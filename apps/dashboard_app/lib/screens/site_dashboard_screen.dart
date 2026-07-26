@@ -11,11 +11,9 @@ import '../theme/dashboard_palette.dart';
 import '../theme/design_system/dashboard_design_system.dart';
 import '../utils/dashboard_breakpoints.dart';
 import '../utils/dashboard_date_range.dart';
-import '../utils/dashboard_filters.dart';
 import '../utils/site_system_navigation.dart';
 import '../widgets/dashboard_widgets.dart';
 import '../widgets/premium/dashboard_date_quick_bar.dart';
-import '../widgets/premium/imported_data_info_banner.dart';
 import '../widgets/premium/dashboard_background.dart';
 import '../widgets/premium/utility_system_chip.dart';
 import '../widgets/shell/dashboard_alert_bell.dart';
@@ -269,10 +267,6 @@ class _MobileToolbar extends StatelessWidget {
                 compact: true,
               ),
             ),
-            if (siteHasImportedHistoricalMonths(siteId)) ...[
-              const SizedBox(height: 6),
-              const ImportedDataInfoBanner(),
-            ],
             const SizedBox(height: 8),
             SingleChildScrollView(
               scrollDirection: Axis.horizontal,

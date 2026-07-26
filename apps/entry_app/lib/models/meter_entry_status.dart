@@ -27,6 +27,18 @@ enum MeterWorkStatus {
         return 'Conflict';
     }
   }
+
+  String localizedLabel(bool isAr) {
+    if (!isAr) return label;
+    return switch (this) {
+      MeterWorkStatus.pending => 'معلّق',
+      MeterWorkStatus.savedLocally => 'محفوظ محلياً',
+      MeterWorkStatus.syncing => 'جارٍ المزامنة',
+      MeterWorkStatus.submitted => 'مُرسَل',
+      MeterWorkStatus.failedSync => 'فشل المزامنة',
+      MeterWorkStatus.conflict => 'تعارض',
+    };
+  }
 }
 
 enum MeterListFilter {
@@ -49,6 +61,17 @@ enum MeterListFilter {
       case MeterListFilter.failedSync:
         return 'Failed sync';
     }
+  }
+
+  String localizedLabel(bool isAr) {
+    if (!isAr) return label;
+    return switch (this) {
+      MeterListFilter.all => 'الكل',
+      MeterListFilter.pending => 'معلّق',
+      MeterListFilter.submitted => 'مُرسَل',
+      MeterListFilter.savedLocally => 'محفوظ محلياً',
+      MeterListFilter.failedSync => 'فشل المزامنة',
+    };
   }
 }
 

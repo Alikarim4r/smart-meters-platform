@@ -2,7 +2,6 @@ import 'package:flutter_test/flutter_test.dart';
 
 import 'package:dashboard_app/utils/chart_period_selection.dart';
 import 'package:dashboard_app/utils/dashboard_date_range.dart';
-import 'package:dashboard_app/utils/dashboard_filters.dart';
 
 void main() {
   final anchor = DateTime(2026, 7, 4);
@@ -10,7 +9,7 @@ void main() {
   test('single day selection uses subsequent and previous reading dates', () {
     final selection = DashboardDateSelection.singleDay(
       day: DateTime(2026, 5, 31),
-      preset: DashboardDatePreset.may312026,
+      preset: DashboardDatePreset.pickDay,
     );
     expect(selection.mode, DashboardDateMode.singleDay);
     expect(selection.subsequentReadingDate, DateTime(2026, 5, 31));
@@ -39,17 +38,8 @@ void main() {
     expect(selection.isSingleDay, isTrue);
   });
 
-  test('May 31 2026 preset remains supported', () {
-    final selection = DashboardDateSelection.forPreset(
-      preset: DashboardDatePreset.may312026,
-      currentBusinessDate: anchor,
-    );
-    expect(selection.selectedBusinessDate, DateTime(2026, 5, 31));
-    expect(selection.preset, DashboardDatePreset.may312026);
-  });
-
   test('defaults to current business day for all sites', () {
-    final selection = defaultDateSelectionForSite(kMoeheHqSiteId, anchor);
+    final selection = defaultDateSelectionForSite('any-site', anchor);
     expect(selection.isSingleDay, isTrue);
     expect(selection.selectedBusinessDate, anchor);
     expect(selection.preset, DashboardDatePreset.today);
@@ -69,8 +59,9 @@ void main() {
 
   test('month mode shows month label', () {
     final selection = DashboardDateSelection.forPreset(
-      preset: DashboardDatePreset.may2026,
+      preset: DashboardDatePreset.monthPicker,
       currentBusinessDate: anchor,
+      pickedMonth: DateTime(2026, 5, 1),
     );
     expect(selection.isMonthMode, isTrue);
     expect(selection.displayLabel, 'May 2026');
@@ -89,8 +80,9 @@ void main() {
 
   test('shift month moves by one month', () {
     final selection = DashboardDateSelection.forPreset(
-      preset: DashboardDatePreset.may2026,
+      preset: DashboardDatePreset.monthPicker,
       currentBusinessDate: anchor,
+      pickedMonth: DateTime(2026, 5, 1),
     );
     final prev = shiftDashboardDateSelection(selection, step: -1);
     final next = shiftDashboardDateSelection(selection, step: 1);

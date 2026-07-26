@@ -235,15 +235,6 @@ class DashboardSiteListTile extends StatelessWidget {
                       ),
                     ),
                   ),
-                  if (isDemoShowcaseSiteName(site.nameEn))
-                    Padding(
-                      padding: const EdgeInsets.only(right: 8),
-                      child: Chip(
-                        label: Text(s.demo),
-                        visualDensity: VisualDensity.compact,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                      ),
-                    ),
                   DashboardStatusBadge(
                     label: site.isActive ? s.active : s.inactive,
                     color: site.isActive ? Colors.green.shade800 : Colors.grey.shade700,

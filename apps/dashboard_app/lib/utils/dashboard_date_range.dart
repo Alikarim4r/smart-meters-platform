@@ -14,14 +14,10 @@ enum DashboardDatePreset {
   today,
   yesterday,
   pickDay,
-  may312026,
   last7Days,
   last30Days,
   currentMonth,
   previousMonth,
-  march2026,
-  april2026,
-  may2026,
   monthPicker,
   customRange,
 }
@@ -31,14 +27,10 @@ extension DashboardDatePresetLabel on DashboardDatePreset {
         DashboardDatePreset.today => 'Today',
         DashboardDatePreset.yesterday => 'Yesterday',
         DashboardDatePreset.pickDay => 'Pick date',
-        DashboardDatePreset.may312026 => 'May 31, 2026',
         DashboardDatePreset.last7Days => 'Last 7 days',
         DashboardDatePreset.last30Days => 'Last 31 days',
         DashboardDatePreset.currentMonth => 'Current month',
         DashboardDatePreset.previousMonth => 'Previous month',
-        DashboardDatePreset.march2026 => 'March 2026',
-        DashboardDatePreset.april2026 => 'April 2026',
-        DashboardDatePreset.may2026 => 'May 2026',
         DashboardDatePreset.monthPicker => 'Month',
         DashboardDatePreset.customRange => 'Custom range',
       };
@@ -48,23 +40,10 @@ extension DashboardDatePresetLabel on DashboardDatePreset {
         DashboardDatePreset.last30Days ||
         DashboardDatePreset.currentMonth ||
         DashboardDatePreset.previousMonth ||
-        DashboardDatePreset.march2026 ||
-        DashboardDatePreset.april2026 ||
-        DashboardDatePreset.may2026 ||
         DashboardDatePreset.monthPicker ||
         DashboardDatePreset.customRange =>
           false,
         _ => true,
-      };
-
-  /// Fixed demo months used for showcase data — hide outside debug builds.
-  bool get isDemoShowcasePreset => switch (this) {
-        DashboardDatePreset.may312026 ||
-        DashboardDatePreset.march2026 ||
-        DashboardDatePreset.april2026 ||
-        DashboardDatePreset.may2026 =>
-          true,
-        _ => false,
       };
 }
 
@@ -117,23 +96,12 @@ class DashboardDateSelection {
 
   String get displayLabel => formatDashboardDateSelectionLabel(this);
 
-  String get summarySubmittedLabel => isSingleDay
-      ? 'Submitted on date'
-      : isRangeMode
-          ? 'Read in range'
-          : 'Read in month';
+  /// KPI summaries are always day-end for [chartBusinessDate] / end of period.
+  String get summarySubmittedLabel => 'Submitted on date';
 
-  String get summaryPendingLabel => isSingleDay
-      ? 'Pending on date'
-      : isRangeMode
-          ? 'Not read in range'
-          : 'Not read in month';
+  String get summaryPendingLabel => 'Pending on date';
 
-  String get summaryCompletionLabel => isSingleDay
-      ? 'Completion on date'
-      : isRangeMode
-          ? 'Completion in range'
-          : 'Completion in month';
+  String get summaryCompletionLabel => 'Completion on date';
 
   /// Chart anchor: single day uses that day; range/month use range end.
   DateTime get chartBusinessDate =>
@@ -200,11 +168,6 @@ class DashboardDateSelection {
         );
       case DashboardDatePreset.pickDay:
         return singleDay(day: pickedDay ?? anchor, preset: preset);
-      case DashboardDatePreset.may312026:
-        return singleDay(
-          day: DateTime(2026, 5, 31),
-          preset: preset,
-        );
       case DashboardDatePreset.last7Days:
         final start = anchor.subtract(const Duration(days: 6));
         return DashboardDateSelection(
@@ -247,33 +210,6 @@ class DashboardDateSelection {
           startDate: prev,
           endDate: end,
           previousReadingDate: prev,
-        );
-      case DashboardDatePreset.march2026:
-        return DashboardDateSelection(
-          mode: DashboardDateMode.month,
-          preset: preset,
-          selectedDay: DateTime(2026, 3, 31),
-          startDate: DateTime(2026, 3, 1),
-          endDate: DateTime(2026, 3, 31),
-          previousReadingDate: DateTime(2026, 3, 1),
-        );
-      case DashboardDatePreset.april2026:
-        return DashboardDateSelection(
-          mode: DashboardDateMode.month,
-          preset: preset,
-          selectedDay: DateTime(2026, 4, 30),
-          startDate: DateTime(2026, 4, 1),
-          endDate: DateTime(2026, 4, 30),
-          previousReadingDate: DateTime(2026, 4, 1),
-        );
-      case DashboardDatePreset.may2026:
-        return DashboardDateSelection(
-          mode: DashboardDateMode.month,
-          preset: preset,
-          selectedDay: DateTime(2026, 5, 31),
-          startDate: DateTime(2026, 5, 1),
-          endDate: DateTime(2026, 5, 31),
-          previousReadingDate: DateTime(2026, 5, 1),
         );
       case DashboardDatePreset.monthPicker:
         final month = pickedMonth ?? anchor;

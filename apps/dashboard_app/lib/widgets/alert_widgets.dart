@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/app_strings.dart';
 import '../providers/alert_providers.dart';
 import '../theme/dashboard_theme.dart';
 import 'dashboard_widgets.dart';
@@ -19,6 +20,7 @@ class CompactAlertSummaryRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = dashboardColors(context);
+    final s = AppStrings.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -34,17 +36,17 @@ class CompactAlertSummaryRow extends StatelessWidget {
               runSpacing: 6,
               children: [
                 _CountChip(
-                  label: 'Critical',
+                  label: s.critical,
                   count: summary.critical,
                   color: Theme.of(context).colorScheme.error,
                 ),
                 _CountChip(
-                  label: 'Warning',
+                  label: s.warning,
                   count: summary.warning,
                   color: Colors.orange.shade800,
                 ),
                 _CountChip(
-                  label: 'Info',
+                  label: s.info,
                   count: summary.info,
                   color: Theme.of(context).colorScheme.primary,
                 ),
@@ -54,7 +56,7 @@ class CompactAlertSummaryRow extends StatelessWidget {
           if (onViewAll != null)
             TextButton(
               onPressed: onViewAll,
-              child: const Text('View all'),
+              child: Text(s.viewAll),
             ),
         ],
       ),
@@ -75,6 +77,7 @@ class CompactAlertListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = dashboardColors(context);
+    final s = AppStrings.of(context);
     final severityColor = alertSeverityColor(context, alert.severity);
     return Material(
       color: colors.cardElevated,
@@ -105,7 +108,7 @@ class CompactAlertListTile extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      alert.title,
+                      s.alertTitle(alert),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -116,7 +119,7 @@ class CompactAlertListTile extends StatelessWidget {
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      alert.message,
+                      s.alertMessage(alert),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
@@ -250,6 +253,12 @@ class AlertListTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = alertSeverityColor(context, alert.severity);
+    final s = AppStrings.of(context);
+    final severityLabel = switch (alert.severity) {
+      AlertSeverity.critical => s.critical,
+      AlertSeverity.warning => s.warning,
+      AlertSeverity.info => s.info,
+    };
     return DashboardCard(
       child: InkWell(
         onTap: onTap,
@@ -262,30 +271,40 @@ class AlertListTile extends StatelessWidget {
               Row(
                 children: [
                   DashboardStatusBadge(
-                    label: alert.severity.label,
+                    label: severityLabel,
                     color: color,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      alert.title,
+                      s.alertTitle(alert),
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 6),
-              Text(alert.message),
+              Text(s.alertMessage(alert)),
               if (alert.meterName != null)
                 Text('${alert.meterName} (${alert.meterCode ?? ''})'),
               if (alert.categoryName != null)
-                Text('Category: ${alert.categoryName}'),
+                Text(
+                  s.isAr
+                      ? 'الفئة: ${alert.categoryName}'
+                      : 'Category: ${alert.categoryName}',
+                ),
               if (alert.readingDate != null)
-                Text('Date: ${formatBusinessDate(alert.readingDate!)}'),
+                Text(
+                  s.isAr
+                      ? 'التاريخ: ${formatBusinessDate(alert.readingDate!)}'
+                      : 'Date: ${formatBusinessDate(alert.readingDate!)}',
+                ),
               if (alert.suggestedAction != null) ...[
                 const SizedBox(height: 6),
                 Text(
-                  'Action: ${alert.suggestedAction}',
+                  s.isAr
+                      ? 'الإجراء: ${alert.suggestedAction}'
+                      : 'Action: ${alert.suggestedAction}',
                   style: TextStyle(
                     fontSize: 12,
                     color: dashboardColors(context).textMuted,
@@ -320,6 +339,7 @@ class CriticalAlertsBanner extends StatelessWidget {
     if (critical.isEmpty) return const SizedBox.shrink();
 
     final theme = Theme.of(context);
+    final s = AppStrings.of(context);
     return DashboardCard(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -329,7 +349,7 @@ class CriticalAlertsBanner extends StatelessWidget {
               Icon(Icons.error_outline, color: theme.colorScheme.error),
               const SizedBox(width: 8),
               Text(
-                'Critical alerts',
+                s.isAr ? 'تنبيهات حرجة' : 'Critical alerts',
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.error,
@@ -337,14 +357,16 @@ class CriticalAlertsBanner extends StatelessWidget {
               ),
               const Spacer(),
               if (onViewAll != null)
-                TextButton(onPressed: onViewAll, child: const Text('View all')),
+                TextButton(onPressed: onViewAll, child: Text(s.viewAll)),
             ],
           ),
           const SizedBox(height: 8),
           for (final alert in critical)
             Padding(
               padding: const EdgeInsets.only(bottom: 6),
-              child: Text('• ${alert.title}: ${alert.message}'),
+              child: Text(
+                '• ${s.alertTitle(alert)}: ${s.alertMessage(alert)}',
+              ),
             ),
         ],
       ),

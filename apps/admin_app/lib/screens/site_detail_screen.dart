@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
+import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 import 'meter_detail_screen.dart';
 import 'meter_form_screen.dart';
@@ -15,13 +17,14 @@ class SiteDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AdminStrings(ref.watch(adminLocaleProvider));
     final siteAsync = ref.watch(adminSiteProvider(siteId));
     final metersAsync = ref.watch(siteMetersProvider(siteId));
     final canEdit = ref.watch(canEditSitesProvider);
     final canManageMeters = ref.watch(canManageMetersProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Site details')),
+      appBar: AppBar(title: Text(s.isAr ? 'تفاصيل الموقع' : 'Site details')),
       body: siteAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => CatalogErrorView(
@@ -62,7 +65,7 @@ class SiteDetailScreen extends ConsumerWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Meters',
+                      s.meters,
                       style: Theme.of(context).textTheme.titleMedium,
                     ),
                   ),
@@ -78,7 +81,7 @@ class SiteDetailScreen extends ConsumerWidget {
                         ref.invalidate(adminSitesProvider);
                       },
                       icon: const Icon(Icons.add),
-                      label: const Text('Add meter'),
+                      label: Text(s.addMeter),
                     ),
                 ],
               ),
@@ -88,9 +91,11 @@ class SiteDetailScreen extends ConsumerWidget {
                 error: (error, _) => Text(friendlyMeterError(error)),
                 data: (meters) {
                   if (meters.isEmpty) {
-                    return const CatalogEmptyState(
-                      title: 'No meters',
-                      message: 'This site has no meters yet.',
+                    return CatalogEmptyState(
+                      title: s.isAr ? 'لا توجد عدادات' : 'No meters',
+                      message: s.isAr
+                          ? 'لا توجد عدادات في هذا الموقع بعد.'
+                          : 'This site has no meters yet.',
                       icon: Icons.speed_outlined,
                     );
                   }

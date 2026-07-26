@@ -60,7 +60,22 @@ class ConnectivityStatusBar extends ConsumerWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  if (isOnline && sync.lastSyncTime != null) ...[
+                  if (sync.lastError != null && sync.lastError!.isNotEmpty) ...[
+                    TextSpan(
+                      text: ' · ',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface
+                            .withValues(alpha: 0.45),
+                      ),
+                    ),
+                    TextSpan(
+                      text: sync.lastError!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.error,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ] else if (isOnline && sync.lastSyncTime != null) ...[
                     TextSpan(
                       text: ' · ',
                       style: theme.textTheme.bodySmall?.copyWith(

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../config/app_env.dart';
 import '../theme/app_colors.dart';
 import '../theme/brand_chrome.dart';
 
@@ -55,13 +54,12 @@ class DemoBrandMark extends StatelessWidget {
 }
 
 /// Elevated login panel used by all three apps.
-class DemoLoginPanel extends StatelessWidget {
-  const DemoLoginPanel({
+class AppLoginPanel extends StatelessWidget {
+  const AppLoginPanel({
     super.key,
     required this.title,
     required this.child,
     this.subtitle,
-    this.hint,
     this.brandMark,
     this.locale,
     this.onLocaleChanged,
@@ -69,7 +67,6 @@ class DemoLoginPanel extends StatelessWidget {
 
   final String title;
   final String? subtitle;
-  final String? hint;
   final Widget? brandMark;
   final Widget child;
   final Locale? locale;
@@ -175,6 +172,44 @@ class DemoLoginPanel extends StatelessWidget {
   }
 }
 
+/// Backward-compatible alias.
+typedef DemoLoginPanel = AppLoginPanel;
+
+/// Section title for dashboard chrome.
+class AppSectionHeader extends StatelessWidget {
+  const AppSectionHeader({
+    super.key,
+    required this.title,
+    this.subtitle,
+  });
+
+  final String title;
+  final String? subtitle;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          title,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        if (subtitle != null)
+          Text(subtitle!, style: theme.textTheme.bodySmall),
+      ],
+    );
+  }
+}
+
+/// Backward-compatible alias.
+typedef DemoSectionHeader = AppSectionHeader;
+
+
 class _LoginLocaleToggle extends StatelessWidget {
   const _LoginLocaleToggle({
     required this.isArabic,
@@ -250,58 +285,4 @@ class _LangChip extends StatelessWidget {
       ),
     );
   }
-}
-
-/// Section title with optional demo badge (e.g. MOEHE HQ).
-class DemoSectionHeader extends StatelessWidget {
-  const DemoSectionHeader({
-    super.key,
-    required this.title,
-    this.subtitle,
-    this.showDemoBadge = false,
-  });
-
-  final String title;
-  final String? subtitle;
-  final bool showDemoBadge;
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                title,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              if (subtitle != null)
-                Text(subtitle!, style: theme.textTheme.bodySmall),
-            ],
-          ),
-        ),
-        if (showDemoBadge)
-          Chip(
-            label: const Text('Demo site'),
-            avatar: Icon(Icons.star, size: 16, color: AppColors.gold),
-            visualDensity: VisualDensity.compact,
-          ),
-      ],
-    );
-  }
-}
-
-bool isDemoShowcaseSiteName(String name) {
-  if (!AppEnv.showDemoSiteUx) {
-    return false;
-  }
-  final normalized = name.toLowerCase();
-  return normalized.contains('moehe') || normalized.contains('headquarters');
 }

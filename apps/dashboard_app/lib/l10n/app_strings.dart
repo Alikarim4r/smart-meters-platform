@@ -185,23 +185,17 @@ class AppStrings {
 
   String summarySubmitted(DashboardDateSelection selection) {
     if (!isAr) return selection.summarySubmittedLabel;
-    if (selection.isSingleDay) return 'مُسجَّل في التاريخ';
-    if (selection.isRangeMode) return 'مقروء ضمن النطاق';
-    return 'مقروء خلال الشهر';
+    return 'مُسجَّل في التاريخ';
   }
 
   String summaryPending(DashboardDateSelection selection) {
     if (!isAr) return selection.summaryPendingLabel;
-    if (selection.isSingleDay) return 'معلّق في التاريخ';
-    if (selection.isRangeMode) return 'غير مقروء ضمن النطاق';
-    return 'غير مقروء خلال الشهر';
+    return 'معلّق في التاريخ';
   }
 
   String summaryCompletion(DashboardDateSelection selection) {
     if (!isAr) return selection.summaryCompletionLabel;
-    if (selection.isSingleDay) return 'نسبة الإنجاز في التاريخ';
-    if (selection.isRangeMode) return 'نسبة الإنجاز ضمن النطاق';
-    return 'نسبة الإنجاز خلال الشهر';
+    return 'نسبة الإنجاز في التاريخ';
   }
 
   // ── Meter card ────────────────────────────────────────────────────
@@ -453,14 +447,10 @@ class AppStrings {
       DashboardDatePreset.today => today,
       DashboardDatePreset.yesterday => yesterday,
       DashboardDatePreset.pickDay => pickDate,
-      DashboardDatePreset.may312026 => '31 مايو 2026',
       DashboardDatePreset.last7Days => last7Days,
       DashboardDatePreset.last30Days => last30Days,
       DashboardDatePreset.currentMonth => currentMonth,
       DashboardDatePreset.previousMonth => previousMonth,
-      DashboardDatePreset.march2026 => 'مارس 2026',
-      DashboardDatePreset.april2026 => 'أبريل 2026',
-      DashboardDatePreset.may2026 => 'مايو 2026',
       DashboardDatePreset.monthPicker => month,
       DashboardDatePreset.customRange => customRange,
     };
@@ -486,6 +476,49 @@ class AppStrings {
   String get chartRange => isAr ? 'المخطط' : 'Chart';
   String get noReadingsForPeriod =>
       isAr ? 'لا توجد قراءات لهذه الفترة.' : 'No readings for this period.';
+  String get noReadingsForDateRange => isAr
+      ? 'لا توجد قراءات لنطاق التاريخ المحدد.'
+      : 'No readings for the selected date range.';
+  String get notEnoughReadingsForCop => isAr
+      ? 'لا توجد قراءات كافية لحساب COP'
+      : 'Not enough readings to calculate COP';
+  String get critical => isAr ? 'حرج' : 'Critical';
+  String get warning => isAr ? 'تحذير' : 'Warning';
+  String get info => isAr ? 'معلومة' : 'Info';
+  String get viewAll => isAr ? 'عرض الكل' : 'View all';
+
+  String alertTitle(DashboardAlert alert) {
+    if (!isAr) return alert.title;
+    return switch (alert.type) {
+      AlertType.missingReading => 'قراءة مفقودة اليوم',
+      AlertType.lowerThanPrevious => 'قراءة أقل من السابقة',
+      AlertType.highConsumption => 'استهلاك مرتفع',
+      AlertType.zeroUnexpected => 'استهلاك صفري غير متوقع',
+      AlertType.missingPhoto => 'صورة مفقودة',
+      AlertType.inactiveMeterReading => 'عداد غير نشط لديه قراءة',
+      AlertType.lowCop => 'COP منخفض',
+      AlertType.copMissingData => 'بيانات COP ناقصة',
+      AlertType.lowCompletion => 'إنجاز قراءة منخفض',
+      AlertType.possibleLeak => 'احتمال تسرّب مياه',
+    };
+  }
+
+  String alertMessage(DashboardAlert alert) {
+    if (!isAr) return alert.message;
+    return switch (alert.type) {
+      AlertType.missingReading => 'لم تُسجَّل قراءة لهذا العداد اليوم.',
+      AlertType.lowerThanPrevious => 'أحدث قراءة أقل من القراءة السابقة.',
+      AlertType.highConsumption => alert.message,
+      AlertType.zeroUnexpected => 'الاستهلاك صفر رغم وجود قراءات سابقة.',
+      AlertType.missingPhoto => 'قراءة اليوم بدون صورة مرفقة.',
+      AlertType.inactiveMeterReading => 'هذا العداد غير نشط لكن لديه قراءة حديثة.',
+      AlertType.lowCop => alert.message,
+      AlertType.copMissingData => 'مجموعة COP تحتاج ربط عدادات BTU والكهرباء.',
+      AlertType.lowCompletion => alert.message,
+      AlertType.possibleLeak => alert.message,
+    };
+  }
+
   String get couldNotLoadChart =>
       isAr ? 'تعذّر تحميل المخطط' : 'Could not load chart';
   String get couldNotLoadComparison =>
@@ -765,7 +798,6 @@ class AppStrings {
 
   String get active => isAr ? 'نشط' : 'Active';
   String get inactive => isAr ? 'غير نشط' : 'Inactive';
-  String get demo => isAr ? 'تجريبي' : 'Demo';
   String metersCount(int count) => isAr ? '$count عداد' : '$count meters';
   String categoriesCount(int count) =>
       isAr ? '$count فئة' : '$count categories';

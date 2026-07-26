@@ -401,7 +401,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               ? 'سجّل الدخول بحسابك للمتابعة.'
               : 'Sign in to your account to continue.');
 
-    return DemoLoginPanel(
+    return AppLoginPanel(
       title: widget.appTitle,
       subtitle: subtitle,
       brandMark: AppBrandMark(assetPath: widget.brandMarkAsset, size: 72),
@@ -692,7 +692,7 @@ class _BiometricUnlockScreenState
     final theme = Theme.of(context);
     final isAr = widget.locale.languageCode == 'ar';
 
-    return DemoLoginPanel(
+    return AppLoginPanel(
       title: widget.appTitle,
       subtitle: isAr
           ? 'استخدم ${security.biometricLabel} للمتابعة'

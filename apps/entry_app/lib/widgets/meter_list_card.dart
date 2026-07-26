@@ -12,10 +12,12 @@ class MeterListCard extends StatelessWidget {
     super.key,
     required this.status,
     required this.onTap,
+    this.isArabic = false,
   });
 
   final MeterEntryStatus status;
   final VoidCallback onTap;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
@@ -129,6 +131,7 @@ class MeterListCard extends StatelessWidget {
                         padding: const EdgeInsets.only(top: 6),
                         child: _SubmittedPhotoThumb(
                           storagePath: status.todayReading!.imageStoragePath!,
+                          isArabic: isArabic,
                         ),
                       ),
                   ],
@@ -137,7 +140,7 @@ class MeterListCard extends StatelessWidget {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  _StatusBadge(status: status.workStatus),
+                  _StatusBadge(status: status.workStatus, isArabic: isArabic),
                   const SizedBox(height: 8),
                   Icon(
                     status.isReadOnly
@@ -157,9 +160,10 @@ class MeterListCard extends StatelessWidget {
   String _lastReadingLabel(MeterEntryStatus status) {
     final last = status.lastReading;
     if (last == null) {
-      return 'Last reading: none';
+      return isArabic ? 'آخر قراءة: لا يوجد' : 'Last reading: none';
     }
-    return 'Last: ${last.rawValue} ${status.meter.unitDisplayLabel} '
+    final prefix = isArabic ? 'السابق' : 'Last';
+    return '$prefix: ${last.rawValue} ${status.meter.unitDisplayLabel} '
         '(${formatBusinessDate(last.readingDate)})';
   }
 
@@ -180,9 +184,13 @@ class MeterListCard extends StatelessWidget {
 }
 
 class _SubmittedPhotoThumb extends ConsumerWidget {
-  const _SubmittedPhotoThumb({required this.storagePath});
+  const _SubmittedPhotoThumb({
+    required this.storagePath,
+    this.isArabic = false,
+  });
 
   final String storagePath;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -199,7 +207,7 @@ class _SubmittedPhotoThumb extends ConsumerWidget {
           ReadingPhotoThumbnail(remoteUrl: url, localPath: null),
           const SizedBox(width: 8),
           Text(
-            'Photo uploaded',
+            isArabic ? 'تم رفع الصورة' : 'Photo uploaded',
             style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
@@ -209,9 +217,10 @@ class _SubmittedPhotoThumb extends ConsumerWidget {
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({required this.status});
+  const _StatusBadge({required this.status, this.isArabic = false});
 
   final MeterWorkStatus status;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +232,7 @@ class _StatusBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(
-        status.label,
+        status.localizedLabel(isArabic),
         style: TextStyle(
           fontSize: 11,
           fontWeight: FontWeight.w700,

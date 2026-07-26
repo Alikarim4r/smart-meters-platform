@@ -28,16 +28,20 @@ class AlertRepository {
     required DateTime businessDate,
   }) async {
     final sites = await _dashboard.getAccessibleSitesForDashboard();
-    final alerts = <DashboardAlert>[];
-    for (final site in sites) {
-      try {
-        alerts.addAll(
-          await getSiteAlerts(siteId: site.id, businessDate: businessDate),
-        );
-      } catch (_) {
-        // One large/slow site must not fail the whole home alerts load.
-      }
-    }
+    final results = await Future.wait(
+      sites.map((site) async {
+        try {
+          return await getSiteAlerts(
+            siteId: site.id,
+            businessDate: businessDate,
+          );
+        } catch (_) {
+          // One large/slow site must not fail the whole home alerts load.
+          return <DashboardAlert>[];
+        }
+      }),
+    );
+    final alerts = results.expand((list) => list).toList();
     alerts.sort((a, b) {
       final severity = _severityRank(
         b.severity,

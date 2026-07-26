@@ -450,8 +450,8 @@ class MultiSeriesLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (series.isEmpty || !series.any((s) => s.hasData)) {
-      return const ChartEmptyPlaceholder(
-        message: 'No readings for this period',
+      return ChartEmptyPlaceholder(
+        message: AppStrings.of(context).noReadingsForPeriod,
       );
     }
 
@@ -459,7 +459,9 @@ class MultiSeriesLineChart extends StatelessWidget {
     final colors = _chartPalette(theme);
     final maxPoints = series.map((s) => s.points.length).fold(0, (a, b) => a > b ? a : b);
     if (maxPoints == 0) {
-      return const ChartEmptyPlaceholder(message: 'No readings for this period');
+      return ChartEmptyPlaceholder(
+        message: AppStrings.of(context).noReadingsForPeriod,
+      );
     }
 
     final chartMaxY = chartSoftMaxY(
@@ -578,7 +580,7 @@ class SingleSeriesLineChart extends StatelessWidget {
     required this.points,
     required this.color,
     this.unitLabel,
-    this.emptyMessage = 'No readings for this period',
+    this.emptyMessage,
     this.isStep = false,
     this.bucket,
   });
@@ -586,14 +588,14 @@ class SingleSeriesLineChart extends StatelessWidget {
   final List<TimeSeriesPoint> points;
   final Color color;
   final String? unitLabel;
-  final String emptyMessage;
+  final String? emptyMessage;
   final bool isStep;
   final ChartBucket? bucket;
 
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage);
+      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
     }
 
     final chartMaxY = chartSoftMaxY(points.map((p) => p.value));
@@ -699,20 +701,20 @@ class SingleSeriesBarChart extends StatelessWidget {
     required this.points,
     required this.color,
     this.unitLabel,
-    this.emptyMessage = 'No readings for the selected date range.',
+    this.emptyMessage,
     this.bucket,
   });
 
   final List<TimeSeriesPoint> points;
   final Color color;
   final String? unitLabel;
-  final String emptyMessage;
+  final String? emptyMessage;
   final ChartBucket? bucket;
 
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage);
+      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
     }
 
     final chartMaxY = chartSoftMaxY(points.map((p) => p.value));
@@ -799,20 +801,20 @@ class SingleSeriesAreaChart extends StatelessWidget {
     required this.points,
     required this.color,
     this.unitLabel,
-    this.emptyMessage = 'No readings for the selected date range.',
+    this.emptyMessage,
     this.bucket,
   });
 
   final List<TimeSeriesPoint> points;
   final Color color;
   final String? unitLabel;
-  final String emptyMessage;
+  final String? emptyMessage;
   final ChartBucket? bucket;
 
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage);
+      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
     }
 
     final chartMaxY = chartSoftMaxY(points.map((p) => p.value));
@@ -913,8 +915,8 @@ class HorizontalRankingBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty || !items.any((i) => i.totalConsumption > 0)) {
-      return const ChartEmptyPlaceholder(
-        message: 'Not enough readings to calculate consumption',
+      return ChartEmptyPlaceholder(
+        message: AppStrings.of(context).isAr ? 'لا توجد قراءات كافية لحساب الاستهلاك' : 'Not enough readings to calculate consumption',
       );
     }
 
@@ -991,8 +993,8 @@ class CategorySummaryBarChart extends StatelessWidget {
       ..sort((a, b) => b.totalConsumption.compareTo(a.totalConsumption));
 
     if (ranked.isEmpty) {
-      return const ChartEmptyPlaceholder(
-        message: 'Not enough readings to calculate consumption',
+      return ChartEmptyPlaceholder(
+        message: AppStrings.of(context).isAr ? 'لا توجد قراءات كافية لحساب الاستهلاك' : 'Not enough readings to calculate consumption',
       );
     }
 
@@ -1056,7 +1058,8 @@ class CompletionDonutChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (total <= 0) {
-      return const ChartEmptyPlaceholder(message: 'No entry meters at this site');
+      return ChartEmptyPlaceholder(
+        message: AppStrings.of(context).isAr ? 'لا توجد عدادات إدخال في هذا الموقع' : 'No entry meters at this site');
     }
 
     final theme = Theme.of(context);
@@ -1124,13 +1127,13 @@ class MeterComparisonLineChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!result.canCompare) {
       return ChartEmptyPlaceholder(
-        message: result.warningMessage ?? 'Units cannot be compared safely',
+        message: result.warningMessage ?? (AppStrings.of(context).isAr ? 'لا يمكن مقارنة الوحدات بأمان' : 'Units cannot be compared safely'),
       );
     }
     if (!result.hasData) {
       return ChartEmptyPlaceholder(
         message:
-            result.warningMessage ?? 'Not enough readings to calculate consumption',
+            result.warningMessage ?? (AppStrings.of(context).isAr ? 'لا توجد قراءات كافية لحساب الاستهلاك' : 'Not enough readings to calculate consumption'),
       );
     }
 
@@ -1236,21 +1239,21 @@ class MeterSharePieChart extends StatelessWidget {
     super.key,
     required this.items,
     required this.unitLabel,
-    this.emptyMessage = 'No readings for this period.',
+    this.emptyMessage,
   });
 
   final List<({String label, double value})> items;
   final String unitLabel;
-  final String emptyMessage;
+  final String? emptyMessage;
 
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage);
+      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
     }
     final total = items.fold<double>(0, (sum, item) => sum + item.value);
     if (total <= 0) {
-      return ChartEmptyPlaceholder(message: emptyMessage);
+      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
     }
     final palette = _chartPalette(Theme.of(context));
     return Column(
@@ -1367,7 +1370,7 @@ class MeterComparisonChart extends StatelessWidget {
           ],
           unitLabel: result.baseUnit,
           emptyMessage:
-              result.warningMessage ?? 'Not enough readings to compare',
+              result.warningMessage ?? (AppStrings.of(context).isAr ? 'لا توجد قراءات كافية للمقارنة' : 'Not enough readings to compare'),
         ),
       _ => MeterComparisonLineChart(result: result),
     };
@@ -1736,13 +1739,13 @@ class CopTrendLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (!result.hasRequiredMeters) {
-      return const ChartEmptyPlaceholder(
-        message: 'COP requires both BTU and electricity readings',
+      return ChartEmptyPlaceholder(
+        message: AppStrings.of(context).isAr ? 'COP يتطلب قراءات BTU والكهرباء' : 'COP requires both BTU and electricity readings',
       );
     }
     if (!result.hasData) {
       return ChartEmptyPlaceholder(
-        message: result.emptyMessage ?? 'Not enough readings to calculate COP',
+        message: result.emptyMessage ?? AppStrings.of(context).notEnoughReadingsForCop,
       );
     }
 

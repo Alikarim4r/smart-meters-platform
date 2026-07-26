@@ -6,26 +6,41 @@ class MeterWorkProgressSummary extends StatelessWidget {
   const MeterWorkProgressSummary({
     super.key,
     required this.summary,
+    this.isArabic = false,
   });
 
   final MeterWorkSummary summary;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
+    String t(String en, String ar) => isArabic ? ar : en;
     return Wrap(
       spacing: 8,
       runSpacing: 8,
       children: [
-        _StatPill(label: 'Total', value: summary.total, color: Colors.blueGrey),
-        _StatPill(label: 'Pending', value: summary.pending, color: Colors.orange),
         _StatPill(
-          label: 'Saved locally',
+          label: t('Total', 'الإجمالي'),
+          value: summary.total,
+          color: Colors.blueGrey,
+        ),
+        _StatPill(
+          label: t('Pending', 'معلّق'),
+          value: summary.pending,
+          color: Colors.orange,
+        ),
+        _StatPill(
+          label: t('Saved locally', 'محفوظ محلياً'),
           value: summary.savedLocally,
           color: Colors.indigo,
         ),
-        _StatPill(label: 'Submitted', value: summary.submitted, color: Colors.green),
         _StatPill(
-          label: 'Failed sync',
+          label: t('Submitted', 'مُرسَل'),
+          value: summary.submitted,
+          color: Colors.green,
+        ),
+        _StatPill(
+          label: t('Failed sync', 'فشل المزامنة'),
           value: summary.failedSync,
           color: Colors.red,
         ),
@@ -71,10 +86,12 @@ class MeterListFilterChips extends StatelessWidget {
     super.key,
     required this.selected,
     required this.onSelected,
+    this.isArabic = false,
   });
 
   final MeterListFilter selected;
   final ValueChanged<MeterListFilter> onSelected;
+  final bool isArabic;
 
   @override
   Widget build(BuildContext context) {
@@ -85,7 +102,7 @@ class MeterListFilterChips extends StatelessWidget {
           return Padding(
             padding: const EdgeInsets.only(right: 8),
             child: FilterChip(
-              label: Text(filter.label),
+              label: Text(filter.localizedLabel(isArabic)),
               selected: selected == filter,
               onSelected: (_) => onSelected(filter),
             ),

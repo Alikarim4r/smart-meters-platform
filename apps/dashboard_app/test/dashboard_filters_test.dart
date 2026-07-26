@@ -60,54 +60,31 @@ void main() {
     expect(range.to, today);
   });
 
-  test('readingDateRangeForFilter returns March 2026 range', () {
+  test('readingDateRangeForFilter returns last 7 days', () {
+    final today = DateTime(2026, 7, 4);
     final range = readingDateRangeForFilter(
-      filter: DashboardReadingDateFilter.march2026,
-      businessDate: DateTime(2026, 7, 4),
+      filter: DashboardReadingDateFilter.last7Days,
+      businessDate: today,
     );
-    expect(range.from, DateTime(2026, 3, 1));
-    expect(range.to, DateTime(2026, 3, 31));
+    expect(range.from, DateTime(2026, 6, 28));
+    expect(range.to, today);
   });
 
-  test('chartBusinessDateForMonth anchors historical months', () {
+  test('chartBusinessDateForMonth uses current business date', () {
     expect(
       chartBusinessDateForMonth(
-        month: DashboardChartMonth.may2026,
+        month: DashboardChartMonth.current,
         currentBusinessDate: DateTime(2026, 7, 4),
       ),
-      DateTime(2026, 5, 31),
-    );
-    expect(
-      chartBusinessDateForMonth(
-        month: DashboardChartMonth.march2026,
-        currentBusinessDate: DateTime(2026, 7, 4),
-      ),
-      DateTime(2026, 3, 31),
-    );
-    expect(
-      chartBusinessDateForMonth(
-        month: DashboardChartMonth.april2026,
-        currentBusinessDate: DateTime(2026, 7, 4),
-      ),
-      DateTime(2026, 4, 30),
+      DateTime(2026, 7, 4),
     );
   });
 
-  test('MOEHE demo chart defaults are staging-only (APP_ENV default=production)', () {
-    final selection = defaultDateSelectionForSite(kMoeheHqSiteId, DateTime(2026, 7, 4));
+  test('defaults to current business day for all sites', () {
+    final selection = defaultDateSelectionForSite('any-site', DateTime(2026, 7, 4));
     expect(selection.selectedBusinessDate, DateTime(2026, 7, 4));
     expect(selection.isSingleDay, isTrue);
     expect(selection.preset, DashboardDatePreset.today);
-    // Without --dart-define=APP_ENV=staging, demo UX is off.
-    expect(siteHasImportedHistoricalMonths(kMoeheHqSiteId), isFalse);
-    expect(
-      defaultChartMonthForSite(kMoeheHqSiteId),
-      DashboardChartMonth.current,
-    );
-    expect(
-      defaultChartMonthForSite('other-site'),
-      DashboardChartMonth.current,
-    );
   });
 
   test('resolveBusinessDate returns override or fallback', () {

@@ -558,25 +558,12 @@ profiles:entered_by(full_name, email)
           previousByMeter[reading.meterId] = reading;
         }
       } else {
-        await Future.wait(
-          meterIds.map((meterId) async {
-            final row = await _client
-                .from('meter_readings')
-                .select(
-                  'id, site_id, meter_id, reading_date, raw_value, normalized_value, entered_at, image_url, note',
-                )
-                .eq('meter_id', meterId)
-                .lt('reading_date', dateIso)
-                .order('reading_date', ascending: false)
-                .limit(1)
-                .maybeSingle();
-            if (row == null) return;
-            final reading = MeterReading.fromJson(
-              Map<String, dynamic>.from(row),
-            );
-            previousByMeter[reading.meterId] = reading;
-          }),
+        final previousRows = await _batchPreviousReadings(
+          siteId: siteId,
+          meterIds: meterIds,
+          beforeIso: dateIso,
         );
+        previousByMeter.addAll(previousRows);
       }
     } else {
       // Paginated range fetch (newest first) — never scan unbounded history.
@@ -608,34 +595,19 @@ profiles:entered_by(full_name, email)
         if (latestByMeter.length >= meterIds.length) break;
       }
 
-      // Previous = last reading at/before range start (per meter, capped lookback).
-      final lookbackStart = formatBusinessDate(
-        DateTime.parse(startIso).subtract(const Duration(days: 180)),
+      // Previous = last reading strictly before range start (batched).
+      final previousRows = await _batchPreviousReadings(
+        siteId: siteId,
+        meterIds: meterIds,
+        beforeIso: startIso,
       );
-      await Future.wait(
-        meterIds.map((meterId) async {
-          try {
-            final row = await _client
-                .from('meter_readings')
-                .select(readingCols)
-                .eq('meter_id', meterId)
-                .gte('reading_date', lookbackStart)
-                .lte('reading_date', startIso)
-                .order('reading_date', ascending: false)
-                .limit(1)
-                .maybeSingle();
-            if (row == null) return;
-            final reading = MeterReading.fromJson(
-              Map<String, dynamic>.from(row),
-            );
-            final latest = latestByMeter[reading.meterId];
-            if (latest == null || reading.id == latest.id) return;
-            if (!reading.readingDate.isAfter(latest.readingDate)) {
-              previousByMeter[reading.meterId] = reading;
-            }
-          } catch (_) {}
-        }),
-      );
+      for (final entry in previousRows.entries) {
+        final latest = latestByMeter[entry.key];
+        if (latest == null || entry.value.id == latest.id) continue;
+        if (!entry.value.readingDate.isAfter(latest.readingDate)) {
+          previousByMeter[entry.key] = entry.value;
+        }
+      }
     }
 
     final cards = <MeterReadingCardData>[
@@ -1419,6 +1391,45 @@ profiles:entered_by(full_name, email)
       offset += pageSize;
     }
     return found;
+  }
+
+  /// Newest full reading before [beforeIso] for each meter — few paginated calls.
+  Future<Map<String, MeterReading>> _batchPreviousReadings({
+    required String siteId,
+    required List<String> meterIds,
+    required String beforeIso,
+  }) async {
+    if (meterIds.isEmpty) return {};
+    final lookbackIso = formatBusinessDate(
+      DateTime.parse(beforeIso).subtract(const Duration(days: 400)),
+    );
+    final prevByMeter = <String, MeterReading>{};
+    const pageSize = 1000;
+    const readingCols =
+        'id, site_id, meter_id, reading_date, raw_value, normalized_value, '
+        'entered_at, image_url, note';
+    var offset = 0;
+    while (prevByMeter.length < meterIds.length) {
+      final page = await _client
+          .from('meter_readings')
+          .select(readingCols)
+          .eq('site_id', siteId)
+          .inFilter('meter_id', meterIds)
+          .gte('reading_date', lookbackIso)
+          .lt('reading_date', beforeIso)
+          .order('reading_date', ascending: false)
+          .range(offset, offset + pageSize - 1);
+      final rows = page as List;
+      for (final row in rows) {
+        final reading = MeterReading.fromJson(
+          Map<String, dynamic>.from(row as Map),
+        );
+        prevByMeter.putIfAbsent(reading.meterId, () => reading);
+      }
+      if (rows.length < pageSize) break;
+      offset += pageSize;
+    }
+    return prevByMeter;
   }
 
   /// Newest reading before [beforeIso] for each meter — few paginated calls.

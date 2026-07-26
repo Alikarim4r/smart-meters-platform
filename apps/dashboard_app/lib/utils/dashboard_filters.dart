@@ -13,38 +13,10 @@ enum DashboardReadingDateFilter {
   today,
   last7Days,
   last30Days,
-  march2026,
-  april2026,
-  may2026,
 }
 
 enum DashboardChartMonth {
   current,
-  march2026,
-  april2026,
-  may2026,
-}
-
-/// MOEHE HQ demo site id (staging showcase only).
-const kMoeheHqSiteId = '22222222-2222-4222-8222-222222222222';
-
-const kImportedReadingsHint =
-    'Imported MOEHE HQ readings cover February 2020 through May 2026 '
-    '(gaps on some days). Demo presets include March–May 2026.';
-
-const kImportedReadingsHintAr =
-    'قراءات مقر الوزارة المستوردة تغطي من فبراير 2020 حتى مايو 2026 '
-    '(مع فراغات في بعض الأيام). الاختصارات التجريبية تشمل مارس–مايو 2026.';
-
-/// Staging-only: MOEHE demo months / import banner / lazy analytics gate.
-bool siteHasImportedHistoricalMonths(String siteId) =>
-    AppEnv.showDemoSiteUx && siteId == kMoeheHqSiteId;
-
-DashboardChartMonth defaultChartMonthForSite(String siteId) {
-  if (siteHasImportedHistoricalMonths(siteId)) {
-    return DashboardChartMonth.may2026;
-  }
-  return DashboardChartMonth.current;
 }
 
 extension DashboardReadingDateFilterLabel on DashboardReadingDateFilter {
@@ -52,18 +24,12 @@ extension DashboardReadingDateFilterLabel on DashboardReadingDateFilter {
         DashboardReadingDateFilter.today => 'Today',
         DashboardReadingDateFilter.last7Days => 'Last 7 days',
         DashboardReadingDateFilter.last30Days => 'Last 31 days',
-        DashboardReadingDateFilter.march2026 => 'March 2026',
-        DashboardReadingDateFilter.april2026 => 'April 2026',
-        DashboardReadingDateFilter.may2026 => 'May 2026',
       };
 }
 
 extension DashboardChartMonthLabel on DashboardChartMonth {
   String get label => switch (this) {
         DashboardChartMonth.current => 'Current period',
-        DashboardChartMonth.march2026 => 'March 2026',
-        DashboardChartMonth.april2026 => 'April 2026',
-        DashboardChartMonth.may2026 => 'May 2026',
       };
 }
 
@@ -178,12 +144,6 @@ List<DashboardMeterRow> filterDashboardMeters({
       return (from: businessDate.subtract(const Duration(days: 6)), to: businessDate);
     case DashboardReadingDateFilter.last30Days:
       return (from: businessDate.subtract(const Duration(days: 30)), to: businessDate);
-    case DashboardReadingDateFilter.march2026:
-      return (from: DateTime(2026, 3, 1), to: DateTime(2026, 3, 31));
-    case DashboardReadingDateFilter.april2026:
-      return (from: DateTime(2026, 4, 1), to: DateTime(2026, 4, 30));
-    case DashboardReadingDateFilter.may2026:
-      return (from: DateTime(2026, 5, 1), to: DateTime(2026, 5, 31));
   }
 }
 
@@ -192,19 +152,11 @@ int readingListLimitForFilter(DashboardReadingDateFilter filter) {
     DashboardReadingDateFilter.today => 100,
     DashboardReadingDateFilter.last7Days => 100,
     DashboardReadingDateFilter.last30Days => 150,
-    DashboardReadingDateFilter.march2026 => 150,
-    DashboardReadingDateFilter.april2026 => 150,
-    DashboardReadingDateFilter.may2026 => 150,
   };
 }
 
 bool readingFilterSupportsLoadMore(DashboardReadingDateFilter filter) {
-  return switch (filter) {
-    DashboardReadingDateFilter.march2026 => true,
-    DashboardReadingDateFilter.april2026 => true,
-    DashboardReadingDateFilter.may2026 => true,
-    _ => false,
-  };
+  return false;
 }
 
 DateTime chartBusinessDateForMonth({
@@ -213,9 +165,6 @@ DateTime chartBusinessDateForMonth({
 }) {
   return switch (month) {
     DashboardChartMonth.current => currentBusinessDate,
-    DashboardChartMonth.march2026 => DateTime(2026, 3, 31),
-    DashboardChartMonth.april2026 => DateTime(2026, 4, 30),
-    DashboardChartMonth.may2026 => DateTime(2026, 5, 31),
   };
 }
 

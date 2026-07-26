@@ -21,15 +21,39 @@ class EntryShellScreen extends ConsumerStatefulWidget {
   ConsumerState<EntryShellScreen> createState() => _EntryShellScreenState();
 }
 
-class _EntryShellScreenState extends ConsumerState<EntryShellScreen> {
+class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
+    with WidgetsBindingObserver {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       ref.read(syncProvider);
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) return;
+    final profile = ref.read(authProvider).profile;
+    if (profile == null) return;
+    final today = qatarBusinessDate();
+    final current = ref.read(businessDateProvider);
+    final isPastSelected = current.year != today.year ||
+        current.month != today.month ||
+        current.day != today.day;
+    // Refresh overnight drift; keep intentional backdated day when allowed.
+    if (!isPastSelected || !profile.allowBackdatedReadings) {
+      ref.read(businessDateProvider.notifier).state = today;
+    }
   }
 
   @override

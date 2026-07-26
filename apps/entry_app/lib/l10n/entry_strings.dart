@@ -152,6 +152,17 @@ class EntryStrings {
   String syncedAt(String time) => _t('Synced $time', 'آخر مزامنة $time');
   String get syncNow => _t('Sync now', 'زامن الآن');
   String get sync => _t('Sync', 'مزامنة');
+  String get syncFailed => _t('Sync failed', 'فشل المزامنة');
+  String get noInternet =>
+      _t('No internet connection.', 'لا يوجد اتصال بالإنترنت.');
+  String get couldNotSyncReading => _t(
+        'Could not sync reading. Try again later.',
+        'تعذّر مزامنة القراءة. حاول لاحقاً.',
+      );
+  String get couldNotSyncPermission => _t(
+        'Could not sync reading. Check date permission and try again.',
+        'تعذّر مزامنة القراءة. تحقق من صلاحية التاريخ وحاول مجدداً.',
+      );
 
   // Readings workspace ---------------------------------------------------------
   String get previousReading => _t('Previous', 'السابق');

@@ -491,12 +491,6 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                             ),
                           ),
                         ),
-                        ListTile(
-                          contentPadding: EdgeInsets.zero,
-                          title: Text(s.logoUpload),
-                          subtitle: Text(s.notAvailablePhase),
-                          trailing: const Icon(Icons.image_outlined),
-                        ),
                       ],
                     ),
                     const SizedBox(height: 16),

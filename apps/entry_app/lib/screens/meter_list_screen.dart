@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/entry_strings.dart';
 import '../models/meter_entry_status.dart';
 import '../providers/entry_providers.dart';
+import '../providers/preferences_providers.dart';
 import '../widgets/entry_state_views.dart';
 import '../widgets/meter_list_card.dart';
 import '../widgets/meter_work_progress_summary.dart';
@@ -39,6 +41,7 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = EntryStrings(ref.watch(entryLocaleProvider));
     final query = EntryMeterQuery(
       siteId: widget.site.id,
       category: widget.category,
@@ -67,13 +70,13 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    widget.category.displayName,
+                    s.categoryName(widget.category),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
                   ),
                   Text(
-                    widget.site.nameEn,
+                    s.siteName(widget.site),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey.shade700,
                         ),
@@ -86,10 +89,10 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
         const SizedBox(height: 8),
         TextField(
           controller: _searchController,
-          decoration: const InputDecoration(
-            prefixIcon: Icon(Icons.search),
-            hintText: 'Search name, code, or location',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            prefixIcon: const Icon(Icons.search),
+            hintText: s.searchMeters,
+            border: const OutlineInputBorder(),
             isDense: true,
           ),
           onChanged: (value) {
@@ -99,22 +102,21 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
         const SizedBox(height: 10),
         MeterListFilterChips(
           selected: filter,
+          isArabic: s.isAr,
           onSelected: (value) {
             ref.read(meterListFilterProvider.notifier).state = value;
           },
         ),
         const SizedBox(height: 12),
         metersAsync.when(
-          loading: () => const EntryLoadingCard(message: 'Loading meters…'),
+          loading: () => EntryLoadingCard(message: s.loadingMeters),
           error: (error, _) => EntryErrorCard(
-            message: 'Could not load meters.',
+            message: s.couldNotLoadMeters,
             onRetry: () => ref.invalidate(metersWithStatusProvider(query)),
           ),
           data: (meters) {
             if (meters.isEmpty) {
-              return const EntryEmptyCard(
-                message: 'No active physical meters in this category.',
-              );
+              return EntryEmptyCard(message: s.noMetersOfType);
             }
 
             final filtered = meters
@@ -127,11 +129,16 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                MeterWorkProgressSummary(summary: summary),
+                MeterWorkProgressSummary(
+                  summary: summary,
+                  isArabic: s.isAr,
+                ),
                 const SizedBox(height: 12),
                 if (filtered.isEmpty)
-                  const EntryEmptyCard(
-                    message: 'No meters match your search or filter.',
+                  EntryEmptyCard(
+                    message: s.isAr
+                        ? 'لا توجد عدادات مطابقة للبحث أو الفلتر.'
+                        : 'No meters match your search or filter.',
                   )
                 else
                   for (final status in filtered)
@@ -139,6 +146,7 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: MeterListCard(
                         status: status,
+                        isArabic: s.isAr,
                         onTap: () => widget.onMeterTap(status),
                       ),
                     ),

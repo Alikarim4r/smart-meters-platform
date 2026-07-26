@@ -2,11 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../utils/dashboard_date_range.dart';
-import '../../utils/dashboard_filters.dart';
 import '../../utils/site_system_navigation.dart';
 import 'utility_analytics_section.dart';
 
-/// Defers chart mount so meter cards stay responsive on large sites.
+/// Defers chart mount by one frame so meter cards stay responsive.
 class LazyUtilityAnalyticsSection extends ConsumerStatefulWidget {
   const LazyUtilityAnalyticsSection({
     super.key,
@@ -37,18 +36,10 @@ class LazyUtilityAnalyticsSection extends ConsumerStatefulWidget {
 class _LazyUtilityAnalyticsSectionState
     extends ConsumerState<LazyUtilityAnalyticsSection> {
   bool _ready = false;
-  bool _expanded = false;
-
-  bool get _deferHeavy => siteHasImportedHistoricalMonths(widget.siteId);
 
   @override
   void initState() {
     super.initState();
-    if (_deferHeavy) {
-      // Large imports: wait for an explicit expand (keeps first paint light).
-      return;
-    }
-    // Mount charts on next frame — no artificial delay.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _ready = true);
     });
@@ -56,19 +47,6 @@ class _LazyUtilityAnalyticsSectionState
 
   @override
   Widget build(BuildContext context) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-
-    if (_deferHeavy && !_expanded) {
-      return OutlinedButton.icon(
-        onPressed: () => setState(() {
-          _expanded = true;
-          _ready = true;
-        }),
-        icon: const Icon(Icons.insights_outlined, size: 18),
-        label: Text(isAr ? 'عرض التحليلات والمخططات' : 'Show analytics & charts'),
-      );
-    }
-
     if (!_ready) {
       return const SizedBox(
         height: 48,

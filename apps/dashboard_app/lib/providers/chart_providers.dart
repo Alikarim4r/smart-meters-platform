@@ -31,12 +31,7 @@ final siteDateSelectionProvider =
 /// Legacy alias — prefer [siteDateSelectionProvider].
 @Deprecated('Use siteDateSelectionProvider')
 DashboardChartMonth chartMonthFromSelection(DashboardDateSelection selection) {
-  return switch (selection.preset) {
-    DashboardDatePreset.march2026 => DashboardChartMonth.march2026,
-    DashboardDatePreset.april2026 => DashboardChartMonth.april2026,
-    DashboardDatePreset.may2026 => DashboardChartMonth.may2026,
-    _ => DashboardChartMonth.current,
-  };
+  return DashboardChartMonth.current;
 }
 
 final siteCategoriesSummaryForMonthProvider =

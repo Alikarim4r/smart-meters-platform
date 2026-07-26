@@ -1,9 +1,7 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../utils/dashboard_date_range.dart';
-import '../utils/dashboard_filters.dart';
 import 'report_models.dart';
 
 Future<ReportExportOptions?> showReportExportDialog({
@@ -94,18 +92,12 @@ Future<ReportExportOptions?> showReportExportDialog({
                       decoration: const InputDecoration(
                         labelText: 'Date preset',
                         border: OutlineInputBorder(),
-                        helperText: kImportedReadingsHint,
                       ),
                       items: [
                         for (final item in [
                           DashboardDatePreset.currentMonth,
                           DashboardDatePreset.last30Days,
                           DashboardDatePreset.customRange,
-                          if (kDebugMode) ...[
-                            DashboardDatePreset.march2026,
-                            DashboardDatePreset.april2026,
-                            DashboardDatePreset.may2026,
-                          ],
                         ])
                           DropdownMenuItem(
                             value: item,

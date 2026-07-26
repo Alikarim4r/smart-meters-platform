@@ -249,7 +249,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
     }
 
     if (!_ref.read(isOnlineProvider)) {
-      state = state.copyWith(lastError: 'No internet connection.');
+      state = state.copyWith(lastError: 'لا يوجد اتصال بالإنترنت. / No internet connection.');
       return 0;
     }
 
@@ -285,7 +285,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
             status: LocalReadingStatus.failed,
             errorMessage: isNetworkError(error)
                 ? 'Network error while syncing.'
-                : 'Could not sync reading. Try again later.',
+                : 'تعذّر مزامنة القراءة. حاول لاحقاً.',
             updatedAt: DateTime.now(),
           ),
         );
@@ -729,7 +729,7 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
             errorMessage:
                 syncedDraft.errorMessage ??
                 syncedDraft.photoErrorMessage ??
-                'Could not sync reading. Check date permission and try again.',
+                'تعذّر مزامنة القراءة. تحقق من صلاحية التاريخ وحاول مجدداً.',
           );
           _ref.invalidate(metersWithStatusProvider);
           return false;
