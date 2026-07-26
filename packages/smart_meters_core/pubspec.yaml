@@ -1,0 +1,27 @@
+name: smart_meters_core
+description: Shared Supabase integration, models, and UI for smart-meters-platform.
+version: 0.1.0
+publish_to: none
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.6.1
+  supabase_flutter: ^2.9.1
+  app_links: ^7.2.0
+  url_launcher: ^6.3.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  assets:
+    - assets/branding/meter_line_art_pattern_md.png
+    - assets/branding/mark_dashboard.png
+    - assets/branding/mark_entry.png
+    - assets/branding/mark_admin.png

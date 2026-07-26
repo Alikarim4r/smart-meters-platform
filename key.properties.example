@@ -1,0 +1,12 @@
+# Copy to apps/<app>/android/key.properties (gitignored) for release signing.
+# See also: apps/*/android/app/build.gradle.kts
+#
+# storePassword=<keystore-password>
+# keyPassword=<key-password>
+# keyAlias=<alias>
+# storeFile=<path-to-keystore.jks relative to android/ or absolute>
+
+storePassword=
+keyPassword=
+keyAlias=
+storeFile=

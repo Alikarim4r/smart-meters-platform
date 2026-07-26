@@ -1,0 +1,20 @@
+---
+description: Always install Flutter app updates on the connected Android device after app changes
+alwaysApply: true
+---
+
+# Mobile deploy after changes
+
+When modifying any Flutter app in this repo (`dashboard_app`, `entry_app`, `admin_app`):
+
+1. After implementation and before closing the task, **install/run the updated app on the connected Android device**.
+2. Use staging Supabase config:
+   ```bash
+   export SUPABASE_URL=... SUPABASE_ANON_KEY=...
+   ./scripts/run_staging_app.sh <dashboard|entry|admin> -d <device_id>
+   ```
+3. If multiple apps were changed, install the app(s) that were modified.
+4. If no device is connected, report that clearly and ask the user to connect the phone.
+5. Do not skip mobile install unless the user explicitly says not to deploy.
+
+The user expects updates to be **always installed on their phone** (ثبت التحديث في الجوال).

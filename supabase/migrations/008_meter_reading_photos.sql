@@ -1,0 +1,29 @@
+-- =============================================================================
+-- Smart Meters Platform — Meter reading photo metadata (DRAFT)
+-- Migration: 008_meter_reading_photos.sql
+-- Status: DRAFT — DO NOT EXECUTE without approval
+-- Depends on: 001_schema.sql (image_url already exists on meter_readings)
+--
+-- Existing column in use:
+--   meter_readings.image_url text  — stores storage object path in meter-images bucket
+--
+-- This draft adds optional metadata columns for audit/UI. Not required for
+-- current entry_app photo upload (uses image_url as storage path).
+-- =============================================================================
+
+-- alter table public.meter_readings
+--   add column if not exists image_storage_path text,
+--   add column if not exists image_bucket text default 'meter-images',
+--   add column if not exists image_uploaded_at timestamptz,
+--   add column if not exists photo_source text check (photo_source in ('camera', 'gallery')),
+--   add column if not exists photo_watermark_version text default 'v1';
+--
+-- comment on column public.meter_readings.image_storage_path is
+--   'Optional explicit storage path; image_url remains canonical until migrated.';
+-- comment on column public.meter_readings.photo_source is
+--   'camera or gallery — how the technician captured the meter photo.';
+-- comment on column public.meter_readings.photo_watermark_version is
+--   'Watermark format version burned into image pixels (e.g. v1).';
+
+-- No RLS changes required: meter_readings policies already gate by site access.
+-- Storage policies in 003_storage.sql already gate meter-images by can_write_site.

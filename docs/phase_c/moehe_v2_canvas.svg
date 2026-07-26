@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1201" height="586" viewBox="0 0 1201 586">
+<rect width="100%" height="100%" fill="#F8FAFC"/>
+<defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#475569"/></marker></defs>
+<line x1="263.4" y1="329.9" x2="469.7" y2="331.0" stroke="#0D9488" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="263.4" y1="329.9" x2="243.6" y2="471.2" stroke="#0D9488" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="310.4" y1="204.6" x2="93.4" y2="329.9" stroke="#64748B" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+<text x="201.9" y="259.2" fill="#64748B" font-size="11" text-anchor="middle">overflow</text>
+<line x1="263.4" y1="329.9" x2="140.4" y2="204.6" stroke="#0D9488" stroke-width="2.5" marker-end="url(#arrow)"/>
+<line x1="250.0" y1="115.0" x2="81.0" y2="116.0" stroke="#64748B" stroke-width="2.5" stroke-dasharray="8 6" marker-end="url(#arrow)"/>
+<text x="165.5" y="107.5" fill="#64748B" font-size="11" text-anchor="middle">overflow</text>
+<rect x="93.4" y="294.9" width="170" height="70" rx="10" fill="white" stroke="#1D4ED8" stroke-width="2.5"/>
+<text x="103.4" y="316.9" fill="#1D4ED8" font-size="13" font-weight="700">1219053</text>
+<text x="103.4" y="336.9" fill="#334155" font-size="11">خزان كهرماء الرئيسي</text>
+<text x="103.4" y="352.9" fill="#1D4ED8" font-size="10">meter</text>
+<rect x="81.0" y="81.0" width="170" height="70" rx="10" fill="white" stroke="#64748B" stroke-width="2.5"/>
+<text x="91.0" y="103.0" fill="#64748B" font-size="13" font-weight="700">DIR-D1</text>
+<text x="91.0" y="123.0" fill="#334155" font-size="11">ص</text>
+<text x="91.0" y="139.0" fill="#64748B" font-size="10">discharge_point</text>
+<rect x="80.0" y="80.0" width="170" height="70" rx="10" fill="white" stroke="#0D9488" stroke-width="2.5"/>
+<text x="90.0" y="102.0" fill="#0D9488" font-size="13" font-weight="700">DIR-T1</text>
+<text x="90.0" y="122.0" fill="#334155" font-size="11">د</text>
+<text x="90.0" y="138.0" fill="#0D9488" font-size="10">tank</text>
+<rect x="243.6" y="436.2" width="170" height="70" rx="10" fill="white" stroke="#1D4ED8" stroke-width="2.5"/>
+<text x="253.6" y="458.2" fill="#1D4ED8" font-size="13" font-weight="700">KF-18530916</text>
+<text x="253.6" y="478.2" fill="#334155" font-size="11">KF-18530916 | Inside Portable Wa</text>
+<text x="253.6" y="494.2" fill="#1D4ED8" font-size="10">meter</text>
+<rect x="469.7" y="296.0" width="170" height="70" rx="10" fill="white" stroke="#1D4ED8" stroke-width="2.5"/>
+<text x="479.7" y="318.0" fill="#1D4ED8" font-size="13" font-weight="700">KHA-WATER-METER-FOR-GR1</text>
+<text x="479.7" y="338.0" fill="#334155" font-size="11">غرفة الحراسة 1</text>
+<text x="479.7" y="354.0" fill="#1D4ED8" font-size="10">meter</text>
+<rect x="140.4" y="169.6" width="170" height="70" rx="10" fill="white" stroke="#0D9488" stroke-width="2.5"/>
+<text x="150.4" y="191.6" fill="#0D9488" font-size="13" font-weight="700">tank-b2b157a3</text>
+<text x="150.4" y="211.6" fill="#334155" font-size="11">B5 Rooftop Tank</text>
+<text x="150.4" y="227.6" fill="#0D9488" font-size="10">tank</text>
+<rect x="951.5" y="409.7" width="170" height="70" rx="10" fill="white" stroke="#B45309" stroke-width="2.5"/>
+<text x="961.5" y="431.7" fill="#B45309" font-size="13" font-weight="700">tanker-89954d91</text>
+<text x="961.5" y="451.7" fill="#334155" font-size="11">صرف تانكر</text>
+<text x="961.5" y="467.7" fill="#B45309" font-size="10">tanker_loading</text>
+<rect x="16" y="516.2" width="480" height="54" rx="8" fill="white" stroke="#CBD5E1"/>
+<text x="28" y="544.2" fill="#0F172A" font-size="14" font-weight="700">Network v2 · MOEHE HQ Draft (Staging)</text>
+<text x="28" y="562.2" fill="#475569" font-size="12">nodes=7 connections=5 placements=7</text>
+</svg>

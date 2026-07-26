@@ -1,0 +1,17 @@
+item,value
+source_files,Mar/Apr/May 2026 consolidated utility xlsm files
+source_sheet,Consolidated Utility Readings.
+site_target,MOEHE HQ / Permanent HQ
+meters_total,32
+readings_total,2944
+meters_category_electricity,8
+meters_category_flow,7
+meters_category_fuel,3
+meters_category_water,14
+2026-03_days,31
+2026-03_reading_rows,992
+2026-04_days,30
+2026-04_reading_rows,960
+2026-05_days,31
+2026-05_reading_rows,992
+note_flow_category,Energy & Flow Meters are marked category_code=flow; use fallback_category_code=water if current schema cannot attach custom category to meters.

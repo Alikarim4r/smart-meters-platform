@@ -1,0 +1,496 @@
+{
+  "connections": [
+    {
+      "connection_kind": "supply",
+      "from_node_id": "ea8a7b19-7ce1-420d-9db4-936b4ce11354",
+      "from_port_id": "897ea049-bfc5-460d-b234-d9b36c6bdc1d",
+      "id": "78d17b6f-de04-4265-ad0d-da2d9b0acee5",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "to_node_id": "d8ca5812-ece0-4bfa-92b4-c97ed228ce6b",
+      "to_port_id": "23b592c6-e38b-4586-81f4-49c87009553a",
+      "transport_mode": "pipe",
+      "water_type": null
+    },
+    {
+      "connection_kind": "supply",
+      "from_node_id": "ea8a7b19-7ce1-420d-9db4-936b4ce11354",
+      "from_port_id": "897ea049-bfc5-460d-b234-d9b36c6bdc1d",
+      "id": "3063c433-080f-41b8-a5bd-bc61ad9c8d5f",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "to_node_id": "1ba6e37b-3ab7-4c27-8546-2313ffda95e6",
+      "to_port_id": "ce35d438-f790-4174-bfb3-582a07f9842d",
+      "transport_mode": "pipe",
+      "water_type": null
+    },
+    {
+      "connection_kind": "overflow",
+      "from_node_id": "b957df23-c99f-411a-aec4-935df9db13ca",
+      "from_port_id": "0aed29a9-d035-48ba-9cd0-bdcd0973f339",
+      "id": "2eccf877-a3cb-4cb0-a560-3fad125be8bf",
+      "is_consumptive": false,
+      "legacy_sync_status": "graph_only",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "to_node_id": "ea8a7b19-7ce1-420d-9db4-936b4ce11354",
+      "to_port_id": "616c897b-fc8c-4ae4-adb9-d05f0db0ef5f",
+      "transport_mode": "open_drain",
+      "water_type": null
+    },
+    {
+      "connection_kind": "transfer",
+      "from_node_id": "ea8a7b19-7ce1-420d-9db4-936b4ce11354",
+      "from_port_id": "897ea049-bfc5-460d-b234-d9b36c6bdc1d",
+      "id": "68722ce5-8473-4f1d-9016-d1d176e8c6f4",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "to_node_id": "b957df23-c99f-411a-aec4-935df9db13ca",
+      "to_port_id": "82ce139a-fc77-41d6-bc49-482aabddf85e",
+      "transport_mode": "pipe",
+      "water_type": null
+    },
+    {
+      "connection_kind": "overflow",
+      "from_node_id": "e4be09db-1ef7-4cf7-ab66-7cb751784c3e",
+      "from_port_id": "7ea42521-3a69-4d96-a4f4-a8b1256de866",
+      "id": "1d623b2a-6a9b-44e5-8850-47a8d4fc8d7c",
+      "is_consumptive": false,
+      "legacy_sync_status": "graph_only",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "to_node_id": "e282545b-a9a4-43e8-9a4f-bf19f3d4de18",
+      "to_port_id": "1216d4a0-c12a-454c-b420-faad965e4c09",
+      "transport_mode": "open_drain",
+      "water_type": "discharge"
+    }
+  ],
+  "members": [
+    {
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    }
+  ],
+  "network": {
+    "category_id": "c1111111-1111-4111-8111-111111111101",
+    "code": "test-direct-ov",
+    "draft_revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+    "id": "a0b75601-7b84-4310-8b52-4490bcbe5c34",
+    "name_ar": "د",
+    "name_en": "D",
+    "published_revision_id": null
+  },
+  "nodes": [
+    {
+      "asset_id": "797c37d3-2321-42f7-bb74-cff2cab7796b",
+      "asset_type": "meter",
+      "code": "1219053",
+      "facility_area_id": null,
+      "meter_role": "main",
+      "name_ar": "خزان كهرماء الرئيسي",
+      "name_en": "Kahrmaa Main Meter",
+      "node_id": "ea8a7b19-7ce1-420d-9db4-936b4ce11354",
+      "ports": [
+        {
+          "asset_id": "797c37d3-2321-42f7-bb74-cff2cab7796b",
+          "code": "inlet",
+          "direction": "in",
+          "id": "616c897b-fc8c-4ae4-adb9-d05f0db0ef5f",
+          "name_ar": "مدخل",
+          "name_en": "Inlet",
+          "port_role": "inlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "797c37d3-2321-42f7-bb74-cff2cab7796b",
+          "code": "outlet",
+          "direction": "out",
+          "id": "897ea049-bfc5-460d-b234-d9b36c6bdc1d",
+          "name_ar": "مخرج",
+          "name_en": "Outlet",
+          "port_role": "outlet",
+          "properties": {}
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": "33333333-3333-4333-8333-333333333301",
+      "ref_tank_id": null,
+      "service_type": null,
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "asset_id": "01e999a5-807b-4c99-9418-c02a209e4304",
+      "asset_type": "discharge_point",
+      "code": "DIR-D1",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "ص",
+      "name_en": "D",
+      "node_id": "e282545b-a9a4-43e8-9a4f-bf19f3d4de18",
+      "ports": [
+        {
+          "asset_id": "01e999a5-807b-4c99-9418-c02a209e4304",
+          "code": "inlet",
+          "direction": "in",
+          "id": "1216d4a0-c12a-454c-b420-faad965e4c09",
+          "name_ar": "مدخل",
+          "name_en": "Inlet",
+          "port_role": "inlet",
+          "properties": {}
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": null,
+      "service_type": "floor_drain",
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "asset_id": "fde8f4c0-4124-4c0b-8540-db9d04efa16a",
+      "asset_type": "tank",
+      "code": "DIR-T1",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "د",
+      "name_en": "DT",
+      "node_id": "e4be09db-1ef7-4cf7-ab66-7cb751784c3e",
+      "ports": [
+        {
+          "asset_id": "fde8f4c0-4124-4c0b-8540-db9d04efa16a",
+          "code": "drain",
+          "direction": "out",
+          "id": "289039d1-7865-4b35-a6f3-511c7d51b949",
+          "name_ar": "صرف",
+          "name_en": "Drain",
+          "port_role": "drain",
+          "properties": {}
+        },
+        {
+          "asset_id": "fde8f4c0-4124-4c0b-8540-db9d04efa16a",
+          "code": "inlet",
+          "direction": "in",
+          "id": "9352e1ad-17e6-4908-b98f-f699d4190197",
+          "name_ar": "مدخل",
+          "name_en": "Inlet",
+          "port_role": "inlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "fde8f4c0-4124-4c0b-8540-db9d04efa16a",
+          "code": "outlet",
+          "direction": "out",
+          "id": "82003fa6-17ef-4b14-a9ef-addc9056337b",
+          "name_ar": "مخرج",
+          "name_en": "Outlet",
+          "port_role": "outlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "fde8f4c0-4124-4c0b-8540-db9d04efa16a",
+          "code": "overflow",
+          "direction": "out",
+          "id": "7ea42521-3a69-4d96-a4f4-a8b1256de866",
+          "name_ar": "فيض",
+          "name_en": "Overflow",
+          "port_role": "overflow",
+          "properties": {}
+        },
+        {
+          "asset_id": "fde8f4c0-4124-4c0b-8540-db9d04efa16a",
+          "code": "washout",
+          "direction": "out",
+          "id": "34ecf25c-8b99-4980-ac71-d1a4f7eecbef",
+          "name_ar": "تنظيف",
+          "name_en": "Washout",
+          "port_role": "washout",
+          "properties": {}
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": "3fdfd1e4-d5ee-4e7a-a30e-2f25a6273d53",
+      "service_type": "potable",
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "asset_id": "f9bdb96c-f91f-4ad5-9de5-d36b9f00c906",
+      "asset_type": "meter",
+      "code": "KF-18530916",
+      "facility_area_id": null,
+      "meter_role": "submeter",
+      "name_ar": "KF-18530916 | Inside Portable Water Tank Room | Extracted from Consolidated Utility Readings (Domestic Water Meter No. / Location)",
+      "name_en": "KF-18530916",
+      "node_id": "1ba6e37b-3ab7-4c27-8546-2313ffda95e6",
+      "ports": [
+        {
+          "asset_id": "f9bdb96c-f91f-4ad5-9de5-d36b9f00c906",
+          "code": "inlet",
+          "direction": "in",
+          "id": "ce35d438-f790-4174-bfb3-582a07f9842d",
+          "name_ar": "مدخل",
+          "name_en": "Inlet",
+          "port_role": "inlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "f9bdb96c-f91f-4ad5-9de5-d36b9f00c906",
+          "code": "outlet",
+          "direction": "out",
+          "id": "7f0f592b-5ca4-48ba-bdc0-dc5d8d8fca91",
+          "name_ar": "مخرج",
+          "name_en": "Outlet",
+          "port_role": "outlet",
+          "properties": {}
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": "19b45800-11b9-4458-aeff-28030801344e",
+      "ref_tank_id": null,
+      "service_type": null,
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "asset_id": "61193553-6087-44fd-81b2-97372a5597ea",
+      "asset_type": "meter",
+      "code": "KHA-WATER-METER-FOR-GR1",
+      "facility_area_id": null,
+      "meter_role": "submeter",
+      "name_ar": "غرفة الحراسة 1",
+      "name_en": "Guard Room 1",
+      "node_id": "d8ca5812-ece0-4bfa-92b4-c97ed228ce6b",
+      "ports": [
+        {
+          "asset_id": "61193553-6087-44fd-81b2-97372a5597ea",
+          "code": "inlet",
+          "direction": "in",
+          "id": "23b592c6-e38b-4586-81f4-49c87009553a",
+          "name_ar": "مدخل",
+          "name_en": "Inlet",
+          "port_role": "inlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "61193553-6087-44fd-81b2-97372a5597ea",
+          "code": "outlet",
+          "direction": "out",
+          "id": "f55b70b0-7358-4da7-a42c-69c4d244a35f",
+          "name_ar": "مخرج",
+          "name_en": "Outlet",
+          "port_role": "outlet",
+          "properties": {}
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": "12a5fa31-e33b-4ded-aed4-edb48317de62",
+      "ref_tank_id": null,
+      "service_type": null,
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "asset_id": "0ac52f0d-7181-4c98-a6f4-cb425aa83b9e",
+      "asset_type": "tank",
+      "code": "tank-b2b157a3",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "B5 Rooftop Tank",
+      "name_en": "B5 Rooftop Tank",
+      "node_id": "b957df23-c99f-411a-aec4-935df9db13ca",
+      "ports": [
+        {
+          "asset_id": "0ac52f0d-7181-4c98-a6f4-cb425aa83b9e",
+          "code": "drain",
+          "direction": "out",
+          "id": "11ad4c36-5d1d-406c-9856-a625289abee9",
+          "name_ar": "صرف",
+          "name_en": "Drain",
+          "port_role": "drain",
+          "properties": {}
+        },
+        {
+          "asset_id": "0ac52f0d-7181-4c98-a6f4-cb425aa83b9e",
+          "code": "inlet",
+          "direction": "in",
+          "id": "82ce139a-fc77-41d6-bc49-482aabddf85e",
+          "name_ar": "مدخل",
+          "name_en": "Inlet",
+          "port_role": "inlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "0ac52f0d-7181-4c98-a6f4-cb425aa83b9e",
+          "code": "outlet",
+          "direction": "out",
+          "id": "356d208a-a0e8-4496-88c3-18fc5258ed23",
+          "name_ar": "مخرج",
+          "name_en": "Outlet",
+          "port_role": "outlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "0ac52f0d-7181-4c98-a6f4-cb425aa83b9e",
+          "code": "overflow",
+          "direction": "out",
+          "id": "0aed29a9-d035-48ba-9cd0-bdcd0973f339",
+          "name_ar": "فيض",
+          "name_en": "Overflow",
+          "port_role": "overflow",
+          "properties": {}
+        },
+        {
+          "asset_id": "0ac52f0d-7181-4c98-a6f4-cb425aa83b9e",
+          "code": "washout",
+          "direction": "out",
+          "id": "76e184f8-9707-4675-b479-21c406fd31f8",
+          "name_ar": "تنظيف",
+          "name_en": "Washout",
+          "port_role": "washout",
+          "properties": {}
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": "b2b157a3-c6f1-44b9-bbb8-c671697a6144",
+      "service_type": null,
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    },
+    {
+      "asset_id": "856e82bc-b833-462e-9ecf-83bedcc08710",
+      "asset_type": "tanker_loading",
+      "code": "tanker-89954d91",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "صرف تانكر",
+      "name_en": "Tanker out",
+      "node_id": "87301b88-f221-4b90-af12-fdd036ed8029",
+      "ports": [
+        {
+          "asset_id": "856e82bc-b833-462e-9ecf-83bedcc08710",
+          "code": "inlet",
+          "direction": "in",
+          "id": "d9afb1a2-ee4a-4389-8cb2-f19ca08758e4",
+          "name_ar": "مدخل",
+          "name_en": "Inlet",
+          "port_role": "inlet",
+          "properties": {}
+        },
+        {
+          "asset_id": "856e82bc-b833-462e-9ecf-83bedcc08710",
+          "code": "tanker_transfer",
+          "direction": "out",
+          "id": "b7a7d87e-5dae-4269-b493-1c45cc334127",
+          "name_ar": "نقل تانكر",
+          "name_en": "Tanker transfer",
+          "port_role": "tanker_transfer",
+          "properties": {}
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": null,
+      "service_type": "offsite_disposal",
+      "site_id": "22222222-2222-4222-8222-222222222222"
+    }
+  ],
+  "placements": [
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "ea8a7b19-7ce1-420d-9db4-936b4ce11354",
+      "pos_x": 14.4160024800127,
+      "pos_y": 215.914542108595,
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "view_id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "b957df23-c99f-411a-aec4-935df9db13ca",
+      "pos_x": 61.3636340261078,
+      "pos_y": 90.5804757918689,
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "view_id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "1ba6e37b-3ab7-4c27-8546-2313ffda95e6",
+      "pos_x": 164.632650123006,
+      "pos_y": 357.155351507446,
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "view_id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "d8ca5812-ece0-4bfa-92b4-c97ed228ce6b",
+      "pos_x": 390.73046875,
+      "pos_y": 216.9921875,
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "view_id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "87301b88-f221-4b90-af12-fdd036ed8029",
+      "pos_x": 872.485309609875,
+      "pos_y": 330.688065576055,
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "view_id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "e4be09db-1ef7-4cf7-ab66-7cb751784c3e",
+      "pos_x": 1,
+      "pos_y": 1,
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "view_id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "e282545b-a9a4-43e8-9a4f-bf19f3d4de18",
+      "pos_x": 2,
+      "pos_y": 2,
+      "revision_id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+      "view_id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "width": null
+    }
+  ],
+  "revision": {
+    "based_on_revision_id": null,
+    "id": "9194a165-2d23-4d09-80ed-29cd06f1808e",
+    "lock_version": 4,
+    "network_id": "a0b75601-7b84-4310-8b52-4490bcbe5c34",
+    "published_at": null,
+    "status": "draft"
+  },
+  "status": "ok",
+  "views": [
+    {
+      "code": "campus_overview",
+      "facility_area_id": null,
+      "id": "be5c09b1-e226-4613-8d94-248cbd673b4b",
+      "is_default": true,
+      "name_ar": "نظرة المجمع",
+      "name_en": "Campus overview",
+      "view_kind": "campus_overview"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+-- Draft migration: optional reading correction metadata enhancements.
+-- NOT APPLIED — existing reading_audit_logs + meter_readings update trigger
+-- is sufficient for v1 admin corrections (old/new values audited automatically).
+--
+-- Apply only if product requires dedicated correction_reason / old_note columns
+-- separate from the formatted note field used by the Flutter admin app.
+--
+-- Possible additions:
+--   alter table public.reading_audit_logs
+--     add column if not exists correction_reason text,
+--     add column if not exists old_note text;
+--
+--   create or replace function public.audit_meter_reading_change() ...
+--     store old.note in old_note, parse app.correction_reason session var.
+--
+--   alter table public.meter_readings
+--     add column if not exists corrected_at timestamptz,
+--     add column if not exists corrected_by uuid references public.profiles(id),
+--     add column if not exists correction_reason text;
+--
+-- No RLS changes required: meter_readings_update_admin already allows
+-- super_admin / site_admin corrections; technicians blocked by trigger.

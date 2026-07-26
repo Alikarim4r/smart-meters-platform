@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+
+jobs:
+  analyze-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Core package
+        working-directory: packages/smart_meters_core
+        run: |
+          flutter pub get
+          flutter analyze
+          flutter test
+
+      - name: Dashboard app
+        working-directory: apps/dashboard_app
+        run: |
+          flutter pub get
+          dart analyze
+          flutter test
+
+      - name: Entry app
+        working-directory: apps/entry_app
+        run: |
+          flutter pub get
+          dart analyze
+          flutter test
+
+      - name: Admin app
+        working-directory: apps/admin_app
+        run: |
+          flutter pub get
+          dart analyze
+          flutter test

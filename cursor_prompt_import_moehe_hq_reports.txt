@@ -1,0 +1,116 @@
+Import MOEHE HQ permanent headquarters meters and readings from consolidated utility report CSVs.
+
+Important:
+- Do not modify legacy Firebase apps.
+- Do not weaken RLS.
+- Do not use service_role in Flutter apps.
+- This is a one-time staging/admin import script. Keep it idempotent.
+- Target site is the permanent headquarters / MOEHE HQ. Use the existing site if present; do not create a duplicate site.
+- Source files were Mar, Apr, May 2026 XLSM reports; extracted normalized CSVs are in:
+  imports/moehe_hq_reports/moehe_hq_meters_from_reports.csv
+  imports/moehe_hq_reports/moehe_hq_readings_mar_apr_may_2026.csv
+  imports/moehe_hq_reports/moehe_hq_import_summary.csv
+
+Extraction summary:
+- 32 meters.
+- 2944 daily reading rows.
+- Months: March, April, May 2026.
+- Source sheet: Consolidated Utility Readings.
+- Categories in CSV:
+  electricity, water, fuel, flow.
+- Important: "flow" is used for Energy & Flow Meters / CHW loops. If the current meters legacy enum/sync triggers cannot support custom category "flow", import those rows using fallback_category_code=water and keep notes that they came from Energy & Flow Meters.
+
+Tasks:
+
+1. Copy the three CSV files into the project:
+   smart-meters-platform/imports/moehe_hq_reports/
+
+2. Inspect current Supabase schema and triggers before import:
+   - sites
+   - meters
+   - meter_readings
+   - meter_categories
+   - meter_units
+   - meter_sources
+   - sync_meter_legacy_from_config
+   - sync_meter_fk_from_legacy
+
+3. Resolve target site:
+   - Find existing MOEHE HQ / Permanent HQ site.
+   - Prefer existing MOEHE HQ site.
+   - Do not create duplicate site.
+   - If there are multiple possible sites, stop and report choices.
+
+4. Ensure catalog config exists:
+   - electricity category, unit kwh, source kahramaa
+   - water category, unit m3, sources kahramaa, tse, irrigation, ro, other
+   - fuel category, unit liter, source diesel
+   - for flow category:
+     Option A: if custom categories are safe for meters, create/use:
+       category code: flow
+       name_en: Energy & Flow
+       base_unit_code: m3
+       unit: m3
+       sources: chilled_water, kahramaa, ro, storm_water, cooling_tower_blowdown, other
+     Option B: if legacy enum/sync prevents category=flow on meters, use fallback_category_code=water for those meters and source=other when source code does not exist.
+
+5. Upsert meters idempotently:
+   - Match by site_id + meter_code.
+   - Use CSV columns:
+     meter_code, name_en, location, category_code, fallback_category_code, source_code, unit_code, level, include_in_dashboard, is_active, notes.
+   - Do not delete existing meters.
+   - If meter already exists, update safe fields only:
+     name_en, location/notes if supported, category/source/unit only if no readings exist.
+   - If meter has readings, do not change category/unit.
+
+6. Import meter readings idempotently:
+   - Match by meter_id + reading_date.
+   - Use raw_value as cumulative reading.
+   - Use note from CSV and append source file/sheet/row for traceability.
+   - If reading exists, do not duplicate.
+   - Choose conflict behavior:
+     - If same value exists: skip.
+     - If different value exists: report conflict; do not overwrite unless I explicitly approve.
+   - Preserve technician restrictions; this is admin/staging import.
+
+7. Build import script:
+   Preferred:
+   - scripts/import_moehe_hq_reports.py or .ts using Supabase admin-authenticated connection appropriate for local/staging scripts.
+   - Or SQL/staging script using temporary import tables and INSERT ... SELECT.
+   Requirements:
+   - dry-run mode first
+   - apply mode second
+   - clear final counts:
+     meters inserted
+     meters updated
+     readings inserted
+     readings skipped
+     conflicts
+     category/source/unit created
+   - CSV parsing should handle UTF-8 and numeric values.
+
+8. After import, validate:
+   - Admin App → Sites → MOEHE HQ → Meters includes imported meters.
+   - Entry App technician assigned to MOEHE HQ sees categories/meters.
+   - Dashboard → MOEHE HQ shows imported readings for Mar/Apr/May 2026.
+   - Dashboard charts and reports can use imported data.
+   - Export PDF/Excel works after import.
+
+9. Run checks:
+   flutter analyze packages/smart_meters_core
+   flutter test packages/smart_meters_core
+   flutter analyze apps/admin_app
+   flutter analyze apps/entry_app
+   flutter analyze apps/dashboard_app
+   flutter test apps/admin_app
+   flutter test apps/entry_app
+   flutter test apps/dashboard_app
+
+Final report:
+- Target site id/name used.
+- Catalog items created/reused.
+- Meters inserted/updated/skipped.
+- Readings inserted/skipped/conflicts.
+- Any flow category fallback decision.
+- Validation screenshots or CLI output.
+- Whether dashboard reports/export now include imported data.

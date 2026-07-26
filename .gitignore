@@ -1,0 +1,43 @@
+# Environment (never commit real keys)
+.env
+.env.local
+.env.*.local
+
+# Flutter / Dart
+.dart_tool/
+.packages
+build/
+**/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+coverage/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# macOS
+.DS_Store
+
+# Supabase CLI temp (may contain project refs)
+supabase/.temp/
+
+# Icon generation venv
+scripts/.icon-venv/
+
+# Local web deploy artifacts (CI builds these)
+web_deploy/
+web_deploy_root/
+
+# Android signing / local config
+**/key.properties
+**/*.jks
+**/*.keystore
+
+# iOS
+**/Pods/
+**/DerivedData/
+.venv-import/
