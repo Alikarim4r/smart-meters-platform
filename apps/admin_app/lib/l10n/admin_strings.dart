@@ -84,6 +84,61 @@ class AdminStrings {
   String get addSite => _t('Add site', 'إضافة موقع');
   String get addMeter => _t('Add meter', 'إضافة عداد');
   String get addUser => _t('Add user', 'إضافة مستخدم');
+  String get orgControlPermission =>
+      _t('Full organization control', 'صلاحية التحكم بكامل الجهة');
+  String get zoneControlPermission =>
+      _t('Full zone control', 'صلاحية التحكم بكامل المنطقة');
+  String get siteControlPermission =>
+      _t('Site control permission', 'صلاحية التحكم بالموقع');
+  String get registerNewAccount =>
+      _t('Register new account', 'تسجيل حساب جديد');
+  String get assignExistingAccount =>
+      _t('Assign existing account', 'تعيين حساب موجود');
+  String get assign => _t('Assign', 'تعيين');
+  String get assignSuperAdminsHint => _t(
+    'Registered Super Admin accounts',
+    'حسابات السوبر أدمن المسجّلة',
+  );
+  String get assignAdminsHint => _t(
+    'Registered Admin accounts',
+    'حسابات الأدمن المسجّلة',
+  );
+  String get assignTechniciansHint => _t(
+    'Registered technician accounts',
+    'حسابات الفنيين المسجّلة',
+  );
+  String get assignViewersHint => _t(
+    'Registered viewer accounts',
+    'حسابات العرض المسجّلة',
+  );
+  String get scopeInheritHint => _t(
+    'Organization Super Admins already control zones and sites. Zone Admins already control sites under their zone.',
+    'من له تحكم كامل بالجهة (سوبر أدمن) يتحكم تلقائياً بالمناطق والمواقع. ومن له تحكم بالمنطقة يتحكم تلقائياً بمواقعها.',
+  );
+  String get inheritedAccessLabel =>
+      _t('Inherited from parent scope', 'صلاحية موروثة من المستوى الأعلى');
+  String get inheritedAccessCannotRemoveHere => _t(
+    'Remove this access from the parent organization or zone',
+    'أزل هذه الصلاحية من الجهة أو المنطقة الأب',
+  );
+  String get onlyOwnerManagesSuperAdmins => _t(
+    'Only the platform owner can assign or remove Super Admins',
+    'المالك فقط يمكنه تعيين أو حذف السوبر أدمن',
+  );
+  String get adminsAssignedBySuperHint => _t(
+    'Regular admins are assigned by the organization Super Admin on zones',
+    'الأدمن العادي يُعيَّن من سوبر أدمن الجهة على المناطق',
+  );
+  String get noEligibleAccounts => _t(
+    'No eligible accounts available to assign',
+    'لا توجد حسابات مؤهلة للتعيين',
+  );
+  String get accountsWithPermission =>
+      _t('Accounts with permission', 'الحسابات التي لها الصلاحية');
+  String get noAccountsInTab =>
+      _t('No accounts in this tab yet', 'لا حسابات في هذا التبويب بعد');
+  String get removeScopeAccess =>
+      _t('Remove access', 'إزالة الصلاحية');
   String get searchOrganizations =>
       _t('Search organizations…', 'ابحث في الجهات…');
   String get searchZones => _t('Search zones…', 'ابحث في المناطق…');
@@ -420,6 +475,9 @@ class AdminStrings {
       _t('No active sites available.', 'لا توجد مواقع مفعّلة.');
   String get sitesSelected => _t('selected', 'محدد');
   String get pendingApprovals => _t('Pending approvals', 'بانتظار الاعتماد');
+  String get approved => _t('Approved', 'معتمد');
+  String get rejected => _t('Rejected', 'مرفوض');
+  String get suspended => _t('Suspended', 'معلّق');
   String get allUsers => _t('All users', 'كل المستخدمين');
   String get approve => _t('Approve', 'اعتماد');
   String get reject => _t('Reject', 'رفض');

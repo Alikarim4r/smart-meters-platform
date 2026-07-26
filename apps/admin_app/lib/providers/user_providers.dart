@@ -8,7 +8,9 @@ final canManageUsersProvider = Provider<bool>((ref) {
   if (profile == null) {
     return false;
   }
-  return profile.isSuperAdmin || profile.isSiteAdmin;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 final usersProvider = FutureProvider.autoDispose<List<AdminUser>>((ref) async {
@@ -37,6 +39,10 @@ final userApprovalFilterProvider = StateProvider<UserApprovalFilter>(
 
 final userRoleFilterProvider = StateProvider<UserRoleFilter>(
   (ref) => UserRoleFilter.all,
+);
+
+final userAppBucketFilterProvider = StateProvider<UserAppBucketFilter>(
+  (ref) => UserAppBucketFilter.all,
 );
 
 final userSearchQueryProvider = StateProvider<String>((ref) => '');

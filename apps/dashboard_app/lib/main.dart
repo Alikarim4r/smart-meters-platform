@@ -20,7 +20,7 @@ Future<void> main() async {
       systemNavigationBarContrastEnforced: false,
     ),
   );
-  await bootstrapSupabase();
+  await bootstrapSupabase(appKey: 'dashboard');
   runApp(const ProviderScope(child: DashboardApp()));
 }
 
@@ -62,6 +62,8 @@ class DashboardApp extends ConsumerWidget {
       home: AuthGate(
         appTitle: s.appTitle,
         brandMarkAsset: BrandMarkAssets.dashboard,
+        allowSelfRegistration: true,
+        registrationRequestedRole: 'viewer',
         locale: locale,
         onLocaleChanged: (next) =>
             ref.read(localeProvider.notifier).setLocale(next),

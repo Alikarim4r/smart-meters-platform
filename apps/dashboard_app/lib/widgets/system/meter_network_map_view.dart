@@ -7,6 +7,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../../l10n/app_strings.dart';
 import '../../theme/design_system/dashboard_design_system.dart';
 import '../dashboard_widgets.dart';
+import 'reading_photo_viewer_dialog.dart';
 
 Future<UtilityNetworkSnapshot?> _loadNetworkSnapshotForDashboard({
   required UtilityNetworkRepository repo,
@@ -40,8 +41,8 @@ final dashboardPublishedNetworkProvider = FutureProvider.autoDispose
     ) async {
       final repo = ref.read(utilityNetworkRepositoryProvider);
 
-      // Continuous sync while the Network map is open.
-      final timer = Timer.periodic(const Duration(seconds: 8), (_) {
+      // Refresh occasionally while the Network map is open (not every few seconds).
+      final timer = Timer.periodic(const Duration(seconds: 60), (_) {
         ref.invalidateSelf();
       });
       ref.onDispose(timer.cancel);
@@ -118,6 +119,109 @@ class _MeterNetworkMapViewState extends ConsumerState<MeterNetworkMapView> {
       for (final c in snap.connections)
         if (c.fromNodeId == nodeId) c.toNodeId,
     ];
+  }
+
+  String _fmt(double v) {
+    final abs = v.abs();
+    if (abs >= 1000000) return '${(v / 1000000).toStringAsFixed(1)}M';
+    if (abs >= 10000) return '${(v / 1000).toStringAsFixed(1)}k';
+    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+    return v.toStringAsFixed(2);
+  }
+
+  /// Full reading for the meter circle (no M/k abbreviation).
+  String _fmtFull(double v) {
+    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+    var s = v.toStringAsFixed(2);
+    if (s.contains('.')) {
+      s = s.replaceFirst(RegExp(r'0+$'), '');
+      s = s.replaceFirst(RegExp(r'\.$'), '');
+    }
+    return s;
+  }
+
+  String _fmtDetail(double v) {
+    final abs = v.abs();
+    if (abs >= 1000000) return '${(v / 1000000).toStringAsFixed(2)}M';
+    if (abs >= 10000) return '${(v / 1000).toStringAsFixed(2)}k';
+    if (v == v.roundToDouble()) return v.toStringAsFixed(0);
+    return v.toStringAsFixed(2);
+  }
+
+  String _fmtDate(DateTime? d) {
+    if (d == null) return '';
+    final local = d.toLocal();
+    final y = local.year.toString().padLeft(4, '0');
+    final m = local.month.toString().padLeft(2, '0');
+    final day = local.day.toString().padLeft(2, '0');
+    return '$y-$m-$day';
+  }
+
+  Map<String, UtilityNetworkMeterOverlay> _meterOverlays({
+    required UtilityNetworkSnapshot snapshot,
+    required Map<String, MeterReadingCardData> byMeterId,
+    required AppStrings s,
+    required bool isAr,
+  }) {
+    final out = <String, UtilityNetworkMeterOverlay>{};
+    for (final node in snapshot.nodes) {
+      final meterId = node.asset?.refMeterId;
+      if (meterId == null) continue;
+      final card = byMeterId[meterId];
+      if (card == null) continue;
+      final name = isAr && card.meterNameAr.trim().isNotEmpty
+          ? card.meterNameAr
+          : (card.meterName.trim().isNotEmpty
+                ? card.meterName
+                : card.meterCode);
+      final reading = card.latestValue == null
+          ? null
+          : '${_fmtFull(card.latestValue!)}\n${card.unitLabel}'.trim();
+      final previousValue = card.previousValue == null
+          ? null
+          : '${_fmtDetail(card.previousValue!)} ${card.unitLabel}'.trim();
+      final currentValue = card.latestValue == null
+          ? null
+          : '${_fmtDetail(card.latestValue!)} ${card.unitLabel}'.trim();
+      final consumption = card.consumptionValue == null
+          ? null
+          : '${_fmtDetail(card.consumptionValue!)} ${card.unitLabel}'.trim();
+      out[node.id] = UtilityNetworkMeterOverlay(
+        readingLabel: reading,
+        detail: UtilityNetworkMeterDetailCard(
+          meterName: name,
+          meterCode: card.meterCode,
+          previousValueLabel: previousValue,
+          previousDateLabel: _fmtDate(card.previousDate),
+          currentValueLabel: currentValue,
+          currentDateLabel: _fmtDate(card.latestDate),
+          consumptionLabel: consumption,
+          previousTitle: s.previous,
+          currentTitle: s.current,
+          consumptionTitle: s.consumption,
+        ),
+      );
+    }
+    return out;
+  }
+
+  Future<void> _openMeterPhoto(MeterReadingCardData card) async {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final name = isAr && card.meterNameAr.trim().isNotEmpty
+        ? card.meterNameAr
+        : card.meterName;
+    await showReadingPhotoViewer(
+      context: context,
+      ref: ref,
+      kind: ReadingPhotoKind.current,
+      meterCode: card.meterCode,
+      meterName: name,
+      unitLabel: card.unitLabel,
+      value: card.latestValue,
+      date: card.latestDate,
+      hasPhoto: card.hasPhoto,
+      storagePath: card.imageStoragePath,
+    );
   }
 
   String _label(UtilityRevisionNode? node, bool isAr) {
@@ -340,6 +444,12 @@ class _MeterNetworkMapViewState extends ConsumerState<MeterNetworkMapView> {
                 editMode: false,
                 showPorts: false,
                 showFitControl: true,
+                meterOverlaysByNodeId: _meterOverlays(
+                  snapshot: snapshot,
+                  byMeterId: byMeterId,
+                  s: s,
+                  isAr: isAr,
+                ),
                 onNodeTap: (n) {
                   if (filteredNodeIds.isNotEmpty &&
                       !filteredNodeIds.contains(n.id)) {
@@ -357,6 +467,27 @@ class _MeterNetworkMapViewState extends ConsumerState<MeterNetworkMapView> {
                     }
                   }
                   setState(() => _selectedNodeId = n.id);
+                },
+                onNodeDoubleTap: (n) {
+                  final meterId = n.asset?.refMeterId;
+                  if (meterId == null) return;
+                  final card = byMeterId[meterId];
+                  if (card == null) return;
+                  if (!card.hasPhoto &&
+                      (card.imageStoragePath == null ||
+                          card.imageStoragePath!.trim().isEmpty)) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          isAr
+                              ? 'لا توجد صورة مرفقة لهذه القراءة'
+                              : 'No photo attached for this reading',
+                        ),
+                      ),
+                    );
+                    return;
+                  }
+                  _openMeterPhoto(card);
                 },
               ),
             ),
@@ -377,7 +508,12 @@ class _MeterNetworkMapViewState extends ConsumerState<MeterNetworkMapView> {
                       if (selectedCard != null) ...[
                         Text(
                           '${s.networkCurrentReading}: '
-                          '${selectedCard.latestValue?.toStringAsFixed(2) ?? '—'} '
+                          '${selectedCard.latestValue == null ? '—' : _fmt(selectedCard.latestValue!)} '
+                          '${selectedCard.unitLabel}',
+                        ),
+                        Text(
+                          '${s.consumption}: '
+                          '${selectedCard.consumptionValue == null ? '—' : _fmt(selectedCard.consumptionValue!)} '
                           '${selectedCard.unitLabel}',
                         ),
                         Text(
@@ -402,13 +538,24 @@ class _MeterNetworkMapViewState extends ConsumerState<MeterNetworkMapView> {
                       ],
                       if (selectedCard != null) ...[
                         const SizedBox(height: 12),
-                        Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: FilledButton(
-                            onPressed: () =>
-                                widget.onViewReadings(selectedCard),
-                            child: Text(s.viewReadingHistory),
-                          ),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: [
+                            FilledButton(
+                              onPressed: () =>
+                                  widget.onViewReadings(selectedCard),
+                              child: Text(s.viewReadingHistory),
+                            ),
+                            if (selectedCard.hasPhoto ||
+                                (selectedCard.imageStoragePath?.trim().isNotEmpty ??
+                                    false))
+                              OutlinedButton.icon(
+                                onPressed: () => _openMeterPhoto(selectedCard),
+                                icon: const Icon(Icons.photo_outlined),
+                                label: Text(isAr ? 'صورة القراءة' : 'Reading photo'),
+                              ),
+                          ],
                         ),
                       ],
                     ],

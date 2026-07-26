@@ -25,7 +25,8 @@ class SiteRepository {
 
   /// Sites the user can read (dashboard). RLS / scope inheritance is the source of truth.
   Future<List<Site>> getReadableSites(Profile profile) async {
-    if (profile.isSuperAdmin) {
+    // Only platform owner bypasses RPC; super_admin must use assigned scopes.
+    if (profile.isPlatformOwner) {
       final rows = await _client
           .from('sites')
           .select(_siteSelect)
@@ -51,7 +52,7 @@ class SiteRepository {
 
   /// Sites the user can enter readings for (write access).
   Future<List<Site>> getAccessibleSites(Profile profile) async {
-    if (profile.isSuperAdmin) {
+    if (profile.isPlatformOwner) {
       final rows = await _client
           .from('sites')
           .select(_siteSelect)

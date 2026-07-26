@@ -87,6 +87,7 @@ class AdminSettingsDrawer extends ConsumerWidget {
                 const SizedBox(height: 20),
                 _SectionLabel(icon: Icons.person_outline, text: s.account),
                 const SizedBox(height: 4),
+                SessionSecuritySettingsSection(locale: locale, dense: true),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.lock_outline),

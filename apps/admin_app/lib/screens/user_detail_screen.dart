@@ -190,6 +190,92 @@ class UserDetailScreen extends ConsumerWidget {
     }
   }
 
+  Future<void> _changeRole(
+    BuildContext context,
+    WidgetRef ref,
+    AdminUser user,
+  ) async {
+    final actor = ref.read(authProvider).profile!;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    var selected = user.profile.role == UserRole.technicianRequest
+        ? UserRole.technician
+        : user.profile.role;
+    final confirmed = await showDialog<UserRole>(
+      context: context,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setLocal) {
+            final items = <DropdownMenuItem<UserRole>>[
+              DropdownMenuItem(
+                value: UserRole.technician,
+                child: Text(userRoleLabel(UserRole.technician)),
+              ),
+              DropdownMenuItem(
+                value: UserRole.viewer,
+                child: Text(userRoleLabel(UserRole.viewer)),
+              ),
+              DropdownMenuItem(
+                value: UserRole.siteAdmin,
+                child: Text(userRoleLabel(UserRole.siteAdmin)),
+              ),
+              if (actor.isPlatformOwner)
+                DropdownMenuItem(
+                  value: UserRole.superAdmin,
+                  child: Text(userRoleLabel(UserRole.superAdmin)),
+                ),
+            ];
+            return AlertDialog(
+              title: Text(isAr ? 'تعديل الصلاحية' : 'Change role'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  DropdownButtonFormField<UserRole>(
+                    initialValue: selected,
+                    items: items,
+                    onChanged: (v) {
+                      if (v != null) setLocal(() => selected = v);
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  Text(userRolePermissionHint(selected, isAr: isAr)),
+                ],
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: Text(isAr ? 'إلغاء' : 'Cancel'),
+                ),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, selected),
+                  child: Text(isAr ? 'حفظ' : 'Save'),
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
+    if (confirmed == null || !context.mounted) return;
+    try {
+      await ref
+          .read(userAdminRepositoryProvider)
+          .changeUserRole(userId: user.profile.id, role: confirmed);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isAr ? 'تم تحديث الصلاحية' : 'Role updated'),
+        ),
+      );
+      await _refresh(ref);
+    } catch (error) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(friendlyUserAdminError(error))));
+    }
+  }
+
   Future<void> _removeAssignment(
     BuildContext context,
     WidgetRef ref,
@@ -455,7 +541,20 @@ class UserDetailScreen extends ConsumerWidget {
                         icon: const Icon(Icons.restart_alt),
                         label: const Text('Re-approve user'),
                       ),
-                    if (actor.isSuperAdmin && !profile.isSuperAdmin) ...[
+                    if (canChangeUserRole(actor, user) &&
+                        profile.approvalStatus == ApprovalStatus.approved) ...[
+                      const SizedBox(height: 12),
+                      OutlinedButton.icon(
+                        onPressed: () => _changeRole(context, ref, user),
+                        icon: const Icon(Icons.manage_accounts_outlined),
+                        label: Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? 'تعديل الصلاحية'
+                              : 'Change role / permissions',
+                        ),
+                      ),
+                    ],
+                    if (canDeleteUserAccount(actor, user)) ...[
                       const SizedBox(height: 16),
                       FilledButton.icon(
                         onPressed: () => _deleteUser(context, ref, user),

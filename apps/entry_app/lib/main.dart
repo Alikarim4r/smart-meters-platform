@@ -11,7 +11,7 @@ import 'theme/entry_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await bootstrapSupabase();
+  await bootstrapSupabase(appKey: 'entry');
   await OfflineStorageService.init();
   runApp(const ProviderScope(child: EntryApp()));
 }

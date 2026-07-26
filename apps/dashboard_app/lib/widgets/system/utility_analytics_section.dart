@@ -142,7 +142,7 @@ class UtilityAnalyticsSection extends ConsumerWidget {
       ? customRange
       : resolveUtilityChartPeriodRange(
           state: periodState,
-          anchorDate: qatarBusinessDate(),
+          anchorDate: dateSelection.chartBusinessDate,
         );
   return (useCustom: useCustom, range: range);
 }
@@ -335,15 +335,10 @@ class _ComparisonRow extends ConsumerWidget {
       final pruned = selected.where(allowedIds.contains).toSet();
       final seeded = ref.watch(meterComparisonSeededProvider(comparisonKey));
       if (!seeded && pruned.isEmpty) {
-        final defaults = defaultChartComparisonMeterIds(meterCards);
+        // Do not auto-seed comparison — that doubles chart fetches on open.
         WidgetsBinding.instance.addPostFrameCallback((_) {
           ref.read(meterComparisonSeededProvider(comparisonKey).notifier).state =
               true;
-          if (defaults.isNotEmpty) {
-            ref
-                .read(meterComparisonSelectionProvider(comparisonKey).notifier)
-                .state = defaults;
-          }
         });
       } else if (pruned.length != selected.length) {
         WidgetsBinding.instance.addPostFrameCallback((_) {

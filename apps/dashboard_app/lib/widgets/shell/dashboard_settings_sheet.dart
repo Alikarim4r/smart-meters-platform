@@ -13,13 +13,17 @@ Future<void> showDashboardSettingsSheet(
   BuildContext context, {
   VoidCallback? onSignOut,
 }) {
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+  final colors = dashboardColors(context);
   return showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    // Transparent so sheet chrome is painted by [DashboardSettingsSheet]
-    // and updates immediately when theme mode changes.
-    backgroundColor: Colors.transparent,
+    useSafeArea: true,
+    backgroundColor: isDark ? colors.cardElevated : colors.card,
     showDragHandle: false,
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+    ),
     builder: (context) => DashboardSettingsSheet(onSignOut: onSignOut),
   );
 }
@@ -90,7 +94,7 @@ class _DashboardSettingsSheetState
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Material(
-      color: Colors.transparent,
+      color: isDark ? colors.cardElevated : colors.card,
       elevation: 0,
       shadowColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
@@ -98,32 +102,23 @@ class _DashboardSettingsSheetState
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
       clipBehavior: Clip.antiAlias,
-      child: DecoratedBox(
-        decoration: BoxDecoration(
-          gradient: BrandChrome.cardWash(isDark: isDark),
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-          border: Border(
-            top: BorderSide(
-              color: BrandChrome.border(
-                isDark: isDark,
-                scheme: Theme.of(context).colorScheme,
-              ),
-            ),
-          ),
-        ),
-        child: SafeArea(
+      child: SafeArea(
         top: false,
-        child: Padding(
-          padding: EdgeInsets.fromLTRB(
-            20,
-            8,
-            20,
-            24 + bottomInset + MediaQuery.viewPaddingOf(context).bottom,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
-          child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              20,
+              8,
+              20,
+              16 + bottomInset,
+            ),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
               Center(
                 child: Container(
                   width: 36,
@@ -272,6 +267,14 @@ class _DashboardSettingsSheetState
             ),
             const SizedBox(height: 12),
             _SectionCard(
+              title: s.isAr ? 'الأمان' : 'Security',
+              child: SessionSecuritySettingsSection(
+                locale: locale,
+                dense: true,
+              ),
+            ),
+            const SizedBox(height: 12),
+            _SectionCard(
               title: s.language,
               child: SizedBox(
                 width: double.infinity,
@@ -397,11 +400,11 @@ class _DashboardSettingsSheetState
                 ),
               ),
             ],
-          ],
-        ),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
       ),
     );
   }

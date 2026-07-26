@@ -48,7 +48,8 @@ class _LazyUtilityAnalyticsSectionState
       // Large imports: wait for an explicit expand (keeps first paint light).
       return;
     }
-    Future<void>.delayed(const Duration(milliseconds: 900), () {
+    // Mount charts on next frame — no artificial delay.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) setState(() => _ready = true);
     });
   }

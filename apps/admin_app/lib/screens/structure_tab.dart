@@ -11,10 +11,10 @@ import '../utils/delete_confirmations.dart';
 import '../widgets/catalog_widgets.dart';
 import 'meter_form_screen.dart';
 import 'organizations_tab.dart';
+import 'scope_control_screen.dart';
 import 'settings_tab.dart';
 import 'site_detail_screen.dart';
 import 'sites_tab.dart';
-import 'user_create_screen.dart';
 import 'zones_tab.dart';
 
 /// Merged Orgs / Zones / Sites into one Structure tree with master-detail.
@@ -26,21 +26,43 @@ class StructureTab extends ConsumerWidget {
     final s = AdminStrings(ref.watch(adminLocaleProvider));
     final treeAsync = ref.watch(structureTreeProvider);
     final selection = ref.watch(structureSelectionProvider);
-    final canManage = ref.watch(canManageOrganizationsProvider);
+    final canAddOrg = ref.watch(canAddOrganizationProvider);
     final wide = MediaQuery.sizeOf(context).width >= 900;
 
     return treeAsync.when(
+      skipLoadingOnReload: true,
+      skipLoadingOnRefresh: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => CatalogErrorView(
         message: '$error',
         onRetry: () => ref.invalidate(structureTreeProvider),
       ),
       data: (tree) {
+        // Drop stale selection if the node disappeared after reload.
+        if (selection != null) {
+          final stillValid = switch (selection) {
+            StructureOrgSelection(:final organizationId) =>
+              tree.organizations.any((o) => o.id == organizationId),
+            StructureSiteTypesSelection(:final organizationId) =>
+              tree.organizations.any((o) => o.id == organizationId),
+            StructureZoneSelection(:final zoneId) => tree.zonesByOrg.values
+                .expand((z) => z)
+                .any((z) => z.id == zoneId),
+            StructureSiteSelection(:final siteId) => tree.sitesByOrg.values
+                .expand((s) => s)
+                .any((site) => site.id == siteId),
+          };
+          if (!stillValid) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              ref.read(structureSelectionProvider.notifier).state = null;
+            });
+          }
+        }
         final treePane = _StructureTreePane(
           tree: tree,
           selection: selection,
           strings: s,
-          canManage: canManage,
+          canAddOrganization: canAddOrg,
           onSelect: (value) {
             ref.read(structureSelectionProvider.notifier).state = value;
             if (!wide && value != null) {
@@ -87,7 +109,7 @@ class _StructureTreePane extends ConsumerWidget {
     required this.tree,
     required this.selection,
     required this.strings,
-    required this.canManage,
+    required this.canAddOrganization,
     required this.onSelect,
     required this.onRefresh,
   });
@@ -95,7 +117,7 @@ class _StructureTreePane extends ConsumerWidget {
   final StructureTreeData tree;
   final StructureSelection? selection;
   final AdminStrings strings;
-  final bool canManage;
+  final bool canAddOrganization;
   final ValueChanged<StructureSelection?> onSelect;
   final VoidCallback onRefresh;
 
@@ -120,7 +142,7 @@ class _StructureTreePane extends ConsumerWidget {
                 onPressed: onRefresh,
                 icon: const Icon(Icons.refresh),
               ),
-              if (canManage)
+              if (canAddOrganization)
                 FilledButton.tonalIcon(
                   onPressed: () async {
                     await Navigator.of(context).push(
@@ -140,7 +162,9 @@ class _StructureTreePane extends ConsumerWidget {
           child: tree.organizations.isEmpty
               ? CatalogEmptyState(
                   title: strings.organizations,
-                  message: strings.addOrganization,
+                  message: canAddOrganization
+                      ? strings.addOrganization
+                      : strings.selectTreeItem,
                   icon: Icons.account_balance_outlined,
                 )
               : ListView(
@@ -516,7 +540,13 @@ class StructureDetailBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AdminStrings(ref.watch(adminLocaleProvider));
     final canManage = ref.watch(canManageOrganizationsProvider);
+    final isOwner = ref.watch(authProvider).profile?.isPlatformOwner ?? false;
     final isSuper = ref.watch(authProvider).profile?.isSuperAdmin ?? false;
+    final isSiteAdmin = ref.watch(authProvider).profile?.isSiteAdmin ?? false;
+    // Zone control: owner or super_admin (scoped by RLS).
+    final canManageZoneUsers = isOwner || isSuper;
+    // Site control: owner, super_admin, or regular admin.
+    final canManageSiteUsers = isOwner || isSuper || isSiteAdmin;
 
     void onDeleted() {
       ref.read(structureSelectionProvider.notifier).state = null;
@@ -530,7 +560,8 @@ class StructureDetailBody extends ConsumerWidget {
         org: tree.organizations.firstWhere((o) => o.id == organizationId),
         strings: s,
         canManage: canManage,
-        isSuper: isSuper,
+        canManageOrgControl: isOwner,
+        canForceDelete: isOwner,
         onRefresh: () => _refresh(ref),
         onDeleted: onDeleted,
       ),
@@ -546,8 +577,9 @@ class StructureDetailBody extends ConsumerWidget {
             .firstWhere((z) => z.id == zoneId),
         tree: tree,
         strings: s,
-        canManage: canManage,
-        isSuper: isSuper,
+        canManage: canManage || canManageZoneUsers,
+        canManageUsers: canManageZoneUsers,
+        canForceDelete: isOwner || isSuper,
         onRefresh: () => _refresh(ref),
         onDeleted: onDeleted,
       ),
@@ -556,8 +588,9 @@ class StructureDetailBody extends ConsumerWidget {
             .expand((s) => s)
             .firstWhere((site) => site.id == siteId),
         strings: s,
-        canManage: canManage,
-        isSuper: isSuper,
+        canManage: canManage || canManageSiteUsers,
+        canManageUsers: canManageSiteUsers,
+        canForceDelete: isOwner || isSuper || isSiteAdmin,
         onRefresh: () => _refresh(ref),
         onDeleted: onDeleted,
       ),
@@ -570,7 +603,8 @@ class _OrgDetail extends ConsumerWidget {
     required this.org,
     required this.strings,
     required this.canManage,
-    required this.isSuper,
+    required this.canManageOrgControl,
+    required this.canForceDelete,
     required this.onRefresh,
     required this.onDeleted,
   });
@@ -578,7 +612,9 @@ class _OrgDetail extends ConsumerWidget {
   final Organization org;
   final AdminStrings strings;
   final bool canManage;
-  final bool isSuper;
+  /// Platform owner only — assign super_admins at organization level.
+  final bool canManageOrgControl;
+  final bool canForceDelete;
   final VoidCallback onRefresh;
   final VoidCallback onDeleted;
 
@@ -669,16 +705,23 @@ class _OrgDetail extends ConsumerWidget {
             onRefresh();
           },
         ),
-        _ActionTile(
-          icon: Icons.person_add_alt_1,
-          label: strings.addUser,
-          enabled: isSuper,
-          onTap: () async {
-            await Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const UserCreateScreen()),
-            );
-          },
-        ),
+        if (canManageOrgControl)
+          _ActionTile(
+            icon: Icons.admin_panel_settings_outlined,
+            label: strings.orgControlPermission,
+            enabled: true,
+            onTap: () async {
+              await Navigator.of(context).push(
+                MaterialPageRoute<void>(
+                  builder: (_) => ScopeControlScreen(
+                    kind: ScopeKind.organization,
+                    title: strings.orgControlPermission,
+                    organizationId: org.id,
+                  ),
+                ),
+              );
+            },
+          ),
         _ActionTile(
           icon: Icons.policy_outlined,
           label: strings.openPolicy,
@@ -708,7 +751,7 @@ class _OrgDetail extends ConsumerWidget {
               onRefresh();
             },
           ),
-        if (isSuper)
+        if (canForceDelete)
           _ActionTile(
             icon: Icons.delete_forever_outlined,
             label: strings.forceDelete,
@@ -853,7 +896,8 @@ class _ZoneDetail extends ConsumerWidget {
     required this.tree,
     required this.strings,
     required this.canManage,
-    required this.isSuper,
+    required this.canManageUsers,
+    required this.canForceDelete,
     required this.onRefresh,
     required this.onDeleted,
   });
@@ -862,7 +906,8 @@ class _ZoneDetail extends ConsumerWidget {
   final StructureTreeData tree;
   final AdminStrings strings;
   final bool canManage;
-  final bool isSuper;
+  final bool canManageUsers;
+  final bool canForceDelete;
   final VoidCallback onRefresh;
   final VoidCallback onDeleted;
 
@@ -943,12 +988,19 @@ class _ZoneDetail extends ConsumerWidget {
           },
         ),
         _ActionTile(
-          icon: Icons.person_add_alt_1,
-          label: strings.addUser,
-          enabled: isSuper,
+          icon: Icons.admin_panel_settings_outlined,
+          label: strings.zoneControlPermission,
+          enabled: canManageUsers,
           onTap: () async {
             await Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const UserCreateScreen()),
+              MaterialPageRoute<void>(
+                builder: (_) => ScopeControlScreen(
+                  kind: ScopeKind.zone,
+                  title: strings.zoneControlPermission,
+                  organizationId: zone.organizationId,
+                  zoneId: zone.id,
+                ),
+              ),
             );
           },
         ),
@@ -965,7 +1017,7 @@ class _ZoneDetail extends ConsumerWidget {
             onRefresh();
           },
         ),
-        if (isSuper)
+        if (canForceDelete)
           _ActionTile(
             icon: Icons.delete_forever_outlined,
             label: strings.forceDelete,
@@ -983,7 +1035,8 @@ class _SiteDetailActions extends ConsumerWidget {
     required this.site,
     required this.strings,
     required this.canManage,
-    required this.isSuper,
+    required this.canManageUsers,
+    required this.canForceDelete,
     required this.onRefresh,
     required this.onDeleted,
   });
@@ -991,7 +1044,8 @@ class _SiteDetailActions extends ConsumerWidget {
   final Site site;
   final AdminStrings strings;
   final bool canManage;
-  final bool isSuper;
+  final bool canManageUsers;
+  final bool canForceDelete;
   final VoidCallback onRefresh;
   final VoidCallback onDeleted;
 
@@ -1034,7 +1088,7 @@ class _SiteDetailActions extends ConsumerWidget {
         _ActionTile(
           icon: Icons.speed_outlined,
           label: strings.addMeter,
-          enabled: canManage || isSuper,
+          enabled: canManage || canForceDelete,
           onTap: () async {
             await Navigator.of(context).push(
               MaterialPageRoute<void>(
@@ -1045,12 +1099,19 @@ class _SiteDetailActions extends ConsumerWidget {
           },
         ),
         _ActionTile(
-          icon: Icons.person_add_alt_1,
-          label: strings.addUser,
-          enabled: isSuper,
+          icon: Icons.admin_panel_settings_outlined,
+          label: strings.siteControlPermission,
+          enabled: canManageUsers,
           onTap: () async {
             await Navigator.of(context).push(
-              MaterialPageRoute<void>(builder: (_) => const UserCreateScreen()),
+              MaterialPageRoute<void>(
+                builder: (_) => ScopeControlScreen(
+                  kind: ScopeKind.site,
+                  title: strings.siteControlPermission,
+                  organizationId: site.organizationId,
+                  siteId: site.id,
+                ),
+              ),
             );
           },
         ),
@@ -1079,7 +1140,7 @@ class _SiteDetailActions extends ConsumerWidget {
             onRefresh();
           },
         ),
-        if (isSuper)
+        if (canForceDelete)
           _ActionTile(
             icon: Icons.delete_forever_outlined,
             label: strings.forceDelete,

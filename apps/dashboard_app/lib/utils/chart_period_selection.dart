@@ -2,6 +2,9 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 /// Chart comparison windows available in analytics.
 enum UtilityChartPeriodKind {
+  /// Last 7 days — lighter default daily buckets.
+  last7Days,
+
   /// Last 31 days — daily buckets (inclusive of today).
   last30Days,
 
@@ -36,6 +39,7 @@ class UtilityChartPeriodState {
   }
 
   String get label => switch (kind) {
+        UtilityChartPeriodKind.last7Days => 'Last 7 days',
         UtilityChartPeriodKind.last30Days => 'Last 31 days',
         UtilityChartPeriodKind.twelveMonths => '12 months',
         UtilityChartPeriodKind.fiveYears => '5 years',
@@ -90,6 +94,13 @@ ChartPeriodRange resolveUtilityChartPeriodRange({
   final day = _normalize(anchorDate);
 
   switch (state.kind) {
+    case UtilityChartPeriodKind.last7Days:
+      return ChartPeriodRange(
+        period: ChartPeriod.weekly,
+        from: day.subtract(const Duration(days: 6)),
+        to: day,
+        bucket: ChartBucket.daily,
+      );
     case UtilityChartPeriodKind.last30Days:
       return ChartPeriodRange(
         period: ChartPeriod.last30Days,
@@ -117,6 +128,7 @@ ChartPeriodRange resolveUtilityChartPeriodRange({
 /// Maps to legacy [ChartPeriod] for report export compatibility.
 ChartPeriod legacyChartPeriodForState(UtilityChartPeriodState state) {
   return switch (state.kind) {
+    UtilityChartPeriodKind.last7Days => ChartPeriod.weekly,
     UtilityChartPeriodKind.last30Days => ChartPeriod.last30Days,
     UtilityChartPeriodKind.twelveMonths => ChartPeriod.monthly,
     UtilityChartPeriodKind.fiveYears => ChartPeriod.yearly,

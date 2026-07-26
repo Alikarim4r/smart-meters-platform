@@ -12,7 +12,22 @@ import '../widgets/catalog_widgets.dart';
 /// Super-admin flow: create account, approve with app role, assign inherited
 /// scope (organization / zone / site) + backdated entry permission.
 class UserCreateScreen extends ConsumerStatefulWidget {
-  const UserCreateScreen({super.key});
+  const UserCreateScreen({
+    super.key,
+    this.lockedRole,
+    this.lockedScopeKind,
+    this.initialOrganizationId,
+    this.initialZoneId,
+    this.initialSiteId,
+    this.lockScopeSelection = false,
+  });
+
+  final UserRole? lockedRole;
+  final ScopeKind? lockedScopeKind;
+  final String? initialOrganizationId;
+  final String? initialZoneId;
+  final String? initialSiteId;
+  final bool lockScopeSelection;
 
   @override
   ConsumerState<UserCreateScreen> createState() => _UserCreateScreenState();
@@ -24,15 +39,31 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  UserRole _role = UserRole.technician;
+  late UserRole _role;
   bool _allowBackdated = false;
-  ScopeKind _scopeKind = ScopeKind.organization;
+  late ScopeKind _scopeKind;
   String? _organizationId;
   String? _zoneId;
   String? _siteId;
   bool _inheritChildren = true;
   bool _submitting = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    _role = widget.lockedRole ?? UserRole.technician;
+    _scopeKind = widget.lockedScopeKind ??
+        (widget.initialSiteId != null
+            ? ScopeKind.site
+            : widget.initialZoneId != null
+            ? ScopeKind.zone
+            : ScopeKind.organization);
+    _organizationId = widget.initialOrganizationId;
+    _zoneId = widget.initialZoneId;
+    _siteId = widget.initialSiteId;
+    _inheritChildren = _scopeKind != ScopeKind.site;
+  }
 
   @override
   void dispose() {
@@ -43,6 +74,7 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
   }
 
   void _onScopeKindChanged(ScopeKind kind) {
+    if (widget.lockScopeSelection) return;
     setState(() {
       _scopeKind = kind;
       _zoneId = null;
@@ -90,7 +122,7 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
       );
 
       final scopeRole = await repo.getRoleByCode(
-        UserAdminRepository.scopeRoleCodeFor(_role),
+        UserAdminRepository.scopeRoleCodeFor(_role, kind: _scopeKind),
       );
       if (scopeRole == null) {
         throw StateError('Scope role not found for ${_role.dbValue}');
@@ -240,8 +272,20 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
+                      if ((ref.watch(authProvider).profile?.isPlatformOwner ??
+                              false) &&
+                          (widget.lockedRole == null ||
+                              widget.lockedRole == UserRole.superAdmin))
+                        DropdownMenuItem(
+                          value: UserRole.superAdmin,
+                          child: Text(
+                            s.roleSuperAdmin,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
                     ],
-                    onChanged: _submitting
+                    onChanged: (_submitting || widget.lockedRole != null)
                         ? null
                         : (value) {
                             if (value != null) setState(() => _role = value);
@@ -263,7 +307,7 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
                 subtitle: s.assignScopeHint,
                 children: [
                   IgnorePointer(
-                    ignoring: _submitting,
+                    ignoring: _submitting || widget.lockScopeSelection,
                     child: SegmentedButton<ScopeKind>(
                       segments: [
                         ButtonSegment(
@@ -308,7 +352,7 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
                               ),
                             ),
                         ],
-                        onChanged: _submitting
+                        onChanged: (_submitting || widget.lockScopeSelection)
                             ? null
                             : (value) => setState(() {
                                 _organizationId = value;
@@ -326,7 +370,7 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
                     _ZonePicker(
                       organizationId: _organizationId!,
                       zoneId: _zoneId,
-                      enabled: !_submitting,
+                      enabled: !_submitting && !widget.lockScopeSelection,
                       strings: s,
                       onChanged: (id) => setState(() => _zoneId = id),
                     ),
@@ -337,7 +381,7 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
                     _SitePicker(
                       organizationId: _organizationId!,
                       siteId: _siteId,
-                      enabled: !_submitting,
+                      enabled: !_submitting && !widget.lockScopeSelection,
                       strings: s,
                       onChanged: (id) => setState(() => _siteId = id),
                     ),
@@ -348,7 +392,8 @@ class _UserCreateScreenState extends ConsumerState<UserCreateScreen> {
                       title: Text(s.inheritChildren),
                       subtitle: Text(s.inheritChildrenHint),
                       value: _inheritChildren,
-                      onChanged: _submitting
+                      onChanged:
+                          (_submitting || widget.lockScopeSelection)
                           ? null
                           : (value) => setState(() => _inheritChildren = value),
                     ),

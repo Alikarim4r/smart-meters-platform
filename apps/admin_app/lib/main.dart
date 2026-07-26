@@ -9,7 +9,7 @@ import 'providers/preferences_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await bootstrapSupabase();
+  await bootstrapSupabase(appKey: 'admin');
   runApp(const ProviderScope(child: AdminApp()));
 }
 

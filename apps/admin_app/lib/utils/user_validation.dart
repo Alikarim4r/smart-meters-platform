@@ -19,6 +19,60 @@ enum UserRoleFilter {
   superAdmin,
 }
 
+/// Users tab primary grouping by client app.
+enum UserAppBucketFilter {
+  all,
+  pending,
+  adminApp,
+  entryApp,
+  dashboardApp,
+}
+
+List<AdminUser> filterUsersByAppBucket({
+  required List<AdminUser> users,
+  required UserAppBucketFilter filter,
+}) {
+  switch (filter) {
+    case UserAppBucketFilter.all:
+      return users;
+    case UserAppBucketFilter.pending:
+      return users
+          .where((u) => u.profile.approvalStatus == ApprovalStatus.pending)
+          .toList();
+    case UserAppBucketFilter.adminApp:
+      return users
+          .where(
+            (u) =>
+                u.profile.approvalStatus != ApprovalStatus.pending &&
+                (u.profile.isSuperAdmin || u.profile.isSiteAdmin),
+          )
+          .toList();
+    case UserAppBucketFilter.entryApp:
+      return users
+          .where(
+            (u) =>
+                u.profile.role == UserRole.technician ||
+                u.profile.role == UserRole.technicianRequest ||
+                (u.profile.isSiteAdmin &&
+                    u.profile.approvalStatus == ApprovalStatus.approved),
+          )
+          .toList();
+    case UserAppBucketFilter.dashboardApp:
+      return users
+          .where(
+            (u) =>
+                u.profile.approvalStatus == ApprovalStatus.approved &&
+                u.profile.role != UserRole.technicianRequest &&
+                (u.profile.isViewer ||
+                    u.profile.isTechnician ||
+                    u.profile.isSiteAdmin ||
+                    u.profile.isSuperAdmin),
+          )
+          .toList();
+  }
+}
+
+
 List<AdminUser> searchUsers(List<AdminUser> users, String query) {
   final q = query.trim().toLowerCase();
   if (q.isEmpty) {
@@ -88,6 +142,9 @@ String? validateApprovalSites({
   if (role == UserRole.technician && selectedSiteIds.isEmpty) {
     return 'Select at least one site for technician approval.';
   }
+  if (role == UserRole.siteAdmin && selectedSiteIds.isEmpty) {
+    return 'Select at least one site for site admin approval.';
+  }
   return null;
 }
 
@@ -144,6 +201,29 @@ String userRoleLabel(UserRole role) {
   }
 }
 
+String userRolePermissionHint(UserRole role, {required bool isAr}) {
+  switch (role) {
+    case UserRole.superAdmin:
+      return isAr
+          ? 'صلاحيات كاملة: أدمن + عرض'
+          : 'Full access: Admin + Dashboard';
+    case UserRole.siteAdmin:
+      return isAr
+          ? 'إدارة مواقع: أدمن + إدخال + عرض'
+          : 'Site management: Admin + Entry + Dashboard';
+    case UserRole.technician:
+      return isAr
+          ? 'إدخال قراءات + عرض'
+          : 'Reading entry + Dashboard';
+    case UserRole.viewer:
+      return isAr ? 'عرض فقط' : 'Dashboard view only';
+    case UserRole.technicianRequest:
+      return isAr
+          ? 'طلب جديد بانتظار الموافقة'
+          : 'New request awaiting approval';
+  }
+}
+
 String approvalStatusLabel(ApprovalStatus status) {
   switch (status) {
     case ApprovalStatus.pending:
@@ -158,13 +238,33 @@ String approvalStatusLabel(ApprovalStatus status) {
 }
 
 bool canManageUserActions(Profile actor, AdminUser target) {
-  if (target.profile.isSuperAdmin) {
+  if (target.profile.id == actor.id) {
+    return false;
+  }
+  if (actor.isPlatformOwner) {
+    return !target.profile.isPlatformOwner;
+  }
+  if (target.profile.isPlatformOwner || target.profile.isSuperAdmin) {
     return false;
   }
   if (actor.isSuperAdmin) {
     return true;
   }
   return actor.isSiteAdmin;
+}
+
+bool canDeleteUserAccount(Profile actor, AdminUser target) {
+  if (target.profile.id == actor.id) return false;
+  if (target.profile.isPlatformOwner) return false;
+  if (actor.isPlatformOwner) return true;
+  return actor.isSuperAdmin && !target.profile.isSuperAdmin;
+}
+
+bool canChangeUserRole(Profile actor, AdminUser target) {
+  if (target.profile.id == actor.id) return false;
+  if (target.profile.isPlatformOwner) return false;
+  if (actor.isPlatformOwner) return true;
+  return actor.isSuperAdmin && !target.profile.isSuperAdmin;
 }
 
 bool canEditSiteAssignments(AdminUser target) {

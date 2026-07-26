@@ -216,6 +216,7 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
     final matched = chartPeriodStateForDateSelection(selection);
     if (matched != null) {
       return switch (matched.kind) {
+        UtilityChartPeriodKind.last7Days => _PickerKind.last30Days,
         UtilityChartPeriodKind.last30Days => _PickerKind.last30Days,
         UtilityChartPeriodKind.twelveMonths => _PickerKind.twelveMonths,
         UtilityChartPeriodKind.fiveYears => _PickerKind.fiveYears,

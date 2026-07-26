@@ -846,8 +846,9 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
       );
 
       NetworkMutationResult result;
+      var lock = _lock;
       try {
-        result = await save(_lock);
+        result = await save(lock);
       } on NetworkVersionConflict {
         // Another mutation bumped the lock — refresh lock only, keep new positions.
         final fresh = await _repo.getDraftSnapshot(_networkId!);
@@ -867,7 +868,8 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
         setState(() {
           _snapshot = fresh.copyWith(placements: byId.values.toList());
         });
-        result = await save(_lock);
+        lock = fresh.revision.lockVersion;
+        result = await save(lock);
       }
 
       if (!mounted) return;
@@ -907,6 +909,10 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
       _showMutationError(e, s);
     } finally {
       _flushingMoves = false;
+      if (_pendingMoves.isNotEmpty && mounted) {
+        _moveDebounce?.cancel();
+        _moveDebounce = Timer(const Duration(milliseconds: 200), _flushMoves);
+      }
     }
   }
 

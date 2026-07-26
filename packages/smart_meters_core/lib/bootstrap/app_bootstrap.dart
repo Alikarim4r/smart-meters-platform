@@ -6,7 +6,9 @@ import '../config/supabase_config.dart';
 import '../models/enums.dart';
 import '../models/profile.dart';
 import '../providers/auth_provider.dart';
+import '../providers/session_security_provider.dart';
 import '../providers/supabase_provider.dart';
+import '../security/session_security_store.dart';
 import '../ui/demo_branding.dart';
 
 // dart:async for Future.timeout used by site-access gate
@@ -14,9 +16,20 @@ import 'dart:async';
 
 Future<void> bootstrapSupabase({
   SupabaseConfig config = SupabaseConfig.fromEnvironment,
+  required String appKey,
 }) async {
   config.validate();
+  SessionSecurityStore.configure(appKey);
+  await SessionSecurityStore.instance.load();
   await Supabase.initialize(url: config.url, publishableKey: config.anonKey);
+  // Cold start without "stay signed in" → drop any persisted session.
+  if (!SessionSecurityStore.instance.staySignedIn) {
+    try {
+      await Supabase.instance.client.auth.signOut(
+        scope: SignOutScope.local,
+      );
+    } catch (_) {}
+  }
 }
 
 typedef AppBuilder = Widget Function(BuildContext context);
@@ -33,6 +46,7 @@ class AuthGate extends ConsumerWidget {
     this.brandMarkAsset = BrandMarkAssets.dashboard,
     this.siteAccessRequirement = SiteAccessRequirement.none,
     this.allowSelfRegistration = false,
+    this.registrationRequestedRole = 'technician_request',
     this.locale,
     this.onLocaleChanged,
   });
@@ -53,8 +67,11 @@ class AuthGate extends ConsumerWidget {
   /// dedicated screen instead of the app home.
   final SiteAccessRequirement siteAccessRequirement;
 
-  /// When true, login screen offers technician self-registration (pending approval).
+  /// When true, login screen offers self-registration (pending approval).
   final bool allowSelfRegistration;
+
+  /// Role metadata sent on signup (`technician_request` or `viewer`).
+  final String registrationRequestedRole;
 
   /// Current UI locale for the login language toggle (E / ع).
   final Locale? locale;
@@ -65,6 +82,27 @@ class AuthGate extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final auth = ref.watch(authProvider);
+    final security = ref.watch(sessionSecurityProvider);
+
+    if (!security.isReady) {
+      return const Scaffold(
+        backgroundColor: Colors.transparent,
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    final localeValue = locale ?? const Locale('en');
+
+    // Biometric gate only when a restored session is waiting to be unlocked.
+    if (auth.isAuthenticated && security.requiresUnlock) {
+      return _BiometricUnlockScreen(
+        appTitle: appTitle,
+        brandMarkAsset: brandMarkAsset,
+        locale: localeValue,
+        onLocaleChanged: onLocaleChanged,
+        hasSession: true,
+      );
+    }
 
     if (auth.isLoadingProfile) {
       return const Scaffold(
@@ -78,6 +116,7 @@ class AuthGate extends ConsumerWidget {
         appTitle: appTitle,
         brandMarkAsset: brandMarkAsset,
         allowSelfRegistration: allowSelfRegistration,
+        registrationRequestedRole: registrationRequestedRole,
         locale: locale,
         onLocaleChanged: onLocaleChanged,
       );
@@ -229,6 +268,7 @@ class LoginScreen extends ConsumerStatefulWidget {
     required this.appTitle,
     this.brandMarkAsset = BrandMarkAssets.dashboard,
     this.allowSelfRegistration = false,
+    this.registrationRequestedRole = 'technician_request',
     this.locale,
     this.onLocaleChanged,
   });
@@ -236,6 +276,7 @@ class LoginScreen extends ConsumerStatefulWidget {
   final String appTitle;
   final String brandMarkAsset;
   final bool allowSelfRegistration;
+  final String registrationRequestedRole;
   final Locale? locale;
   final ValueChanged<Locale>? onLocaleChanged;
 
@@ -250,6 +291,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _registerMode = false;
+  bool _staySignedIn = true;
+  bool _prefsLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _loadPrefs());
+  }
+
+  Future<void> _loadPrefs() async {
+    final security = ref.read(sessionSecurityProvider);
+    final isAr = (widget.locale ?? const Locale('en')).languageCode == 'ar';
+    await ref
+        .read(sessionSecurityProvider.notifier)
+        .refreshBiometricLabel(isArabic: isAr);
+    if (!mounted) return;
+    setState(() {
+      _staySignedIn = security.staySignedIn;
+      if (security.savedEmail != null &&
+          security.savedEmail!.isNotEmpty &&
+          _emailController.text.isEmpty) {
+        _emailController.text = security.savedEmail!;
+      }
+      _prefsLoaded = true;
+    });
+  }
 
   @override
   void dispose() {
@@ -269,29 +336,70 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             email: _emailController.text.trim(),
             password: _passwordController.text,
             fullName: _nameController.text.trim(),
+            requestedRole: widget.registrationRequestedRole,
           );
       return;
     }
 
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
     await ref.read(authProvider.notifier).signIn(
-          email: _emailController.text.trim(),
-          password: _passwordController.text,
+          email: email,
+          password: password,
         );
+    final auth = ref.read(authProvider);
+    if (auth.isAuthenticated && auth.profile != null) {
+      await ref.read(sessionSecurityProvider.notifier).onPasswordSignInSuccess(
+            email: email,
+            password: password,
+            staySignedIn: _staySignedIn,
+          );
+    }
+  }
+
+  Future<void> _signInWithBiometrics() async {
+    final security = ref.read(sessionSecurityProvider.notifier);
+    final isAr = (widget.locale ?? const Locale('en')).languageCode == 'ar';
+    final label = ref.read(sessionSecurityProvider).biometricLabel;
+    final ok = await security.authenticate(
+      reason: isAr
+          ? 'استخدم $label لتسجيل الدخول'
+          : 'Use $label to sign in',
+    );
+    if (!ok) return;
+    final creds = await security.readCredentials();
+    if (creds == null) return;
+    await ref.read(authProvider.notifier).signIn(
+          email: creds.email,
+          password: creds.password,
+        );
+    final auth = ref.read(authProvider);
+    if (auth.isAuthenticated) {
+      await security.markUnlocked();
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = ref.watch(authProvider);
+    final security = ref.watch(sessionSecurityProvider);
     final theme = Theme.of(context);
     final locale = widget.locale ?? Localizations.localeOf(context);
     final isAr = locale.languageCode == 'ar';
     final registering = widget.allowSelfRegistration && _registerMode;
+    final showBiometricButton = !registering &&
+        _prefsLoaded &&
+        security.canUseBiometrics &&
+        security.hasStoredCredentials &&
+        security.biometricEnabled;
 
     final subtitle = registering
         ? (isAr
               ? 'أنشئ حساب فني. سيظهر لدى المشرف للموافقة قبل الدخول.'
               : 'Create a technician account. An admin must approve before access.')
-        : (isAr ? 'سجّل الدخول بحسابك للمتابعة.' : 'Sign in to your account to continue.');
+        : (isAr
+              ? 'سجّل الدخول بحسابك للمتابعة.'
+              : 'Sign in to your account to continue.');
 
     return DemoLoginPanel(
       title: widget.appTitle,
@@ -378,6 +486,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
               },
               onFieldSubmitted: (_) => _submit(),
             ),
+            if (!registering) ...[
+              const SizedBox(height: 8),
+              CheckboxListTile(
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                controlAffinity: ListTileControlAffinity.leading,
+                value: _staySignedIn,
+                onChanged: auth.isLoadingProfile
+                    ? null
+                    : (v) => setState(() => _staySignedIn = v ?? true),
+                title: Text(
+                  isAr ? 'البقاء قيد الاتصال' : 'Stay signed in',
+                  style: theme.textTheme.bodyMedium,
+                ),
+                subtitle: Text(
+                  isAr
+                      ? 'يمكن أيضاً ضبطه لاحقاً من الإعدادات'
+                      : 'You can also change this later in Settings',
+                  style: theme.textTheme.bodySmall,
+                ),
+              ),
+            ],
             if (auth.errorMessage != null) ...[
               const SizedBox(height: 12),
               Container(
@@ -423,6 +553,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       style: const TextStyle(fontWeight: FontWeight.w700),
                     ),
             ),
+            if (showBiometricButton) ...[
+              const SizedBox(height: 10),
+              OutlinedButton.icon(
+                onPressed: auth.isLoadingProfile ? null : _signInWithBiometrics,
+                icon: const Icon(Icons.fingerprint_rounded),
+                label: Text(
+                  isAr
+                      ? 'الدخول عبر ${security.biometricLabel}'
+                      : 'Continue with ${security.biometricLabel}',
+                ),
+                style: OutlinedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(48),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
+              ),
+            ],
             if (widget.allowSelfRegistration) ...[
               const SizedBox(height: 8),
               TextButton(
@@ -442,6 +590,166 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             ],
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _BiometricUnlockScreen extends ConsumerStatefulWidget {
+  const _BiometricUnlockScreen({
+    required this.appTitle,
+    required this.brandMarkAsset,
+    required this.locale,
+    required this.hasSession,
+    this.onLocaleChanged,
+  });
+
+  final String appTitle;
+  final String brandMarkAsset;
+  final Locale locale;
+  final bool hasSession;
+  final ValueChanged<Locale>? onLocaleChanged;
+
+  @override
+  ConsumerState<_BiometricUnlockScreen> createState() =>
+      _BiometricUnlockScreenState();
+}
+
+class _BiometricUnlockScreenState
+    extends ConsumerState<_BiometricUnlockScreen> {
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _unlock());
+  }
+
+  Future<void> _unlock() async {
+    if (_busy) return;
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    final isAr = widget.locale.languageCode == 'ar';
+    final security = ref.read(sessionSecurityProvider.notifier);
+    await security.refreshBiometricLabel(isArabic: isAr);
+    final label = ref.read(sessionSecurityProvider).biometricLabel;
+    final ok = await security.authenticate(
+      reason: isAr
+          ? 'افتح ${widget.appTitle} باستخدام $label'
+          : 'Unlock ${widget.appTitle} with $label',
+    );
+    if (!ok) {
+      if (mounted) {
+        setState(() {
+          _busy = false;
+          _error = isAr
+              ? 'تعذّر التحقق البيومتري. حاول مرة أخرى.'
+              : 'Biometric verification failed. Try again.';
+        });
+      }
+      return;
+    }
+
+    if (!widget.hasSession) {
+      final creds = await security.readCredentials();
+      if (creds == null) {
+        await security.onSignOut(forgetDevice: true);
+        if (mounted) setState(() => _busy = false);
+        return;
+      }
+      await ref.read(authProvider.notifier).signIn(
+            email: creds.email,
+            password: creds.password,
+          );
+      final auth = ref.read(authProvider);
+      if (!auth.isAuthenticated) {
+        if (mounted) {
+          setState(() {
+            _busy = false;
+            _error = auth.errorMessage ??
+                (isAr ? 'تعذّر تسجيل الدخول' : 'Sign-in failed');
+          });
+        }
+        return;
+      }
+    }
+
+    await security.markUnlocked();
+    if (mounted) setState(() => _busy = false);
+  }
+
+  Future<void> _usePasswordInstead() async {
+    await ref.read(sessionSecurityProvider.notifier).preferPasswordLogin();
+    await ref.read(authProvider.notifier).signOut();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final security = ref.watch(sessionSecurityProvider);
+    final theme = Theme.of(context);
+    final isAr = widget.locale.languageCode == 'ar';
+
+    return DemoLoginPanel(
+      title: widget.appTitle,
+      subtitle: isAr
+          ? 'استخدم ${security.biometricLabel} للمتابعة'
+          : 'Use ${security.biometricLabel} to continue',
+      brandMark: AppBrandMark(assetPath: widget.brandMarkAsset, size: 72),
+      locale: widget.locale,
+      onLocaleChanged: widget.onLocaleChanged,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Icon(
+            Icons.fingerprint_rounded,
+            size: 72,
+            color: theme.colorScheme.primary,
+          ),
+          const SizedBox(height: 16),
+          if (_error != null) ...[
+            Text(
+              _error!,
+              textAlign: TextAlign.center,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.error,
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+          FilledButton.icon(
+            onPressed: _busy ? null : _unlock,
+            icon: _busy
+                ? SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: theme.colorScheme.onPrimary,
+                    ),
+                  )
+                : const Icon(Icons.fingerprint_rounded),
+            label: Text(
+              isAr ? 'فتح التطبيق' : 'Unlock',
+              style: const TextStyle(fontWeight: FontWeight.w700),
+            ),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size.fromHeight(48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(14),
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          TextButton(
+            onPressed: _busy ? null : _usePasswordInstead,
+            child: Text(
+              isAr ? 'استخدام كلمة المرور' : 'Use password instead',
+            ),
+          ),
+        ],
       ),
     );
   }

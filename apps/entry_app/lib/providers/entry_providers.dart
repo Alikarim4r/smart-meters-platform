@@ -720,6 +720,21 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
           return false;
         }
 
+        if (syncedDraft.status == LocalReadingStatus.failed) {
+          state = state.copyWith(
+            isSaving: false,
+            localDraft: syncedDraft,
+            savedLocally: true,
+            saveSucceeded: false,
+            errorMessage:
+                syncedDraft.errorMessage ??
+                syncedDraft.photoErrorMessage ??
+                'Could not sync reading. Check date permission and try again.',
+          );
+          _ref.invalidate(metersWithStatusProvider);
+          return false;
+        }
+
         state = state.copyWith(
           isSaving: false,
           localDraft: syncedDraft,

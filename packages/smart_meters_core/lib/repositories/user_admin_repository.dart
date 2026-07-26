@@ -3,6 +3,72 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/enums.dart';
 import '../models/user_scope_assignment.dart';
 import '../models/user_site_access.dart';
+import '../security/platform_owner.dart';
+
+/// One assignee row returned by [list_scope_assignees_at].
+class ScopeAssignee {
+  const ScopeAssignee({
+    required this.assignmentId,
+    required this.userId,
+    required this.email,
+    this.fullName,
+    required this.profileRole,
+    required this.scopeRoleCode,
+    required this.scopeRoleNameEn,
+    required this.scopeRoleNameAr,
+    this.inheritChildren = true,
+    this.status = 'active',
+    this.organizationId,
+    this.zoneId,
+    this.siteId,
+    this.isDirect = true,
+  });
+
+  final String assignmentId;
+  final String userId;
+  final String email;
+  final String? fullName;
+  final String profileRole;
+  final String scopeRoleCode;
+  final String scopeRoleNameEn;
+  final String scopeRoleNameAr;
+  final bool inheritChildren;
+  final String status;
+  final String? organizationId;
+  final String? zoneId;
+  final String? siteId;
+  final bool isDirect;
+
+  String displayName({required bool isAr}) {
+    final name = fullName?.trim();
+    if (name != null && name.isNotEmpty) return name;
+    return email;
+  }
+
+  String scopeRoleLabel({required bool isAr}) =>
+      isAr && scopeRoleNameAr.trim().isNotEmpty
+      ? scopeRoleNameAr
+      : scopeRoleNameEn;
+
+  factory ScopeAssignee.fromJson(Map<String, dynamic> json) {
+    return ScopeAssignee(
+      assignmentId: json['assignment_id'] as String,
+      userId: json['user_id'] as String,
+      email: (json['email'] as String?) ?? '',
+      fullName: json['full_name'] as String?,
+      profileRole: (json['profile_role'] as String?) ?? '',
+      scopeRoleCode: (json['scope_role_code'] as String?) ?? '',
+      scopeRoleNameEn: (json['scope_role_name_en'] as String?) ?? '',
+      scopeRoleNameAr: (json['scope_role_name_ar'] as String?) ?? '',
+      inheritChildren: json['inherit_children'] as bool? ?? true,
+      status: (json['status'] as String?) ?? 'active',
+      organizationId: json['organization_id'] as String?,
+      zoneId: json['zone_id'] as String?,
+      siteId: json['site_id'] as String?,
+      isDirect: json['is_direct'] as bool? ?? true,
+    );
+  }
+}
 
 class UserAdminRepository {
   UserAdminRepository(this._client);
@@ -14,18 +80,84 @@ class UserAdminRepository {
   static const _scopeSelect = '*, roles(*)';
 
   /// Maps legacy [UserRole] to RBAC role code for scope assignments.
-  static String scopeRoleCodeFor(UserRole role) {
+  ///
+  /// For admin app roles, [kind] picks org_admin / zone_admin / site_admin.
+  static String scopeRoleCodeFor(UserRole role, {ScopeKind? kind}) {
     switch (role) {
       case UserRole.superAdmin:
         return 'system_admin';
       case UserRole.siteAdmin:
-        return 'site_admin';
+        return switch (kind) {
+          ScopeKind.organization => 'org_admin',
+          ScopeKind.zone => 'zone_admin',
+          ScopeKind.site || null => 'site_admin',
+        };
       case UserRole.technician:
       case UserRole.technicianRequest:
         return 'reading_entry';
       case UserRole.viewer:
         return 'viewer';
     }
+  }
+
+  /// Role codes shown under each app control tab.
+  static const adminScopeRoleCodes = {
+    'system_admin',
+    'org_admin',
+    'zone_admin',
+    'site_admin',
+  };
+  static const entryScopeRoleCodes = {'reading_entry', 'meter_manager'};
+  static const dashboardScopeRoleCodes = {
+    'viewer',
+    'auditor',
+    'reading_entry',
+    'meter_manager',
+    'site_admin',
+    'zone_admin',
+    'org_admin',
+    'system_admin',
+  };
+
+  static Set<String> scopeRoleCodesForApp(AppAccessCategory app) {
+    return switch (app) {
+      AppAccessCategory.admin => adminScopeRoleCodes,
+      AppAccessCategory.entry => entryScopeRoleCodes,
+      AppAccessCategory.dashboard => dashboardScopeRoleCodes,
+    };
+  }
+
+  Future<List<ScopeAssignee>> listScopeAssigneesAt({
+    String? organizationId,
+    String? zoneId,
+    String? siteId,
+  }) async {
+    // RPC requires exactly one scope id — never send multiple non-null values.
+    final scoped = [
+      if (organizationId != null) 'organization',
+      if (zoneId != null) 'zone',
+      if (siteId != null) 'site',
+    ];
+    if (scoped.length != 1) {
+      throw ArgumentError(
+        'Exactly one of organizationId, zoneId, siteId is required',
+      );
+    }
+
+    final rows = await _client.rpc(
+      'list_scope_assignees_at',
+      params: {
+        'p_organization_id': organizationId,
+        'p_zone_id': zoneId,
+        'p_site_id': siteId,
+      },
+    );
+    return (rows as List)
+        .map(
+          (row) =>
+              ScopeAssignee.fromJson(Map<String, dynamic>.from(row as Map)),
+        )
+        .toList();
   }
 
   Future<List<AdminUser>> getUsersForAdmin() async {
@@ -124,6 +256,22 @@ class UserAdminRepository {
   /// Super-admin only: permanently delete auth user + profile.
   Future<void> deleteUser({required String userId}) async {
     await _client.rpc('admin_delete_user', params: {'p_user_id': userId});
+  }
+
+  /// Change role for an approved account (platform owner may set super_admin).
+  Future<void> changeUserRole({
+    required String userId,
+    required UserRole role,
+    String? note,
+  }) async {
+    await _client.rpc(
+      'admin_change_user_role',
+      params: {
+        'p_user_id': userId,
+        'p_role': role.dbValue,
+        'p_note': note,
+      },
+    );
   }
 
   Future<List<UserSiteAccess>> getUserSiteAccess(String userId) async {

@@ -36,6 +36,17 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen> {
   Widget build(BuildContext context) {
     final profile = ref.watch(authProvider).profile!;
     final businessDate = ref.watch(businessDateProvider);
+    final today = qatarBusinessDate();
+    final isPastSelected =
+        businessDate.year != today.year ||
+        businessDate.month != today.month ||
+        businessDate.day != today.day;
+    if (isPastSelected && !profile.allowBackdatedReadings) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        ref.read(businessDateProvider.notifier).state = today;
+      });
+    }
     final selectedSite = ref.watch(selectedSiteProvider);
     final selectedCategory = ref.watch(selectedCategoryProvider);
     final s = EntryStrings(ref.watch(entryLocaleProvider));

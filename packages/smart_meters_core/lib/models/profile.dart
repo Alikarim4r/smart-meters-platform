@@ -1,4 +1,5 @@
 import 'enums.dart';
+import '../security/platform_owner.dart';
 
 class Profile {
   const Profile({
@@ -86,6 +87,9 @@ class Profile {
   bool get isViewer => role == UserRole.viewer;
 
   bool get isTechnicianRequest => role == UserRole.technicianRequest;
+
+  /// Hard-coded platform owner (email allowlist) — full delete/role powers.
+  bool get isPlatformOwner => isPlatformOwnerEmail(email);
 
   /// Approved and active — required before role/site gates and data access.
   bool get isApprovedForAccess =>

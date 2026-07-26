@@ -73,11 +73,18 @@ Future<void> applyEntryPartnerLink(
   if (intent.readingDate != null) {
     final parsedDate = DateTime.tryParse(intent.readingDate!);
     if (parsedDate != null) {
-      ref.read(businessDateProvider.notifier).state = DateTime(
-        parsedDate.year,
-        parsedDate.month,
-        parsedDate.day,
-      );
+      final day = DateTime(parsedDate.year, parsedDate.month, parsedDate.day);
+      final today = qatarBusinessDate();
+      final profile = ref.read(authProvider).profile;
+      final isToday =
+          day.year == today.year &&
+          day.month == today.month &&
+          day.day == today.day;
+      final allowed =
+          isToday || (profile?.allowBackdatedReadings ?? false);
+      if (allowed) {
+        ref.read(businessDateProvider.notifier).state = day;
+      }
     }
   }
 }

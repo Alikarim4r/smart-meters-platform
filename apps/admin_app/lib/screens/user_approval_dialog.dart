@@ -27,12 +27,24 @@ class UserApprovalDialog extends ConsumerStatefulWidget {
 }
 
 class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
-  UserRole _role = UserRole.technician;
+  late UserRole _role;
   final _noteController = TextEditingController();
   final _selectedSiteIds = <String>{};
   final _sitePermissions = <String, ({bool canRead, bool canWrite})>{};
   bool _submitting = false;
   String? _error;
+
+  @override
+  void initState() {
+    super.initState();
+    final pending = widget.user.profile.role;
+    _role = switch (pending) {
+      UserRole.viewer => UserRole.viewer,
+      UserRole.siteAdmin => UserRole.siteAdmin,
+      UserRole.superAdmin => UserRole.superAdmin,
+      _ => UserRole.technician,
+    };
+  }
 
   @override
   void dispose() {
@@ -87,7 +99,10 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
 
       // Dual-layer: mirror each site into user_scope_assignments.
       final scopeRole = await repo.getRoleByCode(
-        UserAdminRepository.scopeRoleCodeFor(_role),
+        UserAdminRepository.scopeRoleCodeFor(
+          _role,
+          kind: ScopeKind.site,
+        ),
       );
       if (scopeRole != null) {
         for (final siteId in _selectedSiteIds) {
@@ -143,9 +158,39 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
       data: (sites) => sites.where((s) => s.isActive).toList(),
       orElse: () => <Site>[],
     );
+    final actor = ref.watch(authProvider).profile;
+    final isOwner = actor?.isPlatformOwner ?? false;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final source = isAr
+        ? widget.user.profile.role.registrationSourceLabelAr
+        : widget.user.profile.role.registrationSourceLabelEn;
+
+    final roleItems = <DropdownMenuItem<UserRole>>[
+      const DropdownMenuItem(
+        value: UserRole.technician,
+        child: Text('Technician — Entry + Dashboard'),
+      ),
+      const DropdownMenuItem(
+        value: UserRole.viewer,
+        child: Text('Viewer — Dashboard only'),
+      ),
+      const DropdownMenuItem(
+        value: UserRole.siteAdmin,
+        child: Text('Site Admin — Admin + Entry + Dashboard'),
+      ),
+      if (isOwner)
+        const DropdownMenuItem(
+          value: UserRole.superAdmin,
+          child: Text('Super Admin — Admin + Dashboard'),
+        ),
+    ];
 
     return AlertDialog(
-      title: Text('Approve ${widget.user.displayName}'),
+      title: Text(
+        isAr
+            ? 'اعتماد ${widget.user.displayName}'
+            : 'Approve ${widget.user.displayName}',
+      ),
       content: SizedBox(
         width: double.maxFinite,
         child: SingleChildScrollView(
@@ -157,37 +202,21 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
                 widget.user.profile.email,
                 style: Theme.of(context).textTheme.bodySmall,
               ),
+              const SizedBox(height: 4),
+              Text(
+                source,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 16),
               DropdownButtonFormField<UserRole>(
                 initialValue: _role,
                 isExpanded: true,
-                decoration: catalogFieldDecoration(labelText: 'Final role'),
-                items: const [
-                  DropdownMenuItem(
-                    value: UserRole.technician,
-                    child: Text(
-                      'Technician',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: UserRole.viewer,
-                    child: Text(
-                      'Viewer',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                  DropdownMenuItem(
-                    value: UserRole.siteAdmin,
-                    child: Text(
-                      'Site Admin',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ],
+                decoration: catalogFieldDecoration(
+                  labelText: isAr ? 'الصلاحية النهائية' : 'Final role',
+                ),
+                items: roleItems,
                 onChanged: _submitting
                     ? null
                     : (value) {
@@ -198,16 +227,21 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
                         });
                       },
               ),
+              const SizedBox(height: 8),
+              Text(
+                userRolePermissionHint(_role, isAr: isAr),
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
               const SizedBox(height: 16),
               Text(
-                'Assign sites',
+                isAr ? 'تعيين المواقع' : 'Assign sites',
                 style: Theme.of(context).textTheme.titleSmall,
               ),
               const SizedBox(height: 8),
               if (sitesAsync.isLoading)
                 const Center(child: CircularProgressIndicator())
               else if (activeSites.isEmpty)
-                const Text('No active sites available.')
+                Text(isAr ? 'لا توجد مواقع مفعّلة.' : 'No active sites available.')
               else
                 ...activeSites.map((site) {
                   final selected = _selectedSiteIds.contains(site.id);

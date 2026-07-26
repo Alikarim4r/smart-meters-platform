@@ -153,6 +153,23 @@ class UserListTileCard extends StatelessWidget {
                 compact: true,
               ),
               ActiveStatusBadge(isActive: profile.isActive),
+              ...profile.role.accessibleApps.map(
+                (app) => AppAccessBadge(category: app, compact: true),
+              ),
+              if (profile.isPlatformOwner)
+                Chip(
+                  label: Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'مالك المنصة'
+                        : 'Platform owner',
+                  ),
+                  visualDensity: VisualDensity.compact,
+                  backgroundColor: Colors.amber.shade100,
+                  labelStyle: TextStyle(
+                    color: Colors.amber.shade900,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
             ],
           ),
           if (subtitleExtra != null) ...[
@@ -166,6 +183,30 @@ class UserListTileCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class AppAccessBadge extends StatelessWidget {
+  const AppAccessBadge({super.key, required this.category, this.compact = false});
+
+  final AppAccessCategory category;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final color = switch (category) {
+      AppAccessCategory.admin => Colors.indigo.shade700,
+      AppAccessCategory.entry => Colors.teal.shade700,
+      AppAccessCategory.dashboard => Colors.blueGrey.shade700,
+    };
+    return Chip(
+      label: Text(appAccessCategoryLabel(category, isAr: isAr)),
+      visualDensity: compact ? VisualDensity.compact : VisualDensity.standard,
+      backgroundColor: color.withValues(alpha: 0.1),
+      labelStyle: TextStyle(color: color, fontWeight: FontWeight.w600),
+      side: BorderSide(color: color.withValues(alpha: 0.3)),
     );
   }
 }

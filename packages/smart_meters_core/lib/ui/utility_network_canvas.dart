@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'dart:typed_data';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
@@ -337,6 +338,47 @@ typedef UtilityNetworkPortConnect =
 typedef UtilityNetworkNodeMoved =
     void Function(UtilityRevisionNode node, UtilityViewNode placement);
 
+/// Structured detail popup for a meter node (dashboard network map).
+class UtilityNetworkMeterDetailCard {
+  const UtilityNetworkMeterDetailCard({
+    required this.meterName,
+    required this.meterCode,
+    this.previousValueLabel,
+    this.previousDateLabel,
+    this.currentValueLabel,
+    this.currentDateLabel,
+    this.consumptionLabel,
+    this.previousTitle = 'Previous',
+    this.currentTitle = 'Current',
+    this.consumptionTitle = 'Consumption',
+  });
+
+  final String meterName;
+  final String meterCode;
+  final String? previousValueLabel;
+  final String? previousDateLabel;
+  final String? currentValueLabel;
+  final String? currentDateLabel;
+  final String? consumptionLabel;
+  final String previousTitle;
+  final String currentTitle;
+  final String consumptionTitle;
+}
+
+/// Optional dashboard overlays for meter circles (reading + detail card).
+class UtilityNetworkMeterOverlay {
+  const UtilityNetworkMeterOverlay({
+    this.readingLabel,
+    this.detail,
+  });
+
+  /// Latest entered reading shown alone in the center of the meter circle.
+  final String? readingLabel;
+
+  /// Transparent detail card shown on hover / long-press / selection.
+  final UtilityNetworkMeterDetailCard? detail;
+}
+
 /// Utility network canvas — read-only by default; editable when [editMode].
 class UtilityNetworkCanvas extends StatefulWidget {
   const UtilityNetworkCanvas({
@@ -347,6 +389,7 @@ class UtilityNetworkCanvas extends StatefulWidget {
     this.selectedNodeId,
     this.selectedConnectionId,
     this.onNodeTap,
+    this.onNodeDoubleTap,
     this.onConnectionTap,
     this.editMode = false,
     this.showPorts = false,
@@ -356,6 +399,7 @@ class UtilityNetworkCanvas extends StatefulWidget {
     this.autoFitOnLoad = true,
     this.showFitControl = true,
     this.lockInteraction = false,
+    this.meterOverlaysByNodeId,
   });
 
   final UtilityNetworkSnapshot snapshot;
@@ -364,6 +408,7 @@ class UtilityNetworkCanvas extends StatefulWidget {
   final String? selectedNodeId;
   final String? selectedConnectionId;
   final ValueChanged<UtilityRevisionNode>? onNodeTap;
+  final ValueChanged<UtilityRevisionNode>? onNodeDoubleTap;
   final ValueChanged<UtilityConnection>? onConnectionTap;
   final bool editMode;
   final bool showPorts;
@@ -374,6 +419,9 @@ class UtilityNetworkCanvas extends StatefulWidget {
   final bool showFitControl;
   /// When true, disables pan/zoom (e.g. while dragging from an external palette).
   final bool lockInteraction;
+
+  /// Optional per-node meter overlays (keyed by revision node id).
+  final Map<String, UtilityNetworkMeterOverlay>? meterOverlaysByNodeId;
 
   @override
   State<UtilityNetworkCanvas> createState() => UtilityNetworkCanvasState();
@@ -637,6 +685,8 @@ class UtilityNetworkCanvasState extends State<UtilityNetworkCanvas> {
                                   selected: node.id == widget.selectedNodeId,
                                   editMode: widget.editMode,
                                   showPorts: _portsVisible,
+                                  meterOverlay:
+                                      widget.meterOverlaysByNodeId?[node.id],
                                   connectingPortId:
                                       _connectFrom?.node.id == node.id
                                       ? _connectFrom?.port.id
@@ -648,6 +698,9 @@ class UtilityNetworkCanvasState extends State<UtilityNetworkCanvas> {
                                     }
                                     widget.onNodeTap?.call(node);
                                   },
+                                  onDoubleTap: widget.onNodeDoubleTap == null
+                                      ? null
+                                      : () => widget.onNodeDoubleTap!(node),
                                   onChanged: widget.editMode
                                       ? (placement) => widget.onNodeMoved
                                             ?.call(node, placement)
@@ -747,6 +800,8 @@ class _UtilityNode extends StatefulWidget {
     required this.editMode,
     required this.showPorts,
     required this.onTap,
+    this.onDoubleTap,
+    this.meterOverlay,
     this.connectingPortId,
     this.onChanged,
     this.onDragLock,
@@ -761,6 +816,8 @@ class _UtilityNode extends StatefulWidget {
   final bool showPorts;
   final String? connectingPortId;
   final VoidCallback onTap;
+  final VoidCallback? onDoubleTap;
+  final UtilityNetworkMeterOverlay? meterOverlay;
   final ValueChanged<UtilityViewNode>? onChanged;
   final ValueChanged<bool>? onDragLock;
   final ValueChanged<UtilityAssetPort>? onPortTap;
@@ -771,8 +828,15 @@ class _UtilityNode extends StatefulWidget {
 
 class _UtilityNodeState extends State<_UtilityNode> {
   UtilityViewNode? _dragPlacement;
+  bool _hovering = false;
+  bool _pressShowingDetail = false;
 
   UtilityViewNode get _placement => _dragPlacement ?? widget.placement;
+
+  bool get _showDetailCard {
+    if (widget.meterOverlay?.detail == null) return false;
+    return _hovering || _pressShowingDetail || widget.selected;
+  }
 
   @override
   void didUpdateWidget(covariant _UtilityNode oldWidget) {
@@ -821,6 +885,11 @@ class _UtilityNodeState extends State<_UtilityNode> {
     final isRectCard = assetType == 'tank' || assetType == 'pump';
     // Keep meter text inside the inscribed square of the circle.
     final meterInset = math.max(14.0, cardW * 0.16);
+    final overlay = widget.meterOverlay;
+    final detail = overlay?.detail;
+    final hasReadingOverlay =
+        overlay?.readingLabel != null &&
+        overlay!.readingLabel!.trim().isNotEmpty;
 
     return SizedBox(
       width: cardW,
@@ -833,79 +902,144 @@ class _UtilityNodeState extends State<_UtilityNode> {
             top: showPorts ? 9 : 0,
             width: cardW,
             height: cardH,
-            child: GestureDetector(
-              onTap: onTap,
-              onPanStart: canEditGeometry
-                  ? (_) {
-                      _dragPlacement = placement;
-                      onDragLock?.call(true);
-                    }
+            child: MouseRegion(
+              onEnter: isMeter && !editMode
+                  ? (_) => setState(() => _hovering = true)
                   : null,
-              onPanUpdate: canEditGeometry
-                  ? (details) {
-                      final next = (_dragPlacement ?? placement).copyWith(
-                        posX: (_dragPlacement ?? placement).posX + details.delta.dx,
-                        posY: (_dragPlacement ?? placement).posY + details.delta.dy,
-                      );
-                      _dragPlacement = next;
-                      onChanged(next);
-                    }
+              onExit: isMeter && !editMode
+                  ? (_) => setState(() => _hovering = false)
                   : null,
-              onPanEnd: canEditGeometry
-                  ? (_) {
-                      _dragPlacement = null;
-                      onDragLock?.call(false);
-                    }
-                  : null,
-              child: Opacity(
-                opacity: isDraft ? 0.78 : 1,
-                child: Material(
-                  color: Theme.of(context).colorScheme.surface,
-                  elevation: selected ? 4 : 1,
-                  clipBehavior: Clip.antiAlias,
-                  shape: utilityNetworkNodeShape(
-                    assetType,
-                    Size(cardW, cardH),
-                    side: BorderSide(
-                      color: cardColor,
-                      width: selected ? 2.5 : 1.2,
-                    ),
-                  ),
-                  child: Stack(
-                    fit: StackFit.expand,
-                    children: [
-                      if (background != null)
-                        Opacity(opacity: .22, child: background),
-                      Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isMeter ? meterInset : 10,
-                          vertical: isMeter ? meterInset * 0.85 : 8,
-                        ),
-                        child: isMeter
-                            ? _MeterNodeContent(
-                                code: asset.code,
-                                name: name,
-                                color: cardColor,
-                                isDraft: isDraft,
-                                isArabic: isArabic,
-                                icon: utilityNetworkAssetIcon(assetType),
-                              )
-                            : _RectNodeContent(
-                                code: asset.code,
-                                name: name,
-                                color: cardColor,
-                                isDraft: isDraft,
-                                isArabic: isArabic,
-                                icon: utilityNetworkAssetIcon(assetType),
-                                emphasizeIcon: isRectCard,
-                              ),
+              child: GestureDetector(
+                onTap: onTap,
+                onDoubleTap: widget.onDoubleTap,
+                onLongPressStart: isMeter && !editMode && detail != null
+                    ? (_) => setState(() => _pressShowingDetail = true)
+                    : null,
+                onLongPressEnd: isMeter && !editMode
+                    ? (_) => setState(() => _pressShowingDetail = false)
+                    : null,
+                onPanStart: canEditGeometry
+                    ? (_) {
+                        _dragPlacement = placement;
+                        onDragLock?.call(true);
+                      }
+                    : null,
+                onPanUpdate: canEditGeometry
+                    ? (details) {
+                        final next = (_dragPlacement ?? placement).copyWith(
+                          posX:
+                              (_dragPlacement ?? placement).posX +
+                              details.delta.dx,
+                          posY:
+                              (_dragPlacement ?? placement).posY +
+                              details.delta.dy,
+                        );
+                        _dragPlacement = next;
+                        onChanged(next);
+                      }
+                    : null,
+                onPanEnd: canEditGeometry
+                    ? (_) {
+                        _dragPlacement = null;
+                        onDragLock?.call(false);
+                      }
+                    : null,
+                child: Opacity(
+                  opacity: isDraft ? 0.78 : 1,
+                  child: DecoratedBox(
+                    decoration: ShapeDecoration(
+                      shape: utilityNetworkNodeShape(
+                        assetType,
+                        Size(cardW, cardH),
+                        side: BorderSide.none,
                       ),
-                    ],
+                      shadows: [
+                        BoxShadow(
+                          color: Colors.black.withValues(
+                            alpha: selected ? 0.18 : 0.12,
+                          ),
+                          blurRadius: selected ? 16 : 12,
+                          offset: const Offset(0, 5),
+                          spreadRadius: -1,
+                        ),
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.06),
+                          blurRadius: 4,
+                          offset: const Offset(0, 1),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Theme.of(context).colorScheme.surface,
+                      elevation: 0,
+                      shadowColor: Colors.transparent,
+                      clipBehavior: Clip.antiAlias,
+                      shape: utilityNetworkNodeShape(
+                        assetType,
+                        Size(cardW, cardH),
+                        side: BorderSide(
+                          color: cardColor,
+                          width: selected ? 2.5 : 1.2,
+                        ),
+                      ),
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          if (background != null)
+                            Opacity(opacity: .22, child: background),
+                          Padding(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: isMeter ? meterInset : 10,
+                              vertical: isMeter ? meterInset * 0.85 : 8,
+                            ),
+                            child: isMeter
+                                ? _MeterNodeContent(
+                                    code: asset.code,
+                                    name: name,
+                                    color: cardColor,
+                                    isDraft: isDraft,
+                                    isArabic: isArabic,
+                                    icon: utilityNetworkAssetIcon(assetType),
+                                    readingLabel: overlay?.readingLabel,
+                                    readingOnly: hasReadingOverlay,
+                                  )
+                                : _RectNodeContent(
+                                    code: asset.code,
+                                    name: name,
+                                    color: cardColor,
+                                    isDraft: isDraft,
+                                    isArabic: isArabic,
+                                    icon: utilityNetworkAssetIcon(assetType),
+                                    emphasizeIcon: isRectCard,
+                                  ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
           ),
+          // Anchor at meter top, then lift by full height + gap so nothing is covered.
+          if (_showDetailCard && detail != null)
+            Positioned(
+              left: (cardW - 220) / 2,
+              width: 220,
+              top: showPorts ? 9 : 0,
+              child: IgnorePointer(
+                child: FractionalTranslation(
+                  translation: const Offset(0, -1),
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _MeterDetailPopup(
+                      detail: detail,
+                      accent: cardColor,
+                    ),
+                  ),
+                ),
+              ),
+            ),
           if (canEditGeometry)
             Positioned(
               right: isMeter ? -4 : 0,
@@ -1022,6 +1156,8 @@ class _MeterNodeContent extends StatelessWidget {
     required this.isDraft,
     required this.isArabic,
     required this.icon,
+    this.readingLabel,
+    this.readingOnly = false,
   });
 
   final String code;
@@ -1030,10 +1166,86 @@ class _MeterNodeContent extends StatelessWidget {
   final bool isDraft;
   final bool isArabic;
   final IconData icon;
+  final String? readingLabel;
+  final bool readingOnly;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasReading =
+        readingLabel != null && readingLabel!.trim().isNotEmpty;
+
+    if (readingOnly && hasReading) {
+      final parts = readingLabel!.split('\n');
+      final valueLine = parts.first.trim();
+      final unitLine = parts.length > 1 ? parts.sublist(1).join(' ').trim() : '';
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final side = math.min(
+            constraints.maxWidth.isFinite ? constraints.maxWidth : 96,
+            constraints.maxHeight.isFinite ? constraints.maxHeight : 96,
+          );
+          final box = (side * 0.82).clamp(36.0, 140.0);
+          return Center(
+            child: SizedBox(
+              width: box,
+              height: box,
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                child: ConstrainedBox(
+                  constraints: BoxConstraints(maxWidth: box),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        valueLine,
+                        maxLines: 1,
+                        softWrap: false,
+                        overflow: TextOverflow.visible,
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                          height: 1.05,
+                          color: color,
+                        ),
+                      ),
+                      if (unitLine.isNotEmpty)
+                        Text(
+                          unitLine,
+                          maxLines: 1,
+                          softWrap: false,
+                          overflow: TextOverflow.visible,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                            height: 1.1,
+                            color: color.withValues(alpha: 0.88),
+                          ),
+                        ),
+                      if (isDraft) ...[
+                        const SizedBox(height: 2),
+                        Text(
+                          isArabic ? 'مسودة' : 'Draft',
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 9,
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
+
     return Center(
       child: FittedBox(
         fit: BoxFit.scaleDown,
@@ -1083,6 +1295,178 @@ class _MeterNodeContent extends StatelessWidget {
                 ),
               ],
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MeterDetailPopup extends StatelessWidget {
+  const _MeterDetailPopup({required this.detail, required this.accent});
+
+  final UtilityNetworkMeterDetailCard detail;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final onSurface = theme.colorScheme.onSurface;
+    final radius = BorderRadius.circular(10);
+
+    Widget field(String title, String? value, {String? date}) {
+      final valueText = value?.trim().isNotEmpty == true ? value! : '—';
+      final dateText = date?.trim().isNotEmpty == true ? date!.trim() : null;
+      return Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 1),
+              child: Text(
+                title,
+                softWrap: false,
+                maxLines: 1,
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.w600,
+                  height: 1.15,
+                  color: onSurface.withValues(alpha: 0.52),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    valueText,
+                    softWrap: false,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.end,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                      height: 1.15,
+                      color: onSurface.withValues(alpha: 0.92),
+                    ),
+                  ),
+                  if (dateText != null)
+                    Text(
+                      dateText,
+                      softWrap: false,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      textAlign: TextAlign.end,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        fontSize: 8.5,
+                        fontWeight: FontWeight.w500,
+                        height: 1.15,
+                        color: onSurface.withValues(alpha: 0.45),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: radius,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.28 : 0.10),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+            spreadRadius: -1,
+          ),
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.12 : 0.04),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: radius,
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              borderRadius: radius,
+              border: Border.all(
+                color: Colors.white.withValues(alpha: isDark ? 0.18 : 0.45),
+                width: 1,
+              ),
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  Colors.white.withValues(alpha: isDark ? 0.10 : 0.28),
+                  accent.withValues(alpha: isDark ? 0.06 : 0.08),
+                  Colors.white.withValues(alpha: isDark ? 0.05 : 0.16),
+                ],
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(10, 7, 10, 7),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    detail.meterName,
+                    softWrap: false,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 11,
+                      height: 1.15,
+                      color: onSurface.withValues(alpha: 0.90),
+                    ),
+                  ),
+                  Text(
+                    detail.meterCode,
+                    softWrap: false,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w600,
+                      height: 1.2,
+                      color: accent.withValues(alpha: 0.95),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4, bottom: 1),
+                    child: Divider(
+                      height: 1,
+                      thickness: 0.6,
+                      color: onSurface.withValues(alpha: 0.08),
+                    ),
+                  ),
+                  field(
+                    detail.previousTitle,
+                    detail.previousValueLabel,
+                    date: detail.previousDateLabel,
+                  ),
+                  field(
+                    detail.currentTitle,
+                    detail.currentValueLabel,
+                    date: detail.currentDateLabel,
+                  ),
+                  field(detail.consumptionTitle, detail.consumptionLabel),
+                ],
+              ),
+            ),
           ),
         ),
       ),

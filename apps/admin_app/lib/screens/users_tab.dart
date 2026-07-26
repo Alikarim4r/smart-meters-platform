@@ -60,24 +60,26 @@ class _UsersTabState extends ConsumerState<UsersTab> {
   }
 
   Future<void> _rejectUser(AdminUser user) async {
+    final isAr = ref.read(adminLocaleProvider).languageCode == 'ar';
     final noteController = TextEditingController();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reject user?'),
+        title: Text(isAr ? 'رفض الحساب؟' : 'Reject user?'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Reject ${user.displayName}? They will not receive site access.',
+              isAr
+                  ? 'رفض ${user.displayName}؟ لن يحصل على صلاحيات.'
+                  : 'Reject ${user.displayName}? They will not receive site access.',
             ),
             const SizedBox(height: 12),
             TextField(
               controller: noteController,
               decoration: catalogFieldDecoration(
-                labelText: 'Note (optional)',
-                hintText: 'Reason for rejection',
+                labelText: isAr ? 'ملاحظة (اختياري)' : 'Note (optional)',
               ),
               maxLines: 2,
             ),
@@ -86,12 +88,12 @@ class _UsersTabState extends ConsumerState<UsersTab> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(isAr ? 'إلغاء' : 'Cancel'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
-            child: const Text('Reject'),
+            child: Text(isAr ? 'رفض' : 'Reject'),
           ),
         ],
       ),
@@ -113,9 +115,9 @@ class _UsersTabState extends ConsumerState<UsersTab> {
           );
       noteController.dispose();
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('User rejected')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(isAr ? 'تم رفض الحساب' : 'User rejected')),
+      );
       await _refresh();
     } catch (error) {
       noteController.dispose();
@@ -126,16 +128,32 @@ class _UsersTabState extends ConsumerState<UsersTab> {
     }
   }
 
+  String _bucketLabel(UserAppBucketFilter bucket, AdminStrings s, bool isAr) {
+    switch (bucket) {
+      case UserAppBucketFilter.all:
+        return isAr ? 'الكل' : 'All';
+      case UserAppBucketFilter.pending:
+        return isAr ? 'طلبات جديدة' : 'New requests';
+      case UserAppBucketFilter.adminApp:
+        return isAr ? 'تطبيق الأدمن' : 'Admin app';
+      case UserAppBucketFilter.entryApp:
+        return isAr ? 'تطبيق الإدخال' : 'Entry app';
+      case UserAppBucketFilter.dashboardApp:
+        return isAr ? 'تطبيق العرض' : 'Dashboard app';
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final usersAsync = ref.watch(usersProvider);
-    final pendingAsync = ref.watch(pendingUsersProvider);
     final approvalFilter = ref.watch(userApprovalFilterProvider);
     final roleFilter = ref.watch(userRoleFilterProvider);
+    final appBucket = ref.watch(userAppBucketFilterProvider);
     final searchQuery = ref.watch(userSearchQueryProvider);
     final canManage = ref.watch(canManageUsersProvider);
     final isSuperAdmin = ref.watch(authProvider).profile?.isSuperAdmin ?? false;
     final s = AdminStrings(ref.watch(adminLocaleProvider));
+    final isAr = ref.watch(adminLocaleProvider).languageCode == 'ar';
     final listBottomPadding = catalogListBottomPadding(context);
 
     return Scaffold(
@@ -160,21 +178,44 @@ class _UsersTabState extends ConsumerState<UsersTab> {
           child: usersAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (error, _) => UserEmptyState(
-              title: 'Could not load users',
+              title: isAr ? 'تعذر تحميل الحسابات' : 'Could not load users',
               subtitle: friendlyUserAdminError(error),
               icon: Icons.error_outline,
             ),
             data: (allUsers) {
-              var users = filterUsersByApproval(
+              final pendingCount = allUsers
+                  .where(
+                    (u) => u.profile.approvalStatus == ApprovalStatus.pending,
+                  )
+                  .length;
+
+              var users = filterUsersByAppBucket(
                 users: allUsers,
+                filter: appBucket,
+              );
+              users = filterUsersByApproval(
+                users: users,
                 filter: approvalFilter,
               );
               users = filterUsersByRole(users: users, filter: roleFilter);
               users = searchUsers(users, searchQuery);
 
-              final showPendingSection =
-                  approvalFilter == UserApprovalFilter.all ||
-                  approvalFilter == UserApprovalFilter.pending;
+              // Group by permission role inside the current bucket.
+              final byRole = <UserRole, List<AdminUser>>{};
+              for (final user in users) {
+                byRole
+                    .putIfAbsent(user.profile.role, () => <AdminUser>[])
+                    .add(user);
+              }
+              final isOwner =
+                  ref.watch(authProvider).profile?.isPlatformOwner ?? false;
+              final roleOrder = [
+                UserRole.technicianRequest,
+                if (isOwner) UserRole.superAdmin,
+                UserRole.siteAdmin,
+                UserRole.technician,
+                UserRole.viewer,
+              ];
 
               return CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -192,12 +233,62 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                     ),
                   ),
                   SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Text(
+                        isAr
+                            ? 'تصنيف حسب التطبيق'
+                            : 'Category by app',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
                     child: SingleChildScrollView(
                       scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                       child: Row(
                         children: [
-                          for (final filter in UserApprovalFilter.values)
+                          for (final bucket in UserAppBucketFilter.values)
+                            Padding(
+                              padding: const EdgeInsets.only(right: 8),
+                              child: FilterChip(
+                                label: Text(
+                                  bucket == UserAppBucketFilter.pending &&
+                                          pendingCount > 0
+                                      ? '${_bucketLabel(bucket, s, isAr)} ($pendingCount)'
+                                      : _bucketLabel(bucket, s, isAr),
+                                ),
+                                selected: appBucket == bucket,
+                                onSelected: (_) =>
+                                    ref
+                                            .read(
+                                              userAppBucketFilterProvider
+                                                  .notifier,
+                                            )
+                                            .state =
+                                        bucket,
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  SliverToBoxAdapter(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                      child: Row(
+                        children: [
+                          for (final filter in [
+                            UserApprovalFilter.all,
+                            UserApprovalFilter.pending,
+                            UserApprovalFilter.approved,
+                            UserApprovalFilter.rejected,
+                            UserApprovalFilter.suspended,
+                          ])
                             Padding(
                               padding: const EdgeInsets.only(right: 8),
                               child: FilterChip(
@@ -224,58 +315,38 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                         initialValue: roleFilter,
                         isExpanded: true,
                         decoration: catalogFieldDecoration(
-                          labelText: s.roleFilter,
+                          labelText: isAr
+                              ? 'تصفية الصلاحية'
+                              : s.roleFilter,
                           hintText: s.allRoles,
                         ),
                         items: [
                           DropdownMenuItem(
                             value: UserRoleFilter.all,
-                            child: Text(
-                              s.allRoles,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            child: Text(s.allRoles),
                           ),
                           DropdownMenuItem(
                             value: UserRoleFilter.technicianRequest,
-                            child: Text(
-                              s.roleTechnicianRequest,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            child: Text(s.roleTechnicianRequest),
                           ),
                           DropdownMenuItem(
                             value: UserRoleFilter.technician,
-                            child: Text(
-                              s.roleTechnician,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            child: Text(s.roleTechnician),
                           ),
                           DropdownMenuItem(
                             value: UserRoleFilter.viewer,
-                            child: Text(
-                              s.roleViewer,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            child: Text(s.roleViewer),
                           ),
                           DropdownMenuItem(
                             value: UserRoleFilter.siteAdmin,
-                            child: Text(
-                              s.roleSiteAdmin,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                            child: Text(s.roleSiteAdmin),
                           ),
-                          DropdownMenuItem(
-                            value: UserRoleFilter.superAdmin,
-                            child: Text(
-                              s.roleSuperAdmin,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                          if (ref.watch(authProvider).profile?.isPlatformOwner ??
+                              false)
+                            DropdownMenuItem(
+                              value: UserRoleFilter.superAdmin,
+                              child: Text(s.roleSuperAdmin),
                             ),
-                          ),
                         ],
                         onChanged: (value) {
                           if (value != null) {
@@ -286,57 +357,69 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                       ),
                     ),
                   ),
-                  if (showPendingSection)
-                    pendingAsync.when(
-                      loading: () =>
-                          const SliverToBoxAdapter(child: SizedBox.shrink()),
-                      error: (_, _) =>
-                          const SliverToBoxAdapter(child: SizedBox.shrink()),
-                      data: (pendingUsers) {
-                        if (pendingUsers.isEmpty ||
-                            approvalFilter != UserApprovalFilter.all &&
-                                approvalFilter != UserApprovalFilter.pending) {
-                          return const SliverToBoxAdapter(
-                            child: SizedBox.shrink(),
-                          );
-                        }
-                        final visiblePending =
-                            approvalFilter == UserApprovalFilter.pending
-                            ? users
-                            : pendingUsers;
-
-                        if (visiblePending.isEmpty) {
-                          return const SliverToBoxAdapter(
-                            child: SizedBox.shrink(),
-                          );
-                        }
-
-                        return SliverToBoxAdapter(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Padding(
-                                padding: const EdgeInsets.fromLTRB(
-                                  16,
-                                  20,
-                                  16,
-                                  8,
-                                ),
-                                child: Text(
-                                  s.pendingApprovals,
+                  if (users.isEmpty)
+                    SliverFillRemaining(
+                      hasScrollBody: false,
+                      child: UserEmptyState(
+                        title: isAr ? 'لا توجد حسابات' : 'No users found',
+                        subtitle: isAr
+                            ? 'جرّب تغيير التصنيف أو البحث'
+                            : 'Try another category or search',
+                        icon: Icons.people_outline,
+                      ),
+                    )
+                  else
+                    for (final role in roleOrder)
+                      if ((byRole[role] ?? const <AdminUser>[]).isNotEmpty) ...[
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  userRoleLabel(role),
                                   style: Theme.of(context).textTheme.titleSmall
-                                      ?.copyWith(fontWeight: FontWeight.w600),
+                                      ?.copyWith(fontWeight: FontWeight.w800),
                                 ),
-                              ),
-                              for (final user in visiblePending)
-                                UserListTileCard(
-                                  user: user,
-                                  onTap: () => _openUserDetail(user),
-                                  subtitleExtra: canManage
-                                      ? Row(
+                                const SizedBox(height: 2),
+                                Text(
+                                  userRolePermissionHint(role, isAr: isAr),
+                                  style: Theme.of(context).textTheme.bodySmall,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SliverList(
+                          delegate: SliverChildBuilderDelegate((context, i) {
+                            final user = byRole[role]![i];
+                            final isPending =
+                                user.profile.approvalStatus ==
+                                ApprovalStatus.pending;
+                            return UserListTileCard(
+                              user: user,
+                              onTap: () => _openUserDetail(user),
+                              subtitleExtra: isPending && canManage
+                                  ? Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.stretch,
+                                      children: [
+                                        Text(
+                                          isAr
+                                              ? user.profile.role
+                                                    .registrationSourceLabelAr
+                                              : user.profile.role
+                                                    .registrationSourceLabelEn,
+                                          style: Theme.of(
+                                            context,
+                                          ).textTheme.labelSmall,
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Row(
                                           children: [
                                             Expanded(
-                                              child: OutlinedButton.icon(
+                                              child: FilledButton.icon(
                                                 onPressed: () =>
                                                     _openApproveDialog(user),
                                                 icon: const Icon(
@@ -365,93 +448,16 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                                               ),
                                             ),
                                           ],
-                                        )
-                                      : null,
-                                ),
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-                  if (approvalFilter != UserApprovalFilter.pending)
-                    SliverToBoxAdapter(
-                      child: Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 20, 16, 8),
-                        child: Text(
-                          approvalFilter == UserApprovalFilter.all
-                              ? s.allUsers
-                              : _approvalFilterLabel(approvalFilter, s),
-                          style: Theme.of(context).textTheme.titleSmall
-                              ?.copyWith(fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                    ),
-                  if (users.isEmpty)
-                    SliverFillRemaining(
-                      hasScrollBody: false,
-                      child: UserEmptyState(
-                        title: s.noUsersMatch,
-                        subtitle: s.adjustFilters,
-                      ),
-                    )
-                  else if (approvalFilter == UserApprovalFilter.pending)
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate(
-                        (context, index) => UserListTileCard(
-                          user: users[index],
-                          onTap: () => _openUserDetail(users[index]),
-                          subtitleExtra: canManage
-                              ? Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () =>
-                                            _openApproveDialog(users[index]),
-                                        icon: const Icon(Icons.check, size: 18),
-                                        label: Text(s.approve),
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        onPressed: () =>
-                                            _rejectUser(users[index]),
-                                        icon: Icon(
-                                          Icons.close,
-                                          size: 18,
-                                          color: Colors.red.shade700,
                                         ),
-                                        label: Text(
-                                          s.reject,
-                                          style: TextStyle(
-                                            color: Colors.red.shade700,
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                )
-                              : null,
+                                      ],
+                                    )
+                                  : null,
+                            );
+                          }, childCount: byRole[role]!.length),
                         ),
-                        childCount: users.length,
-                      ),
-                    )
-                  else if (approvalFilter != UserApprovalFilter.pending)
-                    SliverList(
-                      delegate: SliverChildBuilderDelegate((context, index) {
-                        final user = users[index];
-                        if (user.profile.approvalStatus ==
-                            ApprovalStatus.pending) {
-                          return const SizedBox.shrink();
-                        }
-                        return UserListTileCard(
-                          user: user,
-                          onTap: () => _openUserDetail(user),
-                        );
-                      }, childCount: users.length),
-                    ),
-                  SliverPadding(
-                    padding: EdgeInsets.only(bottom: listBottomPadding),
+                      ],
+                  SliverToBoxAdapter(
+                    child: SizedBox(height: listBottomPadding + 72),
                   ),
                 ],
               );
@@ -467,13 +473,13 @@ class _UsersTabState extends ConsumerState<UsersTab> {
       case UserApprovalFilter.all:
         return s.all;
       case UserApprovalFilter.pending:
-        return s.filterPending;
+        return s.pendingApprovals;
       case UserApprovalFilter.approved:
-        return s.filterApproved;
+        return s.approved;
       case UserApprovalFilter.rejected:
-        return s.filterRejected;
+        return s.rejected;
       case UserApprovalFilter.suspended:
-        return s.filterSuspended;
+        return s.suspended;
       case UserApprovalFilter.active:
         return s.active;
       case UserApprovalFilter.inactive:

@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/profile.dart';
+import 'session_security_provider.dart';
 import 'supabase_provider.dart';
 
 class AuthState {
@@ -99,6 +100,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String email,
     required String password,
     required String fullName,
+    String requestedRole = 'technician_request',
   }) async {
     state = state.copyWith(clearError: true, isLoadingProfile: true);
     try {
@@ -107,7 +109,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         email: email,
         password: password,
         fullName: fullName,
-        requestedRole: 'technician_request',
+        requestedRole: requestedRole,
       );
       final session = authRepo.currentSession;
       if (session == null) {
@@ -138,6 +140,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
 
   Future<void> signOut() async {
     await _ref.read(authRepositoryProvider).signOut();
+    try {
+      await _ref.read(sessionSecurityProvider.notifier).onSignOut();
+    } catch (_) {}
     state = const AuthState();
   }
 

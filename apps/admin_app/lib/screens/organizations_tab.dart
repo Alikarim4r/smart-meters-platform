@@ -16,9 +16,25 @@ final adminAllOrganizationsProvider =
       return ref.read(siteRepositoryProvider).getAllOrganizationsForAdmin();
     });
 
-/// Only super_admin manages organizations (matches RLS).
+/// Create new organizations — platform owner only.
+final canAddOrganizationProvider = Provider<bool>((ref) {
+  return ref.watch(authProvider).profile?.isPlatformOwner ?? false;
+});
+
+/// Edit structure within visible scopes (owner / scoped super_admin).
 final canManageOrganizationsProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).profile?.isSuperAdmin ?? false;
+  final profile = ref.watch(authProvider).profile;
+  if (profile == null) return false;
+  return profile.isPlatformOwner || profile.isSuperAdmin;
+});
+
+/// Zone/site user assignment (refined further per screen).
+final canManageScopeUsersProvider = Provider<bool>((ref) {
+  final profile = ref.watch(authProvider).profile;
+  if (profile == null) return false;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 class OrganizationsTab extends ConsumerStatefulWidget {
@@ -130,6 +146,7 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final canAddOrg = ref.watch(canAddOrganizationProvider);
     final canManage = ref.watch(canManageOrganizationsProvider);
     final orgsAsync = ref.watch(adminAllOrganizationsProvider);
     final listBottomPadding = catalogListBottomPadding(context);
@@ -137,7 +154,7 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
 
     return Scaffold(
       primary: false,
-      floatingActionButton: canManage
+      floatingActionButton: canAddOrg
           ? FloatingActionButton.extended(
               heroTag: 'admin_fab_organizations',
               onPressed: () => _openForm(),
@@ -418,7 +435,11 @@ class _OrganizationFormScreenState
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (!ref.read(canManageOrganizationsProvider)) return;
+    if (widget.isEditing) {
+      if (!ref.read(canManageOrganizationsProvider)) return;
+    } else {
+      if (!ref.read(canAddOrganizationProvider)) return;
+    }
 
     setState(() => _isSaving = true);
     final siteRepo = ref.read(siteRepositoryProvider);

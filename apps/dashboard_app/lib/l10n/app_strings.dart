@@ -386,7 +386,7 @@ class AppStrings {
   String get customRange => isAr ? 'نطاق مخصص' : 'Custom range';
   String get currentMonth => isAr ? 'الشهر الحالي' : 'Current month';
   String get previousMonth => isAr ? 'الشهر السابق' : 'Previous month';
-  String get last7Days => isAr ? 'آخر 7 أيام' : 'Last 7 days';
+  String get last7Days => isAr ? 'آخر ٧ أيام' : 'Last 7 days';
   String get last30Days => isAr ? 'آخر ٣١ يوماً' : 'Last 31 days';
   String get month => isAr ? 'شهر' : 'Month';
   String get cancel => isAr ? 'إلغاء' : 'Cancel';
@@ -517,6 +517,7 @@ class AppStrings {
 
   String chartPeriodKindLabel(UtilityChartPeriodKind kind) {
     return switch (kind) {
+      UtilityChartPeriodKind.last7Days => last7Days,
       UtilityChartPeriodKind.last30Days => last30Days,
       UtilityChartPeriodKind.twelveMonths => twelveMonths,
       UtilityChartPeriodKind.fiveYears => fiveYears,

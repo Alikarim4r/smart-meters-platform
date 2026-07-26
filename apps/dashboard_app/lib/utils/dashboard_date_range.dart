@@ -623,6 +623,12 @@ UtilityChartPeriodState? chartPeriodStateForDateSelection(
     );
   }
 
+  if (spanDays == 6 && isSameDashboardDay(end, today)) {
+    return const UtilityChartPeriodState(
+      kind: UtilityChartPeriodKind.last7Days,
+    );
+  }
+
   // 12-month comparison window.
   if (start.day == 1 && spanDays >= 300 && spanDays <= 400) {
     return const UtilityChartPeriodState(
@@ -659,6 +665,16 @@ DashboardDateSelection dateSelectionForChartPeriodKind({
 }) {
   final anchor = normalizeDashboardDate(anchorDate);
   switch (kind) {
+    case UtilityChartPeriodKind.last7Days:
+      final start = anchor.subtract(const Duration(days: 6));
+      return DashboardDateSelection(
+        mode: DashboardDateMode.range,
+        preset: DashboardDatePreset.customRange,
+        selectedDay: anchor,
+        startDate: start,
+        endDate: anchor,
+        previousReadingDate: start,
+      );
     case UtilityChartPeriodKind.last30Days:
       return DashboardDateSelection.forPreset(
         preset: DashboardDatePreset.last30Days,

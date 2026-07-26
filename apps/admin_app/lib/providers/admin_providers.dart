@@ -4,7 +4,11 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../utils/admin_validation.dart';
 
 final canCreateSitesProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).profile?.isSuperAdmin ?? false;
+  final profile = ref.watch(authProvider).profile;
+  if (profile == null) return false;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 final canEditSitesProvider = Provider<bool>((ref) {
@@ -12,7 +16,9 @@ final canEditSitesProvider = Provider<bool>((ref) {
   if (profile == null) {
     return false;
   }
-  return profile.isSuperAdmin || profile.isSiteAdmin;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 final canManageMetersProvider = Provider<bool>((ref) {
@@ -20,21 +26,27 @@ final canManageMetersProvider = Provider<bool>((ref) {
   if (profile == null) {
     return false;
   }
-  return profile.isSuperAdmin || profile.isSiteAdmin;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 /// Hard-delete for admins who can manage the entity (site_admin with warnings).
 final canDeleteEntitiesProvider = Provider<bool>((ref) {
   final profile = ref.watch(authProvider).profile;
   if (profile == null) return false;
-  return profile.isSuperAdmin || profile.isSiteAdmin;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
-/// Cascade delete for meters/sites — super_admin and site managers.
+/// Cascade delete for meters/sites — owner, super_admin and site managers.
 final canForceDeleteProvider = Provider<bool>((ref) {
   final profile = ref.watch(authProvider).profile;
   if (profile == null) return false;
-  return profile.isSuperAdmin || profile.isSiteAdmin;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 final adminSitesProvider = FutureProvider.autoDispose<List<Site>>((ref) async {
@@ -59,6 +71,8 @@ final adminMetersProvider = FutureProvider.autoDispose<List<Meter>>((
   ref,
 ) async {
   final siteId = ref.watch(selectedAdminSiteIdProvider);
+  if (siteId == null) return const [];
+
   final categoryId = ref.watch(selectedAdminMeterCategoryIdProvider);
   final levelFilter = ref.watch(adminMeterLevelFilterProvider);
   final activeFilter = ref.watch(adminMeterActiveFilterProvider);

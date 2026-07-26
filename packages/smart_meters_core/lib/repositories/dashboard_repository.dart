@@ -71,7 +71,7 @@ profiles:entered_by(full_name, email)
         .timeout(const Duration(seconds: 12));
     final parsed = Profile.fromJson(Map<String, dynamic>.from(profile));
     // Reuse SiteRepository path via RPC list — keep logic local to avoid circular deps.
-    if (parsed.isSuperAdmin) {
+    if (parsed.isPlatformOwner) {
       final rows = await _client
           .from('sites')
           .select(_siteSelect)
@@ -222,40 +222,47 @@ profiles:entered_by(full_name, email)
     required String siteId,
     required DateTime businessDate,
   }) async {
-    final siteRow = await _client
+    final todayIso = formatBusinessDate(businessDate);
+    final lookbackIso = formatBusinessDate(
+      businessDate.subtract(const Duration(days: 45)),
+    );
+
+    final siteFuture = _client
         .from('sites')
         .select(_siteSelect)
         .eq('id', siteId)
         .single();
-    final site = Site.fromJson(Map<String, dynamic>.from(siteRow));
-
-    final meters = await _fetchMetersForSite(siteId);
-    final todayIso = formatBusinessDate(businessDate);
-    final todayReadings = await _client
+    final metersFuture = _fetchMetersForSite(siteId);
+    final todayFuture = _client
         .from('meter_readings')
         .select('id')
         .eq('site_id', siteId)
         .eq('reading_date', todayIso);
+    final lastFuture = _client
+        .from('meter_readings')
+        .select('reading_date')
+        .eq('site_id', siteId)
+        .gte('reading_date', lookbackIso)
+        .order('reading_date', ascending: false)
+        .limit(1)
+        .maybeSingle()
+        .timeout(const Duration(seconds: 3));
+    final copFuture = _client
+        .from('cop_groups')
+        .select('id')
+        .eq('site_id', siteId);
+
+    final siteRow = await siteFuture;
+    final site = Site.fromJson(Map<String, dynamic>.from(siteRow));
+    final meters = await metersFuture;
+    final todayReadings = await todayFuture as List;
 
     DateTime? lastReadingDate;
-    if ((todayReadings as List).isNotEmpty) {
+    if (todayReadings.isNotEmpty) {
       lastReadingDate = businessDate;
     } else {
       try {
-        final lastReading = await _client
-            .from('meter_readings')
-            .select('reading_date')
-            .eq('site_id', siteId)
-            .gte(
-              'reading_date',
-              formatBusinessDate(
-                businessDate.subtract(const Duration(days: 45)),
-              ),
-            )
-            .order('reading_date', ascending: false)
-            .limit(1)
-            .maybeSingle()
-            .timeout(const Duration(seconds: 3));
+        final lastReading = await lastFuture;
         if (lastReading != null) {
           lastReadingDate = DateTime.parse(
             lastReading['reading_date'] as String,
@@ -264,10 +271,7 @@ profiles:entered_by(full_name, email)
       } catch (_) {}
     }
 
-    final copRows = await _client
-        .from('cop_groups')
-        .select('id')
-        .eq('site_id', siteId);
+    final copRows = await copFuture;
 
     final entryEligible = meters.where((m) => m.isEntryEligible).length;
     final submittedToday = todayReadings.length;
@@ -1310,54 +1314,71 @@ profiles:entered_by(full_name, email)
     required ChartBucket bucket,
   }) async {
     final windows = chartBucketWindows(from: from, to: to, bucket: bucket);
+    if (windows.isEmpty) return const [];
+
+    // Bound concurrency: windows in parallel chunks; earliest+prev in parallel.
+    const chunkSize = 4;
     final results = <Map<String, dynamic>>[];
 
-    for (final window in windows) {
-      final windowFromIso = formatBusinessDate(window.from);
-      final windowToIso = formatBusinessDate(window.to);
-      final latest = await _fetchEdgeReadingPerMeterInWindow(
-        siteId: siteId,
-        meterIds: meterIds,
-        fromIso: windowFromIso,
-        toIso: windowToIso,
-        ascending: false,
-      );
-      if (latest.isEmpty) continue;
+    for (var i = 0; i < windows.length; i += chunkSize) {
+      final chunk = windows.skip(i).take(chunkSize).toList();
+      final chunkRows = await Future.wait(
+        chunk.map((window) async {
+          final windowFromIso = formatBusinessDate(window.from);
+          final windowToIso = formatBusinessDate(window.to);
+          final latest = await _fetchEdgeReadingPerMeterInWindow(
+            siteId: siteId,
+            meterIds: meterIds,
+            fromIso: windowFromIso,
+            toIso: windowToIso,
+            ascending: false,
+          );
+          if (latest.isEmpty) return <Map<String, dynamic>>[];
 
-      final earliest = await _fetchEdgeReadingPerMeterInWindow(
-        siteId: siteId,
-        meterIds: latest.keys.toList(),
-        fromIso: windowFromIso,
-        toIso: windowToIso,
-        ascending: true,
-      );
-      final prevByMeter = await _batchPreviousNormalized(
-        siteId: siteId,
-        meterIds: latest.keys.toList(),
-        beforeIso: windowFromIso,
-      );
+          final activeIds = latest.keys.toList();
+          final earliestFuture = _fetchEdgeReadingPerMeterInWindow(
+            siteId: siteId,
+            meterIds: activeIds,
+            fromIso: windowFromIso,
+            toIso: windowToIso,
+            ascending: true,
+          );
+          final prevFuture = _batchPreviousNormalized(
+            siteId: siteId,
+            meterIds: activeIds,
+            beforeIso: windowFromIso,
+          );
+          final earliest = await earliestFuture;
+          final prevByMeter = await prevFuture;
 
-      for (final entry in latest.entries) {
-        final meterId = entry.key;
-        final meta = meterMetaById[meterId];
-        if (meta == null) continue;
-        final lastRow = entry.value;
-        final lastValue = _toDouble(lastRow['normalized_value']);
-        final firstValue = earliest[meterId] == null
-            ? null
-            : _toDouble(earliest[meterId]!['normalized_value']);
-        final consumption = periodConsumptionFromEndpoints(
-          lastInPeriod: lastValue,
-          previousBeforePeriod: prevByMeter[meterId],
-          firstInPeriod: firstValue,
-        );
-        results.add({
-          'meter_id': meterId,
-          'site_id': lastRow['site_id'] ?? siteId,
-          'reading_date': lastRow['reading_date'],
-          'daily_consumption': consumption,
-          'meters': meta,
-        });
+          final out = <Map<String, dynamic>>[];
+          for (final entry in latest.entries) {
+            final meterId = entry.key;
+            final meta = meterMetaById[meterId];
+            if (meta == null) continue;
+            final lastRow = entry.value;
+            final lastValue = _toDouble(lastRow['normalized_value']);
+            final firstValue = earliest[meterId] == null
+                ? null
+                : _toDouble(earliest[meterId]!['normalized_value']);
+            final consumption = periodConsumptionFromEndpoints(
+              lastInPeriod: lastValue,
+              previousBeforePeriod: prevByMeter[meterId],
+              firstInPeriod: firstValue,
+            );
+            out.add({
+              'meter_id': meterId,
+              'site_id': lastRow['site_id'] ?? siteId,
+              'reading_date': lastRow['reading_date'],
+              'daily_consumption': consumption,
+              'meters': meta,
+            });
+          }
+          return out;
+        }),
+      );
+      for (final rows in chunkRows) {
+        results.addAll(rows);
       }
     }
 

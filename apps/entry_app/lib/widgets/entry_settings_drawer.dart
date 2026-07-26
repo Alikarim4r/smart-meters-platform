@@ -119,6 +119,7 @@ class EntrySettingsDrawer extends ConsumerWidget {
                     text: s.account,
                   ),
                   const SizedBox(height: 4),
+                  SessionSecuritySettingsSection(locale: locale, dense: true),
                   ListTile(
                     contentPadding: EdgeInsets.zero,
                     leading: const Icon(Icons.lock_outline),

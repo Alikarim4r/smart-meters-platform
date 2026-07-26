@@ -1,0 +1,71 @@
+import 'package:flutter/foundation.dart';
+import 'package:local_auth/local_auth.dart';
+
+/// Thin wrapper around [LocalAuthentication] with web-safe fallbacks.
+class BiometricAuthService {
+  BiometricAuthService({LocalAuthentication? auth})
+    : _auth = auth ?? LocalAuthentication();
+
+  final LocalAuthentication _auth;
+
+  bool get isSupportedPlatform =>
+      !kIsWeb &&
+      (defaultTargetPlatform == TargetPlatform.android ||
+          defaultTargetPlatform == TargetPlatform.iOS ||
+          defaultTargetPlatform == TargetPlatform.macOS);
+
+  Future<bool> canUseBiometrics() async {
+    if (!isSupportedPlatform) return false;
+    try {
+      final supported = await _auth.isDeviceSupported();
+      if (!supported) return false;
+      final canCheck = await _auth.canCheckBiometrics;
+      return canCheck || supported;
+    } catch (_) {
+      return false;
+    }
+  }
+
+  /// Prefer a concrete biometric label when available.
+  Future<String> preferredLabel({required bool isArabic}) async {
+    if (!isSupportedPlatform) {
+      return isArabic ? 'البصمة / الوجه' : 'Biometrics';
+    }
+    try {
+      final types = await _auth.getAvailableBiometrics();
+      final hasFace = types.contains(BiometricType.face);
+      final hasFinger =
+          types.contains(BiometricType.fingerprint) ||
+          types.contains(BiometricType.strong) ||
+          types.contains(BiometricType.weak);
+      if (hasFace && hasFinger) {
+        return isArabic ? 'البصمة أو الوجه' : 'Fingerprint or Face ID';
+      }
+      if (hasFace) {
+        return isArabic ? 'الوجه' : 'Face ID';
+      }
+      if (hasFinger) {
+        return isArabic ? 'بصمة الإصبع' : 'Fingerprint';
+      }
+    } catch (_) {}
+    return isArabic ? 'البصمة / الوجه' : 'Biometrics';
+  }
+
+  Future<bool> authenticate({
+    required String localizedReason,
+  }) async {
+    if (!isSupportedPlatform) return false;
+    try {
+      return await _auth.authenticate(
+        localizedReason: localizedReason,
+        options: const AuthenticationOptions(
+          biometricOnly: false,
+          stickyAuth: true,
+          useErrorDialogs: true,
+        ),
+      );
+    } catch (_) {
+      return false;
+    }
+  }
+}

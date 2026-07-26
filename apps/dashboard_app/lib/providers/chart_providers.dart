@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
@@ -51,8 +53,10 @@ final siteCategoriesSummaryForMonthProvider =
 /// Chart period chips per utility analytics section (independent of meter dates).
 final utilityChartPeriodProvider =
     StateProvider.autoDispose.family<UtilityChartPeriodState, String>((ref, key) {
+  // Lighter default: last 7 days (daily) via weekly period mapping.
+  // last30Days remains available as an explicit chip.
   return const UtilityChartPeriodState(
-    kind: UtilityChartPeriodKind.last30Days,
+    kind: UtilityChartPeriodKind.last7Days,
   );
 });
 
@@ -92,6 +96,16 @@ final siteTodayCompletionProvider =
 
 final categoryChartBundleProvider = FutureProvider.autoDispose
     .family<CategoryChartBundle, CategoryChartQuery>((ref, query) async {
+  // Keep chart results for the session so remounts don't refetch immediately.
+  final link = ref.keepAlive();
+  Timer? disposeTimer;
+  ref.onCancel(() {
+    disposeTimer?.cancel();
+    disposeTimer = Timer(const Duration(minutes: 5), link.close);
+  });
+  ref.onResume(() => disposeTimer?.cancel());
+  ref.onDispose(() => disposeTimer?.cancel());
+
   final DateTime businessDate = resolveBusinessDate(
     override: query.businessDate,
     fallback: ref.watch(businessDateProvider),
