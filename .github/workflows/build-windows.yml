@@ -1,0 +1,84 @@
+name: Build Windows Apps
+
+on:
+  workflow_dispatch:
+    inputs:
+      app_env:
+        description: APP_ENV baked into the builds
+        required: true
+        default: staging
+        type: choice
+        options:
+          - staging
+          - production
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: dashboard
+            dir: apps/dashboard_app
+            exe: dashboard_app.exe
+            zip_name: Meter-Dashboard-Windows
+          - app: entry
+            dir: apps/entry_app
+            exe: entry_app.exe
+            zip_name: Meter-Entry-Windows
+          - app: admin
+            dir: apps/admin_app
+            exe: admin_app.exe
+            zip_name: Meter-Admin-Windows
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Enable Windows desktop
+        run: flutter config --enable-windows-desktop
+
+      - name: Get dependencies
+        working-directory: ${{ matrix.dir }}
+        run: flutter pub get
+
+      - name: Build Windows release
+        working-directory: ${{ matrix.dir }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          flutter build windows --release `
+            --dart-define=SUPABASE_URL=$env:SUPABASE_URL `
+            --dart-define=SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY `
+            --dart-define=APP_ENV=${{ inputs.app_env }}
+
+      - name: Package release folder
+        shell: pwsh
+        run: |
+          $src = "${{ matrix.dir }}/build/windows/x64/runner/Release"
+          if (-not (Test-Path "$src/${{ matrix.exe }}")) {
+            Write-Error "Missing executable: $src/${{ matrix.exe }}"
+            Get-ChildItem -Recurse "${{ matrix.dir }}/build/windows" | Select-Object FullName
+            exit 1
+          }
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          Compress-Archive -Path "$src/*" -DestinationPath "dist/${{ matrix.zip_name }}.zip" -Force
+          Get-Item "dist/${{ matrix.zip_name }}.zip" | Format-List Name, Length
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.zip_name }}
+          path: dist/${{ matrix.zip_name }}.zip
+          if-no-files-found: error
+          retention-days: 14
