@@ -187,6 +187,17 @@ class AdminStrings {
   String get editOrganization => _t('Edit organization', 'تعديل الجهة');
   String get editZone => _t('Edit zone', 'تعديل المنطقة');
   String get editSite => _t('Edit site', 'تعديل الموقع');
+  String get editMeter => _t('Edit meter', 'تعديل عداد');
+  String get meterDetails => _t('Meter details', 'تفاصيل العداد');
+  String get meterCode => _t('Meter code', 'رمز العداد');
+  String get categoryAndMeasurement =>
+      _t('Category & measurement', 'الفئة والقياس');
+  String get meterHasReadings =>
+      _t('Meter has readings', 'العداد لديه قراءات');
+  String get meterHasReadingsHint => _t(
+    'This meter has readings. Category and unit cannot be changed.',
+    'هذا العداد لديه قراءات. لا يمكن تغيير الفئة أو الوحدة.',
+  );
   String get noZone => _t('No Zone', 'بدون منطقة');
 
   String get zoneFilter => _t('Zone filter', 'تصفية حسب المنطقة');

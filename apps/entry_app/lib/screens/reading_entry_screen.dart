@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/entry_strings.dart';
 import '../models/meter_entry_status.dart';
 import '../offline/local_reading_draft.dart';
 import '../photos/reading_photo_models.dart';
 import '../providers/entry_providers.dart';
+import '../providers/preferences_providers.dart';
 import '../utils/reading_validation.dart';
 import '../widgets/cumulative_reading_input.dart';
 import '../widgets/optional_note_field.dart';
@@ -88,19 +90,24 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       return true;
     }
 
+    final s = EntryStrings(ref.read(entryLocaleProvider));
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('High reading'),
-        content: const Text(highReadingWarningMessage),
+        title: Text(s.highReading),
+        content: Text(
+          s.isAr
+              ? 'هذه القراءة أعلى بكثير من السابقة. راجع القيمة قبل التأكيد.'
+              : highReadingWarningMessage,
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Review'),
+            child: Text(s.review),
           ),
           FilledButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Confirm'),
+            child: Text(s.confirm),
           ),
         ],
       ),
@@ -114,13 +121,16 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       return;
     }
 
+    final s = EntryStrings(ref.read(entryLocaleProvider));
     final rawValue = double.parse(_rawValueController.text.trim());
     final lastRaw = _lastRawValue;
     if (lastRaw != null && rawValue < lastRaw) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'This reading is lower than the previous reading.',
+            s.isAr
+                ? 'هذه القراءة أقل من القراءة السابقة.'
+                : 'This reading is lower than the previous reading.',
           ),
         ),
       );
@@ -146,8 +156,10 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       SnackBar(
         content: Text(
           entryState.savedLocally
-              ? 'Reading saved locally. It will sync when online.'
-              : 'Reading saved successfully',
+              ? (s.isAr
+                  ? 'حُفظت القراءة محلياً. ستُزامن عند الاتصال.'
+                  : 'Reading saved locally. It will sync when online.')
+              : (s.isAr ? 'تم حفظ القراءة بنجاح' : 'Reading saved successfully'),
         ),
       ),
     );
@@ -260,12 +272,19 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Photo was not added.')),
+      SnackBar(
+        content: Text(
+          EntryStrings(ref.read(entryLocaleProvider)).isAr
+              ? 'لم تتم إضافة الصورة.'
+              : 'Photo was not added.',
+        ),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final s = EntryStrings(ref.watch(entryLocaleProvider));
     final entryState = ref.watch(readingEntryProvider(_query));
     final policyAsync = ref.watch(sitePolicyProvider(widget.site.id));
     final photoRequired = policyAsync.valueOrNull?.photoRequired ?? false;
@@ -278,7 +297,11 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(isReadOnly ? 'Reading submitted' : 'Enter reading'),
+        title: Text(
+          isReadOnly
+              ? (s.isAr ? 'تم إرسال القراءة' : 'Reading submitted')
+              : (s.isAr ? 'إدخال قراءة' : 'Enter reading'),
+        ),
       ),
       body: entryState.isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -362,7 +385,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                                 child:
                                     CircularProgressIndicator(strokeWidth: 2),
                               )
-                            : const Text('Save reading'),
+                            : Text(s.isAr ? 'حفظ القراءة' : 'Save reading'),
                       ),
                     ],
                   ],

@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
 import '../providers/catalog_providers.dart';
+import '../providers/preferences_providers.dart';
 import '../utils/admin_validation.dart';
 import '../widgets/catalog_widgets.dart';
 
@@ -208,6 +210,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AdminStrings(ref.watch(adminLocaleProvider));
     final canManage = ref.watch(canManageMetersProvider);
     final categoriesAsync = ref.watch(catalogCategoriesProvider);
     final unitsAsync = _categoryId == null
@@ -220,7 +223,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isEditing ? 'Edit meter' : 'Add meter'),
+        title: Text(widget.isEditing ? s.editMeter : s.addMeter),
         actions: [
           if (canManage)
             Padding(
@@ -236,7 +239,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Save'),
+                    : Text(s.save),
               ),
             ),
         ],
@@ -251,21 +254,19 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                 Card(
                   margin: const EdgeInsets.only(bottom: 20),
                   color: Colors.amber.shade50,
-                  child: const ListTile(
-                    leading: Icon(Icons.lock_outline),
-                    title: Text('Meter has readings'),
-                    subtitle: Text(
-                      'This meter has readings. Category and unit cannot be changed.',
-                    ),
+                  child: ListTile(
+                    leading: const Icon(Icons.lock_outline),
+                    title: Text(s.meterHasReadings),
+                    subtitle: Text(s.meterHasReadingsHint),
                   ),
                 ),
               CatalogFormSection(
-                title: 'Basic information',
+                title: s.basicInformation,
                 children: [
                   TextFormField(
                     controller: _codeController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Meter code *',
+                      labelText: '${s.meterCode} *',
                       hintText: 'e.g. WM-001',
                     ),
                     enabled: canManage,
@@ -274,7 +275,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                   TextFormField(
                     controller: _nameEnController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'English name *',
+                      labelText: '${s.englishName} *',
                     ),
                     enabled: canManage,
                     validator: validateSiteNameEn,
@@ -282,14 +283,14 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                   TextFormField(
                     controller: _nameArController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Arabic name',
+                      labelText: s.arabicName,
                     ),
                     enabled: canManage,
                   ),
                   TextFormField(
                     controller: _sortOrderController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Sort order *',
+                      labelText: '${s.sortOrder} *',
                     ),
                     keyboardType: TextInputType.number,
                     enabled: canManage,
@@ -298,9 +299,10 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                 ],
               ),
               CatalogFormSection(
-                title: 'Category & measurement',
-                subtitle:
-                    'Unit and source options depend on the selected category',
+                title: s.categoryAndMeasurement,
+                subtitle: s.isAr
+                    ? 'خيارات الوحدة والمصدر تعتمد على الفئة المختارة'
+                    : 'Unit and source options depend on the selected category',
                 children: [
                   categoriesAsync.when(
                     loading: () =>
@@ -324,7 +326,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                         initialValue: _categoryId,
                         isExpanded: true,
                         decoration: catalogFieldDecoration(
-                          labelText: 'Category *',
+                          labelText: '${s.category} *',
                         ),
                         items: [
                           for (final category in activeCategories)
@@ -410,7 +412,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                                 initialValue: _unitId,
                                 isExpanded: true,
                                 decoration: catalogFieldDecoration(
-                                  labelText: 'Unit *',
+                                  labelText: '${s.unit} *',
                                 ),
                                 items: [
                                   for (final u in active)
@@ -436,7 +438,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                           initialValue: _globalUnitId,
                           isExpanded: true,
                           decoration: catalogFieldDecoration(
-                            labelText: 'Unit *',
+                            labelText: '${s.unit} *',
                             helperText:
                                 'Only units allowed for this measurement',
                           ),
@@ -469,7 +471,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                             initialValue: null,
                             isExpanded: true,
                             decoration: catalogFieldDecoration(
-                              labelText: 'Unit *',
+                              labelText: '${s.unit} *',
                               helperText: 'Select a category first',
                             ),
                             items: const [],
@@ -483,7 +485,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                         if (activeUnits.isEmpty) {
                           return InputDecorator(
                             decoration: catalogFieldDecoration(
-                              labelText: 'Unit *',
+                              labelText: '${s.unit} *',
                               helperText:
                                   'No units for this category — add them under Units',
                             ),
@@ -513,7 +515,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                           initialValue: unitValue,
                           isExpanded: true,
                           decoration: catalogFieldDecoration(
-                            labelText: 'Unit *',
+                            labelText: '${s.unit} *',
                             helperText:
                                 'Choose from catalog units for this category',
                           ),
@@ -550,7 +552,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                         initialValue: _sourceId,
                         isExpanded: true,
                         decoration: catalogFieldDecoration(
-                          labelText: 'Source *',
+                          labelText: '${s.source} *',
                         ),
                         items: [
                           for (final source in activeSources)
