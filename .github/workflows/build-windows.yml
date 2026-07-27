@@ -57,6 +57,9 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
+          # Silence MSVC STL1011 from local_auth_windows experimental coroutines.
+          $env:CXXFLAGS = "/D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS $($env:CXXFLAGS)"
+          $env:CFLAGS = "/D_SILENCE_EXPERIMENTAL_COROUTINE_DEPRECATION_WARNINGS $($env:CFLAGS)"
           flutter build windows --release `
             --dart-define=SUPABASE_URL=$env:SUPABASE_URL `
             --dart-define=SUPABASE_ANON_KEY=$env:SUPABASE_ANON_KEY `
