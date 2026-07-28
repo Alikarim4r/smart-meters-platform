@@ -35,11 +35,97 @@ profiles:entered_by(full_name, email)
   Future<List<AdminReadingRow>> getSubmittedReadingsForAdmin({
     required ReadingCorrectionFilters filters,
   }) async {
-    var query = _client.from('meter_readings').select(_readingSelect);
+    final siteId = filters.siteId;
+    if (siteId == null || siteId.isEmpty) return [];
 
-    if (filters.siteId != null) {
-      query = query.eq('site_id', filters.siteId!);
+    // Prefer SECURITY DEFINER RPC — avoids empty lists from RLS/embed edge cases.
+    try {
+      final rows = await _client.rpc(
+        'admin_list_site_readings',
+        params: {
+          'p_site_id': siteId,
+          'p_from_date': filters.fromDate == null
+              ? null
+              : formatBusinessDate(filters.fromDate!),
+          'p_to_date': filters.toDate == null
+              ? null
+              : formatBusinessDate(filters.toDate!),
+          'p_limit': filters.limit,
+        },
+      );
+      final results = <AdminReadingRow>[];
+      for (final row in rows as List) {
+        final map = Map<String, dynamic>.from(row as Map);
+        if (filters.zoneId != null && map['zone_id'] != filters.zoneId) {
+          continue;
+        }
+        if (filters.categoryId != null &&
+            map['category_id'] != filters.categoryId) {
+          continue;
+        }
+
+        final readingDate = DateTime.parse(map['reading_date'] as String);
+        final adminRow = AdminReadingRow(
+          readingId: map['reading_id'] as String,
+          siteId: map['site_id'] as String,
+          siteName: map['site_name'] as String? ?? 'Site',
+          zoneName: map['zone_name'] as String? ?? 'No Zone',
+          meterId: map['meter_id'] as String,
+          meterName: map['meter_name'] as String? ?? 'Unknown meter',
+          meterCode: map['meter_code'] as String? ?? '',
+          categoryName: map['category_name'] as String? ?? '',
+          unitLabel: map['unit_label'] as String? ?? '',
+          readingDate: readingDate,
+          rawValue: _toDouble(map['raw_value'] ?? 0),
+          normalizedValue: _toDouble(map['normalized_value'] ?? map['raw_value'] ?? 0),
+          note: map['note'] as String?,
+          imageStoragePath: map['image_storage_path'] as String?,
+          enteredByName: map['entered_by_name'] as String?,
+          enteredByEmail: map['entered_by_email'] as String?,
+          enteredAt: DateTime.tryParse(map['entered_at']?.toString() ?? '') ??
+              readingDate,
+          isCorrected: map['is_corrected'] as bool? ?? false,
+        );
+
+        final previous = await getPreviousReadingValue(
+          meterId: adminRow.meterId,
+          readingDate: adminRow.readingDate,
+        );
+        final enriched = AdminReadingRow(
+          readingId: adminRow.readingId,
+          siteId: adminRow.siteId,
+          siteName: adminRow.siteName,
+          zoneName: adminRow.zoneName,
+          meterId: adminRow.meterId,
+          meterName: adminRow.meterName,
+          meterCode: adminRow.meterCode,
+          categoryName: adminRow.categoryName,
+          unitLabel: adminRow.unitLabel,
+          readingDate: adminRow.readingDate,
+          rawValue: adminRow.rawValue,
+          normalizedValue: adminRow.normalizedValue,
+          note: adminRow.note,
+          imageStoragePath: adminRow.imageStoragePath,
+          enteredByName: adminRow.enteredByName,
+          enteredByEmail: adminRow.enteredByEmail,
+          enteredAt: adminRow.enteredAt,
+          isCorrected: adminRow.isCorrected,
+          alertTypes: _detectReadingAlerts(
+            rawValue: adminRow.rawValue,
+            previousValue: previous,
+            hasPhoto: adminRow.hasPhoto,
+          ),
+        );
+        if (!_matchesListFilter(enriched, filters.listFilter)) continue;
+        results.add(enriched);
+      }
+      return results;
+    } catch (_) {
+      // Fall through to legacy PostgREST path.
     }
+
+    var query = _client.from('meter_readings').select(_readingSelect);
+    query = query.eq('site_id', siteId);
     if (filters.fromDate != null) {
       query = query.gte('reading_date', formatBusinessDate(filters.fromDate!));
     }

@@ -615,7 +615,10 @@ class AdminStrings {
   );
   String get dailyCutoff =>
       _t('Daily reading cutoff time', 'وقت إقفال القراءة اليومية');
-  String get cutoffHint => _t('HH:MM (Qatar time)', 'HH:MM (بتوقيت قطر)');
+  String get cutoffHint => _t(
+    'Tap to pick time (Qatar)',
+    'اضغط لاختيار الوقت (بتوقيت قطر)',
+  );
   String get backdatePerUser =>
       _t('Backdated entry (per user)', 'الإدخال بتواريخ سابقة (لكل مستخدم)');
   String get backdatePerUserHint => _t(

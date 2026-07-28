@@ -142,10 +142,18 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(session: session);
       await _loadProfile(session.user.id);
     } on AuthException catch (error) {
+      final lower = error.message.toLowerCase();
+      final message = lower.contains('rate limit') ||
+              lower.contains('over_email') ||
+              lower.contains('email rate')
+          ? 'Registration temporarily limited by email sending. Try again in a few minutes, or ask an admin to create the account.'
+          : (lower.contains('already') || lower.contains('registered')
+                ? 'This email is already registered. Sign in or use another email.'
+                : error.message);
       state = state.copyWith(
         clearProfile: true,
         isLoadingProfile: false,
-        errorMessage: error.message,
+        errorMessage: message,
       );
     } catch (_) {
       state = state.copyWith(
@@ -220,15 +228,13 @@ class AuthNotifier extends StateNotifier<AuthState> {
         clearInfo: true,
       );
     } catch (error) {
-      // Never leave the gate spinning forever (offline / hung RPC).
-      try {
-        await _ref.read(authRepositoryProvider).signOut();
-      } catch (_) {}
-      state = AuthState(
+      // Keep the session so the user can retry / wait for approval screens.
+      // Signing out here made new registrations look completely broken.
+      state = state.copyWith(
         isLoadingProfile: false,
         errorMessage: error.toString().contains('Timeout')
-            ? 'Connection timed out. Check your network and try again.'
-            : 'Could not load profile for this account.',
+            ? 'Connection timed out. Check your network and tap retry.'
+            : 'Could not load profile for this account. Pull to refresh or try again.',
       );
     }
   }

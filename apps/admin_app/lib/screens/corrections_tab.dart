@@ -58,6 +58,7 @@ class CorrectionsTab extends ConsumerWidget {
                       error: (e, _) => Text('Sites: $e'),
                       data: (sites) {
                         return DropdownButtonFormField<String?>(
+                          key: ValueKey('site-$siteId-${sites.length}'),
                           initialValue: siteId,
                           isExpanded: true,
                           decoration: const InputDecoration(

@@ -210,17 +210,15 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                                 )
                               : null,
                         ),
-                        _TextFieldTile(
+                        _TimePickerTile(
                           label: s.dailyCutoff,
                           hint: s.cutoffHint,
                           value: draft.dailyReadingCutoffTime,
                           enabled: canManage,
                           onChanged: (value) => _updateDraft(
                             (current) => current.copyWith(
-                              dailyReadingCutoffTime: value.trim().isEmpty
-                                  ? null
-                                  : value.trim(),
-                              clearDailyReadingCutoffTime: value.trim().isEmpty,
+                              dailyReadingCutoffTime: value,
+                              clearDailyReadingCutoffTime: value == null,
                             ),
                           ),
                         ),
@@ -575,19 +573,126 @@ class _SectionCard extends StatelessWidget {
   }
 }
 
+class _TimePickerTile extends StatelessWidget {
+  const _TimePickerTile({
+    required this.label,
+    required this.onChanged,
+    this.value,
+    this.hint,
+    this.enabled = true,
+  });
+
+  final String label;
+  final String? value;
+  final String? hint;
+  final bool enabled;
+  final ValueChanged<String?> onChanged;
+
+  TimeOfDay _parse(String? raw) {
+    final text = (raw ?? '').trim();
+    final match = RegExp(r'^(\d{1,2}):(\d{2})$').firstMatch(text);
+    if (match == null) {
+      return const TimeOfDay(hour: 23, minute: 59);
+    }
+    final hour = int.tryParse(match.group(1)!) ?? 23;
+    final minute = int.tryParse(match.group(2)!) ?? 59;
+    return TimeOfDay(
+      hour: hour.clamp(0, 23),
+      minute: minute.clamp(0, 59),
+    );
+  }
+
+  String _format(TimeOfDay time) {
+    final h = time.hour.toString().padLeft(2, '0');
+    final m = time.minute.toString().padLeft(2, '0');
+    return '$h:$m';
+  }
+
+  Future<void> _pick(BuildContext context) async {
+    if (!enabled) return;
+    final selected = await showTimePicker(
+      context: context,
+      initialTime: _parse(value),
+      helpText: label,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
+    );
+    if (selected == null) return;
+    onChanged(_format(selected));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final display = (value == null || value!.trim().isEmpty)
+        ? (hint ?? '--:--')
+        : value!.trim();
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: InputDecorator(
+        decoration: InputDecoration(
+          labelText: label,
+          hintText: hint,
+          border: const OutlineInputBorder(),
+          suffixIcon: enabled
+              ? IconButton(
+                  tooltip: 'Clear',
+                  onPressed: () => onChanged(null),
+                  icon: const Icon(Icons.clear),
+                )
+              : null,
+        ),
+        child: InkWell(
+          onTap: enabled ? () => _pick(context) : null,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 12),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.alarm,
+                  size: 20,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    display,
+                    style: Theme.of(context).textTheme.titleMedium,
+                  ),
+                ),
+                if (enabled)
+                  Text(
+                    Localizations.localeOf(context).languageCode == 'ar'
+                        ? 'اختيار'
+                        : 'Pick',
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TextFieldTile extends StatelessWidget {
   const _TextFieldTile({
     required this.label,
     required this.onChanged,
     this.value,
-    this.hint,
     this.enabled = true,
     this.maxLines = 1,
   });
 
   final String label;
   final String? value;
-  final String? hint;
   final bool enabled;
   final int maxLines;
   final ValueChanged<String> onChanged;
@@ -602,7 +707,6 @@ class _TextFieldTile extends StatelessWidget {
         maxLines: maxLines,
         decoration: InputDecoration(
           labelText: label,
-          hintText: hint,
           border: const OutlineInputBorder(),
         ),
         onChanged: onChanged,
