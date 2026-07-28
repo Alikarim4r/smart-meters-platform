@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>التحميلات — منصة العدادات الذكية</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css?v=5" />
+  <link rel="icon" href="./assets/portal_mark.png?v=5" />
+</head>
+<body data-page="downloads">
+  <div class="site-bg" aria-hidden="true"></div>
+  <div class="site-motif" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <div class="wrap topbar-inner">
+      <a class="brand" href="./">
+        <img src="./assets/portal_mark.png?v=5" alt="" />
+        <span data-i18n="brand">العدادات الذكية</span>
+      </a>
+      <nav class="nav" aria-label="Main">
+        <a href="./" data-i18n="navAbout">التعريف</a>
+        <a href="./apps.html" data-i18n="navApps">التطبيقات</a>
+        <a href="./downloads.html" aria-current="page" data-i18n="navDownloads">التحميلات</a>
+        <div class="controls" role="group" aria-label="Language and theme">
+          <button type="button" class="toggle-btn" data-lang-toggle>EN</button>
+          <button type="button" class="toggle-btn" data-theme-toggle>داكن</button>
+        </div>
+      </nav>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="page-hero">
+      <h1 data-i18n="dlHeroTitle">تحميل التطبيقات</h1>
+      <p data-i18n="dlHeroLead">حمّل تطبيقات أندرويد وماك وويندوز، أو افتح تطبيقات الويب مباشرة من بوابة التطبيقات. على iPhone/iPad استخدم الويب عبر Safari إلى حين اعتماد TestFlight.</p>
+    </section>
+
+    <section class="section" style="padding-top:0">
+      <div class="download-grid">
+        <article class="download-item">
+          <h3>Android <span class="badge badge-ready" data-i18n="available">متاح</span></h3>
+          <p data-i18n="dlAndroidBody">ملفات APK لتطبيقات العرض والإدخال والإدارة على أجهزة أندرويد.</p>
+          <div class="dl-stack">
+            <a class="btn btn-primary" href="./downloads/android/smart-meters-dashboard.apk" download data-i18n="dlDashApk">تحميل لوحة العرض</a>
+            <a class="btn btn-primary" href="./downloads/android/smart-meters-entry.apk" download data-i18n="dlEntryApk">تحميل الإدخال</a>
+            <a class="btn btn-primary" href="./downloads/android/smart-meters-admin.apk" download data-i18n="dlAdminApk">تحميل الإدارة</a>
+          </div>
+        </article>
+        <article class="download-item">
+          <h3>Mac <span class="badge badge-ready" data-i18n="available">متاح</span></h3>
+          <p data-i18n="dlMacBody">ملفات ZIP تحتوي تطبيق .app لكل منصة. بعد التحميل: فك الضغط ثم افتح التطبيق (قد تحتاج السماح من إعدادات الخصوصية والأمان).</p>
+          <div class="dl-stack">
+            <a class="btn btn-primary" href="./downloads/macos/Meter-Dashboard-macOS.zip" download data-i18n="dlDashMac">تحميل لوحة العرض (Mac)</a>
+            <a class="btn btn-primary" href="./downloads/macos/Meter-Entry-macOS.zip" download data-i18n="dlEntryMac">تحميل الإدخال (Mac)</a>
+            <a class="btn btn-primary" href="./downloads/macos/Meter-Admin-macOS.zip" download data-i18n="dlAdminMac">تحميل الإدارة (Mac)</a>
+          </div>
+        </article>
+        <article class="download-item">
+          <h3>Windows <span class="badge badge-ready" data-i18n="available">متاح</span></h3>
+          <p data-i18n="dlWinBody">حزم ZIP لمجلد التشغيل على ويندوز. فك الضغط ثم شغّل الملف التنفيذي للتطبيق المطلوب.</p>
+          <div class="dl-stack">
+            <a class="btn btn-primary" href="./downloads/windows/Meter-Dashboard-Windows.zip" download data-i18n="dlDashWin">تحميل لوحة العرض (Windows)</a>
+            <a class="btn btn-primary" href="./downloads/windows/Meter-Entry-Windows.zip" download data-i18n="dlEntryWin">تحميل الإدخال (Windows)</a>
+            <a class="btn btn-primary" href="./downloads/windows/Meter-Admin-Windows.zip" download data-i18n="dlAdminWin">تحميل الإدارة (Windows)</a>
+          </div>
+        </article>
+        <article class="download-item">
+          <h3>iPhone / iPad <span class="badge badge-ready" data-i18n="webReady">ويب متاح</span></h3>
+          <p data-i18n="dlIosBody">التطبيق الأصلي عبر App Store / TestFlight غير منشور بعد. يمكنك استخدام تطبيقات الويب مباشرة من Safari على iPhone وiPad.</p>
+          <div class="dl-stack">
+            <a class="btn btn-primary" href="./dashboard/" data-i18n="dlDashIos">فتح لوحة العرض في Safari</a>
+            <a class="btn btn-primary" href="./entry/" data-i18n="dlEntryIos">فتح الإدخال في Safari</a>
+            <a class="btn btn-primary" href="./admin/" data-i18n="dlAdminIos">فتح الإدارة في Safari</a>
+          </div>
+        </article>
+      </div>
+      <div class="note" data-i18n="dlNote">ملاحظة: تثبيت APK على أندرويد يتطلب السماح بالتثبيت من مصادر غير المتجر. تطبيقات الماك غير موقّعة من Apple Notary وقد تحتاج «فتح على أي حال» من إعدادات الأمان. حزم ويندوز تُشغَّل بعد فك الضغط دون مثبّت.</div>
+    </section>
+
+    <section class="section" style="padding-top:1rem">
+      <div class="creator">
+        <h2 data-i18n="creatorTitle">تم الإنشاء والتطوير بواسطة</h2>
+        <p class="role" data-creator-name>المهندس: علي عبد الكريم الحسن</p>
+        <a href="tel:+97430058899" class="phone-ltr" dir="ltr">+974 3005 8899</a>
+        <a href="mailto:Support@AliMind.com">Support@AliMind.com</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="wrap footer-inner">
+      <div><strong data-i18n="brand">العدادات الذكية</strong> · Smart Meters Platform</div>
+      <div data-i18n="footerNote">بوابة مرحلية للوصول إلى تطبيقات الويب</div>
+    </div>
+  </footer>
+
+  <script src="./portal.js?v=5"></script>
+</body>
+</html>
