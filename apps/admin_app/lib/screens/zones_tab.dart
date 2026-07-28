@@ -495,6 +495,7 @@ class _ZoneFormScreenState extends ConsumerState<ZoneFormScreen> {
         ],
       ),
       body: BrandSurfaceBackground(
+        showMotif: false,
         child: SafeArea(
           child: Form(
             key: _formKey,

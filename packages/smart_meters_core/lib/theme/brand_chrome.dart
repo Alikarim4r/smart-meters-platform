@@ -1,55 +1,65 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
+import 'app_brand_palette.dart';
 
-/// Shared warm cream/gold chrome — Entry, Admin, and Dashboard brand language.
+/// Shared brand chrome. Call [use] once at app startup to pick an official palette.
+///
+/// Revert to previous look with `BrandChrome.use(AppBrandPalette.legacy)`.
 abstract final class BrandChrome {
-  /// Warm ink for titles (not cold navy).
-  static const ink = Color(0xFF3F3426);
+  static AppBrandPalette _palette = AppBrandPalette.legacy;
 
-  /// Soft secondary text.
-  static const inkMuted = Color(0xFF7A6A55);
+  static AppBrandPalette get palette => _palette;
 
-  /// Icon well fill (cream → soft gold).
-  static const iconWellTop = Color(0xFFFFF6E0);
-  static const iconWellBottom = Color(0xFFE8C96A);
+  static void use(AppBrandPalette palette) {
+    _palette = palette;
+  }
 
-  /// Icon glyph on the well.
-  static const iconGlyph = Color(0xFF8A6A1A);
+  static Color get ink => _palette.ink;
+  static Color get inkMuted => _palette.inkMuted;
+  static Color get iconWellTop => _palette.iconWellTop;
+  static Color get iconWellBottom => _palette.iconWellBottom;
+  static Color get iconGlyph => _palette.iconGlyph;
+  static Color get accent => _palette.accent;
+  static Color get accentDeep => _palette.accentDeep;
+  static Color get onAccent => _palette.onAccent;
+  static Color get borderLight => _palette.borderLight;
+  static Color get canvasLight => _palette.surface;
+  static Color get primary => _palette.primary;
+  static Color get accentSoft => _palette.accentSoft;
 
-  /// Primary action / selected chip.
-  static const accent = AppColors.gold;
-  static const accentDeep = Color(0xFFA88412);
-  static const onAccent = Color(0xFF2C2208);
+  static Color get canvasDark => _palette.canvasDark;
+  static Color get surfaceDark => _palette.surfaceDark;
+  static Color get surfaceDarkHigh => _palette.surfaceDarkHigh;
+  static Color get borderDark => _palette.borderDark;
+  static Color get textDark => _palette.textDark;
+  static Color get textDarkMuted => _palette.textDarkMuted;
 
-  /// Card edge in light mode.
-  static const borderLight = Color(0xFFE8D9B0);
+  static LinearGradient get iconWellGradient => LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [iconWellTop, iconWellBottom],
+      );
 
-  /// Scaffold / drawer canvas (light).
-  static const canvasLight = Color(0xFFF7F3EA);
-
-  /// Midnight surfaces (dark).
-  static const canvasDark = Color(0xFF07111F);
-  static const surfaceDark = Color(0xFF12233A);
-  static const surfaceDarkHigh = Color(0xFF1A314D);
-  static const borderDark = Color(0xFF2C4566);
-  static const textDark = Color(0xFFF3EFE4);
-  static const textDarkMuted = Color(0xFFB7C5D8);
-
-  static LinearGradient get iconWellGradient => const LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [iconWellTop, iconWellBottom],
-  );
-
-  static LinearGradient cardWash({required bool isDark}) => LinearGradient(
-    begin: Alignment.topLeft,
-    end: Alignment.bottomRight,
-    colors: [
-      isDark ? surfaceDark : Colors.white,
-      AppColors.goldSoft.withValues(alpha: isDark ? 0.16 : 0.45),
-    ],
-  );
+  /// Light: nearly flat white with a faint wash.
+  /// Dark: solid panel fill matching KPI tiles (not translucent).
+  static LinearGradient cardWash({required bool isDark}) {
+    if (isDark) {
+      final flat = Color.alphaBlend(
+        accentSoft.withValues(alpha: 0.06),
+        surfaceDark,
+      );
+      return LinearGradient(colors: [flat, flat]);
+    }
+    final soft = Color.alphaBlend(
+      accentSoft.withValues(alpha: 0.07),
+      Colors.white,
+    );
+    return LinearGradient(
+      begin: Alignment.topLeft,
+      end: Alignment.bottomRight,
+      colors: [Colors.white, soft],
+    );
+  }
 
   static Color border({required bool isDark, required ColorScheme scheme}) =>
       isDark ? scheme.outline.withValues(alpha: 0.45) : borderLight;
@@ -57,10 +67,12 @@ abstract final class BrandChrome {
   static Color titleColor({
     required bool isDark,
     required ColorScheme scheme,
-  }) => isDark ? scheme.onSurface : ink;
+  }) =>
+      isDark ? scheme.onSurface : ink;
 
   static Color mutedColor({
     required bool isDark,
     required ColorScheme scheme,
-  }) => isDark ? scheme.onSurface.withValues(alpha: 0.62) : inkMuted;
+  }) =>
+      isDark ? scheme.onSurface.withValues(alpha: 0.62) : inkMuted;
 }

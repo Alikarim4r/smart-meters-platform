@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../repositories/alert_repository.dart';
 import '../repositories/auth_repository.dart';
+import '../repositories/cop_group_repository.dart';
 import '../repositories/dashboard_repository.dart';
 import '../repositories/meter_catalog_repository.dart';
 import '../repositories/meter_image_storage_repository.dart';
@@ -35,6 +36,10 @@ final authRepositoryProvider = Provider<AuthRepository>((ref) {
 
 final dashboardRepositoryProvider = Provider<DashboardRepository>((ref) {
   return DashboardRepository(ref.watch(supabaseClientProvider));
+});
+
+final copGroupRepositoryProvider = Provider<CopGroupRepository>((ref) {
+  return CopGroupRepository(ref.watch(supabaseClientProvider));
 });
 
 final profileRepositoryProvider = Provider<ProfileRepository>((ref) {

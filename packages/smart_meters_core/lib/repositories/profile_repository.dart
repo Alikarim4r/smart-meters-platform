@@ -14,11 +14,20 @@ class ProfileRepository {
     // Prefer SECURITY DEFINER RPC — avoids profiles RLS recursion hangs after login.
     try {
       final data = await _client.rpc('get_own_profile');
-      if (data is Map) {
-        final map = Map<String, dynamic>.from(data);
-        if (map['id']?.toString() == userId) {
-          return Profile.fromJson(map);
-        }
+      final map = _asProfileMap(data);
+      if (map != null && map['id']?.toString() == userId) {
+        return Profile.fromJson(map);
+      }
+    } catch (_) {
+      // Fall through.
+    }
+
+    // Self-registration may lack a profiles row if the auth trigger failed.
+    try {
+      final ensured = await _client.rpc('ensure_own_pending_profile');
+      final map = _asProfileMap(ensured);
+      if (map != null && map['id']?.toString() == userId) {
+        return Profile.fromJson(map);
       }
     } catch (_) {
       // Fall through to direct select for older backends / other-user reads.
@@ -31,6 +40,17 @@ class ProfileRepository {
         .single();
 
     return Profile.fromJson(Map<String, dynamic>.from(data as Map));
+  }
+
+  Map<String, dynamic>? _asProfileMap(dynamic data) {
+    if (data == null) return null;
+    if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    if (data is List && data.isNotEmpty && data.first is Map) {
+      return Map<String, dynamic>.from(data.first as Map);
+    }
+    return null;
   }
 
   /// Updates editable Entry profile fields for the signed-in user.

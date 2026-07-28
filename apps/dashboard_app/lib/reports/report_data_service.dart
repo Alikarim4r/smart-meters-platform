@@ -49,8 +49,15 @@ class ReportDataService {
     required DateTime businessDate,
     String? categoryId,
     ReportType type = ReportType.siteSummary,
+    DateTime? rangeStart,
+    DateTime? rangeEnd,
   }) async {
-    final range = chartPeriodRange(period: period, businessDate: businessDate);
+    final range = _resolveReportRange(
+      period: period,
+      businessDate: businessDate,
+      rangeStart: rangeStart,
+      rangeEnd: rangeEnd,
+    );
     final readingsRequired = type == ReportType.readings;
 
     final summary = await _loadEssential(
@@ -92,6 +99,7 @@ class ReportDataService {
         siteId: siteId,
         period: period,
         businessDate: businessDate,
+        rangeOverride: range,
       ),
       fallback: const SiteConsumptionTrend(
         series: [],
@@ -129,6 +137,7 @@ class ReportDataService {
       categoryId: categoryId,
       period: period,
       businessDate: businessDate,
+      rangeOverride: range,
     );
 
     final copResults = await _loadCopResults(
@@ -136,6 +145,7 @@ class ReportDataService {
       type: type,
       period: period,
       businessDate: businessDate,
+      rangeOverride: range,
     );
 
     String? categoryFilterName;
@@ -145,6 +155,12 @@ class ReportDataService {
           .map((c) => c.category.displayName)
           .firstOrNull;
     }
+
+    final secondaryLogoPath = site.reportLogoPath?.trim().isNotEmpty == true
+        ? site.reportLogoPath
+        : (site.zone?.reportLogoPath?.trim().isNotEmpty == true
+            ? site.zone!.reportLogoPath
+            : policy.reportLogoSecondaryPath);
 
     return SiteReportBundle(
       meta: ReportMeta(
@@ -160,6 +176,10 @@ class ReportDataService {
         reportFooterText: policy.reportFooterText,
         includeAlertsSection: policy.includeAlertSectionDefault,
         includePhotoIndicator: policy.includePhotoIndicatorDefault,
+        reportLogoPrimaryPath: policy.reportLogoPrimaryPath,
+        reportLogoSecondaryPath: secondaryLogoPath,
+        periodLabelOverride:
+            '${formatBusinessDate(range.from)} → ${formatBusinessDate(range.to)}',
       ),
       summary: summary,
       categories: categories,
@@ -172,6 +192,29 @@ class ReportDataService {
       categoryFilterName: categoryFilterName,
       alerts: alerts,
     );
+  }
+
+  ChartPeriodRange _resolveReportRange({
+    required ChartPeriod period,
+    required DateTime businessDate,
+    DateTime? rangeStart,
+    DateTime? rangeEnd,
+  }) {
+    if (rangeStart != null && rangeEnd != null) {
+      final from = DateTime(rangeStart.year, rangeStart.month, rangeStart.day);
+      final to = DateTime(rangeEnd.year, rangeEnd.month, rangeEnd.day);
+      final spanDays = to.difference(from).inDays;
+      final bucket = spanDays > 90
+          ? ChartBucket.monthly
+          : (spanDays > 400 ? ChartBucket.yearly : ChartBucket.daily);
+      return ChartPeriodRange(
+        period: period,
+        from: from,
+        to: to,
+        bucket: bucket,
+      );
+    }
+    return chartPeriodRange(period: period, businessDate: businessDate);
   }
 
   Future<T> _loadEssential<T>(String step, Future<T> Function() loader) async {
@@ -249,6 +292,7 @@ class ReportDataService {
     required ChartPeriod period,
     required DateTime businessDate,
     String? categoryId,
+    ChartPeriodRange? rangeOverride,
   }) async {
     final rankings = <String, List<CategoryRankingItem>>{};
     final targetCategories = categoryId == null
@@ -264,6 +308,7 @@ class ReportDataService {
           categoryId: category.category.id,
           period: period,
           businessDate: businessDate,
+          rangeOverride: rangeOverride,
         );
         reportExportLog(step, 'ok');
       } catch (error, stack) {
@@ -279,6 +324,7 @@ class ReportDataService {
     required ReportType type,
     required ChartPeriod period,
     required DateTime businessDate,
+    ChartPeriodRange? rangeOverride,
   }) async {
     if (type != ReportType.cop && type != ReportType.siteSummary) {
       return const [];
@@ -299,6 +345,7 @@ class ReportDataService {
               copGroupId: group.id,
               period: period,
               businessDate: businessDate,
+              rangeOverride: rangeOverride,
             ),
           );
           reportExportLog(step, 'ok');

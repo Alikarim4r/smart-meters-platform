@@ -228,14 +228,17 @@ List<CopTrendPoint> aggregateCopTrend({
     if (date.isBefore(range.from) || date.isAfter(range.to)) continue;
     final bucket = chartBucketKey(date: date, bucket: range.bucket);
     final consumption = nonNegativeConsumption(row['daily_consumption']);
+    final unitCode = _meterBaseUnitCode(row['meters']);
 
     final btuWeight = btuWeights[meterId];
     if (btuWeight != null) {
-      btuByDate[bucket] = (btuByDate[bucket] ?? 0) + consumption * btuWeight;
+      btuByDate[bucket] = (btuByDate[bucket] ?? 0) +
+          coolingToKwh(consumption, unitCode) * btuWeight;
     }
     final elecWeight = electricityWeights[meterId];
     if (elecWeight != null) {
-      elecByDate[bucket] = (elecByDate[bucket] ?? 0) + consumption * elecWeight;
+      elecByDate[bucket] = (elecByDate[bucket] ?? 0) +
+          electricityToKwh(consumption, unitCode) * elecWeight;
     }
   }
 
@@ -244,6 +247,42 @@ List<CopTrendPoint> aggregateCopTrend({
       _copPoint(date: key, btu: btuByDate[key], electricity: elecByDate[key]),
   ];
 }
+
+/// Convert cooling energy to kWh thermal for COP/EER.
+double coolingToKwh(double value, String? unitCode) {
+  switch ((unitCode ?? '').trim().toLowerCase()) {
+    case 'gj':
+      return value * 277.7777778;
+    case 'btu':
+      return value / 3412.142;
+    case 'mwh':
+      return value * 1000;
+    case 'kwh':
+    case 'kw·h':
+      return value;
+    default:
+      // Unknown cooling unit — treat as already thermal-kWh-compatible.
+      return value;
+  }
+}
+
+/// Convert electric energy to kWh.
+double electricityToKwh(double value, String? unitCode) {
+  switch ((unitCode ?? '').trim().toLowerCase()) {
+    case 'mwh':
+      return value * 1000;
+    case 'wh':
+      return value / 1000;
+    case 'kwh':
+    case 'kw·h':
+      return value;
+    default:
+      return value;
+  }
+}
+
+/// EER ≈ COP × 3.412 (dimensionless COP → BTU/Wh).
+const kCopToEerFactor = 3.412;
 
 CopTrendPoint _copPoint({
   required DateTime date,
@@ -257,17 +296,42 @@ CopTrendPoint _copPoint({
       electricityConsumption: electricity,
     );
   }
+  final cop = btu / electricity;
   return CopTrendPoint(
     date: date,
     btuConsumption: btu,
     electricityConsumption: electricity,
-    cop: btu / electricity,
+    cop: cop,
+    eer: cop * kCopToEerFactor,
   );
+}
+
+String? _meterBaseUnitCode(Object? metersMeta) {
+  if (metersMeta is! Map) return null;
+  final map = Map<String, dynamic>.from(metersMeta);
+  final direct = map['base_unit'] as String?;
+  if (direct != null && direct.trim().isNotEmpty) return direct;
+  final categories = map['meter_categories'];
+  if (categories is Map) {
+    final code = categories['base_unit_code'] as String?;
+    if (code != null && code.trim().isNotEmpty) return code;
+  }
+  return null;
 }
 
 double? averageCopValues(List<CopTrendPoint> points) {
   final values = points
       .map((p) => p.cop)
+      .whereType<double>()
+      .where((v) => v > 0)
+      .toList();
+  if (values.isEmpty) return null;
+  return values.reduce((a, b) => a + b) / values.length;
+}
+
+double? averageEerValues(List<CopTrendPoint> points) {
+  final values = points
+      .map((p) => p.eer)
       .whereType<double>()
       .where((v) => v > 0)
       .toList();

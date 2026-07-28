@@ -1,8 +1,11 @@
+import 'dart:typed_data';
+
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../catalog/catalog_helpers.dart';
 import '../domain/business_date.dart';
 import '../domain/correction_validation.dart';
+import '../domain/meter_image_path.dart';
 import '../models/alert_models.dart';
 import '../models/meter_reading.dart';
 import '../models/reading_correction_models.dart';
@@ -50,6 +53,7 @@ profiles:entered_by(full_name, email)
         .limit(filters.limit);
 
     final results = <AdminReadingRow>[];
+    final mapped = <({AdminReadingRow row, Map<String, dynamic> map})>[];
     for (final row in rows as List) {
       final map = Map<String, dynamic>.from(row as Map);
       final adminRow = _mapAdminReadingRow(map);
@@ -60,25 +64,39 @@ profiles:entered_by(full_name, email)
         if (siteJson is Map) {
           final zoneId = siteJson['zone_id'] as String?;
           if (zoneId != filters.zoneId) continue;
+        } else {
+          continue;
         }
       }
 
       if (filters.categoryId != null) {
         final meterJson = map['meters'];
-        if (meterJson is! Map ||
-            meterJson['category_id'] != filters.categoryId) {
-          continue;
-        }
+        final categoryId = meterJson is Map
+            ? meterJson['category_id'] as String?
+            : null;
+        if (categoryId != filters.categoryId) continue;
       }
 
+      mapped.add((row: adminRow, map: map));
+    }
+
+    // Batch audit lookup instead of N+1 per reading (avoids empty/hung UI).
+    final readingIds = mapped.map((e) => e.row.readingId).toList();
+    final correctedIds = <String>{};
+    if (readingIds.isNotEmpty) {
       final auditRows = await _client
           .from('reading_audit_logs')
-          .select('action')
-          .eq('reading_id', adminRow.readingId);
-      final isCorrected = (auditRows as List).any(
-        (entry) => (entry as Map)['action'] == 'update',
-      );
+          .select('reading_id, action')
+          .inFilter('reading_id', readingIds)
+          .eq('action', 'update');
+      for (final entry in auditRows as List) {
+        final id = (entry as Map)['reading_id'] as String?;
+        if (id != null) correctedIds.add(id);
+      }
+    }
 
+    for (final item in mapped) {
+      final adminRow = item.row;
       final previous = await getPreviousReadingValue(
         meterId: adminRow.meterId,
         readingDate: adminRow.readingDate,
@@ -107,7 +125,7 @@ profiles:entered_by(full_name, email)
         enteredByName: adminRow.enteredByName,
         enteredByEmail: adminRow.enteredByEmail,
         enteredAt: adminRow.enteredAt,
-        isCorrected: isCorrected,
+        isCorrected: correctedIds.contains(adminRow.readingId),
         alertTypes: alertTypes,
       );
 
@@ -256,6 +274,77 @@ profiles:entered_by(full_name, email)
     );
   }
 
+  /// Clears the reading photo for admins (storage object + `image_url` column).
+  Future<void> deleteReadingPhoto({
+    required String readingId,
+  }) async {
+    final details = await getReadingDetailsForCorrection(readingId);
+    final path = details.reading.imageStoragePath;
+    if (path == null || path.trim().isEmpty) {
+      return;
+    }
+
+    await _client
+        .from('meter_readings')
+        .update({'image_url': null})
+        .eq('id', readingId);
+
+    // Best-effort storage cleanup (RLS may already allow site admins).
+    try {
+      await _client.storage.from(kMeterImagesBucket).remove([path]);
+    } catch (_) {}
+  }
+
+  /// Uploads a replacement photo and points `image_url` at the new storage path.
+  Future<String> replaceReadingPhoto({
+    required String readingId,
+    required List<int> bytes,
+    required String organizationId,
+  }) async {
+    final details = await getReadingDetailsForCorrection(readingId);
+    final reading = details.reading;
+    final oldPath = reading.imageStoragePath;
+    final categoryCode = reading.categoryName.toLowerCase().contains('water')
+        ? 'water'
+        : reading.categoryName.toLowerCase().contains('electric')
+            ? 'electricity'
+            : reading.categoryName.toLowerCase().contains('btu') ||
+                    reading.categoryName.toLowerCase().contains('cool')
+                ? 'btu'
+                : 'fuel';
+    final path = buildMeterImageStoragePath(
+      organizationId: organizationId,
+      siteId: reading.siteId,
+      categoryCode: categoryCode,
+      readingDate: formatBusinessDate(reading.readingDate),
+      meterId: reading.meterId,
+      capturedAt: DateTime.now().toUtc(),
+    );
+
+    await _client.storage.from(kMeterImagesBucket).uploadBinary(
+          path,
+          Uint8List.fromList(bytes),
+          fileOptions: const FileOptions(
+            contentType: 'image/jpeg',
+            upsert: true,
+          ),
+        );
+
+    await _client
+        .from('meter_readings')
+        .update({'image_url': path})
+        .eq('id', readingId);
+
+    if (oldPath != null &&
+        oldPath.trim().isNotEmpty &&
+        oldPath.trim() != path) {
+      try {
+        await _client.storage.from(kMeterImagesBucket).remove([oldPath]);
+      } catch (_) {}
+    }
+    return path;
+  }
+
   Future<List<ReadingAuditEntry>> getReadingAuditHistory(
     String readingId,
   ) async {
@@ -322,11 +411,12 @@ profiles:entered_by(full_name, email)
     final meterJson = map['meters'];
     final siteJson = map['sites'];
     final profileJson = map['profiles'];
-    if (meterJson is! Map) return null;
-
-    final categoryJson = meterJson['meter_categories'];
-    final unitJson = meterJson['meter_units'];
-    final meterMap = Map<String, dynamic>.from(meterJson);
+    // Keep the row even when the meters embed is missing (RLS/join edge cases).
+    final meterMap = meterJson is Map
+        ? Map<String, dynamic>.from(meterJson)
+        : <String, dynamic>{};
+    final categoryJson = meterMap['meter_categories'];
+    final unitJson = meterMap['meter_units'];
     final zoneName = siteJson is Map
         ? (siteJson['zones'] is Map
               ? siteJson['zones']['name_en'] as String? ?? 'No Zone'
@@ -342,8 +432,8 @@ profiles:entered_by(full_name, email)
       siteName: siteName,
       zoneName: zoneName,
       meterId: reading.meterId,
-      meterName: meterJson['name_en'] as String? ?? 'Unknown',
-      meterCode: meterJson['meter_code'] as String? ?? '',
+      meterName: meterMap['name_en'] as String? ?? 'Unknown meter',
+      meterCode: meterMap['meter_code'] as String? ?? reading.meterId,
       categoryName: joinedCatalogDisplayName(
         categoryJson is Map ? Map<String, dynamic>.from(categoryJson) : null,
         legacyFallback: legacyMeterCategoryLabel(meterMap['category']),

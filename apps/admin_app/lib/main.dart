@@ -9,6 +9,7 @@ import 'providers/preferences_providers.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  BrandChrome.use(AppBrandPalette.admin);
   await bootstrapSupabase(appKey: 'admin');
   runApp(const ProviderScope(child: AdminApp()));
 }
@@ -50,8 +51,11 @@ class AdminApp extends ConsumerWidget {
         onLocaleChanged: (next) =>
             ref.read(adminLocaleProvider.notifier).setLocale(next),
         allowedForProfile: (profile) =>
-            profile.isSuperAdmin || profile.isSiteAdmin,
-        accessDeniedMessage: 'Admin app requires super_admin or site_admin.',
+            profile.isPlatformOwner ||
+            profile.isSuperAdmin ||
+            profile.isSiteAdmin,
+        accessDeniedMessage:
+            'Admin app requires platform owner, super_admin, or site_admin.',
         homeBuilder: (context) => const AdminHomeWithLinks(),
       ),
     );

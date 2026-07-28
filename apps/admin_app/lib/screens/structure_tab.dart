@@ -4,11 +4,13 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
+import '../providers/policy_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../providers/structure_providers.dart';
 import '../providers/zone_providers.dart';
 import '../utils/delete_confirmations.dart';
 import '../widgets/catalog_widgets.dart';
+import '../widgets/scoped_report_logo_editor.dart';
 import 'meter_form_screen.dart';
 import 'organizations_tab.dart';
 import 'scope_control_screen.dart';
@@ -952,6 +954,54 @@ class _ZoneDetail extends ConsumerWidget {
                 '${strings.defaultSuggestedType}: ${zone.defaultSiteType!.label(isAr: strings.isAr)}',
             icon: Icons.category_outlined,
             color: Colors.teal,
+          ),
+        ],
+        if (ref.watch(canEditReportLogoSecondaryProvider)) ...[
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: ScopedReportLogoEditor(
+                organizationId: zone.organizationId,
+                storageKey: 'zones/${zone.id}.png',
+                title: strings.isAr
+                    ? 'شعار المنطقة (أعلى اليسار)'
+                    : 'Zone logo (top-left)',
+                subtitle: strings.isAr
+                    ? 'يُستخدم في تقارير مواقع هذه المنطقة إن لم يُضبط شعار للموقع.'
+                    : 'Used for sites in this zone when the site has no logo of its own.',
+                storagePath: zone.reportLogoPath,
+                canEdit: true,
+                onPathChanged: (path) async {
+                  try {
+                    await ref.read(zoneRepositoryProvider).updateZoneReportLogo(
+                          zoneId: zone.id,
+                          reportLogoPath: path,
+                        );
+                    onRefresh();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          path == null
+                              ? (strings.isAr
+                                  ? 'تم مسح الشعار'
+                                  : 'Logo cleared')
+                              : (strings.isAr
+                                  ? 'تم حفظ شعار المنطقة'
+                                  : 'Zone logo saved'),
+                        ),
+                      ),
+                    );
+                  } catch (error) {
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$error')),
+                    );
+                  }
+                },
+              ),
+            ),
           ),
         ],
         const SizedBox(height: 24),

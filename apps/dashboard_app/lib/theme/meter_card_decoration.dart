@@ -12,15 +12,26 @@ BoxDecoration meterCardDecoration({
 }) {
   final accent = _utilityAccentColor(utilityKey);
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  final base = brandCardDecoration(context, radius: DashboardRadius.card);
+  final borderColor = isMain
+      ? accent.withValues(alpha: isDark ? 0.55 : 0.42)
+      : BrandChrome.border(
+          isDark: isDark,
+          scheme: Theme.of(context).colorScheme,
+        );
+  final borderWidth = isMain ? 1.4 : 1.2;
 
+  // Dark mode: keep meter cards translucent so the page motif shows through.
+  if (isDark) {
+    return BoxDecoration(
+      borderRadius: BorderRadius.circular(DashboardRadius.card),
+      color: BrandChrome.surfaceDark.withValues(alpha: 0.42),
+      border: Border.all(color: borderColor, width: borderWidth),
+    );
+  }
+
+  final base = brandCardDecoration(context, radius: DashboardRadius.card);
   return base.copyWith(
-    border: Border.all(
-      color: isMain
-          ? accent.withValues(alpha: isDark ? 0.55 : 0.42)
-          : BrandChrome.border(isDark: isDark, scheme: Theme.of(context).colorScheme),
-      width: isMain ? 1.4 : 1.2,
-    ),
+    border: Border.all(color: borderColor, width: borderWidth),
   );
 }
 

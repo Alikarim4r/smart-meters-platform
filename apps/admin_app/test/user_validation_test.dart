@@ -78,13 +78,24 @@ void main() {
     );
   });
 
-  test('validateApprovalSites requires sites for technician', () {
+  test('validateApprovalSites requires sites for technician and viewer', () {
     expect(
       validateApprovalSites(role: UserRole.technician, selectedSiteIds: {}),
       isNotNull,
     );
     expect(
       validateApprovalSites(role: UserRole.viewer, selectedSiteIds: {}),
+      isNotNull,
+    );
+    expect(
+      validateApprovalSites(
+        role: UserRole.viewer,
+        selectedSiteIds: {'site-1'},
+      ),
+      isNull,
+    );
+    expect(
+      validateApprovalSites(role: UserRole.superAdmin, selectedSiteIds: {}),
       isNull,
     );
   });

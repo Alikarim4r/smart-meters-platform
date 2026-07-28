@@ -196,12 +196,13 @@ extension CorrectionListFilterLabel on CorrectionListFilter {
   };
 }
 
-enum CorrectionDateFilter { today, last7Days, last30Days }
+enum CorrectionDateFilter { today, last7Days, last30Days, all }
 
 extension CorrectionDateFilterLabel on CorrectionDateFilter {
   String get label => switch (this) {
     CorrectionDateFilter.today => 'Today',
     CorrectionDateFilter.last7Days => 'Last 7 days',
     CorrectionDateFilter.last30Days => 'Last 30 days',
+    CorrectionDateFilter.all => 'All dates',
   };
 }

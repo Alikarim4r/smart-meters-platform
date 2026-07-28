@@ -11,6 +11,7 @@ import 'theme/entry_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  BrandChrome.use(AppBrandPalette.entry);
   await bootstrapSupabase(appKey: 'entry');
   await OfflineStorageService.init();
   runApp(const ProviderScope(child: EntryApp()));
@@ -58,10 +59,18 @@ class EntryApp extends ConsumerWidget {
         onLocaleChanged: (next) =>
             ref.read(entryLocaleProvider.notifier).setLocale(next),
         allowedForProfile: (profile) =>
-            profile.isTechnician || profile.isSiteAdmin,
+            profile.isTechnician ||
+            profile.isSiteAdmin ||
+            profile.isSuperAdmin,
         siteAccessRequirement: SiteAccessRequirement.write,
-        accessDeniedMessage:
-            'Entry app requires technician or site_admin with write access.',
+        accessDeniedMessageBuilder: (profile) {
+          if (profile.isViewer) {
+            return 'This account is a Viewer (Dashboard only). '
+                'Ask an admin to approve it as Technician to use Entry.';
+          }
+          return 'Entry app requires technician, site_admin, or super_admin '
+              'with at least one writable site.';
+        },
         homeBuilder: (context) => const EntryShellWithLinks(),
       ),
     );

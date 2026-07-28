@@ -88,6 +88,14 @@ class CorrectionsTab extends ConsumerWidget {
                           onChanged: (value) {
                             ref.read(correctionSiteIdProvider.notifier).state =
                                 value;
+                            // Reset sticky filters that can wipe the list when
+                            // switching sites (zone from another site, etc.).
+                            ref.read(correctionZoneIdProvider.notifier).state =
+                                null;
+                            ref
+                                    .read(correctionCategoryIdProvider.notifier)
+                                    .state =
+                                null;
                             ref.invalidate(adminCorrectionsProvider);
                           },
                         );
@@ -102,8 +110,28 @@ class CorrectionsTab extends ConsumerWidget {
                       error: (_, _) => const SizedBox.shrink(),
                       data: (zones) {
                         final zoneId = ref.watch(correctionZoneIdProvider);
+                        final selectedSite = sitesAsync.maybeWhen(
+                          data: (sites) => sites
+                              .where((s) => s.id == siteId)
+                              .firstOrNull,
+                          orElse: () => null,
+                        );
+                        final items = selectedSite == null
+                            ? zones
+                            : zones
+                                .where(
+                                  (z) =>
+                                      z.organizationId ==
+                                      selectedSite.organizationId,
+                                )
+                                .toList();
+                        final effectiveZoneId =
+                            zoneId != null && items.any((z) => z.id == zoneId)
+                                ? zoneId
+                                : null;
                         return DropdownButtonFormField<String?>(
-                          initialValue: zoneId,
+                          key: ValueKey('zone-$siteId-$effectiveZoneId'),
+                          initialValue: effectiveZoneId,
                           isExpanded: true,
                           decoration: const InputDecoration(
                             labelText: 'Zone',
@@ -119,7 +147,7 @@ class CorrectionsTab extends ConsumerWidget {
                                 overflow: TextOverflow.ellipsis,
                               ),
                             ),
-                            ...zones.map(
+                            ...items.map(
                               (zone) => DropdownMenuItem(
                                 value: zone.id,
                                 child: Text(

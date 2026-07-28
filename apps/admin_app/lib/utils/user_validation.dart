@@ -139,11 +139,20 @@ String? validateApprovalSites({
   required UserRole role,
   required Set<String> selectedSiteIds,
 }) {
-  if (role == UserRole.technician && selectedSiteIds.isEmpty) {
-    return 'Select at least one site for technician approval.';
+  // Entry/dashboard both require ≥1 site after approval (except super_admin).
+  if (role == UserRole.superAdmin) {
+    return null;
   }
-  if (role == UserRole.siteAdmin && selectedSiteIds.isEmpty) {
-    return 'Select at least one site for site admin approval.';
+  if (selectedSiteIds.isEmpty) {
+    return switch (role) {
+      UserRole.technician =>
+        'Select at least one site for technician approval.',
+      UserRole.siteAdmin =>
+        'Select at least one site for site admin approval.',
+      UserRole.viewer =>
+        'Select at least one site for viewer approval (required to open Dashboard).',
+      _ => 'Select at least one site before approving this user.',
+    };
   }
   return null;
 }

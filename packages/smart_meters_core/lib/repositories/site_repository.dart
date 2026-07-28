@@ -267,6 +267,19 @@ class SiteRepository {
     return Site.fromJson(Map<String, dynamic>.from(row));
   }
 
+  Future<Site> updateSiteReportLogo({
+    required String siteId,
+    String? reportLogoPath,
+  }) async {
+    final row = await _client
+        .from('sites')
+        .update({'report_logo_path': reportLogoPath})
+        .eq('id', siteId)
+        .select(_adminSelect)
+        .single();
+    return Site.fromJson(Map<String, dynamic>.from(row));
+  }
+
   Future<Site> deactivateSite(String siteId) {
     return updateSite(siteId, isActive: false);
   }

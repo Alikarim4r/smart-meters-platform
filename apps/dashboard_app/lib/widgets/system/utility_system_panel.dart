@@ -20,6 +20,7 @@ import '../../widgets/enterprise/meter_filter_toolbar.dart';
 import '../../widgets/premium/skeleton_loaders.dart';
 import '../../widgets/premium/utility_colors.dart';
 import 'meter_readings_section.dart';
+import 'efficiency_metric_cards.dart';
 
 /// Utility page — enterprise visual hierarchy: overview → KPIs → filters → meters → analytics.
 class UtilitySystemPanel extends ConsumerWidget {
@@ -186,6 +187,21 @@ class UtilitySystemPanel extends ConsumerWidget {
               categoryId: categorySummary?.category.id,
             ),
           ),
+          if (system == UtilitySystemKey.btu)
+            SliverPadding(
+              padding: EdgeInsets.fromLTRB(
+                padding,
+                DashboardLayout.sectionGap,
+                padding,
+                0,
+              ),
+              sliver: SliverToBoxAdapter(
+                child: EfficiencyMetricCards(
+                  siteId: siteId,
+                  dateSelection: dateSelection,
+                ),
+              ),
+            ),
           if (categorySummary != null)
             SliverPadding(
               padding: EdgeInsets.fromLTRB(

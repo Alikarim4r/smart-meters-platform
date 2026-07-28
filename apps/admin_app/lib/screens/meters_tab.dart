@@ -12,6 +12,7 @@ import '../utils/delete_confirmations.dart';
 import '../widgets/catalog_widgets.dart';
 import 'meter_detail_screen.dart';
 import 'meter_form_screen.dart';
+import 'site_cop_groups_screen.dart';
 
 class MetersTab extends ConsumerStatefulWidget {
   const MetersTab({super.key});
@@ -127,6 +128,32 @@ class _MetersTabState extends ConsumerState<MetersTab> {
                     },
                   );
                 },
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      s.meters,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                  ),
+                  if (canManage && selectedSiteId != null)
+                    TextButton.icon(
+                      onPressed: () {
+                        Navigator.of(context).push(
+                          MaterialPageRoute<void>(
+                            builder: (_) =>
+                                SiteCopGroupsScreen(siteId: selectedSiteId),
+                          ),
+                        );
+                      },
+                      icon: const Icon(Icons.speed_outlined, size: 18),
+                      label: Text(s.copEerGroups),
+                    ),
+                ],
               ),
             ),
             Padding(

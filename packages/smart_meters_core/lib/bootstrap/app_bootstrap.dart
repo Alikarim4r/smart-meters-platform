@@ -42,6 +42,7 @@ class AuthGate extends ConsumerWidget {
     required this.allowedForProfile,
     required this.homeBuilder,
     this.accessDeniedMessage,
+    this.accessDeniedMessageBuilder,
     @Deprecated('Staging hints are no longer shown on login.') this.stagingHint,
     this.brandMarkAsset = BrandMarkAssets.dashboard,
     this.siteAccessRequirement = SiteAccessRequirement.none,
@@ -55,6 +56,7 @@ class AuthGate extends ConsumerWidget {
   final bool Function(Profile profile) allowedForProfile;
   final AppBuilder homeBuilder;
   final String? accessDeniedMessage;
+  final String Function(Profile profile)? accessDeniedMessageBuilder;
 
   /// Ignored — kept for call-site compatibility.
   @Deprecated('Staging hints are no longer shown on login.')
@@ -123,19 +125,27 @@ class AuthGate extends ConsumerWidget {
     }
 
     final profile = auth.profile!;
+    // Platform owner always passes approval + role gates.
+    if (profile.isPlatformOwner) {
+      return homeBuilder(context);
+    }
+
     final approvalScreen = _approvalStatusScreen(
       profile: profile,
+      locale: localeValue,
       onSignOut: () => ref.read(authProvider.notifier).signOut(),
+      onRefresh: () => ref.read(authProvider.notifier).refreshProfile(),
     );
     if (approvalScreen != null) {
       return approvalScreen;
     }
 
     if (!allowedForProfile(profile)) {
+      final denied = accessDeniedMessageBuilder?.call(profile) ??
+          accessDeniedMessage ??
+          'Your role (${profile.role.dbValue}) cannot access $appTitle.';
       return _AccessDeniedScreen(
-        message:
-            accessDeniedMessage ??
-            'Your role (${profile.role.dbValue}) cannot access $appTitle.',
+        message: denied,
         onSignOut: () => ref.read(authProvider.notifier).signOut(),
       );
     }
@@ -157,33 +167,49 @@ class AuthGate extends ConsumerWidget {
 /// Returns a blocking screen when the user may sign in but cannot use the app.
 Widget? _approvalStatusScreen({
   required Profile profile,
+  required Locale locale,
   required VoidCallback onSignOut,
+  VoidCallback? onRefresh,
 }) {
+  final isAr = locale.languageCode == 'ar';
   switch (profile.approvalStatus) {
     case ApprovalStatus.pending:
       return _AccountStatusScreen(
-        title: 'Account pending',
-        message: 'Your account is pending admin approval.',
+        title: isAr ? 'الحساب بانتظار الموافقة' : 'Account pending approval',
+        message: isAr
+            ? 'تم تسجيل الدخول بنجاح، لكن الحساب يحتاج موافقة المسؤول من تطبيق الأدمن مع تعيين موقع واحد على الأقل قبل استخدام التطبيق.'
+            : 'Sign-in succeeded, but an admin must approve this account in the Admin app and assign at least one site before you can use it.',
         onSignOut: onSignOut,
+        onRefresh: onRefresh,
+        isArabic: isAr,
       );
     case ApprovalStatus.rejected:
       return _AccountStatusScreen(
-        title: 'Account rejected',
-        message: 'Your account request was rejected.',
+        title: isAr ? 'تم رفض الحساب' : 'Account rejected',
+        message: isAr
+            ? 'تم رفض طلب التسجيل. تواصل مع المسؤول.'
+            : 'Your account request was rejected. Contact an admin.',
         onSignOut: onSignOut,
+        isArabic: isAr,
       );
     case ApprovalStatus.suspended:
       return _AccountStatusScreen(
-        title: 'Account suspended',
-        message: 'Your account is suspended. Contact admin.',
+        title: isAr ? 'الحساب موقوف' : 'Account suspended',
+        message: isAr
+            ? 'حسابك موقوف. تواصل مع المسؤول.'
+            : 'Your account is suspended. Contact admin.',
         onSignOut: onSignOut,
+        isArabic: isAr,
       );
     case ApprovalStatus.approved:
       if (!profile.isActive) {
         return _AccountStatusScreen(
-          title: 'Account suspended',
-          message: 'Your account is suspended. Contact admin.',
+          title: isAr ? 'الحساب موقوف' : 'Account suspended',
+          message: isAr
+              ? 'حسابك موقوف. تواصل مع المسؤول.'
+              : 'Your account is suspended. Contact admin.',
           onSignOut: onSignOut,
+          isArabic: isAr,
         );
       }
       return null;
@@ -249,10 +275,26 @@ class _SiteAccessGateState extends ConsumerState<_SiteAccessGate> {
         }
 
         if (snapshot.data != true) {
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          final needsWrite =
+              widget.requirement == SiteAccessRequirement.write;
           return _AccountStatusScreen(
-            title: 'No sites assigned',
-            message: 'No sites assigned. Contact admin.',
+            title: isAr ? 'لا مواقع معيّنة' : 'No sites assigned',
+            message: isAr
+                ? (needsWrite
+                    ? 'الحساب موافق عليه، لكن لا يوجد موقع قابل للكتابة. اطلب من الأدمن الموافقة كـ فني مع تعيين موقع، ثم اضغط تحديث.'
+                    : 'الحساب موافق عليه، لكن لا مواقع للقراءة. اطلب من الأدمن تعيين موقع واحد على الأقل، ثم اضغط تحديث.')
+                : (needsWrite
+                    ? 'Approved, but no writable sites yet. Ask an admin to approve you as Technician with at least one site, then tap Refresh.'
+                    : 'Approved, but no readable sites yet. Ask an admin to assign at least one site, then tap Refresh.'),
             onSignOut: widget.onSignOut,
+            onRefresh: () {
+              setState(() {
+                _hasSitesFuture = _loadHasSites();
+              });
+              ref.read(authProvider.notifier).refreshProfile();
+            },
+            isArabic: isAr,
           );
         }
 
@@ -347,6 +389,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           email: email,
           password: password,
         );
+    if (!mounted) return;
     final auth = ref.read(authProvider);
     if (auth.isAuthenticated && auth.profile != null) {
       await ref.read(sessionSecurityProvider.notifier).onPasswordSignInSuccess(
@@ -508,6 +551,29 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 ),
               ),
             ],
+            if (auth.infoMessage != null) ...[
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.35),
+                  ),
+                ),
+                child: Text(
+                  isAr
+                      ? 'تم إرسال طلب التسجيل. أكّد البريد إن لزم، ثم انتظر موافقة المسؤول قبل الدخول.'
+                      : auth.infoMessage!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.primary,
+                    height: 1.35,
+                  ),
+                ),
+              ),
+            ],
             if (auth.errorMessage != null) ...[
               const SizedBox(height: 12),
               Container(
@@ -580,11 +646,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 child: Text(
                   registering
                       ? (isAr
-                            ? 'لديك حساب؟ سجّل الدخول'
+                            ? (widget.registrationRequestedRole == 'viewer'
+                                  ? 'لديك حساب؟ سجّل الدخول'
+                                  : 'لديك حساب؟ سجّل الدخول')
                             : 'Have an account? Sign in')
                       : (isAr
-                            ? 'فني جديد؟ طلب تسجيل'
-                            : 'New technician? Request access'),
+                            ? (widget.registrationRequestedRole == 'viewer'
+                                  ? 'مستخدم جديد؟ طلب تسجيل'
+                                  : 'فني جديد؟ طلب تسجيل')
+                            : (widget.registrationRequestedRole == 'viewer'
+                                  ? 'New user? Request access'
+                                  : 'New technician? Request access')),
                 ),
               ),
             ],
@@ -760,11 +832,15 @@ class _AccountStatusScreen extends StatelessWidget {
     required this.title,
     required this.message,
     required this.onSignOut,
+    this.isArabic = false,
+    this.onRefresh,
   });
 
   final String title;
   final String message;
   final VoidCallback onSignOut;
+  final bool isArabic;
+  final VoidCallback? onRefresh;
 
   @override
   Widget build(BuildContext context) {
@@ -779,17 +855,39 @@ class _AccountStatusScreen extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
+                Icon(
+                  Icons.hourglass_top_rounded,
+                  size: 56,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(height: 16),
                 Text(
                   title,
-                  style: theme.textTheme.titleLarge,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                  ),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
-                Text(message, textAlign: TextAlign.center),
-                const SizedBox(height: 16),
+                Text(
+                  message,
+                  textAlign: TextAlign.center,
+                  style: theme.textTheme.bodyMedium?.copyWith(height: 1.4),
+                ),
+                const SizedBox(height: 20),
+                if (onRefresh != null) ...[
+                  FilledButton.icon(
+                    onPressed: onRefresh,
+                    icon: const Icon(Icons.refresh),
+                    label: Text(
+                      isArabic ? 'تحديث الحالة' : 'Refresh status',
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                ],
                 OutlinedButton(
                   onPressed: onSignOut,
-                  child: const Text('Sign out'),
+                  child: Text(isArabic ? 'تسجيل الخروج' : 'Sign out'),
                 ),
               ],
             ),

@@ -50,6 +50,8 @@ class PolicySettings {
     this.reportFooterText,
     this.organizationDisplayName,
     this.logoUrl,
+    this.reportLogoPrimaryPath,
+    this.reportLogoSecondaryPath,
     this.includeAlertSectionDefault = true,
     this.includePhotoIndicatorDefault = true,
     this.isActive = true,
@@ -78,6 +80,8 @@ class PolicySettings {
   final String? reportFooterText;
   final String? organizationDisplayName;
   final String? logoUrl;
+  final String? reportLogoPrimaryPath;
+  final String? reportLogoSecondaryPath;
   final bool includeAlertSectionDefault;
   final bool includePhotoIndicatorDefault;
   final bool isActive;
@@ -134,6 +138,8 @@ class PolicySettings {
       reportFooterText: json['report_footer_text'] as String?,
       organizationDisplayName: json['organization_display_name'] as String?,
       logoUrl: json['logo_url'] as String?,
+      reportLogoPrimaryPath: json['report_logo_primary_path'] as String?,
+      reportLogoSecondaryPath: json['report_logo_secondary_path'] as String?,
       includeAlertSectionDefault:
           json['include_alert_section_default'] as bool? ?? true,
       includePhotoIndicatorDefault:
@@ -167,6 +173,8 @@ class PolicySettings {
       'report_footer_text': reportFooterText,
       'organization_display_name': organizationDisplayName,
       'logo_url': logoUrl,
+      'report_logo_primary_path': reportLogoPrimaryPath,
+      'report_logo_secondary_path': reportLogoSecondaryPath,
       'include_alert_section_default': includeAlertSectionDefault,
       'include_photo_indicator_default': includePhotoIndicatorDefault,
       'is_active': isActive,
@@ -192,6 +200,10 @@ class PolicySettings {
     String? reportFooterText,
     String? organizationDisplayName,
     String? logoUrl,
+    String? reportLogoPrimaryPath,
+    String? reportLogoSecondaryPath,
+    bool clearReportLogoPrimaryPath = false,
+    bool clearReportLogoSecondaryPath = false,
     bool? includeAlertSectionDefault,
     bool? includePhotoIndicatorDefault,
     bool clearDailyReadingCutoffTime = false,
@@ -238,6 +250,12 @@ class PolicySettings {
           ? null
           : (organizationDisplayName ?? this.organizationDisplayName),
       logoUrl: clearLogoUrl ? null : (logoUrl ?? this.logoUrl),
+      reportLogoPrimaryPath: clearReportLogoPrimaryPath
+          ? null
+          : (reportLogoPrimaryPath ?? this.reportLogoPrimaryPath),
+      reportLogoSecondaryPath: clearReportLogoSecondaryPath
+          ? null
+          : (reportLogoSecondaryPath ?? this.reportLogoSecondaryPath),
       includeAlertSectionDefault:
           includeAlertSectionDefault ?? this.includeAlertSectionDefault,
       includePhotoIndicatorDefault:

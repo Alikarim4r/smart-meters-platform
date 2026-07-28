@@ -299,7 +299,7 @@ enum MeterUnit {
       case MeterUnit.liter:
         return 'L';
       case MeterUnit.dm3:
-        return 'dm³';
+        return 'Dm3';
       case MeterUnit.gallon:
         return 'gal';
       case MeterUnit.kwh:

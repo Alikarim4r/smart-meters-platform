@@ -1,4 +1,5 @@
 import 'package:smart_meters_core/smart_meters_core.dart';
+import 'dart:typed_data';
 
 enum ReportType {
   allSitesSummary,
@@ -44,7 +45,7 @@ class ReportExportOptions {
     required this.period,
     this.categoryId,
     this.includePhotos = false,
-    this.includeCharts = false,
+    this.includeCharts = true,
     this.dataAnchorDate,
     this.rangeStart,
     this.rangeEnd,
@@ -75,6 +76,11 @@ class ReportMeta {
     this.reportFooterText,
     this.includeAlertsSection = true,
     this.includePhotoIndicator = true,
+    this.reportLogoPrimaryPath,
+    this.reportLogoSecondaryPath,
+    this.reportLogoPrimaryBytes,
+    this.reportLogoSecondaryBytes,
+    this.periodLabelOverride,
   });
 
   final String title;
@@ -89,6 +95,41 @@ class ReportMeta {
   final String? reportFooterText;
   final bool includeAlertsSection;
   final bool includePhotoIndicator;
+  final String? reportLogoPrimaryPath;
+  final String? reportLogoSecondaryPath;
+  final Uint8List? reportLogoPrimaryBytes;
+  final Uint8List? reportLogoSecondaryBytes;
+  final String? periodLabelOverride;
+
+  String get periodDisplayLabel =>
+      periodLabelOverride?.trim().isNotEmpty == true
+          ? periodLabelOverride!
+          : period.label;
+
+  ReportMeta withLogoBytes({
+    Uint8List? primary,
+    Uint8List? secondary,
+  }) {
+    return ReportMeta(
+      title: title,
+      generatedAt: generatedAt,
+      generatedByEmail: generatedByEmail,
+      period: period,
+      siteName: siteName,
+      zoneName: zoneName,
+      siteType: siteType,
+      location: location,
+      organizationDisplayName: organizationDisplayName,
+      reportFooterText: reportFooterText,
+      includeAlertsSection: includeAlertsSection,
+      includePhotoIndicator: includePhotoIndicator,
+      reportLogoPrimaryPath: reportLogoPrimaryPath,
+      reportLogoSecondaryPath: reportLogoSecondaryPath,
+      reportLogoPrimaryBytes: primary ?? reportLogoPrimaryBytes,
+      reportLogoSecondaryBytes: secondary ?? reportLogoSecondaryBytes,
+      periodLabelOverride: periodLabelOverride,
+    );
+  }
 }
 
 class SiteReportBundle {
@@ -117,6 +158,22 @@ class SiteReportBundle {
   final List<CopTrendResult> copResults;
   final String? categoryFilterName;
   final List<DashboardAlert> alerts;
+
+  SiteReportBundle copyWith({ReportMeta? meta}) {
+    return SiteReportBundle(
+      meta: meta ?? this.meta,
+      summary: summary,
+      categories: categories,
+      meters: meters,
+      readings: readings,
+      completion: completion,
+      consumptionTrend: consumptionTrend,
+      categoryRankings: categoryRankings,
+      copResults: copResults,
+      categoryFilterName: categoryFilterName,
+      alerts: alerts,
+    );
+  }
 }
 
 class AllSitesReportBundle {

@@ -2,7 +2,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 final canManagePolicySettingsProvider = Provider<bool>((ref) {
-  return ref.watch(authProvider).profile?.isSuperAdmin ?? false;
+  final profile = ref.watch(authProvider).profile;
+  if (profile == null) return false;
+  return profile.isPlatformOwner || profile.isSuperAdmin;
+});
+
+/// Owner-only org logo (report top-right).
+final canEditReportLogoPrimaryProvider = Provider<bool>((ref) {
+  return ref.watch(authProvider).profile?.isPlatformOwner ?? false;
+});
+
+/// Admins may set the site/zone logo (report top-left).
+final canEditReportLogoSecondaryProvider = Provider<bool>((ref) {
+  final profile = ref.watch(authProvider).profile;
+  if (profile == null) return false;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 final selectedPolicyOrganizationIdProvider = StateProvider<String?>(

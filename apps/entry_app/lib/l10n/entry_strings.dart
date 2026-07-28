@@ -33,6 +33,15 @@ class EntryStrings {
   String get passwordsDoNotMatch =>
       _t('Passwords do not match', 'كلمتا المرور غير متطابقتين');
   String get signOut => _t('Sign out', 'تسجيل الخروج');
+  String get aboutApp => _t('About', 'حول التطبيق');
+  String get createdDevelopedBy =>
+      _t('Created and developed by', 'تم الإنشاء والتطوير بواسطة');
+  String get developerName => _t(
+    'Eng. Ali Abdulkarim Elhassan',
+    'المهندس: علي عبد الكريم الحسن',
+  );
+  String get developerPhone => '+974 3005 8899';
+  String get developerEmail => 'Support@AliMind.com';
   String get save => _t('Save', 'حفظ');
   String get cancel => _t('Cancel', 'إلغاء');
   String get saving => _t('Saving…', 'جارٍ الحفظ…');

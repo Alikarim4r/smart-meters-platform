@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../theme/app_colors.dart';
 import '../theme/brand_chrome.dart';
 
 /// Shared asset paths for the METERS wordmark icons (package: smart_meters_core).
@@ -97,18 +96,22 @@ class AppLoginPanel extends StatelessWidget {
               constraints: const BoxConstraints(maxWidth: 420),
               child: DecoratedBox(
                 decoration: BoxDecoration(
-                  gradient: BrandChrome.cardWash(isDark: isDark),
+                  color: isDark ? null : Colors.white,
+                  gradient: isDark ? BrandChrome.cardWash(isDark: true) : null,
                   borderRadius: BorderRadius.circular(24),
                   border: Border.all(
-                    color: BrandChrome.border(
-                      isDark: isDark,
-                      scheme: theme.colorScheme,
-                    ),
+                    color: isDark
+                        ? BrandChrome.border(
+                            isDark: true,
+                            scheme: theme.colorScheme,
+                          )
+                        : BrandChrome.accent.withValues(alpha: 0.28),
+                    width: 1.4,
                   ),
                   boxShadow: [
                     BoxShadow(
-                      color: AppColors.navy.withValues(
-                        alpha: isDark ? 0.35 : 0.08,
+                      color: BrandChrome.primary.withValues(
+                        alpha: isDark ? 0.35 : 0.12,
                       ),
                       blurRadius: 28,
                       offset: const Offset(0, 12),

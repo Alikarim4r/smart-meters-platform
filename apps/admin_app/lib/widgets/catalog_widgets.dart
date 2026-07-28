@@ -26,11 +26,11 @@ InputDecoration catalogFieldDecoration({
     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
     enabledBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: BrandChrome.borderLight),
+      borderSide: BorderSide(color: BrandChrome.borderLight),
     ),
     focusedBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
-      borderSide: const BorderSide(color: BrandChrome.accent, width: 1.5),
+      borderSide: BorderSide(color: BrandChrome.accent, width: 1.5),
     ),
     errorBorder: OutlineInputBorder(
       borderRadius: BorderRadius.circular(12),
@@ -309,7 +309,7 @@ Widget catalogStatusChip({required bool isActive}) {
 Widget catalogTypeChip({
   required String label,
   IconData? icon,
-  Color color = const Color(0xFFC9A227),
+  Color color = const Color(0xFF8B3A4A),
 }) {
   return Container(
     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

@@ -22,7 +22,6 @@ extension UtilityChartTypeIcons on UtilityChartType {
         UtilityChartType.pie => Icons.pie_chart_outline_rounded,
         UtilityChartType.stackedBar => Icons.stacked_bar_chart_rounded,
         UtilityChartType.sourceSplit => Icons.donut_small_outlined,
-        UtilityChartType.cop => Icons.speed_outlined,
       };
 }
 

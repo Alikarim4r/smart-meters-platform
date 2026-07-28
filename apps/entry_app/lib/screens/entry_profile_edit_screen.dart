@@ -148,7 +148,7 @@ class _EntryProfileEditScreenState
                         child: image == null
                             ? Text(
                                 initials,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   color: EntryChrome.onAccent,
                                   fontWeight: FontWeight.w800,
                                   fontSize: 22,
@@ -162,7 +162,7 @@ class _EntryProfileEditScreenState
                                 (avatarUrl != null && avatarUrl.isNotEmpty)
                             ? s.changePhoto
                             : s.addProfilePhoto,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
                           color: EntryChrome.iconGlyph,
                         ),
@@ -213,7 +213,7 @@ class _EntryProfileEditScreenState
                 child: FilledButton.icon(
                   onPressed: _saving ? null : () => _save(s),
                   icon: _saving
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(

@@ -754,8 +754,10 @@ profiles:entered_by(full_name, email)
     required String siteId,
     required ChartPeriod period,
     required DateTime businessDate,
+    ChartPeriodRange? rangeOverride,
   }) async {
-    final range = chartPeriodRange(period: period, businessDate: businessDate);
+    final range = rangeOverride ??
+        chartPeriodRange(period: period, businessDate: businessDate);
     final rows = await _fetchConsumptionRows(
       siteId: siteId,
       from: range.from,
@@ -997,6 +999,7 @@ profiles:entered_by(full_name, email)
       averageCop: averageCopValues(points),
       minCop: minCopValues(points),
       maxCop: maxCopValues(points),
+      averageEer: averageEerValues(points),
     );
   }
 

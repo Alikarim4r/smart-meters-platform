@@ -5,6 +5,7 @@ import '../models/enums.dart';
 /// Passwords must never be stored in source. Ownership is email-based only.
 const kPlatformOwnerEmails = <String>{
   'alikarim4r@gmail.com',
+  'support@alimind.com',
 };
 
 bool isPlatformOwnerEmail(String? email) {
@@ -38,7 +39,11 @@ extension UserRoleAppAccess on UserRole {
   Set<AppAccessCategory> get accessibleApps {
     switch (this) {
       case UserRole.superAdmin:
-        return {AppAccessCategory.admin, AppAccessCategory.dashboard};
+        return {
+          AppAccessCategory.admin,
+          AppAccessCategory.entry,
+          AppAccessCategory.dashboard,
+        };
       case UserRole.siteAdmin:
         return {
           AppAccessCategory.admin,

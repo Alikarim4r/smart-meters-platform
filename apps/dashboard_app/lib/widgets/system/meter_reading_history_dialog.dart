@@ -7,7 +7,6 @@ import '../../theme/dashboard_palette.dart';
 import '../../utils/dashboard_date_range.dart';
 import '../../utils/dashboard_filters.dart';
 import '../premium/dashboard_filter_decorations.dart';
-import '../premium/meter_status_badge.dart';
 
 Future<void> showMeterReadingHistoryDialog({
   required BuildContext context,
@@ -89,7 +88,7 @@ class _MeterReadingHistoryContentState
               toDate: widget.dateSelection.endDate,
               meterId: widget.meter.meterId,
               hasPhoto: _photoFilter,
-              limit: 100,
+              limit: 2000,
             ),
           );
       if (mounted) {
@@ -241,17 +240,65 @@ class _MeterReadingHistoryContentState
         )),
         DataCell(Text(row.reading.note ?? '—')),
         DataCell(
-          MeterStatusBadge(
-            label: reading.hasPhoto ? AppStrings.of(context).yes : AppStrings.of(context).no,
-            color: reading.hasPhoto
-                ? DashboardPalette.success
-                : DashboardPalette.textMuted,
-            compact: true,
-            muted: !reading.hasPhoto,
-          ),
+          reading.hasPhoto
+              ? IconButton(
+                  tooltip: AppStrings.of(context).photo,
+                  icon: const Icon(Icons.photo_outlined),
+                  onPressed: () => _openPhoto(reading.imageStoragePath!),
+                )
+              : Text(AppStrings.of(context).no),
         ),
         DataCell(Text(row.enteredByName ?? '—')),
       ],
     );
+  }
+
+  Future<void> _openPhoto(String storagePath) async {
+    try {
+      final url = await ref
+          .read(meterImageStorageRepositoryProvider)
+          .createSignedUrl(storagePath);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => Dialog(
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 720, maxHeight: 560),
+            child: Column(
+              children: [
+                Align(
+                  alignment: Alignment.centerRight,
+                  child: IconButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    icon: const Icon(Icons.close),
+                  ),
+                ),
+                Expanded(
+                  child: InteractiveViewer(
+                    child: Image.network(
+                      url,
+                      fit: BoxFit.contain,
+                      errorBuilder: (_, _, _) =>
+                          const Center(child: Icon(Icons.broken_image)),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            AppStrings.of(context).isAr
+                ? 'تعذّر فتح الصورة'
+                : 'Could not open photo',
+          ),
+        ),
+      );
+    }
   }
 }

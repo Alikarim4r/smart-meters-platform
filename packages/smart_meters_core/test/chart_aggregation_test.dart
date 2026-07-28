@@ -246,4 +246,33 @@ void main() {
     expect(nonNegativeConsumption(-1), 0);
     expect(nonNegativeConsumption(3.5), 3.5);
   });
+
+  test('aggregateCopTrend converts units and derives EER from COP', () {
+    final range = chartPeriodRange(
+      period: ChartPeriod.weekly,
+      businessDate: businessDate,
+    );
+    final points = aggregateCopTrend(
+      range: range,
+      btuWeights: const {'btu-1': 1},
+      electricityWeights: const {'elec-1': 1},
+      consumptionRows: [
+        {
+          'meter_id': 'btu-1',
+          'reading_date': '2026-07-04',
+          'daily_consumption': 3412.142, // 1 kWh thermal
+          'meters': {'base_unit': 'btu'},
+        },
+        {
+          'meter_id': 'elec-1',
+          'reading_date': '2026-07-04',
+          'daily_consumption': 0.5, // 0.5 kWh electric
+          'meters': {'base_unit': 'kwh'},
+        },
+      ],
+    );
+    final day = points.firstWhere((p) => p.date == DateTime(2026, 7, 4));
+    expect(day.cop, closeTo(2.0, 0.01));
+    expect(day.eer, closeTo(2.0 * kCopToEerFactor, 0.01));
+  });
 }

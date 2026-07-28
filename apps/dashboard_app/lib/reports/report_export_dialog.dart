@@ -15,7 +15,7 @@ Future<ReportExportOptions?> showReportExportDialog({
   var format = ReportFormat.pdf;
   var period = defaultPeriod ?? ChartPeriod.last30Days;
   var includePhotos = false;
-  var includeCharts = false;
+  var includeCharts = true;
   var useDashboardRange = defaultDateSelection != null;
   var dateSelection = defaultDateSelection ??
       DashboardDateSelection.forPreset(
@@ -149,8 +149,9 @@ Future<ReportExportOptions?> showReportExportDialog({
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Include charts'),
-                      subtitle:
-                          const Text('Charts as tables in PDF for now'),
+                      subtitle: const Text(
+                        'Bar charts for the selected date range in the PDF',
+                      ),
                       value: includeCharts,
                       onChanged: (value) =>
                           setState(() => includeCharts = value),

@@ -544,7 +544,6 @@ class AppStrings {
       UtilityChartType.pie => 'دائري',
       UtilityChartType.stackedBar => 'مكدس',
       UtilityChartType.sourceSplit => 'توزيع المصدر',
-      UtilityChartType.cop => 'COP',
     };
   }
 
@@ -589,7 +588,6 @@ class AppStrings {
         UtilityChartType.pie => '$utility meter share',
         UtilityChartType.stackedBar => '$utility stacked consumption',
         UtilityChartType.sourceSplit => '$utility source split',
-        UtilityChartType.cop => 'COP trend',
       };
     }
     return switch (type) {
@@ -603,7 +601,6 @@ class AppStrings {
       UtilityChartType.pie => 'حصة العدادات — $utility',
       UtilityChartType.stackedBar => 'استهلاك مكدس — $utility',
       UtilityChartType.sourceSplit => 'توزيع المصدر — $utility',
-      UtilityChartType.cop => 'اتجاه COP',
     };
   }
 

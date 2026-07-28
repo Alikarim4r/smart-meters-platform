@@ -19,6 +19,7 @@ class Zone {
     this.siteTypeId,
     @Deprecated('Use defaultSiteType') this.siteType,
     this.siteCount,
+    this.reportLogoPath,
   });
 
   final String id;
@@ -45,6 +46,7 @@ class Zone {
   final OrganizationSiteType? siteType;
 
   final int? siteCount;
+  final String? reportLogoPath;
 
   factory Zone.fromJson(Map<String, dynamic> json) {
     OrganizationSiteType? type;
@@ -88,6 +90,7 @@ class Zone {
       siteTypeId: json['site_type_id'] as String? ?? defaultId,
       siteType: type ?? defaultType,
       siteCount: _parseSiteCount(json['sites']),
+      reportLogoPath: json['report_logo_path'] as String?,
     );
   }
 
@@ -99,5 +102,30 @@ class Zone {
       }
     }
     return null;
+  }
+
+  Zone copyWith({
+    String? reportLogoPath,
+    bool clearReportLogoPath = false,
+  }) {
+    return Zone(
+      id: id,
+      organizationId: organizationId,
+      code: code,
+      nameEn: nameEn,
+      nameAr: nameAr,
+      description: description,
+      isActive: isActive,
+      sortOrder: sortOrder,
+      parentZoneId: parentZoneId,
+      defaultSiteTypeId: defaultSiteTypeId,
+      defaultSiteType: defaultSiteType,
+      siteTypeId: siteTypeId,
+      siteType: siteType,
+      siteCount: siteCount,
+      reportLogoPath: clearReportLogoPath
+          ? null
+          : (reportLogoPath ?? this.reportLogoPath),
+    );
   }
 }

@@ -124,18 +124,18 @@ class DashboardSidebar extends ConsumerWidget {
                         BrandChrome.canvasDark.withValues(alpha: 0.98),
                       ]
                     : [
-                        const Color(0xFFFFFCF5).withValues(alpha: 0.96),
-                        AppColors.goldSoft.withValues(alpha: 0.72),
-                        BrandChrome.canvasLight.withValues(alpha: 0.97),
+                        Colors.white,
+                        Colors.white,
                       ],
               ),
               border: asDrawer
                   ? null
-                  : Border(
-                      right: BorderSide(
+                  : BorderDirectional(
+                      end: BorderSide(
                         color: isDark
                             ? BrandChrome.borderDark
-                            : BrandChrome.borderLight,
+                            : const Color(0xFFC5CCD6),
+                        width: 1.5,
                       ),
                     ),
             ),
@@ -322,7 +322,7 @@ class DashboardSidebar extends ConsumerWidget {
                                     radius: 16,
                                     backgroundColor: BrandChrome.accent
                                         .withValues(alpha: 0.18),
-                                    child: const Icon(
+                                    child: Icon(
                                       Icons.person_rounded,
                                       color: BrandChrome.accent,
                                       size: 16,
@@ -371,25 +371,56 @@ class DashboardSidebar extends ConsumerWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(12, 0, 12, 8),
-                    child: OutlinedButton.icon(
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Theme.of(context).colorScheme.error,
-                        side: BorderSide(
-                          color: Theme.of(context)
-                              .colorScheme
-                              .error
-                              .withValues(alpha: 0.45),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      onPressed: () {
-                        closeDrawerIfNeeded();
-                        onSignOut();
-                      },
-                      icon: const Icon(Icons.logout),
-                      label: Text(s.signOut),
+                    padding: EdgeInsets.fromLTRB(
+                      collapsed ? 8 : 12,
+                      0,
+                      collapsed ? 8 : 12,
+                      8,
                     ),
+                    child: collapsed
+                        ? Tooltip(
+                            message: s.signOut,
+                            child: IconButton(
+                              onPressed: () {
+                                closeDrawerIfNeeded();
+                                onSignOut();
+                              },
+                              style: IconButton.styleFrom(
+                                foregroundColor:
+                                    Theme.of(context).colorScheme.error,
+                                side: BorderSide(
+                                  color: Theme.of(context)
+                                      .colorScheme
+                                      .error
+                                      .withValues(alpha: 0.45),
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                              ),
+                              icon: const Icon(Icons.logout_rounded),
+                            ),
+                          )
+                        : OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor:
+                                  Theme.of(context).colorScheme.error,
+                              side: BorderSide(
+                                color: Theme.of(context)
+                                    .colorScheme
+                                    .error
+                                    .withValues(alpha: 0.45),
+                              ),
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            onPressed: () {
+                              closeDrawerIfNeeded();
+                              onSignOut();
+                            },
+                            icon: const Icon(Icons.logout_rounded),
+                            label: Text(s.signOut),
+                          ),
                   ),
                 ],
               ),
@@ -497,7 +528,7 @@ class _SidebarItemState extends State<_SidebarItem> {
                       : Colors.transparent,
               borderRadius: BorderRadius.circular(12),
               border: widget.selected && widget.enabled && !widget.collapsed
-                  ? const Border(
+                  ? Border(
                       left: BorderSide(color: BrandChrome.accent, width: 3),
                     )
                   : null,

@@ -18,6 +18,7 @@ class Site {
     this.zone,
     required this.isActive,
     this.meterCount,
+    this.reportLogoPath,
   });
 
   final String id;
@@ -37,6 +38,7 @@ class Site {
   final Zone? zone;
   final bool isActive;
   final int? meterCount;
+  final String? reportLogoPath;
 
   String get displayZoneName => zone?.nameEn ?? kNoZoneLabel;
 
@@ -86,6 +88,7 @@ class Site {
       zone: zone,
       isActive: json['is_active'] as bool,
       meterCount: _parseMeterCount(json['meters']),
+      reportLogoPath: json['report_logo_path'] as String?,
     );
   }
 
@@ -109,6 +112,7 @@ class Site {
       'location': location,
       'zone_id': zoneId,
       'is_active': isActive,
+      'report_logo_path': reportLogoPath,
     };
   }
 
@@ -121,6 +125,31 @@ class Site {
       'location': location,
       'zone_id': zoneId,
       'is_active': isActive,
+      'report_logo_path': reportLogoPath,
     };
+  }
+
+  Site copyWith({
+    String? reportLogoPath,
+    bool clearReportLogoPath = false,
+  }) {
+    return Site(
+      id: id,
+      organizationId: organizationId,
+      nameEn: nameEn,
+      nameAr: nameAr,
+      siteType: siteType,
+      siteTypeId: siteTypeId,
+      orgSiteType: orgSiteType,
+      organization: organization,
+      location: location,
+      zoneId: zoneId,
+      zone: zone,
+      isActive: isActive,
+      meterCount: meterCount,
+      reportLogoPath: clearReportLogoPath
+          ? null
+          : (reportLogoPath ?? this.reportLogoPath),
+    );
   }
 }

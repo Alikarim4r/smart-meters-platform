@@ -1723,6 +1723,33 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
     final categoriesAsync = ref.watch(catalogCategoriesProvider);
     final selectedSiteId = ref.watch(selectedAdminSiteIdProvider);
     final isAr = ref.watch(adminLocaleProvider).languageCode == 'ar';
+    final sitesAsync = ref.watch(adminSitesProvider);
+
+    // Auto-pick first site (same as Meters tab) so Network is not stuck empty.
+    sitesAsync.whenData((sites) {
+      if (sites.isEmpty) {
+        if (selectedSiteId != null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            if (ref.read(selectedAdminSiteIdProvider) != null) {
+              ref.read(selectedAdminSiteIdProvider.notifier).state = null;
+            }
+          });
+        }
+        return;
+      }
+      final stillValid =
+          selectedSiteId != null && sites.any((s) => s.id == selectedSiteId);
+      if (!stillValid) {
+        final nextId = sites.first.id;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (!mounted) return;
+          if (ref.read(selectedAdminSiteIdProvider) != nextId) {
+            ref.read(selectedAdminSiteIdProvider.notifier).state = nextId;
+          }
+        });
+      }
+    });
 
     // Meters tab create/edit → place newly added meters (not a full re-sync).
     ref.listen(adminMetersProvider, (previous, next) {
@@ -1737,6 +1764,12 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
     });
 
     if (selectedSiteId == null) {
+      if (sitesAsync.isLoading) {
+        return const Center(child: CircularProgressIndicator());
+      }
+      if (sitesAsync.hasError) {
+        return Center(child: Text('${sitesAsync.error}'));
+      }
       return Center(child: Text(s.networkSelectSite));
     }
 

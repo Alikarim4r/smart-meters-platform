@@ -104,6 +104,15 @@ class AdminSettingsDrawer extends ConsumerWidget {
                   onTap: () => ref.read(authProvider.notifier).signOut(),
                 ),
                 const Divider(height: 28),
+                _SectionLabel(icon: Icons.info_outline, text: s.aboutApp),
+                const SizedBox(height: 6),
+                _DeveloperCredit(
+                  title: s.createdDevelopedBy,
+                  name: s.developerName,
+                  phone: s.developerPhone,
+                  email: s.developerEmail,
+                ),
+                const Divider(height: 28),
                 _SectionLabel(
                   icon: Icons.handyman_outlined,
                   text: s.advancedTools,
@@ -315,7 +324,7 @@ class _DrawerHeader extends StatelessWidget {
                 backgroundColor: BrandChrome.accent,
                 child: Text(
                   initials,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: BrandChrome.onAccent,
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
@@ -403,6 +412,57 @@ class _SectionLabel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DeveloperCredit extends StatelessWidget {
+  const _DeveloperCredit({
+    required this.title,
+    required this.name,
+    required this.phone,
+    required this.email,
+  });
+
+  final String title;
+  final String name;
+  final String phone;
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.85),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            name,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(phone, style: theme.textTheme.bodyMedium),
+          ),
+          Text(email, style: theme.textTheme.bodyMedium),
+        ],
+      ),
     );
   }
 }

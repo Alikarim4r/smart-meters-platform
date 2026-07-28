@@ -1,19 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:smart_meters_core/smart_meters_core.dart';
 
-/// Dashboard Viewer palette — aligned with shared cream/gold brand language.
+/// Dashboard Viewer palette — charcoal + cool slate, white canvas, no gold.
 abstract final class DashboardPalette {
-  static const navy = AppColors.navy;
-  static const navyLight = Color(0xFF12233A);
-  static const navyMuted = AppColors.navyMuted;
-  static const gold = AppColors.gold;
-  static const goldSoft = AppColors.goldSoft;
-  static const background = BrandChrome.canvasLight;
+  static const navy = Color(0xFF1B2430);
+  static const navyLight = Color(0xFF273141);
+  static const navyMuted = Color(0xFF3D5A80);
+  static const gold = Color(0xFF3D5A80); // legacy name; cool slate accent
+  static const goldSoft = Color(0xFFD9E2EC);
+  static const background = Color(0xFFFFFFFF);
   static const card = Color(0xFFFFFFFF);
-  static const border = BrandChrome.borderLight;
-  static const textMuted = BrandChrome.inkMuted;
-  static const textPrimary = BrandChrome.ink;
-  static const sidebarBorder = Color(0xFF0E2444);
+  static const border = Color(0xFFE2E6EB);
+  static const textMuted = Color(0xFF5C6775);
+  static const textPrimary = Color(0xFF1B2430);
+  static const sidebarBorder = Color(0xFF273141);
 
   static const water = Color(0xFF2563EB);
   static const electricity = Color(0xFFD97706);
@@ -25,7 +24,7 @@ abstract final class DashboardPalette {
 
   static const cardRadius = 20.0;
   static const cardShadow = BoxShadow(
-    color: Color(0x143F3426),
+    color: Color(0x141B2430),
     blurRadius: 18,
     offset: Offset(0, 6),
   );

@@ -97,47 +97,51 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
             : _noteController.text.trim(),
       );
 
-      // Dual-layer: mirror each site into user_scope_assignments.
-      final scopeRole = await repo.getRoleByCode(
-        UserAdminRepository.scopeRoleCodeFor(
-          _role,
-          kind: ScopeKind.site,
-        ),
-      );
-      if (scopeRole != null) {
-        for (final siteId in _selectedSiteIds) {
-          await repo.assignUserScope(
-            userId: widget.user.profile.id,
-            roleId: scopeRole.id,
-            siteId: siteId,
-            inheritChildren: false,
-          );
-        }
-      }
-
-      // Apply custom permissions if admin changed toggles from role defaults.
-      if (_selectedSiteIds.isNotEmpty) {
-        final defaults = defaultSitePermissionsForRole(_role);
-        for (final siteId in _selectedSiteIds) {
-          final perms = _sitePermissions[siteId] ?? defaults;
-          if (perms.canRead != defaults.canRead ||
-              perms.canWrite != defaults.canWrite) {
-            final accessList = await repo.getUserSiteAccess(
-              widget.user.profile.id,
+      // Best-effort client mirror (RPC 061 also writes scopes atomically).
+      // Never fail approval UX if this secondary write errors.
+      try {
+        final scopeRole = await repo.getRoleByCode(
+          UserAdminRepository.scopeRoleCodeFor(
+            _role,
+            kind: ScopeKind.site,
+          ),
+        );
+        if (scopeRole != null) {
+          for (final siteId in _selectedSiteIds) {
+            await repo.assignUserScope(
+              userId: widget.user.profile.id,
+              roleId: scopeRole.id,
+              siteId: siteId,
+              inheritChildren: false,
             );
-            final match = accessList
-                .where((a) => a.siteId == siteId)
-                .firstOrNull;
-            if (match != null) {
-              await repo.updateUserSiteAccess(
-                accessId: match.id,
-                canRead: perms.canRead,
-                canWrite: perms.canWrite,
-                role: _role,
+          }
+        }
+
+        if (_selectedSiteIds.isNotEmpty) {
+          final defaults = defaultSitePermissionsForRole(_role);
+          for (final siteId in _selectedSiteIds) {
+            final perms = _sitePermissions[siteId] ?? defaults;
+            if (perms.canRead != defaults.canRead ||
+                perms.canWrite != defaults.canWrite) {
+              final accessList = await repo.getUserSiteAccess(
+                widget.user.profile.id,
               );
+              final match = accessList
+                  .where((a) => a.siteId == siteId)
+                  .firstOrNull;
+              if (match != null) {
+                await repo.updateUserSiteAccess(
+                  accessId: match.id,
+                  canRead: perms.canRead,
+                  canWrite: perms.canWrite,
+                  role: _role,
+                );
+              }
             }
           }
         }
+      } catch (_) {
+        // Approval + user_site_access already committed by RPC.
       }
 
       if (!mounted) return;
@@ -236,6 +240,13 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
               Text(
                 isAr ? 'تعيين المواقع' : 'Assign sites',
                 style: Theme.of(context).textTheme.titleSmall,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                isAr
+                    ? 'إلزامي لفتح تطبيقات الإدخال والعرض: اختر موقعاً واحداً على الأقل.'
+                    : 'Required to open Entry/Dashboard: select at least one site.',
+                style: Theme.of(context).textTheme.bodySmall,
               ),
               const SizedBox(height: 8),
               if (sitesAsync.isLoading)

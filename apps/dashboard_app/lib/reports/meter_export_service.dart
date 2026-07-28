@@ -1,6 +1,5 @@
-import 'dart:io';
-
 import 'package:excel/excel.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
@@ -94,18 +93,39 @@ class MeterExportService {
       throw StateError('Excel generation failed');
     }
 
-    final dir = await getTemporaryDirectory();
     final filename =
         'meter_${meter.meterCode}_${formatBusinessDate(dateSelection.endDate)}.xlsx'
             .replaceAll(RegExp(r'[^\w\-.]+'), '_');
-    final file = File('${dir.path}/$filename');
-    await file.writeAsBytes(bytes, flush: true);
 
-    await Share.shareXFiles(
-      [XFile(file.path, name: filename)],
-      text: filename,
+    if (kIsWeb) {
+      await Share.shareXFiles(
+        [
+          XFile.fromData(
+            Uint8List.fromList(bytes),
+            mimeType:
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            name: filename,
+          ),
+        ],
+        text: filename,
+        fileNameOverrides: [filename],
+      );
+      return 'download://$filename';
+    }
+
+    // Avoid importing dart:io so this library compiles for web.
+    final dir = await getTemporaryDirectory();
+    final path = '${dir.path}/$filename';
+    final xfile = XFile.fromData(
+      Uint8List.fromList(bytes),
+      mimeType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      name: filename,
+      path: path,
     );
-    return file.path;
+    await xfile.saveTo(path);
+    await Share.shareXFiles([XFile(path, name: filename)], text: filename);
+    return path;
   }
 }
 

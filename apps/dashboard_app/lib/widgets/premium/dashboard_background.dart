@@ -11,5 +11,6 @@ class DashboardBackground extends StatelessWidget {
   final Widget child;
 
   @override
-  Widget build(BuildContext context) => BrandSurfaceBackground(child: child);
+  Widget build(BuildContext context) =>
+      BrandSurfaceBackground(showMotif: false, child: child);
 }

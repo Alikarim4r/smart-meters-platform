@@ -42,22 +42,22 @@ class DashboardThemeColors extends ThemeExtension<DashboardThemeColors> {
   final Color infoBorder;
 
   static const light = DashboardThemeColors(
-    background: Color(0xFFF7F3EA),
-    card: Color(0xFFFFFCF5),
-    cardElevated: Color(0xFFF8F0DC),
-    border: Color(0xFFE8D9B0),
-    textPrimary: Color(0xFF3F3426),
-    textMuted: Color(0xFF7A6A55),
-    navy: Color(0xFF3F3426),
-    navyMuted: Color(0xFF7A6A55),
-    sidebar: Color(0xFF0A1628),
-    sidebarBorder: Color(0xFF152238),
-    inputFill: Color(0xFFFFF8EB),
-    dialog: Color(0xFFFFFCF5),
+    background: Color(0xFFFFFFFF),
+    card: Color(0xFFFFFFFF),
+    cardElevated: Color(0xFFF7F9FC),
+    border: Color(0xFFE2E6EB),
+    textPrimary: Color(0xFF1B2430),
+    textMuted: Color(0xFF5C6775),
+    navy: Color(0xFF1B2430),
+    navyMuted: Color(0xFF3D5A80),
+    sidebar: Color(0xFF1B2430),
+    sidebarBorder: Color(0xFF273141),
+    inputFill: Color(0xFFFFFFFF),
+    dialog: Color(0xFFFFFFFF),
     meterPatternOpacity: 0,
-    chartGrid: Color(0xFFE0D2AE),
-    infoSurface: Color(0xFFF5E6B8),
-    infoBorder: Color(0xFFE8D9B0),
+    chartGrid: Color(0xFFE2E6EB),
+    infoSurface: Color(0xFFEEF2F6),
+    infoBorder: Color(0xFFE2E6EB),
   );
 
   static const dark = DashboardThemeColors(
@@ -153,16 +153,22 @@ class DashboardThemeColors extends ThemeExtension<DashboardThemeColors> {
 ThemeData buildDashboardLightTheme() {
   const colors = DashboardThemeColors.light;
   final colorScheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF0B1F3A),
+    seedColor: const Color(0xFF1B2430),
     brightness: Brightness.light,
-    primary: const Color(0xFFC9A227),
-    onPrimary: const Color(0xFF2C2208),
-    secondary: const Color(0xFFF5E6B8),
-    onSecondary: const Color(0xFF3F3426),
-    surface: colors.card,
+    primary: const Color(0xFF3D5A80),
+    onPrimary: Colors.white,
+    secondary: const Color(0xFFD9E2EC),
+    onSecondary: const Color(0xFF1B2430),
+    surface: Colors.white,
     onSurface: colors.textPrimary,
-    secondaryContainer: const Color(0xFFF5E6B8).withValues(alpha: 0.55),
-    onSecondaryContainer: const Color(0xFF3F3426),
+    surfaceContainerLowest: Colors.white,
+    surfaceContainerLow: Colors.white,
+    surfaceContainer: Colors.white,
+    surfaceContainerHigh: const Color(0xFFF7F9FC),
+    surfaceContainerHighest: const Color(0xFFF3F5F8),
+    surfaceTint: Colors.transparent,
+    secondaryContainer: const Color(0xFFD9E2EC).withValues(alpha: 0.55),
+    onSecondaryContainer: const Color(0xFF1B2430),
     outline: colors.border,
   );
   return _buildTheme(colors: colors, colorScheme: colorScheme);
@@ -171,10 +177,10 @@ ThemeData buildDashboardLightTheme() {
 ThemeData buildDashboardDarkTheme() {
   const colors = DashboardThemeColors.dark;
   final colorScheme = ColorScheme.dark(
-    primary: const Color(0xFFC9A227),
-    onPrimary: const Color(0xFF0B1F3A),
-    secondary: const Color(0xFFF5E6B8),
-    onSecondary: const Color(0xFF0B1F3A),
+    primary: const Color(0xFF3D5A80),
+    onPrimary: Colors.white,
+    secondary: const Color(0xFFD9E2EC),
+    onSecondary: const Color(0xFF1B2430),
     surface: colors.card,
     onSurface: colors.textPrimary,
     onSurfaceVariant: colors.textMuted,
@@ -185,8 +191,8 @@ ThemeData buildDashboardDarkTheme() {
     surfaceContainer: colors.card,
     surfaceContainerLow: const Color(0xFF0E1A2C),
     surfaceContainerLowest: colors.background,
-    secondaryContainer: const Color(0xFFC9A227).withValues(alpha: 0.22),
-    onSecondaryContainer: const Color(0xFFF5E6B8),
+    secondaryContainer: const Color(0xFF3D5A80).withValues(alpha: 0.22),
+    onSecondaryContainer: const Color(0xFFD9E2EC),
     error: const Color(0xFFF07178),
     onError: const Color(0xFF1A0A0C),
   );
@@ -227,7 +233,7 @@ ThemeData _buildTheme({
         }),
         backgroundColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const Color(0xFFC9A227).withValues(
+            return const Color(0xFF3D5A80).withValues(
               alpha: colorScheme.brightness == Brightness.dark ? 0.24 : 0.22,
             );
           }
@@ -236,8 +242,8 @@ ThemeData _buildTheme({
         iconColor: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
             return colorScheme.brightness == Brightness.dark
-                ? const Color(0xFFF5E6B8)
-                : const Color(0xFF8A6A1A);
+                ? const Color(0xFFD9E2EC)
+                : const Color(0xFF1B2430);
           }
           return colors.textMuted;
         }),
@@ -263,7 +269,7 @@ ThemeData _buildTheme({
     ),
     chipTheme: ChipThemeData(
       backgroundColor: colors.cardElevated,
-      selectedColor: const Color(0xFFC9A227).withValues(alpha: 0.28),
+      selectedColor: const Color(0xFF3D5A80).withValues(alpha: 0.28),
       labelStyle: TextStyle(color: colors.textPrimary, fontSize: 12),
       side: BorderSide(color: colors.border),
       shape: RoundedRectangleBorder(
@@ -282,7 +288,7 @@ ThemeData _buildTheme({
     ),
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFFC9A227),
+        backgroundColor: const Color(0xFF3D5A80),
         foregroundColor: colorScheme.brightness == Brightness.dark
             ? const Color(0xFF0B1F3A)
             : const Color(0xFF2C2208),
@@ -345,5 +351,5 @@ Color chartTooltipBg(BuildContext context) {
 
 Color chartTooltipFg(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  return isDark ? const Color(0xFFF3EFE4) : const Color(0xFFF7F3EA);
+  return isDark ? const Color(0xFFF3EFE4) : const Color(0xFFFFFFFF);
 }

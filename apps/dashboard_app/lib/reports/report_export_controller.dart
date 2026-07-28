@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
+import 'dart:typed_data';
 
 import '../providers/chart_providers.dart';
 import '../providers/dashboard_providers.dart';
@@ -135,9 +136,12 @@ class ReportExportController {
           businessDate: businessDate,
           categoryId: options.categoryId,
           type: options.type,
+          rangeStart: options.rangeStart,
+          rangeEnd: options.rangeEnd,
         );
+        final enriched = await _attachReportLogos(bundle);
         filename = buildReportFilename(
-          siteName: bundle.meta.siteName,
+          siteName: enriched.meta.siteName,
           type: options.type,
           format: options.format,
           period: options.period,
@@ -147,9 +151,10 @@ class ReportExportController {
         if (options.format == ReportFormat.pdf) {
           reportExportLog('G', 'generate site PDF start');
           bytes = await ref.read(pdfReportServiceProvider).buildSitePdf(
-                bundle: bundle,
+                bundle: enriched,
                 type: options.type,
                 includePhotos: options.includePhotos,
+                includeCharts: options.includeCharts,
               );
           reportExportLog('G', 'generate site PDF ok (${bytes.length} bytes)');
         } else if (options.type == ReportType.readings) {
@@ -194,6 +199,31 @@ class ReportExportController {
     }
   }
 
+  Future<SiteReportBundle> _attachReportLogos(SiteReportBundle bundle) async {
+    final primaryPath = bundle.meta.reportLogoPrimaryPath;
+    final secondaryPath = bundle.meta.reportLogoSecondaryPath;
+    if ((primaryPath == null || primaryPath.isEmpty) &&
+        (secondaryPath == null || secondaryPath.isEmpty)) {
+      return bundle;
+    }
+
+    final client = ref.read(supabaseClientProvider);
+    Future<Uint8List?> load(String? path) async {
+      if (path == null || path.trim().isEmpty) return null;
+      try {
+        return await client.storage.from('report-logos').download(path);
+      } catch (_) {
+        return null;
+      }
+    }
+
+    final primary = await load(primaryPath);
+    final secondary = await load(secondaryPath);
+    return bundle.copyWith(
+      meta: bundle.meta.withLogoBytes(primary: primary, secondary: secondary),
+    );
+  }
+
   Future<void> _showSuccessDialog(
     BuildContext context,
     GeneratedReportFile file,
@@ -203,43 +233,54 @@ class ReportExportController {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Report ready'),
-        content: Text('Saved to device:\n${file.filename}'),
+        content: Text(
+          file.path.startsWith('download://')
+              ? 'Report ready:\n${file.filename}\n\nOn web, use the browser download/share prompt.'
+              : 'Saved to device:\n${file.filename}',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Close'),
           ),
-          TextButton(
-            onPressed: () async {
-              try {
-                await fileService.shareReport(file);
-              } catch (error) {
-                if (dialogContext.mounted) {
+          if (!file.path.startsWith('download://'))
+            TextButton(
+              onPressed: () async {
+                try {
+                  await fileService.shareReport(file);
+                } catch (error) {
+                  if (dialogContext.mounted) {
+                    ScaffoldMessenger.of(dialogContext).showSnackBar(
+                      SnackBar(content: Text('Share failed: $error')),
+                    );
+                  }
+                }
+              },
+              child: const Text('Share'),
+            ),
+          if (!file.path.startsWith('download://'))
+            FilledButton(
+              onPressed: () async {
+                final result = await fileService.openReport(file);
+                if (!result.success && dialogContext.mounted) {
                   ScaffoldMessenger.of(dialogContext).showSnackBar(
-                    SnackBar(content: Text('Share failed: $error')),
+                    SnackBar(
+                      content: Text(
+                        result.message == null
+                            ? 'No app found to open this file. Use Share instead.'
+                            : 'Open failed: ${result.message}. Use Share instead.',
+                      ),
+                    ),
                   );
                 }
-              }
-            },
-            child: const Text('Share'),
-          ),
-          FilledButton(
-            onPressed: () async {
-              final result = await fileService.openReport(file);
-              if (!result.success && dialogContext.mounted) {
-                ScaffoldMessenger.of(dialogContext).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      result.message == null
-                          ? 'No app found to open this file. Use Share instead.'
-                          : 'Open failed: ${result.message}. Use Share instead.',
-                    ),
-                  ),
-                );
-              }
-            },
-            child: const Text('Open'),
-          ),
+              },
+              child: const Text('Open'),
+            ),
+          if (file.path.startsWith('download://'))
+            FilledButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Done'),
+            ),
         ],
       ),
     );

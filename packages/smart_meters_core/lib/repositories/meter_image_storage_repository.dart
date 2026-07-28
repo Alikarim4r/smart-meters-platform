@@ -34,4 +34,15 @@ class MeterImageStorageRepository {
         .from(kMeterImagesBucket)
         .createSignedUrl(storagePath, expiresInSeconds);
   }
+
+  /// Deletes a meter reading photo from storage (ignores missing object).
+  Future<void> deleteMeterReadingImage(String storagePath) async {
+    final path = storagePath.trim();
+    if (path.isEmpty) return;
+    try {
+      await _client.storage.from(kMeterImagesBucket).remove([path]);
+    } catch (_) {
+      // Object may already be gone; row clear still proceeds.
+    }
+  }
 }

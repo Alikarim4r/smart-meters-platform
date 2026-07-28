@@ -127,21 +127,28 @@ class MeterReadingCard extends ConsumerWidget {
       child: MeterGlassCard(
         utilityKey: utilityKey,
         isMain: isMain,
-        child: Stack(
-          children: [
-            body,
-            PositionedDirectional(
-              start: 0,
-              top: 0,
-              bottom: 0,
-              child: IgnorePointer(
-                child: meterCardAccentStrip(
-                  utilityKey: utilityKey,
-                  isMain: isMain,
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onViewReadings,
+            borderRadius: BorderRadius.circular(DashboardRadius.card),
+            child: Stack(
+              children: [
+                body,
+                PositionedDirectional(
+                  start: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: IgnorePointer(
+                    child: meterCardAccentStrip(
+                      utilityKey: utilityKey,
+                      isMain: isMain,
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

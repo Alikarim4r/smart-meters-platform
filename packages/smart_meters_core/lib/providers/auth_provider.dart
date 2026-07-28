@@ -13,12 +13,15 @@ class AuthState {
     this.profile,
     this.isLoadingProfile = false,
     this.errorMessage,
+    this.infoMessage,
   });
 
   final Session? session;
   final Profile? profile;
   final bool isLoadingProfile;
   final String? errorMessage;
+  /// Non-error guidance (e.g. registration submitted / await approval).
+  final String? infoMessage;
 
   bool get isAuthenticated => session != null;
 
@@ -27,7 +30,9 @@ class AuthState {
     Profile? profile,
     bool? isLoadingProfile,
     String? errorMessage,
+    String? infoMessage,
     bool clearError = false,
+    bool clearInfo = false,
     bool clearProfile = false,
   }) {
     return AuthState(
@@ -35,6 +40,7 @@ class AuthState {
       profile: clearProfile ? null : (profile ?? this.profile),
       isLoadingProfile: isLoadingProfile ?? this.isLoadingProfile,
       errorMessage: clearError ? null : (errorMessage ?? this.errorMessage),
+      infoMessage: clearInfo ? null : (infoMessage ?? this.infoMessage),
     );
   }
 }
@@ -58,7 +64,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
   }
 
   Future<void> signIn({required String email, required String password}) async {
-    state = state.copyWith(clearError: true, isLoadingProfile: true);
+    state = state.copyWith(
+      clearError: true,
+      clearInfo: true,
+      isLoadingProfile: true,
+    );
 
     try {
       final authRepo = _ref.read(authRepositoryProvider);
@@ -73,9 +83,12 @@ class AuthNotifier extends StateNotifier<AuthState> {
       state = state.copyWith(session: session);
       await _loadProfile(session.user.id);
     } on AuthException catch (error) {
-      final message = error.message.toLowerCase().contains('invalid')
+      final lower = error.message.toLowerCase();
+      final message = lower.contains('invalid')
           ? 'Invalid email or password.'
-          : error.message;
+          : (lower.contains('confirm') || lower.contains('verified')
+                ? 'Confirm your email first, then sign in. An admin must still approve the account.'
+                : error.message);
       state = state.copyWith(
         clearProfile: true,
         isLoadingProfile: false,
@@ -102,7 +115,11 @@ class AuthNotifier extends StateNotifier<AuthState> {
     required String fullName,
     String requestedRole = 'technician_request',
   }) async {
-    state = state.copyWith(clearError: true, isLoadingProfile: true);
+    state = state.copyWith(
+      clearError: true,
+      clearInfo: true,
+      isLoadingProfile: true,
+    );
     try {
       final authRepo = _ref.read(authRepositoryProvider);
       await authRepo.signUpWithEmail(
@@ -116,8 +133,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
         // Email confirmation may be required — treat as success waiting state.
         state = state.copyWith(
           isLoadingProfile: false,
-          errorMessage:
-              'Registration submitted. Wait for admin approval (check email if confirmation is required).',
+          clearError: true,
+          infoMessage:
+              'Registration submitted. Confirm email if required, then wait for admin approval before signing in.',
         );
         return;
       }
@@ -199,6 +217,7 @@ class AuthNotifier extends StateNotifier<AuthState> {
         profile: profile,
         isLoadingProfile: false,
         clearError: true,
+        clearInfo: true,
       );
     } catch (error) {
       // Never leave the gate spinning forever (offline / hung RPC).

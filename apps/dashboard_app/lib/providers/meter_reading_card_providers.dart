@@ -4,6 +4,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../providers/alert_providers.dart';
 import '../providers/chart_providers.dart';
 import '../utils/dashboard_date_range.dart';
+import '../utils/efficiency_metric.dart';
 import '../utils/meter_reading_filters.dart';
 import '../utils/site_system_navigation.dart';
 import '../utils/utility_chart_type.dart';
@@ -231,6 +232,12 @@ final siteNetworkMeterCardsProvider =
 final utilityChartTypeProvider =
     StateProvider.autoDispose.family<UtilityChartType, String>(
   (ref, key) => UtilityChartType.line,
+);
+
+/// Selected COP/EER card on the BTU energy tab (`null` = normal consumption charts).
+final selectedEfficiencyMetricProvider =
+    StateProvider.autoDispose.family<EfficiencyMetric?, String>(
+  (ref, siteId) => null,
 );
 
 final meterCardViewModeProvider =

@@ -18,7 +18,7 @@ class AppTheme {
       colorScheme: colorScheme,
       useMaterial3: true,
       scaffoldBackgroundColor: AppColors.surface,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: false,
@@ -31,7 +31,7 @@ class AppTheme {
         color: AppColors.surfaceElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
         ),
         margin: EdgeInsets.zero,
       ),
@@ -48,7 +48,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.navy,
-          side: const BorderSide(color: AppColors.border),
+          side: BorderSide(color: AppColors.border),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -59,22 +59,22 @@ class AppTheme {
         fillColor: AppColors.surfaceElevated,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.navy, width: 1.5),
+          borderSide: BorderSide(color: AppColors.navy, width: 1.5),
         ),
       ),
-      dividerTheme: const DividerThemeData(
+      dividerTheme: DividerThemeData(
         color: AppColors.border,
         thickness: 1,
       ),
-      listTileTheme: const ListTileThemeData(iconColor: AppColors.navyMuted),
+      listTileTheme: ListTileThemeData(iconColor: AppColors.navyMuted),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: AppColors.surfaceElevated,
         indicatorColor: AppColors.goldSoft,
@@ -84,7 +84,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.goldSoft.withValues(alpha: 0.35),
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           color: AppColors.navy,
           fontWeight: FontWeight.w600,
           fontSize: 11,
@@ -92,7 +92,7 @@ class AppTheme {
         side: BorderSide(color: AppColors.gold.withValues(alpha: 0.4)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineSmall: TextStyle(
           color: AppColors.navy,
           fontWeight: FontWeight.w700,
@@ -112,7 +112,7 @@ class AppTheme {
     );
   }
 
-  /// Dark counterpart of [light]: deep navy surfaces with gold accents.
+  /// Dark counterpart of [light]: deep surfaces with brand accents.
   static ThemeData dark() {
     const background = Color(0xFF0A1220);
     const surfaceElevated = Color(0xFF14213A);
@@ -184,7 +184,7 @@ class AppTheme {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
+          borderSide: BorderSide(color: AppColors.gold, width: 1.5),
         ),
       ),
       dividerTheme: const DividerThemeData(color: border, thickness: 1),
@@ -198,7 +198,7 @@ class AppTheme {
       ),
       chipTheme: ChipThemeData(
         backgroundColor: AppColors.gold.withValues(alpha: 0.12),
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           color: AppColors.goldSoft,
           fontWeight: FontWeight.w600,
           fontSize: 11,

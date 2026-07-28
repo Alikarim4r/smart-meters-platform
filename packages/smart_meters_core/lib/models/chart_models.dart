@@ -107,12 +107,16 @@ class CopTrendPoint {
   const CopTrendPoint({
     required this.date,
     this.cop,
+    this.eer,
     this.btuConsumption,
     this.electricityConsumption,
   });
 
   final DateTime date;
+  /// Coefficient of Performance (cooling kWh / electric kWh).
   final double? cop;
+  /// Energy Efficiency Ratio ≈ COP × 3.412 (BTU/h per Watt).
+  final double? eer;
   final double? btuConsumption;
   final double? electricityConsumption;
 }
@@ -128,6 +132,7 @@ class CopTrendResult {
     this.averageCop,
     this.minCop,
     this.maxCop,
+    this.averageEer,
     this.emptyMessage,
   });
 
@@ -139,6 +144,7 @@ class CopTrendResult {
   final double? averageCop;
   final double? minCop;
   final double? maxCop;
+  final double? averageEer;
   final String? emptyMessage;
 
   bool get hasData => points.any((point) => point.cop != null);

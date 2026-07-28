@@ -4,14 +4,16 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 final canCorrectReadingsProvider = Provider<bool>((ref) {
   final profile = ref.watch(authProvider).profile;
   if (profile == null) return false;
-  return profile.isSuperAdmin || profile.isSiteAdmin;
+  return profile.isPlatformOwner ||
+      profile.isSuperAdmin ||
+      profile.isSiteAdmin;
 });
 
 final correctionSiteIdProvider = StateProvider<String?>((ref) => null);
 final correctionZoneIdProvider = StateProvider<String?>((ref) => null);
 final correctionCategoryIdProvider = StateProvider<String?>((ref) => null);
 final correctionDateFilterProvider = StateProvider<CorrectionDateFilter>(
-  (ref) => CorrectionDateFilter.last7Days,
+  (ref) => CorrectionDateFilter.last30Days,
 );
 final correctionListFilterProvider = StateProvider<CorrectionListFilter>(
   (ref) => CorrectionListFilter.all,
@@ -34,6 +36,9 @@ ReadingCorrectionFilters buildCorrectionFilters({required Ref ref}) {
       fromDate = businessDate.subtract(const Duration(days: 6));
     case CorrectionDateFilter.last30Days:
       fromDate = businessDate.subtract(const Duration(days: 29));
+    case CorrectionDateFilter.all:
+      fromDate = null;
+      toDate = null;
   }
 
   return ReadingCorrectionFilters(
@@ -43,6 +48,7 @@ ReadingCorrectionFilters buildCorrectionFilters({required Ref ref}) {
     fromDate: fromDate,
     toDate: toDate,
     listFilter: listFilter,
+    limit: dateFilter == CorrectionDateFilter.all ? 500 : 200,
   );
 }
 

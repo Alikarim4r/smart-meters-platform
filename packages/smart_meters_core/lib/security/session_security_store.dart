@@ -52,7 +52,7 @@ class SessionSecurityStore {
     final prefs = await SharedPreferences.getInstance();
     staySignedIn = prefs.getBool(_prefsStay) ?? true;
     biometricEnabled = prefs.getBool(_prefsBio) ?? false;
-    savedEmail = await _secure.read(key: _secureEmail);
+    savedEmail = await _safeRead(_secureEmail);
   }
 
   Future<void> setStaySignedIn(bool value) async {
@@ -75,8 +75,8 @@ class SessionSecurityStore {
   }
 
   Future<bool> get hasStoredCredentials async {
-    final email = await _secure.read(key: _secureEmail);
-    final password = await _secure.read(key: _securePassword);
+    final email = await _safeRead(_secureEmail);
+    final password = await _safeRead(_securePassword);
     return email != null &&
         email.isNotEmpty &&
         password != null &&
@@ -88,13 +88,13 @@ class SessionSecurityStore {
     required String password,
   }) async {
     savedEmail = email.trim();
-    await _secure.write(key: _secureEmail, value: savedEmail);
-    await _secure.write(key: _securePassword, value: password);
+    await _safeWrite(_secureEmail, savedEmail!);
+    await _safeWrite(_securePassword, password);
   }
 
   Future<({String email, String password})?> readCredentials() async {
-    final email = await _secure.read(key: _secureEmail);
-    final password = await _secure.read(key: _securePassword);
+    final email = await _safeRead(_secureEmail);
+    final password = await _safeRead(_securePassword);
     if (email == null ||
         email.isEmpty ||
         password == null ||
@@ -106,7 +106,29 @@ class SessionSecurityStore {
 
   Future<void> clearCredentials() async {
     savedEmail = null;
-    await _secure.delete(key: _secureEmail);
-    await _secure.delete(key: _securePassword);
+    await _safeDelete(_secureEmail);
+    await _safeDelete(_securePassword);
+  }
+
+  /// Keychain / secure-storage can throw on macOS when the user cancels the
+  /// system prompt (error -128). Never let that crash app bootstrap.
+  Future<String?> _safeRead(String key) async {
+    try {
+      return await _secure.read(key: key);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<void> _safeWrite(String key, String value) async {
+    try {
+      await _secure.write(key: key, value: value);
+    } catch (_) {}
+  }
+
+  Future<void> _safeDelete(String key) async {
+    try {
+      await _secure.delete(key: key);
+    } catch (_) {}
   }
 }

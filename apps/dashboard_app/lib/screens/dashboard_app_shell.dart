@@ -90,6 +90,7 @@ class DashboardAppShell extends ConsumerWidget {
               // Size to sidebar width — do not expand into the content pane.
               BrandSurfaceBackground(
                 expand: false,
+                showMotif: false,
                 child: DashboardSidebar(
                   onSignOut: () => ref.read(authProvider.notifier).signOut(),
                 ),
@@ -180,6 +181,7 @@ class _MobileDashboardShell extends ConsumerWidget {
       drawer: Drawer(
         backgroundColor: Colors.transparent,
         child: BrandSurfaceBackground(
+          showMotif: false,
           child: DashboardSidebar(
             asDrawer: true,
             onSignOut: () => ref.read(authProvider.notifier).signOut(),

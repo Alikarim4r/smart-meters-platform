@@ -1,29 +1,34 @@
 import 'package:flutter/material.dart';
 
-import 'app_colors.dart';
 import 'app_theme.dart';
 import 'brand_chrome.dart';
 
-/// Shared themes: warm cream/gold light + luxurious midnight/gold dark.
+/// Shared themes driven by the active [BrandChrome] palette.
 abstract final class BrandTheme {
   static ThemeData light() {
     final base = AppTheme.light();
     final colorScheme = base.colorScheme.copyWith(
       primary: BrandChrome.accent,
       onPrimary: BrandChrome.onAccent,
-      secondary: AppColors.goldSoft,
+      secondary: BrandChrome.accentSoft,
       onSecondary: BrandChrome.ink,
+      surface: Colors.white,
       onSurface: BrandChrome.ink,
-      secondaryContainer: AppColors.goldSoft.withValues(alpha: 0.55),
+      surfaceContainerLowest: Colors.white,
+      surfaceContainerLow: Colors.white,
+      surfaceContainer: Colors.white,
+      surfaceContainerHigh: const Color(0xFFF7F8FA),
+      surfaceContainerHighest: const Color(0xFFF2F4F7),
+      surfaceTint: Colors.transparent,
+      secondaryContainer: BrandChrome.accentSoft.withValues(alpha: 0.55),
       onSecondaryContainer: BrandChrome.ink,
       outline: BrandChrome.borderLight,
     );
 
     return base.copyWith(
       colorScheme: colorScheme,
-      // Transparent so [BrandSurfaceBackground] from MaterialApp.builder shows.
       scaffoldBackgroundColor: Colors.transparent,
-      drawerTheme: const DrawerThemeData(
+      drawerTheme: DrawerThemeData(
         backgroundColor: BrandChrome.canvasLight,
       ),
       appBarTheme: base.appBarTheme.copyWith(
@@ -44,7 +49,7 @@ abstract final class BrandTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: BrandChrome.ink,
-          side: const BorderSide(color: BrandChrome.borderLight),
+          side: BorderSide(color: BrandChrome.borderLight),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -70,7 +75,7 @@ abstract final class BrandTheme {
             }
             return BrandChrome.inkMuted;
           }),
-          side: const WidgetStatePropertyAll(
+          side: WidgetStatePropertyAll(
             BorderSide(color: BrandChrome.borderLight),
           ),
           shape: WidgetStatePropertyAll(
@@ -81,7 +86,7 @@ abstract final class BrandTheme {
       chipTheme: base.chipTheme.copyWith(
         selectedColor: BrandChrome.accent.withValues(alpha: 0.28),
         checkmarkColor: BrandChrome.onAccent,
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           color: BrandChrome.ink,
           fontWeight: FontWeight.w600,
           fontSize: 11,
@@ -100,69 +105,68 @@ abstract final class BrandTheme {
           base.navigationBarTheme.labelTextStyle
                   ?.resolve({})
                   ?.copyWith(color: BrandChrome.ink) ??
-              const TextStyle(fontSize: 12, color: BrandChrome.ink),
+              TextStyle(fontSize: 12, color: BrandChrome.ink),
         ),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: BrandChrome.iconGlyph);
+            return IconThemeData(color: BrandChrome.iconGlyph);
           }
-          return const IconThemeData(color: BrandChrome.inkMuted);
+          return IconThemeData(color: BrandChrome.inkMuted);
         }),
       ),
       cardTheme: base.cardTheme.copyWith(
         color: Colors.white,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: BrandChrome.borderLight),
+          side: BorderSide(color: BrandChrome.borderLight),
         ),
       ),
       inputDecorationTheme: base.inputDecorationTheme.copyWith(
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: BrandChrome.accent, width: 1.5),
+          borderSide: BorderSide(color: BrandChrome.accent, width: 1.5),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: BrandChrome.borderLight),
+          borderSide: BorderSide(color: BrandChrome.borderLight),
         ),
       ),
       textTheme: base.textTheme.apply(
         bodyColor: BrandChrome.ink,
         displayColor: BrandChrome.ink,
       ),
-      listTileTheme: const ListTileThemeData(iconColor: BrandChrome.iconGlyph),
-      iconTheme: const IconThemeData(color: BrandChrome.iconGlyph),
+      listTileTheme: ListTileThemeData(iconColor: BrandChrome.iconGlyph),
+      iconTheme: IconThemeData(color: BrandChrome.iconGlyph),
     );
   }
 
-  /// Deep midnight navy with gold accents.
   static ThemeData dark() {
-    const surfaceElevated = BrandChrome.surfaceDark;
-    const surfaceHigh = BrandChrome.surfaceDarkHigh;
-    const border = BrandChrome.borderDark;
-    const textPrimary = BrandChrome.textDark;
-    const textMuted = BrandChrome.textDarkMuted;
+    final surfaceElevated = BrandChrome.surfaceDark;
+    final surfaceHigh = BrandChrome.surfaceDarkHigh;
+    final border = BrandChrome.borderDark;
+    final textPrimary = BrandChrome.textDark;
+    final textMuted = BrandChrome.textDarkMuted;
 
     final colorScheme = ColorScheme.fromSeed(
-      seedColor: AppColors.navy,
+      seedColor: BrandChrome.primary,
       brightness: Brightness.dark,
-      primary: AppColors.gold,
-      onPrimary: AppColors.navy,
-      secondary: AppColors.goldSoft,
-      onSecondary: AppColors.navy,
+      primary: BrandChrome.accent,
+      onPrimary: BrandChrome.onAccent,
+      secondary: BrandChrome.accentSoft,
+      onSecondary: BrandChrome.primary,
       surface: surfaceElevated,
       onSurface: textPrimary,
       outline: border,
       surfaceContainerHighest: surfaceHigh,
-      secondaryContainer: AppColors.gold.withValues(alpha: 0.22),
-      onSecondaryContainer: AppColors.goldSoft,
+      secondaryContainer: BrandChrome.accent.withValues(alpha: 0.22),
+      onSecondaryContainer: BrandChrome.accentSoft,
     );
 
     return ThemeData(
       colorScheme: colorScheme,
       useMaterial3: true,
       scaffoldBackgroundColor: Colors.transparent,
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: false,
@@ -175,15 +179,15 @@ abstract final class BrandTheme {
         color: surfaceElevated,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: border),
+          side: BorderSide(color: border),
         ),
         margin: EdgeInsets.zero,
       ),
-      drawerTheme: const DrawerThemeData(backgroundColor: surfaceElevated),
+      drawerTheme: DrawerThemeData(backgroundColor: surfaceElevated),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.gold,
-          foregroundColor: AppColors.navy,
+          backgroundColor: BrandChrome.accent,
+          foregroundColor: BrandChrome.onAccent,
           padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -193,7 +197,7 @@ abstract final class BrandTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: textPrimary,
-          side: const BorderSide(color: border),
+          side: BorderSide(color: border),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -203,23 +207,23 @@ abstract final class BrandTheme {
         style: ButtonStyle(
           backgroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.gold.withValues(alpha: 0.24);
+              return BrandChrome.accent.withValues(alpha: 0.24);
             }
             return Colors.transparent;
           }),
           foregroundColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.goldSoft;
+              return BrandChrome.accentSoft;
             }
             return textMuted;
           }),
           iconColor: WidgetStateProperty.resolveWith((states) {
             if (states.contains(WidgetState.selected)) {
-              return AppColors.goldSoft;
+              return BrandChrome.accentSoft;
             }
             return textMuted;
           }),
-          side: const WidgetStatePropertyAll(BorderSide(color: border)),
+          side: WidgetStatePropertyAll(BorderSide(color: border)),
           shape: WidgetStatePropertyAll(
             RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           ),
@@ -227,20 +231,20 @@ abstract final class BrandTheme {
       ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: surfaceElevated,
-        indicatorColor: AppColors.gold.withValues(alpha: 0.28),
-        labelTextStyle: const WidgetStatePropertyAll(
+        indicatorColor: BrandChrome.accent.withValues(alpha: 0.28),
+        labelTextStyle: WidgetStatePropertyAll(
           TextStyle(fontSize: 12, color: textPrimary),
         ),
         iconTheme: WidgetStateProperty.resolveWith((states) {
           if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: AppColors.goldSoft);
+            return IconThemeData(color: BrandChrome.accentSoft);
           }
-          return const IconThemeData(color: textMuted);
+          return IconThemeData(color: textMuted);
         }),
       ),
       floatingActionButtonTheme: FloatingActionButtonThemeData(
-        backgroundColor: AppColors.gold,
-        foregroundColor: AppColors.navy,
+        backgroundColor: BrandChrome.accent,
+        foregroundColor: BrandChrome.onAccent,
         extendedPadding: const EdgeInsets.symmetric(horizontal: 18),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
       ),
@@ -249,30 +253,30 @@ abstract final class BrandTheme {
         fillColor: surfaceHigh,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: border),
+          borderSide: BorderSide(color: border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: border),
+          borderSide: BorderSide(color: border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.gold, width: 1.5),
+          borderSide: BorderSide(color: BrandChrome.accent, width: 1.5),
         ),
       ),
-      dividerTheme: const DividerThemeData(color: border, thickness: 1),
-      listTileTheme: const ListTileThemeData(iconColor: textMuted),
+      dividerTheme: DividerThemeData(color: border, thickness: 1),
+      listTileTheme: ListTileThemeData(iconColor: textMuted),
       chipTheme: ChipThemeData(
-        backgroundColor: AppColors.gold.withValues(alpha: 0.14),
-        labelStyle: const TextStyle(
-          color: AppColors.goldSoft,
+        backgroundColor: BrandChrome.accent.withValues(alpha: 0.14),
+        labelStyle: TextStyle(
+          color: BrandChrome.accentSoft,
           fontWeight: FontWeight.w600,
           fontSize: 11,
         ),
-        side: BorderSide(color: AppColors.gold.withValues(alpha: 0.4)),
+        side: BorderSide(color: BrandChrome.accent.withValues(alpha: 0.4)),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       ),
-      textTheme: const TextTheme(
+      textTheme: TextTheme(
         headlineSmall: TextStyle(
           color: textPrimary,
           fontWeight: FontWeight.w700,

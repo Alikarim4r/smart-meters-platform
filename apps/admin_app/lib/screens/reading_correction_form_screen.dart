@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../providers/correction_providers.dart';
@@ -42,6 +43,84 @@ class _ReadingCorrectionFormScreenState
     final stripped = stripCorrectionMarkers(details.reading.note);
     if (stripped != null) {
       _noteController.text = stripped;
+    }
+  }
+
+  Future<void> _replacePhoto(ReadingCorrectionDetails details) async {
+    final profile = ref.read(authProvider).profile;
+    if (profile == null) return;
+    final picker = ImagePicker();
+    final file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+      maxWidth: 2000,
+    );
+    if (file == null) return;
+
+    // Resolve organization from site via accessible sites list if needed.
+    String? organizationId;
+    try {
+      final sites = await ref.read(siteRepositoryProvider).getAccessibleSites(profile);
+      for (final site in sites) {
+        if (site.id == details.reading.siteId) {
+          organizationId = site.organizationId;
+          break;
+        }
+      }
+    } catch (_) {}
+    organizationId ??= profile.id; // fallback folder key — better than failing
+
+    setState(() => _saving = true);
+    try {
+      final bytes = await file.readAsBytes();
+      final oldPath = details.reading.imageStoragePath;
+      await ref.read(readingCorrectionRepositoryProvider).replaceReadingPhoto(
+            readingId: widget.readingId,
+            bytes: bytes,
+            organizationId: organizationId!,
+          );
+      if (oldPath != null) {
+        ref.invalidate(correctionPhotoUrlProvider(oldPath));
+      }
+      ref.invalidate(readingCorrectionDetailsProvider(widget.readingId));
+      ref.invalidate(adminCorrectionsProvider);
+      _showMessage('Photo updated.');
+    } catch (error) {
+      _showMessage('Could not update photo: $error');
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
+  Future<void> _deletePhoto(ReadingCorrectionDetails details) async {
+    final path = details.reading.imageStoragePath;
+    if (path == null || path.trim().isEmpty) return;
+
+    final confirmed = await _confirmDialog(
+      title: 'Delete photo?',
+      message:
+          'This removes the reading photo permanently. The numeric reading stays unchanged.',
+      confirmLabel: 'Delete photo',
+      isCritical: true,
+    );
+    if (!confirmed) return;
+
+    setState(() => _saving = true);
+    try {
+      await ref
+          .read(readingCorrectionRepositoryProvider)
+          .deleteReadingPhoto(readingId: widget.readingId);
+      final storagePath = details.reading.imageStoragePath;
+      if (storagePath != null) {
+        ref.invalidate(correctionPhotoUrlProvider(storagePath));
+      }
+      ref.invalidate(readingCorrectionDetailsProvider(widget.readingId));
+      ref.invalidate(adminCorrectionsProvider);
+      _showMessage('Photo deleted.');
+    } catch (error) {
+      _showMessage('Could not delete photo: $error');
+    } finally {
+      if (mounted) setState(() => _saving = false);
     }
   }
 
@@ -242,7 +321,33 @@ class _ReadingCorrectionFormScreenState
                 ),
               if (reading.hasPhoto) ...[
                 const SizedBox(height: 12),
-                Text('Photo', style: Theme.of(context).textTheme.titleSmall),
+                Row(
+                  children: [
+                    Text(
+                      'Photo',
+                      style: Theme.of(context).textTheme.titleSmall,
+                    ),
+                    const Spacer(),
+                    TextButton.icon(
+                      onPressed: _saving ? null : () => _replacePhoto(details),
+                      icon: const Icon(Icons.add_a_photo_outlined),
+                      label: const Text('Replace photo'),
+                    ),
+                    TextButton.icon(
+                      onPressed: _saving ? null : () => _deletePhoto(details),
+                      icon: Icon(
+                        Icons.delete_outline,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      label: Text(
+                        'Delete photo',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
                 const SizedBox(height: 8),
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
@@ -265,6 +370,13 @@ class _ReadingCorrectionFormScreenState
                             ),
                           ),
                   ),
+                ),
+              ] else ...[
+                const SizedBox(height: 12),
+                OutlinedButton.icon(
+                  onPressed: _saving ? null : () => _replacePhoto(details),
+                  icon: const Icon(Icons.add_a_photo_outlined),
+                  label: const Text('Add photo'),
                 ),
               ],
               if (details.relatedAlerts.isNotEmpty) ...[

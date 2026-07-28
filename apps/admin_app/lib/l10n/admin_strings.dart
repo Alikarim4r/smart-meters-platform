@@ -48,6 +48,15 @@ class AdminStrings {
   String get languageEnglish => 'English';
   String get languageArabic => 'العربية';
   String get account => _t('Account', 'الحساب');
+  String get aboutApp => _t('About', 'حول التطبيق');
+  String get createdDevelopedBy =>
+      _t('Created and developed by', 'تم الإنشاء والتطوير بواسطة');
+  String get developerName => _t(
+    'Eng. Ali Abdulkarim Elhassan',
+    'المهندس: علي عبد الكريم الحسن',
+  );
+  String get developerPhone => '+974 3005 8899';
+  String get developerEmail => 'Support@AliMind.com';
   String get changePassword => _t('Change password', 'تغيير كلمة المرور');
   String get newPassword => _t('New password', 'كلمة المرور الجديدة');
   String get confirmPassword => _t('Confirm password', 'تأكيد كلمة المرور');
@@ -83,6 +92,89 @@ class AdminStrings {
   String get addZone => _t('Add zone', 'إضافة منطقة');
   String get addSite => _t('Add site', 'إضافة موقع');
   String get addMeter => _t('Add meter', 'إضافة عداد');
+  String get copEerGroups =>
+      _t('COP / EER groups', 'مجموعات COP / EER');
+  String get addCopGroup => _t('Add COP/EER group', 'إضافة مجموعة COP/EER');
+  String get editCopGroup => _t('Edit COP/EER group', 'تعديل مجموعة COP/EER');
+  String get deleteCopGroup =>
+      _t('Delete COP/EER group', 'حذف مجموعة COP/EER');
+  String get deleteCopGroupConfirm => _t(
+    'Delete this efficiency group and its meter links?',
+    'حذف مجموعة الكفاءة وروابط العدادات الخاصة بها؟',
+  );
+  String get copEerGroupsEmpty => _t(
+    'No efficiency groups yet. Create one and select cooling BTU meters plus electricity meters (e.g. LVP-4 and LVP-5).',
+    'لا توجد مجموعات كفاءة بعد. أنشئ مجموعة واختر عدادات التبريد (BTU) وعدادات الكهرباء (مثل LVP-4 و LVP-5).',
+  );
+  String copGroupMeterSummary({
+    required int btuCount,
+    required int elecCount,
+  }) =>
+      _t(
+        'Cooling meters: $btuCount · Electricity: $elecCount',
+        'عدادات التبريد: $btuCount · الكهرباء: $elecCount',
+      );
+  String get copEerFormulaHint => _t(
+    'COP = cooling energy (kWh) ÷ electricity (kWh). EER ≈ COP × 3.412.',
+    'COP = طاقة التبريد (ك.و.س) ÷ الكهرباء (ك.و.س). EER ≈ COP × 3.412.',
+  );
+  String get copCoolingMeters =>
+      _t('Cooling / BTU meters', 'عدادات التبريد / BTU');
+  String get copCoolingMetersHint => _t(
+    'Select the three BTU cooling-loop meters that feed COP/EER.',
+    'اختر عدادات حلقات التبريد الثلاثة (BTU) المستخدمة في COP/EER.',
+  );
+  String get copElectricityMeters =>
+      _t('Electricity meters', 'عدادات الكهرباء');
+  String get copElectricityMetersHint => _t(
+    'Select plant electricity meters (e.g. LVP-4 and LVP-5).',
+    'اختر عدادات كهرباء المحطة (مثل LVP-4 و LVP-5).',
+  );
+  String get copGroupNeedsBothMeterTypes => _t(
+    'Select at least one cooling meter and one electricity meter.',
+    'اختر عداد تبريد واحدًا على الأقل وعداد كهرباء واحدًا على الأقل.',
+  );
+  String get noBtuMetersForCop => _t(
+    'No BTU / cooling meters on this site.',
+    'لا توجد عدادات تبريد / BTU في هذا الموقع.',
+  );
+  String get noElectricityMetersForCop => _t(
+    'No electricity meters on this site.',
+    'لا توجد عدادات كهرباء في هذا الموقع.',
+  );
+  String get fieldRequired => _t('Required', 'مطلوب');
+  String get efficiencyMetersPolicy =>
+      _t('Efficiency meters (COP / EER)', 'عدادات الكفاءة (COP / EER)');
+  String get efficiencyMetersPolicyHint => _t(
+    'Choose which cooling (BTU) meters and electricity meters are summed for COP and EER on this site.',
+    'اختر عدادات التبريد (BTU) وعدادات الكهرباء التي يُجمع استهلاكها لحساب COP و EER لهذا الموقع.',
+  );
+  String get saveEfficiencyMeters =>
+      _t('Save efficiency meters', 'حفظ عدادات الكفاءة');
+  String get efficiencyMetersSaved =>
+      _t('Efficiency meters saved', 'تم حفظ عدادات الكفاءة');
+  String get noSitesForOrg => _t(
+    'No sites for this organization.',
+    'لا توجد مواقع لهذه الجهة.',
+  );
+  String get reportLogosTitle =>
+      _t('Report logos (6 × 2 cm)', 'شعارات التقارير (عرض ٦ × ارتفاع ٢ سم)');
+  String get reportLogosHint => _t(
+    'Import an image, then pan/zoom inside the 6×2 cm slot (width × height). Top-left can also be set per zone/site. Empty slots leave blank space in reports (no box).',
+    'استورد صورة ثم حرّكها/كبّرها داخل خانة عرض ٦ × ارتفاع ٢ سم. شعار أعلى اليسار يمكن ضبطه أيضاً لكل منطقة/موقع. الخانة الفارغة تترك فراغاً في التقارير بلا مربع.',
+  );
+  String get reportLogoPrimary =>
+      _t('Top-right logo (organization)', 'شعار أعلى اليمين (الجهة)');
+  String get reportLogoPrimaryHint => _t(
+    'Platform owner only — appears on all org reports.',
+    'لمالك المنصة فقط — يظهر في كل تقارير الجهة.',
+  );
+  String get reportLogoSecondary =>
+      _t('Top-left logo (zones / sites)', 'شعار أعلى اليسار (المناطق/المواقع)');
+  String get reportLogoSecondaryHint => _t(
+    'Org default top-left logo. Admins can override per zone/site.',
+    'شعار أعلى اليسار الافتراضي للجهة. يمكن للمسؤولين تجاوزه لكل منطقة/موقع.',
+  );
   String get addUser => _t('Add user', 'إضافة مستخدم');
   String get orgControlPermission =>
       _t('Full organization control', 'صلاحية التحكم بكامل الجهة');

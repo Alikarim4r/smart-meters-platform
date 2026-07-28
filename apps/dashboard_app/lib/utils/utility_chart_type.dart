@@ -14,7 +14,6 @@ enum UtilityChartType {
   pie,
   stackedBar,
   sourceSplit,
-  cop,
 }
 
 extension UtilityChartTypeMeta on UtilityChartType {
@@ -29,7 +28,6 @@ extension UtilityChartTypeMeta on UtilityChartType {
         UtilityChartType.pie => 'Pie',
         UtilityChartType.stackedBar => 'Stacked',
         UtilityChartType.sourceSplit => 'Split',
-        UtilityChartType.cop => 'COP',
       };
 }
 
@@ -61,7 +59,6 @@ List<UtilityChartType> chartTypesForUtility(
       ],
     UtilitySystemKey.btu => [
         ..._baseUtilityChartTypes,
-        UtilityChartType.cop,
       ],
     UtilitySystemKey.fuel => [
         ..._baseUtilityChartTypes,
@@ -81,6 +78,25 @@ List<UtilityChartType> chartTypesForUtility(
     ];
   }
 
+  return List.unmodifiable(types);
+}
+
+/// Chart types available after selecting a COP or EER card.
+List<UtilityChartType> chartTypesForEfficiency({ChartBucket? bucket}) {
+  var types = const [
+    UtilityChartType.line,
+    UtilityChartType.bar,
+    UtilityChartType.area,
+    UtilityChartType.step,
+    UtilityChartType.cumulative,
+    UtilityChartType.weekday,
+  ];
+  if (bucket != null && bucket != ChartBucket.daily) {
+    types = [
+      for (final type in types)
+        if (type != UtilityChartType.weekday) type,
+    ];
+  }
   return List.unmodifiable(types);
 }
 

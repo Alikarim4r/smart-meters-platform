@@ -110,6 +110,19 @@ class ZoneRepository {
     return Zone.fromJson(Map<String, dynamic>.from(row));
   }
 
+  Future<Zone> updateZoneReportLogo({
+    required String zoneId,
+    String? reportLogoPath,
+  }) async {
+    final row = await _client
+        .from('zones')
+        .update({'report_logo_path': reportLogoPath})
+        .eq('id', zoneId)
+        .select(_adminSelect)
+        .single();
+    return Zone.fromJson(Map<String, dynamic>.from(row));
+  }
+
   Future<Zone> deactivateZone(String zoneId) {
     return updateZone(zoneId, isActive: false);
   }

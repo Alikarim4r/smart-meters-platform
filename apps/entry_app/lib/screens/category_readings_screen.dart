@@ -462,7 +462,7 @@ class _StickySaveBar extends StatelessWidget {
                   ),
                 ),
                 child: saving
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 18,
                         height: 18,
                         child: CircularProgressIndicator(

@@ -7,6 +7,8 @@ import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
 import '../providers/policy_providers.dart';
 import '../providers/preferences_providers.dart';
+import '../widgets/efficiency_meters_policy_section.dart';
+import '../widgets/report_logo_slots_editor.dart';
 
 class SettingsTab extends ConsumerStatefulWidget {
   const SettingsTab({super.key});
@@ -109,6 +111,9 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
   @override
   Widget build(BuildContext context) {
     final canManage = ref.watch(canManagePolicySettingsProvider);
+    final canEditPrimaryLogo = ref.watch(canEditReportLogoPrimaryProvider);
+    final canEditSecondaryLogo = ref.watch(canEditReportLogoSecondaryProvider);
+    final canSaveLogos = canEditPrimaryLogo || canEditSecondaryLogo;
     final orgsAsync = ref.watch(adminOrganizationsProvider);
     final selectedOrgId = ref.watch(selectedPolicyOrganizationIdProvider);
     final s = AdminStrings(ref.watch(adminLocaleProvider));
@@ -399,6 +404,10 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                                 )
                               : null,
                         ),
+                        EfficiencyMetersPolicySection(
+                          organizationId: orgId,
+                          enabled: canManage,
+                        ),
                       ],
                     ),
                     _SectionCard(
@@ -477,19 +486,19 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                             ),
                           ),
                         ),
-                        _TextFieldTile(
-                          label: s.logoUrl,
-                          hint: 'https://…',
-                          value: draft.logoUrl,
-                          enabled: canManage,
-                          onChanged: (value) => _updateDraft(
-                            (current) => current.copyWith(
-                              logoUrl: value.trim().isEmpty
-                                  ? null
-                                  : value.trim(),
-                              clearLogoUrl: value.trim().isEmpty,
-                            ),
-                          ),
+                        const SizedBox(height: 12),
+                        ReportLogoSlotsEditor(
+                          organizationId: orgId,
+                          draft: draft,
+                          enabled: canManage || canSaveLogos,
+                          canEditPrimary: canEditPrimaryLogo,
+                          canEditSecondary: canEditSecondaryLogo,
+                          onChanged: (next) {
+                            setState(() {
+                              _draft = next;
+                              _dirty = true;
+                            });
+                          },
                         ),
                       ],
                     ),
@@ -498,7 +507,9 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                       children: [
                         Expanded(
                           child: FilledButton.icon(
-                            onPressed: (!_dirty || _saving || !canManage)
+                            onPressed: (!_dirty ||
+                                    _saving ||
+                                    !(canManage || canSaveLogos))
                                 ? null
                                 : () => _save(orgId, s),
                             icon: _saving

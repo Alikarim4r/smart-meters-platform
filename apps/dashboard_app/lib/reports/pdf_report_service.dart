@@ -15,6 +15,10 @@ class PdfReportService {
   );
   static final _tableCellStyle = pw.TextStyle(fontSize: 7);
 
+  // Logo slot ~2cm × 6cm on A4 (width × height).
+  static const _logoW = 6.0 * PdfPageFormat.cm;
+  static const _logoH = 2.0 * PdfPageFormat.cm;
+
   Future<Uint8List> buildAllSitesPdf(AllSitesReportBundle bundle) async {
     reportExportLog('G', 'buildAllSitesPdf start');
     final doc = pw.Document();
@@ -65,6 +69,7 @@ class PdfReportService {
     required SiteReportBundle bundle,
     required ReportType type,
     bool includePhotos = false,
+    bool includeCharts = true,
   }) async {
     reportExportLog('G', 'buildSitePdf start ($type)');
     final doc = pw.Document();
@@ -77,6 +82,68 @@ class PdfReportService {
           pw.SizedBox(height: 12),
           _summaryCards(bundle),
           pw.SizedBox(height: 16),
+          if (includeCharts) ...[
+            if (bundle.consumptionTrend.hasData) ...[
+              _sectionTitle('Consumption charts'),
+              for (final series in bundle.consumptionTrend.series)
+                if (series.hasData) ...[
+                  pw.Text(
+                    sanitizePdfText(series.categoryName),
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  _barChart(
+                    points: [
+                      for (final p in series.points)
+                        (formatBusinessDate(p.date), p.value),
+                    ],
+                    color: PdfColors.blue700,
+                  ),
+                  pw.SizedBox(height: 12),
+                ],
+            ],
+            if (bundle.copResults.isNotEmpty) ...[
+              _sectionTitle('COP / EER charts'),
+              for (final result in bundle.copResults)
+                if (result.hasData) ...[
+                  pw.Text(
+                    sanitizePdfText(result.copGroupName),
+                    style: pw.TextStyle(
+                      fontSize: 10,
+                      fontWeight: pw.FontWeight.bold,
+                    ),
+                  ),
+                  pw.SizedBox(height: 4),
+                  _barChart(
+                    points: [
+                      for (final p in result.points)
+                        if (p.cop != null) (formatBusinessDate(p.date), p.cop!),
+                    ],
+                    color: PdfColors.purple700,
+                    label: 'COP',
+                  ),
+                  pw.SizedBox(height: 8),
+                  _barChart(
+                    points: [
+                      for (final p in result.points)
+                        if ((p.eer ?? (p.cop == null ? null : p.cop! * 3.412)) !=
+                            null)
+                          (
+                            formatBusinessDate(p.date),
+                            p.eer ?? p.cop! * 3.412,
+                          ),
+                    ],
+                    color: PdfColors.teal700,
+                    label: 'EER',
+                  ),
+                  pw.SizedBox(height: 12),
+                ],
+            ],
+            pw.SizedBox(height: 8),
+          ],
           if (type == ReportType.siteSummary ||
               type == ReportType.consumption ||
               type == ReportType.categoryConsumption) ...[
@@ -138,9 +205,37 @@ class PdfReportService {
   }
 
   pw.Widget _header(ReportMeta meta) {
+    final leftLogo = meta.reportLogoSecondaryBytes;
+    final rightLogo = meta.reportLogoPrimaryBytes;
+    final hasAnyLogo = leftLogo != null || rightLogo != null;
+
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
+        if (hasAnyLogo)
+          pw.Row(
+            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: pw.CrossAxisAlignment.start,
+            children: [
+              leftLogo == null
+                  ? pw.SizedBox(width: _logoW, height: _logoH)
+                  : pw.Image(
+                      pw.MemoryImage(leftLogo),
+                      width: _logoW,
+                      height: _logoH,
+                      fit: pw.BoxFit.contain,
+                    ),
+              rightLogo == null
+                  ? pw.SizedBox(width: _logoW, height: _logoH)
+                  : pw.Image(
+                      pw.MemoryImage(rightLogo),
+                      width: _logoW,
+                      height: _logoH,
+                      fit: pw.BoxFit.contain,
+                    ),
+            ],
+          ),
+        if (hasAnyLogo) pw.SizedBox(height: 10),
         if (meta.organizationDisplayName?.trim().isNotEmpty == true)
           pw.Text(
             sanitizePdfText(meta.organizationDisplayName),
@@ -158,9 +253,58 @@ class PdfReportService {
           pw.Text('Type: ${sanitizePdfText(meta.siteType)}'),
         if (meta.location != null && meta.location!.trim().isNotEmpty)
           pw.Text('Location: ${sanitizePdfText(meta.location)}'),
-        pw.Text('Period: ${sanitizePdfText(meta.period.label)}'),
+        pw.Text('Period: ${sanitizePdfText(meta.periodDisplayLabel)}'),
         pw.Text('Generated: ${_formatDateTime(meta.generatedAt)}'),
         pw.Text('Generated by: ${sanitizePdfText(meta.generatedByEmail)}'),
+      ],
+    );
+  }
+
+  pw.Widget _barChart({
+    required List<(String, double)> points,
+    required PdfColor color,
+    String? label,
+  }) {
+    if (points.isEmpty) {
+      return _emptyNote('No chart points');
+    }
+    final maxV =
+        points.map((e) => e.$2).fold<double>(0, (a, b) => a > b ? a : b);
+    final safeMax = maxV <= 0 ? 1.0 : maxV;
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        if (label != null)
+          pw.Text(label, style: const pw.TextStyle(fontSize: 9)),
+        pw.SizedBox(height: 4),
+        pw.Container(
+          height: 90,
+          padding: const pw.EdgeInsets.symmetric(horizontal: 4, vertical: 6),
+          decoration: pw.BoxDecoration(
+            border: pw.Border.all(color: PdfColors.grey300),
+            borderRadius: pw.BorderRadius.circular(4),
+          ),
+          child: pw.Row(
+            crossAxisAlignment: pw.CrossAxisAlignment.end,
+            children: [
+              for (final point in points)
+                pw.Expanded(
+                  child: pw.Padding(
+                    padding: const pw.EdgeInsets.symmetric(horizontal: 1),
+                    child: pw.Container(
+                      height: 70 * (point.$2 / safeMax).clamp(0.02, 1.0),
+                      color: color,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+        pw.SizedBox(height: 2),
+        pw.Text(
+          '${points.first.$1} → ${points.last.$1}  ·  max ${safeMax.toStringAsFixed(1)}',
+          style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
+        ),
       ],
     );
   }

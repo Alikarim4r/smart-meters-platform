@@ -51,11 +51,9 @@ class EntrySettingsDrawer extends ConsumerWidget {
             },
           ),
           Expanded(
-            child: Padding(
+            child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
+              children: [
                   _SectionLabel(
                     icon: Icons.palette_outlined,
                     text: s.appearance,
@@ -126,9 +124,20 @@ class EntrySettingsDrawer extends ConsumerWidget {
                     title: Text(s.changePassword),
                     onTap: () => _showChangePasswordDialog(context, ref, s),
                   ),
-                  const Spacer(),
-                ],
-              ),
+                  const SizedBox(height: 12),
+                  _SectionLabel(
+                    icon: Icons.info_outline,
+                    text: s.aboutApp,
+                  ),
+                  const SizedBox(height: 6),
+                  _DeveloperCredit(
+                    title: s.createdDevelopedBy,
+                    name: s.developerName,
+                    phone: s.developerPhone,
+                    email: s.developerEmail,
+                  ),
+                  const SizedBox(height: 16),
+              ],
             ),
           ),
           SafeArea(
@@ -327,7 +336,7 @@ class _DrawerHeader extends StatelessWidget {
                       child: image == null
                           ? Text(
                               initials,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 color: EntryChrome.onAccent,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
@@ -435,6 +444,57 @@ class _SectionLabel extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _DeveloperCredit extends StatelessWidget {
+  const _DeveloperCredit({
+    required this.title,
+    required this.name,
+    required this.phone,
+    required this.email,
+  });
+
+  final String title;
+  final String name;
+  final String phone;
+  final String email;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.7)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.85),
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            name,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(phone, style: theme.textTheme.bodyMedium),
+          ),
+          Text(email, style: theme.textTheme.bodyMedium),
+        ],
+      ),
     );
   }
 }

@@ -4,10 +4,13 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
+import '../providers/policy_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
+import '../widgets/scoped_report_logo_editor.dart';
 import 'meter_detail_screen.dart';
 import 'meter_form_screen.dart';
+import 'site_cop_groups_screen.dart';
 import 'sites_tab.dart';
 
 class SiteDetailScreen extends ConsumerWidget {
@@ -61,6 +64,67 @@ class SiteDetailScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
+              if (canManageMeters)
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SiteCopGroupsScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.speed_outlined),
+                  label: Text(s.copEerGroups),
+                ),
+              if (ref.watch(canEditReportLogoSecondaryProvider)) ...[
+                const SizedBox(height: 16),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: ScopedReportLogoEditor(
+                      organizationId: site.organizationId,
+                      storageKey: 'sites/${site.id}.png',
+                      title: s.isAr
+                          ? 'شعار الموقع (أعلى اليسار)'
+                          : 'Site logo (top-left)',
+                      subtitle: s.isAr
+                          ? 'يظهر في تقارير هذا الموقع فقط. إن فُرغ يُستخدم شعار المنطقة ثم شعار الجهة.'
+                          : 'Shown on this site’s reports. If empty, zone then org logo is used.',
+                      storagePath: site.reportLogoPath,
+                      canEdit: true,
+                      onPathChanged: (path) async {
+                        try {
+                          await ref
+                              .read(siteRepositoryProvider)
+                              .updateSiteReportLogo(
+                                siteId: site.id,
+                                reportLogoPath: path,
+                              );
+                          ref.invalidate(adminSiteProvider(siteId));
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(
+                                path == null
+                                    ? (s.isAr ? 'تم مسح الشعار' : 'Logo cleared')
+                                    : (s.isAr
+                                        ? 'تم حفظ شعار الموقع'
+                                        : 'Site logo saved'),
+                              ),
+                            ),
+                          );
+                        } catch (error) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('$error')),
+                          );
+                        }
+                      },
+                    ),
+                  ),
+                ),
+              ],
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(

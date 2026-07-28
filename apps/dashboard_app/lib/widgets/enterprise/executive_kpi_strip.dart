@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../../theme/design_system/dashboard_design_system.dart';
 
@@ -82,7 +83,9 @@ class _KpiTile extends StatelessWidget {
         vertical: compact ? DashboardSpacing.xs : DashboardSpacing.sm,
       ),
       decoration: BoxDecoration(
-        color: DashboardColors.card(context),
+        color: Theme.of(context).brightness == Brightness.dark
+            ? BrandChrome.surfaceDark
+            : DashboardColors.card(context),
         borderRadius: BorderRadius.circular(DashboardRadius.card),
         border: Border.all(
           color: item.emphasize

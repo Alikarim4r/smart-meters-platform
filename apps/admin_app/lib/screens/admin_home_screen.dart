@@ -78,6 +78,7 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
       appBar: AppBar(title: Text(titles[_index])),
       drawer: const AdminSettingsDrawer(),
       body: BrandSurfaceBackground(
+        showMotif: false,
         child: IndexedStack(
           index: _index,
           children: [

@@ -1,6 +1,7 @@
 import '../models/alert_models.dart';
 import '../models/policy_settings.dart';
 import 'business_date.dart';
+import 'efficiency_bands.dart';
 
 /// Default COP threshold — values below suggest inefficient cooling.
 const double kLowCopThreshold = 2.5;
@@ -384,9 +385,16 @@ List<DashboardAlert> _detectCopAlerts(
             ? AlertSeverity.critical
             : AlertSeverity.warning,
         title: 'Low COP',
-        message:
-            'Average COP (${avg.toStringAsFixed(2)}) is below threshold '
-            '(${context.policy.lowCopWarningThreshold}).',
+        message: () {
+          final band = classifyCop(
+            avg,
+            warningThreshold: context.policy.lowCopWarningThreshold,
+            criticalThreshold: context.policy.lowCopCriticalThreshold,
+          );
+          return 'Average COP (${avg.toStringAsFixed(2)}) — ${band.labelEn(EfficiencyMetricKind.cop)}. '
+              '${band.meaningEn(EfficiencyMetricKind.cop)} '
+              'Warning threshold: ${context.policy.lowCopWarningThreshold}.';
+        }(),
         siteId: context.siteId,
         siteName: context.siteName,
         zoneName: context.zoneName,

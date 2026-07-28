@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
 
-/// Shared palette for demo/presentation builds across Admin, Entry, and Dashboard.
+import 'brand_chrome.dart';
+
+/// Compatibility aliases that follow the active [BrandChrome] palette.
+/// Prefer [BrandChrome] directly in new code.
 abstract final class AppColors {
-  static const navy = Color(0xFF0B1F3A);
-  static const navyMuted = Color(0xFF1A3A5C);
-  static const gold = Color(0xFFC9A227);
-  static const goldSoft = Color(0xFFF5E6B8);
-  static const surface = Color(0xFFF4F6F9);
+  static Color get navy => BrandChrome.primary;
+  static Color get navyMuted => BrandChrome.accentDeep;
+  static Color get gold => BrandChrome.accent;
+  static Color get goldSoft => BrandChrome.accentSoft;
+  static Color get surface => BrandChrome.canvasLight;
   static const surfaceElevated = Color(0xFFFFFFFF);
-  static const border = Color(0xFFE2E8F0);
-  static const textMuted = Color(0xFF64748B);
+  static Color get border => BrandChrome.borderLight;
+  static Color get textMuted => BrandChrome.inkMuted;
 }
