@@ -4,10 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/conservation_providers.dart';
 import '../conservation/actual_vs_baseline_card.dart';
 import '../conservation/actual_vs_target_card.dart';
+import '../conservation/anomaly_card.dart';
+import '../conservation/balance_difference_card.dart';
+import '../conservation/balance_hierarchy_view.dart';
+import '../conservation/benchmark_card.dart';
 import '../conservation/period_comparison_cards.dart';
 
 /// Gated Conservation section.
-/// Visible only when module + (period_compare | targets | baseline).
+/// Visible when module + any P1/P2 child flag is ON.
 class SiteConservationPanel extends ConsumerWidget {
   const SiteConservationPanel({
     super.key,
@@ -38,6 +42,34 @@ class SiteConservationPanel extends ConsumerWidget {
             false;
         final baselineOn = ref
                 .watch(conservationBaselineEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final virtualOn = ref
+                .watch(conservationVirtualMetersEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final waterBalanceOn = ref
+                .watch(conservationWaterBalanceEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final energyBalanceOn = ref
+                .watch(conservationEnergyBalanceEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final benchmarkingOn = ref
+                .watch(conservationBenchmarkingEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final intensityOn = ref
+                .watch(conservationIntensityEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final anomaliesOn = ref
+                .watch(conservationPeriodicAnomaliesEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final copOn = ref
+                .watch(conservationCopConservationEnabledProvider(siteId))
                 .valueOrNull ??
             false;
 
@@ -80,10 +112,7 @@ class SiteConservationPanel extends ConsumerWidget {
               const SizedBox(height: 8),
               _BaselinesSection(siteId: siteId),
             ],
-            if (ref
-                    .watch(conservationVirtualMetersEnabledProvider(siteId))
-                    .valueOrNull ??
-                false) ...[
+            if (virtualOn) ...[
               const SizedBox(height: 16),
               const Text(
                 'Virtual meters (preview)',
@@ -91,6 +120,52 @@ class SiteConservationPanel extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               _VirtualSection(siteId: siteId),
+            ],
+            if (waterBalanceOn || energyBalanceOn) ...[
+              const SizedBox(height: 16),
+              Text(
+                waterBalanceOn && energyBalanceOn
+                    ? 'Water & Energy Balance'
+                    : waterBalanceOn
+                        ? 'Water Balance'
+                        : 'Energy Balance',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              _BalanceSection(
+                siteId: siteId,
+                waterOn: waterBalanceOn,
+                energyOn: energyBalanceOn,
+              ),
+            ],
+            if (benchmarkingOn || intensityOn) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Benchmark',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 8),
+              _BenchmarkSection(siteId: siteId),
+            ],
+            if (anomaliesOn || copOn) ...[
+              const SizedBox(height: 16),
+              Text(
+                anomaliesOn && copOn
+                    ? 'Anomalies & COP trend'
+                    : anomaliesOn
+                        ? 'Anomalies'
+                        : 'COP trend',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              if (copOn) ...[
+                const SizedBox(height: 4),
+                const Text(
+                  'COP trend uses existing dashboard COP values — formulas unchanged.',
+                  style: TextStyle(fontSize: 11),
+                ),
+              ],
+              const SizedBox(height: 8),
+              _AnomaliesSection(siteId: siteId),
             ],
           ],
         );
@@ -219,6 +294,122 @@ class _VirtualSection extends ConsumerWidget {
                   ),
                   isThreeLine: true,
                 ),
+              ),
+              const SizedBox(height: 8),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _BalanceSection extends ConsumerWidget {
+  const _BalanceSection({
+    required this.siteId,
+    required this.waterOn,
+    required this.energyOn,
+  });
+
+  final String siteId;
+  final bool waterOn;
+  final bool energyOn;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(conservationBalanceResultsProvider(siteId));
+    return async.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('$e'),
+      data: (bundles) {
+        final filtered = [
+          for (final b in bundles)
+            if ((b.group.utilityCode.toLowerCase() == 'water' && waterOn) ||
+                (b.group.utilityCode.toLowerCase() == 'electricity' &&
+                    energyOn))
+              b,
+        ];
+        if (filtered.isEmpty) {
+          return const Text('No active balance groups for this site.');
+        }
+        return Column(
+          children: [
+            for (final b in filtered) ...[
+              BalanceDifferenceCard(
+                groupName: b.group.name,
+                result: b.result,
+                mainMeterName: b.meterNamesById[b.result.mainMeterId],
+                submeterNames: [
+                  for (final id in b.result.childMeterIds)
+                    b.meterNamesById[id] ?? id,
+                ],
+              ),
+              const SizedBox(height: 8),
+              BalanceHierarchyView(
+                result: b.result,
+                mainMeterName: b.meterNamesById[b.result.mainMeterId],
+                submeterNames: [
+                  for (final id in b.result.childMeterIds)
+                    b.meterNamesById[id] ?? id,
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _BenchmarkSection extends ConsumerWidget {
+  const _BenchmarkSection({required this.siteId});
+  final String siteId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(conservationBenchmarkProvider(siteId));
+    return async.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('$e'),
+      data: (bundles) {
+        if (bundles.isEmpty) {
+          return const Text('No water/electricity totals for benchmark.');
+        }
+        return Column(
+          children: [
+            for (final b in bundles) ...[
+              BenchmarkCard(bundle: b),
+              const SizedBox(height: 8),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _AnomaliesSection extends ConsumerWidget {
+  const _AnomaliesSection({required this.siteId});
+  final String siteId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(conservationAnomaliesProvider(siteId));
+    return async.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('$e'),
+      data: (bundles) {
+        if (bundles.isEmpty) {
+          return const Text('No anomaly signals for this period.');
+        }
+        return Column(
+          children: [
+            for (final b in bundles) ...[
+              AnomalyCard(
+                title: b.title,
+                result: b.result,
+                unitCode: b.unitCode,
               ),
               const SizedBox(height: 8),
             ],

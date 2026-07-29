@@ -9,6 +9,14 @@ abstract final class ConservationFeatureFlags {
   static const baseline = 'baseline';
   static const virtualMeters = 'virtual_meters';
 
+  // Phase 2 — keys only; missing row = OFF (never auto-enabled).
+  static const waterBalance = 'water_balance';
+  static const energyBalance = 'energy_balance';
+  static const benchmarking = 'benchmarking';
+  static const intensity = 'intensity';
+  static const periodicAnomalies = 'periodic_anomalies';
+  static const copConservation = 'cop_conservation';
+
   /// All known keys (structure only; never auto-enabled).
   static const all = <String>[
     conservationModule,
@@ -17,5 +25,11 @@ abstract final class ConservationFeatureFlags {
     targets,
     baseline,
     virtualMeters,
+    waterBalance,
+    energyBalance,
+    benchmarking,
+    intensity,
+    periodicAnomalies,
+    copConservation,
   ];
 }

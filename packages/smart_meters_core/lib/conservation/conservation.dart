@@ -1,4 +1,4 @@
-/// Conservation layer (Phase 1) — additive, feature-flagged, read-only metrics.
+/// Conservation layer (Phase 1 + Phase 2) — additive, feature-flagged.
 library;
 
 export 'flags/feature_flag_keys.dart';
@@ -26,3 +26,18 @@ export 'repositories/virtual_meter_repository.dart';
 export 'domain/period_windows.dart';
 export 'domain/baseline_approval_gates.dart';
 export 'domain/virtual_meter_validation.dart';
+
+// Phase 2
+export 'domain/reading_alignment.dart';
+export 'models/balance_result.dart';
+export 'models/balance_classification.dart';
+export 'models/site_conservation_profile.dart';
+export 'models/benchmark_result.dart';
+export 'models/anomaly_result.dart';
+export 'services/balance_service.dart';
+export 'services/benchmarking_service.dart';
+export 'services/periodic_anomaly_service.dart';
+export 'services/cop_trend_conservation_service.dart';
+export 'repositories/site_conservation_profile_repository.dart';
+export 'repositories/balance_group_repository.dart';
+export 'repositories/balance_classification_repository.dart';

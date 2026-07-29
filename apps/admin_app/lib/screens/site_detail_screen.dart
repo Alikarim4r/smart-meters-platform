@@ -15,6 +15,8 @@ import 'sites_tab.dart';
 import 'targets_admin_screen.dart';
 import 'baselines_admin_screen.dart';
 import 'virtual_meters_admin_screen.dart';
+import 'balance_groups_admin_screen.dart';
+import 'site_conservation_profile_admin_screen.dart';
 
 final _siteConservationTargetsUiProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
@@ -69,6 +71,56 @@ final _siteConservationVirtualMetersUiProvider =
   return flags.isEnabled(
     organizationId: site.organizationId,
     flagKey: ConservationFeatureFlags.virtualMeters,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationBalanceGroupsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  final water = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.waterBalance,
+    siteId: siteId,
+  );
+  if (water) return true;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.energyBalance,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationProfileUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  final benchmarking = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.benchmarking,
+    siteId: siteId,
+  );
+  if (benchmarking) return true;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.intensity,
     siteId: siteId,
   );
 });
@@ -199,6 +251,55 @@ class SiteDetailScreen extends ConsumerWidget {
                   icon: const Icon(Icons.account_tree_outlined),
                   label: Text(
                     s.isAr ? 'عدادات افتراضية' : 'Virtual meters',
+                  ),
+                ),
+              ],
+              // Balance groups: module + water_balance OR energy_balance.
+              if (canManageMeters &&
+                  (ref
+                          .watch(
+                            _siteConservationBalanceGroupsUiProvider(siteId),
+                          )
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            BalanceGroupsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.account_balance_outlined),
+                  label: Text(
+                    s.isAr ? 'مجموعات التوازن' : 'Balance groups',
+                  ),
+                ),
+              ],
+              // Site conservation profile: module + benchmarking OR intensity.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationProfileUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SiteConservationProfileAdminScreen(
+                          siteId: site.id,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.apartment_outlined),
+                  label: Text(
+                    s.isAr
+                        ? 'ملف ترشيد الموقع'
+                        : 'Site conservation profile',
                   ),
                 ),
               ],

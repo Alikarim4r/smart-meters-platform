@@ -70,9 +70,8 @@ const desktopSiteDashboardSections = mainSiteDashboardSections;
 /// Mobile horizontal utility chips (default — no Conservation).
 const mobileSiteDashboardSections = mainSiteDashboardSections;
 
-/// Visible sections given Conservation gate (`conservation_module` AND
-/// `period_compare`). Default lists are unchanged when [conservationVisible]
-/// is false.
+/// Visible sections given Conservation gate (module + any P1/P2 child flag).
+/// Default lists are unchanged when [conservationVisible] is false.
 List<SiteDashboardSection> siteDashboardSectionsForFlags({
   required bool conservationVisible,
 }) {
