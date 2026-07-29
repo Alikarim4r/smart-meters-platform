@@ -4,7 +4,8 @@
 **Date (UTC):** 2026-07-29  
 **Branch:** `feature/conservation-management`  
 **Environment:** Staging (`iqcxgtpcfhoapnklxdyl`)  
-**Git commit SHA:**   
+**Git commit SHA (P1B implementation):** `f87a92aa115f97362f3a8dd8808ec1d9493b96bc`  
+**Docs tip:** `5f94d9b` (+ this SHA update) 
 
 **Next:** Stop for approval before **P1C**.
 
@@ -212,4 +213,5 @@ When ON: single bounded `meter_readings` select from
 
 ## Git commit SHA
 
+P1B implementation: `f87a92aa115f97362f3a8dd8808ec1d9493b96bc`
 
