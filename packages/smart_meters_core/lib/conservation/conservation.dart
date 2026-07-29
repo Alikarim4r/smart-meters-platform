@@ -1,4 +1,4 @@
-/// Conservation layer (Phase 1 + Phase 2) — additive, feature-flagged.
+/// Conservation layer (Phase 1 + Phase 2 + Phase 3) — additive, feature-flagged.
 library;
 
 export 'flags/feature_flag_keys.dart';
@@ -41,3 +41,24 @@ export 'services/cop_trend_conservation_service.dart';
 export 'repositories/site_conservation_profile_repository.dart';
 export 'repositories/balance_group_repository.dart';
 export 'repositories/balance_classification_repository.dart';
+
+// Phase 3 — Opportunities / Investigations / Actions / Evidence
+export 'domain/opportunity_lifecycle.dart';
+export 'domain/action_lifecycle.dart';
+export 'domain/investigation_lifecycle.dart';
+export 'domain/opportunity_fingerprint.dart';
+export 'domain/opportunity_signal_rules.dart';
+export 'models/conservation_opportunity.dart';
+export 'models/conservation_investigation.dart';
+export 'models/conservation_action.dart';
+export 'models/conservation_evidence.dart';
+export 'models/workflow_audit_entry.dart';
+export 'services/opportunity_priority.dart';
+export 'services/opportunity_engine.dart';
+export 'services/opportunity_generation_service.dart';
+export 'services/opportunity_workflow_service.dart';
+export 'repositories/opportunity_repository.dart';
+export 'repositories/investigation_repository.dart';
+export 'repositories/action_repository.dart';
+export 'repositories/evidence_repository.dart';
+export 'repositories/workflow_audit_repository.dart';

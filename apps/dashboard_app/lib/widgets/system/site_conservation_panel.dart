@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../../providers/conservation_providers.dart';
 import '../conservation/actual_vs_baseline_card.dart';
@@ -8,10 +9,11 @@ import '../conservation/anomaly_card.dart';
 import '../conservation/balance_difference_card.dart';
 import '../conservation/balance_hierarchy_view.dart';
 import '../conservation/benchmark_card.dart';
+import '../conservation/opportunity_list_panel.dart';
 import '../conservation/period_comparison_cards.dart';
 
 /// Gated Conservation section.
-/// Visible when module + any P1/P2 child flag is ON.
+/// Visible when module + any P1/P2/P3 child flag is ON.
 class SiteConservationPanel extends ConsumerWidget {
   const SiteConservationPanel({
     super.key,
@@ -70,6 +72,14 @@ class SiteConservationPanel extends ConsumerWidget {
             false;
         final copOn = ref
                 .watch(conservationCopConservationEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final opportunitiesOn = ref
+                .watch(conservationOpportunitiesEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final investigationsOn = ref
+                .watch(conservationInvestigationsEnabledProvider(siteId))
                 .valueOrNull ??
             false;
 
@@ -167,10 +177,65 @@ class SiteConservationPanel extends ConsumerWidget {
               const SizedBox(height: 8),
               _AnomaliesSection(siteId: siteId),
             ],
+            if (opportunitiesOn) ...[
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Opportunities',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () => _refreshOpportunities(context, ref),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('Refresh opportunities'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Potential Excess only — not Saving. Refresh is manual; never auto-runs on load.',
+                style: TextStyle(fontSize: 11),
+              ),
+              const SizedBox(height: 8),
+              _OpportunitiesSection(
+                siteId: siteId,
+                investigationsOn: investigationsOn,
+              ),
+            ],
           ],
         );
       },
     );
+  }
+
+  Future<void> _refreshOpportunities(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
+    try {
+      final result = await refreshConservationOpportunities(ref, siteId);
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Opportunities: ${result.generation.created} created, '
+            '${result.generation.refreshed} refreshed '
+            '(${result.candidateCount} candidates).',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    }
   }
 }
 
@@ -417,5 +482,69 @@ class _AnomaliesSection extends ConsumerWidget {
         );
       },
     );
+  }
+}
+
+class _OpportunitiesSection extends ConsumerWidget {
+  const _OpportunitiesSection({
+    required this.siteId,
+    required this.investigationsOn,
+  });
+
+  final String siteId;
+  final bool investigationsOn;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(conservationOpportunitiesProvider(siteId));
+    return async.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('$e'),
+      data: (opportunities) {
+        if (opportunities.isEmpty) {
+          return const Text(
+            'No opportunities yet. Tap Refresh opportunities to scan current signals.',
+          );
+        }
+        return OpportunityListPanel(
+          opportunities: opportunities,
+          showStartInvestigation: investigationsOn,
+          onStartInvestigation: investigationsOn
+              ? (o) => _startInvestigation(context, ref, o)
+              : null,
+        );
+      },
+    );
+  }
+
+  Future<void> _startInvestigation(
+    BuildContext context,
+    WidgetRef ref,
+    ConservationOpportunity opportunity,
+  ) async {
+    try {
+      final client = ref.read(supabaseClientProvider);
+      final userId = client.auth.currentUser?.id;
+      final workflow = OpportunityWorkflowService(
+        opportunityRepository: OpportunityRepository(client),
+        auditRepository: WorkflowAuditRepository(client),
+      );
+      await workflow.startInvestigation(opportunity.id);
+      await InvestigationRepository(client).create(
+        opportunityId: opportunity.id,
+        siteId: opportunity.siteId,
+        createdBy: userId,
+      );
+      ref.invalidate(conservationOpportunitiesProvider(siteId));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Investigation started')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('$e')),
+      );
+    }
   }
 }

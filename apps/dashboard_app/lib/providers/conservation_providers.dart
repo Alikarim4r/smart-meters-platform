@@ -200,7 +200,79 @@ final conservationCopConservationEnabledProvider =
   );
 });
 
-/// Conservation nav/section visible when module + any P1/P2 child flag.
+/// True only when both `conservation_module` and `opportunities` are enabled.
+final conservationOpportunitiesEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.opportunities,
+    siteId: siteId,
+  );
+});
+
+/// True only when module ∧ opportunities ∧ investigations.
+final conservationInvestigationsEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final opportunitiesOn =
+      await ref.watch(conservationOpportunitiesEnabledProvider(siteId).future);
+  if (!opportunitiesOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.investigations,
+    siteId: siteId,
+  );
+});
+
+/// True only when module ∧ opportunities ∧ actions.
+final conservationActionsEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final opportunitiesOn =
+      await ref.watch(conservationOpportunitiesEnabledProvider(siteId).future);
+  if (!opportunitiesOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.actions,
+    siteId: siteId,
+  );
+});
+
+/// True only when module ∧ opportunities ∧ evidence.
+final conservationEvidenceEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final opportunitiesOn =
+      await ref.watch(conservationOpportunitiesEnabledProvider(siteId).future);
+  if (!opportunitiesOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.evidence,
+    siteId: siteId,
+  );
+});
+
+/// Conservation nav/section visible when module + any P1/P2/P3 child flag.
 final conservationSectionVisibleProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
   if (await ref.watch(conservationPeriodCompareEnabledProvider(siteId).future)) {
@@ -231,8 +303,162 @@ final conservationSectionVisibleProvider =
       .watch(conservationPeriodicAnomaliesEnabledProvider(siteId).future)) {
     return true;
   }
-  return ref.watch(conservationCopConservationEnabledProvider(siteId).future);
+  if (await ref
+      .watch(conservationCopConservationEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationOpportunitiesEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationInvestigationsEnabledProvider(siteId).future)) {
+    return true;
+  }
+  return ref.watch(conservationActionsEnabledProvider(siteId).future);
 });
+
+/// Opportunities for the site (limit 50, newest first). Never auto-generates.
+/// Short-circuits to [] when opportunities flag is OFF.
+final conservationOpportunitiesProvider = FutureProvider.autoDispose
+    .family<List<ConservationOpportunity>, String>((ref, siteId) async {
+  final enabled =
+      await ref.watch(conservationOpportunitiesEnabledProvider(siteId).future);
+  if (!enabled) return const [];
+
+  return OpportunityRepository(ref.read(supabaseClientProvider)).listForSite(
+    siteId,
+    limit: 50,
+  );
+});
+
+/// Result of an explicit user-triggered opportunity refresh.
+class ConservationOpportunityRefreshResult {
+  const ConservationOpportunityRefreshResult({
+    required this.generation,
+    required this.candidateCount,
+  });
+
+  final GenerationResult generation;
+  final int candidateCount;
+}
+
+/// Explicit refresh only — call from UI "Refresh opportunities", never on build.
+///
+/// Reads current balance / anomaly / target / baseline results from existing
+/// providers (when those flags are ON), runs [OpportunityEngine], persists via
+/// [OpportunityGenerationService], then invalidates [conservationOpportunitiesProvider].
+Future<ConservationOpportunityRefreshResult> refreshConservationOpportunities(
+  WidgetRef ref,
+  String siteId,
+) async {
+  final enabled =
+      await ref.read(conservationOpportunitiesEnabledProvider(siteId).future);
+  if (!enabled) {
+    return const ConservationOpportunityRefreshResult(
+      generation: GenerationResult(created: 0, refreshed: 0, skipped: 0),
+      candidateCount: 0,
+    );
+  }
+
+  final dateSelection = ref.read(siteDateSelectionProvider(siteId));
+  final periodStart = dateOnly(dateSelection.startDate);
+  final periodEnd = dateOnly(dateSelection.endDate);
+
+  final balances = await ref.read(conservationBalanceResultsProvider(siteId).future);
+  final anomalies = await ref.read(conservationAnomaliesProvider(siteId).future);
+  final targets = await ref.read(conservationActualVsTargetProvider(siteId).future);
+  final baselines =
+      await ref.read(conservationActualVsBaselineProvider(siteId).future);
+
+  const engine = OpportunityEngine();
+  final candidates = <OpportunityCandidate>[];
+
+  // Group balance results by utility.
+  final byUtilityBalances = <String, List<BalanceResult>>{};
+  for (final b in balances) {
+    final u = b.group.utilityCode.toLowerCase();
+    byUtilityBalances.putIfAbsent(u, () => []).add(b.result);
+  }
+
+  final byUtilityAnomalies = <String, List<ConsumptionAnomalyResult>>{};
+  for (final a in anomalies) {
+    final title = a.title.toLowerCase();
+    final u = title.contains('water')
+        ? 'water'
+        : title.contains('electric') || title.contains('cop')
+            ? 'electricity'
+            : 'unknown';
+    byUtilityAnomalies.putIfAbsent(u, () => []).add(a.result);
+  }
+
+  final byUtilityTargets = <String, List<ActualVsTargetResult>>{};
+  for (final t in targets) {
+    final u = t.unitCode.toLowerCase().contains('m')
+        ? 'water'
+        : t.unitCode.toLowerCase().contains('kwh')
+            ? 'electricity'
+            : 'unknown';
+    byUtilityTargets.putIfAbsent(u, () => []).add(t);
+  }
+
+  final byUtilityBaselines = <String, List<ActualVsBaselineResult>>{};
+  for (final b in baselines) {
+    final u = b.unitCode.toLowerCase().contains('m')
+        ? 'water'
+        : b.unitCode.toLowerCase().contains('kwh')
+            ? 'electricity'
+            : 'unknown';
+    byUtilityBaselines.putIfAbsent(u, () => []).add(b);
+  }
+
+  final utilities = {
+    ...byUtilityBalances.keys,
+    ...byUtilityAnomalies.keys,
+    ...byUtilityTargets.keys,
+    ...byUtilityBaselines.keys,
+  };
+  if (utilities.isEmpty) {
+    // Still allow engine pass with empty signals (no-op persist).
+    utilities.add('water');
+  }
+
+  for (final utility in utilities) {
+    candidates.addAll(
+      engine.buildCandidatesFromSignals(
+        siteId: siteId,
+        utilityType: utility,
+        anomalies: byUtilityAnomalies[utility] ?? const [],
+        balances: byUtilityBalances[utility] ?? const [],
+        actualVsTargets: byUtilityTargets[utility] ?? const [],
+        actualVsBaselines: byUtilityBaselines[utility] ?? const [],
+        defaultUnitCode: utility == 'water'
+            ? 'm³'
+            : utility == 'electricity'
+                ? 'kWh'
+                : null,
+      ),
+    );
+  }
+
+  final client = ref.read(supabaseClientProvider);
+  final service = OpportunityGenerationService(
+    repository: OpportunityRepository(client),
+  );
+  final generation = await service.refreshForSite(
+    siteId: siteId,
+    periodStart: periodStart,
+    periodEnd: periodEnd,
+    candidates: candidates,
+    createdBy: client.auth.currentUser?.id,
+  );
+
+  ref.invalidate(conservationOpportunitiesProvider(siteId));
+  return ConservationOpportunityRefreshResult(
+    generation: generation,
+    candidateCount: candidates.length,
+  );
+}
 
 class PeriodComparisonBundle {
   const PeriodComparisonBundle({

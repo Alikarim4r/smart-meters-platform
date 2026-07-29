@@ -17,6 +17,8 @@ import 'baselines_admin_screen.dart';
 import 'virtual_meters_admin_screen.dart';
 import 'balance_groups_admin_screen.dart';
 import 'site_conservation_profile_admin_screen.dart';
+import 'opportunities_admin_screen.dart';
+import 'actions_admin_screen.dart';
 
 final _siteConservationTargetsUiProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
@@ -121,6 +123,41 @@ final _siteConservationProfileUiProvider =
   return flags.isEnabled(
     organizationId: site.organizationId,
     flagKey: ConservationFeatureFlags.intensity,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationOpportunitiesUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.opportunities,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationActionsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final opportunitiesOn =
+      await ref.watch(_siteConservationOpportunitiesUiProvider(siteId).future);
+  if (!opportunitiesOn) return false;
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.actions,
     siteId: siteId,
   );
 });
@@ -300,6 +337,51 @@ class SiteDetailScreen extends ConsumerWidget {
                     s.isAr
                         ? 'ملف ترشيد الموقع'
                         : 'Site conservation profile',
+                  ),
+                ),
+              ],
+              // Opportunities: module + opportunities.
+              if (canManageMeters &&
+                  (ref
+                          .watch(
+                            _siteConservationOpportunitiesUiProvider(siteId),
+                          )
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            OpportunitiesAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.lightbulb_outline),
+                  label: Text(
+                    s.isAr ? 'فرص الترشيد' : 'Conservation opportunities',
+                  ),
+                ),
+              ],
+              // Actions: module + opportunities + actions.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationActionsUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ActionsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.task_alt_outlined),
+                  label: Text(
+                    s.isAr ? 'إجراءات الترشيد' : 'Conservation actions',
                   ),
                 ),
               ],

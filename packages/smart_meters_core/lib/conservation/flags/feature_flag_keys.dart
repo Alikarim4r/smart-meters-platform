@@ -17,6 +17,12 @@ abstract final class ConservationFeatureFlags {
   static const periodicAnomalies = 'periodic_anomalies';
   static const copConservation = 'cop_conservation';
 
+  // Phase 3 — keys only; missing row = OFF (never auto-enabled).
+  static const opportunities = 'opportunities';
+  static const investigations = 'investigations';
+  static const actions = 'actions';
+  static const evidence = 'evidence';
+
   /// All known keys (structure only; never auto-enabled).
   static const all = <String>[
     conservationModule,
@@ -31,5 +37,9 @@ abstract final class ConservationFeatureFlags {
     intensity,
     periodicAnomalies,
     copConservation,
+    opportunities,
+    investigations,
+    actions,
+    evidence,
   ];
 }
