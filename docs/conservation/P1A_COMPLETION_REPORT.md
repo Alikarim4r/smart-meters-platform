@@ -4,7 +4,8 @@
 **Date (UTC):** 2026-07-29  
 **Branch:** `feature/conservation-management`  
 **Environment:** Staging (`iqcxgtpcfhoapnklxdyl`)  
-**Git commit SHA:** `acd05e1ff2c205c52998f7ab114c1f27e233da4f`  
+**Git commit SHA (P1A implementation):** `3a7f12ce14a96b22c5bfee4bdbbcccc8434d4a82`  
+*(Report SHA field may be updated by a docs-only follow-up commit.)*  
 
 **Next:** Stop for approval before **P1B**.
 
@@ -226,4 +227,6 @@ Tag `pre-conservation-stable` + Staging restore runbook remain valid.
 
 ## Git commit SHA
 
-*(set on commit)*
+`3a7f12ce14a96b22c5bfee4bdbbcccc8434d4a82`
+
+Note: report finalized in follow-up docs commit if SHA drifts; use `git log -1 --oneline` on branch for authoritative tip.
