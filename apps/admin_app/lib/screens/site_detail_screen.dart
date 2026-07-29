@@ -12,6 +12,66 @@ import 'meter_detail_screen.dart';
 import 'meter_form_screen.dart';
 import 'site_cop_groups_screen.dart';
 import 'sites_tab.dart';
+import 'targets_admin_screen.dart';
+import 'baselines_admin_screen.dart';
+import 'virtual_meters_admin_screen.dart';
+
+final _siteConservationTargetsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.targets,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationBaselinesUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.baseline,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationVirtualMetersUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.virtualMeters,
+    siteId: siteId,
+  );
+});
 
 class SiteDetailScreen extends ConsumerWidget {
   const SiteDetailScreen({super.key, required this.siteId});
@@ -76,6 +136,72 @@ class SiteDetailScreen extends ConsumerWidget {
                   icon: const Icon(Icons.speed_outlined),
                   label: Text(s.copEerGroups),
                 ),
+              // Conservation targets: link only when module + targets flags ON.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationTargetsUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => TargetsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.track_changes_outlined),
+                  label: Text(
+                    s.isAr ? 'أهداف الترشيد' : 'Conservation targets',
+                  ),
+                ),
+              ],
+              // Conservation baselines: link only when module + baseline flags ON.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationBaselinesUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => BaselinesAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.insights_outlined),
+                  label: Text(
+                    s.isAr ? 'خطوط الأساس' : 'Conservation baselines',
+                  ),
+                ),
+              ],
+              // Virtual meters: link only when module + virtual_meters flags ON.
+              if (canManageMeters &&
+                  (ref
+                          .watch(
+                            _siteConservationVirtualMetersUiProvider(siteId),
+                          )
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            VirtualMetersAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.account_tree_outlined),
+                  label: Text(
+                    s.isAr ? 'عدادات افتراضية' : 'Virtual meters',
+                  ),
+                ),
+              ],
               if (ref.watch(canEditReportLogoSecondaryProvider)) ...[
                 const SizedBox(height: 16),
                 Card(

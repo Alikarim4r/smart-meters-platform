@@ -42,7 +42,7 @@ class DashboardSidebar extends ConsumerWidget {
     final conservationVisible = selectedSiteId == null
         ? false
         : (ref
-                .watch(conservationPeriodCompareEnabledProvider(selectedSiteId))
+                .watch(conservationSectionVisibleProvider(selectedSiteId))
                 .valueOrNull ??
             false);
     final shellSection = ref.watch(dashboardShellSectionProvider);

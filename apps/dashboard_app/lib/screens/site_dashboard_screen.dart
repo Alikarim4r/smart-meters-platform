@@ -42,7 +42,7 @@ class SiteDashboardScreen extends ConsumerWidget {
     final summaryAsync = ref.watch(siteDashboardSummaryProvider(siteId));
     final rawSection = ref.watch(siteDashboardSectionProvider);
     final conservationVisible =
-        ref.watch(conservationPeriodCompareEnabledProvider(siteId)).valueOrNull ??
+        ref.watch(conservationSectionVisibleProvider(siteId)).valueOrNull ??
             false;
     final section = normalizeSiteDashboardSection(
       rawSection,
