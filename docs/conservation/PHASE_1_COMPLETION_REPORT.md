@@ -6,7 +6,8 @@
 **Branch:** `feature/conservation-management`  
 **Environment:** Staging (`iqcxgtpcfhoapnklxdyl`)  
 **Tag:** `pre-conservation-stable` (`715f18d65c2da8dc8d3830ddf8011156c1a85694`)  
-**Branch tip at closure:** `d1527a4e22275b1c8c7c3f20c4de2745eaef7592` (+ docs follow-up commit for this report)
+**P1E implementation SHA:** `d1527a4e22275b1c8c7c3f20c4de2745eaef7592`  
+**Phase 1 closure docs SHA:** `de66cbf51608465135dcc5b11b4788863bca0e53`
 
 **Do not start Phase 2 until this report is explicitly approved.**
 
