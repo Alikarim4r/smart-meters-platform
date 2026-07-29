@@ -4,7 +4,7 @@
 **Date (UTC):** 2026-07-29  
 **Branch:** `feature/conservation-management`  
 **Environment:** Staging (`iqcxgtpcfhoapnklxdyl`)  
-**Git tip at report time (pre-commit):** `c23b024` + uncommitted P1D implementation (commit SHA to be recorded on commit)
+**Git commit SHA (P1D implementation):** `54e6ca88307c6f89fb7dfef161dcd7702f41696c`
 
 **Next:** Stop for approval before **P1E**. Do **not** start P1E until this report is approved.
 

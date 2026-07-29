@@ -4,7 +4,7 @@
 **Date (UTC):** 2026-07-29  
 **Branch:** `feature/conservation-management`  
 **Environment:** Staging (`iqcxgtpcfhoapnklxdyl`)  
-**Git tip at report time (pre-commit):** `c23b024` + uncommitted P1E implementation
+**Git commit SHA (P1E implementation):** `d1527a4e22275b1c8c7c3f20c4de2745eaef7592`
 
 **Next:** Stop for approval before **Phase 2**. Do **not** start Phase 2 until approved.
 
@@ -192,3 +192,9 @@ Artifacts: `docs/regression/snapshot_POST_P1E_*`, `COMPARE_POST_P1E.md`
 ## 15. Stop condition
 
 **P1E complete. Phase 1 complete pending Phase 1 summary approval. Do not start Phase 2.**
+
+---
+
+## Git commit SHA
+
+P1E implementation: `d1527a4e22275b1c8c7c3f20c4de2745eaef7592`
