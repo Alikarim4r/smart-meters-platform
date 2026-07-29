@@ -9,8 +9,12 @@ void main() {
   test('chart types stay utility-specific without mixed units', () {
     expect(chartTypesForUtility(UtilitySystemKey.water), contains(UtilityChartType.sourceSplit));
     expect(chartTypesForUtility(UtilitySystemKey.fuel), isNot(contains(UtilityChartType.sourceSplit)));
-    expect(chartTypesForUtility(UtilitySystemKey.btu), contains(UtilityChartType.cop));
-    expect(chartTypesForUtility(UtilitySystemKey.electricity), isNot(contains(UtilityChartType.cop)));
+    // COP/EER is not a UtilityChartType value — efficiency cards use
+    // chartTypesForEfficiency() separately from utility consumption charts.
+    expect(chartTypesForUtility(UtilitySystemKey.btu), contains(UtilityChartType.line));
+    expect(chartTypesForUtility(UtilitySystemKey.btu), isNot(contains(UtilityChartType.sourceSplit)));
+    expect(chartTypesForEfficiency(), contains(UtilityChartType.line));
+    expect(chartTypesForEfficiency(), contains(UtilityChartType.bar));
     expect(chartTypesForUtility(UtilitySystemKey.water), contains(UtilityChartType.pie));
     expect(
       chartTypesForUtility(UtilitySystemKey.electricity),
