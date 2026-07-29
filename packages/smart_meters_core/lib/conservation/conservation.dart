@@ -8,3 +8,6 @@ export 'models/data_quality_result.dart';
 export 'domain/data_quality_rules.dart';
 export 'services/confidence_score.dart';
 export 'services/data_quality_service.dart';
+export 'services/period_comparison_service.dart';
+export 'models/period_comparison_result.dart';
+export 'domain/period_windows.dart';

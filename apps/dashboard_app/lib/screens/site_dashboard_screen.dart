@@ -21,8 +21,8 @@ import '../widgets/shell/dashboard_sidebar.dart';
 import '../widgets/shell/dashboard_top_header.dart';
 import '../widgets/system/site_alerts_panel.dart';
 import '../widgets/system/site_overview_panel.dart';
-import '../widgets/system/site_reports_panel.dart';
-import '../widgets/system/utility_system_panel.dart';
+import '../providers/conservation_providers.dart';
+import '../widgets/system/site_conservation_panel.dart';
 
 class SiteDashboardScreen extends ConsumerWidget {
   const SiteDashboardScreen({
@@ -41,7 +41,13 @@ class SiteDashboardScreen extends ConsumerWidget {
     final s = AppStrings.of(context);
     final summaryAsync = ref.watch(siteDashboardSummaryProvider(siteId));
     final rawSection = ref.watch(siteDashboardSectionProvider);
-    final section = normalizeSiteDashboardSection(rawSection);
+    final conservationVisible =
+        ref.watch(conservationPeriodCompareEnabledProvider(siteId)).valueOrNull ??
+            false;
+    final section = normalizeSiteDashboardSection(
+      rawSection,
+      conservationVisible: conservationVisible,
+    );
     if (rawSection != section) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         ref.read(siteDashboardSectionProvider.notifier).state = section;
@@ -113,6 +119,10 @@ class SiteDashboardScreen extends ConsumerWidget {
             siteId: siteId,
             useDesktop: meterLayoutWide,
           ),
+        SiteDashboardSection.conservation => SiteConservationPanel(
+            siteId: siteId,
+            useDesktop: meterLayoutWide,
+          ),
       };
     }
 
@@ -149,6 +159,9 @@ class SiteDashboardScreen extends ConsumerWidget {
                 siteId: siteId,
                 dateSelection: dateSelection,
                 section: section,
+                sections: siteDashboardSectionsForFlags(
+                  conservationVisible: conservationVisible,
+                ),
                 onDateChanged: (value) => ref
                     .read(siteDateSelectionProvider(siteId).notifier)
                     .state = value,
@@ -237,6 +250,7 @@ class _MobileToolbar extends StatelessWidget {
     required this.siteId,
     required this.dateSelection,
     required this.section,
+    required this.sections,
     required this.onDateChanged,
     required this.onSectionChanged,
   });
@@ -244,6 +258,7 @@ class _MobileToolbar extends StatelessWidget {
   final String siteId;
   final DashboardDateSelection dateSelection;
   final SiteDashboardSection section;
+  final List<SiteDashboardSection> sections;
   final ValueChanged<DashboardDateSelection> onDateChanged;
   final ValueChanged<SiteDashboardSection> onSectionChanged;
 
@@ -272,7 +287,7 @@ class _MobileToolbar extends StatelessWidget {
               scrollDirection: Axis.horizontal,
               child: Row(
                 children: [
-                  for (final item in mobileSiteDashboardSections) ...[
+                  for (final item in sections) ...[
                     UtilitySystemChip(
                       section: item,
                       selected: section == item,

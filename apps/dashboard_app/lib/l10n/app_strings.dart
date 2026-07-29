@@ -137,8 +137,11 @@ class AppStrings {
       SiteDashboardSection.network => network,
       SiteDashboardSection.alerts => alerts,
       SiteDashboardSection.reports => reports,
+      SiteDashboardSection.conservation => isAr ? 'الترشيد' : 'Conservation',
     };
   }
+
+  String get conservation => isAr ? 'الترشيد' : 'Conservation';
 
   String utilityReadingsSubtitle({
     required UtilitySystemKey system,
