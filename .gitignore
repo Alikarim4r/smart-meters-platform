@@ -41,3 +41,11 @@ web_deploy_root/
 **/Pods/
 **/DerivedData/
 .venv-import/
+
+# Local Staging backups (never commit)
+backups/
+
+
+# Regression snapshots may contain operational counts (ok to commit latest)
+# backups only
+
