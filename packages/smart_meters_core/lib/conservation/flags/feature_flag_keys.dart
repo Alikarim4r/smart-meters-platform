@@ -29,6 +29,15 @@ abstract final class ConservationFeatureFlags {
   static const costRoi = 'cost_roi';
   static const conservationReports = 'conservation_reports';
 
+  // Phase 5 — keys only; missing row = OFF (never auto-enabled).
+  static const weatherNormalization = 'weather_normalization';
+  static const occupancyNormalization = 'occupancy_normalization';
+  static const savingPersistence = 'saving_persistence';
+  static const carbonAccounting = 'carbon_accounting';
+  static const portfolioOptimization = 'portfolio_optimization';
+  static const forecasting = 'forecasting';
+  static const recommendationEngine = 'recommendation_engine';
+
   /// All known keys (structure only; never auto-enabled).
   static const all = <String>[
     conservationModule,
@@ -51,5 +60,12 @@ abstract final class ConservationFeatureFlags {
     savingsVerification,
     costRoi,
     conservationReports,
+    weatherNormalization,
+    occupancyNormalization,
+    savingPersistence,
+    carbonAccounting,
+    portfolioOptimization,
+    forecasting,
+    recommendationEngine,
   ];
 }

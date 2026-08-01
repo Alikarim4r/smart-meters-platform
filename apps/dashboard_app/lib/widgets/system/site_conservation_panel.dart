@@ -5,6 +5,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../../providers/conservation_providers.dart';
 import '../conservation/actual_vs_baseline_card.dart';
 import '../conservation/actual_vs_target_card.dart';
+import '../conservation/advanced_conservation_tabs.dart';
 import '../conservation/anomaly_card.dart';
 import '../conservation/balance_difference_card.dart';
 import '../conservation/balance_hierarchy_view.dart';
@@ -15,7 +16,7 @@ import '../conservation/opportunity_list_panel.dart';
 import '../conservation/period_comparison_cards.dart';
 
 /// Gated Conservation section.
-/// Visible when module + any P1–P4 child flag is ON.
+/// Visible when module + any P1–P5 child flag is ON.
 class SiteConservationPanel extends ConsumerWidget {
   const SiteConservationPanel({
     super.key,
@@ -97,6 +98,40 @@ class SiteConservationPanel extends ConsumerWidget {
                 .valueOrNull ??
             false;
         final mvSectionOn = estimationOn || verificationOn;
+        final weatherOn = ref
+                .watch(conservationWeatherNormalizationEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final occupancyOn = ref
+                .watch(
+                  conservationOccupancyNormalizationEnabledProvider(siteId),
+                )
+                .valueOrNull ??
+            false;
+        final persistenceOn = ref
+                .watch(conservationSavingPersistenceEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final carbonOn = ref
+                .watch(conservationCarbonAccountingEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final forecastOn = ref
+                .watch(conservationForecastingEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final recoOn = ref
+                .watch(
+                  conservationRecommendationEngineEnabledProvider(siteId),
+                )
+                .valueOrNull ??
+            false;
+        final advancedOn = weatherOn ||
+            occupancyOn ||
+            persistenceOn ||
+            carbonOn ||
+            forecastOn ||
+            recoOn;
 
         return ListView(
           padding: EdgeInsets.all(useDesktop ? 20 : 12),
@@ -239,6 +274,18 @@ class SiteConservationPanel extends ConsumerWidget {
               _MvSection(
                 siteId: siteId,
                 showCostRoi: costRoiOn,
+              ),
+            ],
+            if (advancedOn) ...[
+              const SizedBox(height: 16),
+              AdvancedConservationTabs(
+                siteId: siteId,
+                weatherOn: weatherOn,
+                occupancyOn: occupancyOn,
+                persistenceOn: persistenceOn,
+                carbonOn: carbonOn,
+                forecastOn: forecastOn,
+                recommendationsOn: recoOn,
               ),
             ],
           ],

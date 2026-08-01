@@ -36,6 +36,7 @@ class MeasurementVerification {
     this.adjustedBaselineValue,
     this.estimatedSavingQuantity,
     this.verifiedSavingQuantity,
+    this.performanceChangeQuantity,
     this.dataCompleteness,
     this.staleReason,
     this.needsRecalculation = false,
@@ -87,6 +88,12 @@ class MeasurementVerification {
   /// Official Verified Saving after gates + human approval. May be 0.
   /// Negative outcomes must not produce a positive verified saving.
   final double? verifiedSavingQuantity;
+
+  /// Signed performance change (reference − post). May be negative when
+  /// consumption increased. Preserved for reporting even when
+  /// [verifiedSavingQuantity] is clamped to 0. Never summed into Verified
+  /// Savings totals when negative.
+  final double? performanceChangeQuantity;
   final String unitCode;
   final double? dataCompleteness;
   final int confidenceScore;
@@ -115,6 +122,16 @@ class MeasurementVerification {
   /// Inclusive post-period day count.
   int get postPeriodDays =>
       inclusiveDayCount(postPeriodStart, postPeriodEnd);
+
+  /// Prefer explicit column; fall back to estimated (signed) or meta.
+  double? get resolvedPerformanceChangeQuantity =>
+      performanceChangeQuantity ??
+      estimatedSavingQuantity ??
+      (calculationMeta['performance_change_quantity'] as num?)?.toDouble() ??
+      (calculationMeta['verified_from_estimated'] as num?)?.toDouble();
+
+  bool get isIncreasedConsumptionOutcome =>
+      (resolvedPerformanceChangeQuantity ?? 0) < 0;
 
   factory MeasurementVerification.fromJson(Map<String, dynamic> json) {
     return MeasurementVerification(
@@ -145,6 +162,8 @@ class MeasurementVerification {
           (json['estimated_saving_quantity'] as num?)?.toDouble(),
       verifiedSavingQuantity:
           (json['verified_saving_quantity'] as num?)?.toDouble(),
+      performanceChangeQuantity:
+          (json['performance_change_quantity'] as num?)?.toDouble(),
       unitCode: json['unit_code'] as String,
       dataCompleteness: (json['data_completeness'] as num?)?.toDouble(),
       confidenceScore: json['confidence_score'] as int? ?? 0,
@@ -194,6 +213,7 @@ class MeasurementVerification {
         'adjusted_baseline_value': adjustedBaselineValue,
         'estimated_saving_quantity': estimatedSavingQuantity,
         'verified_saving_quantity': verifiedSavingQuantity,
+        'performance_change_quantity': performanceChangeQuantity,
         'unit_code': unitCode,
         'data_completeness': dataCompleteness,
         'confidence_score': confidenceScore,

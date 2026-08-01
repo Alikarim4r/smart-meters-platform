@@ -21,6 +21,7 @@ import 'opportunities_admin_screen.dart';
 import 'actions_admin_screen.dart';
 import 'mv_admin_screen.dart';
 import 'tariffs_admin_screen.dart';
+import 'portfolio_conservation_screen.dart';
 
 final _siteConservationTargetsUiProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
@@ -204,6 +205,25 @@ final _siteConservationTariffsUiProvider =
   return flags.isEnabled(
     organizationId: site.organizationId,
     flagKey: ConservationFeatureFlags.costRoi,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationPortfolioUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.portfolioOptimization,
     siteId: siteId,
   );
 });
@@ -470,6 +490,29 @@ class SiteDetailScreen extends ConsumerWidget {
                   icon: const Icon(Icons.payments_outlined),
                   label: Text(
                     s.isAr ? 'تعرفة المرافق' : 'Utility tariffs',
+                  ),
+                ),
+              ],
+              // Portfolio: module + portfolio_optimization (org-level screen).
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationPortfolioUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PortfolioConservationScreen(
+                          organizationId: site.organizationId,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.account_tree_outlined),
+                  label: Text(
+                    s.isAr ? 'محفظة الترشيد' : 'Conservation portfolio',
                   ),
                 ),
               ],

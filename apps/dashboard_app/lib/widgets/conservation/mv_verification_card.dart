@@ -87,6 +87,13 @@ class MvVerificationCard extends StatelessWidget {
                   : '—',
               emphasize: true,
             ),
+            if (record.resolvedPerformanceChangeQuantity != null)
+              _kv(
+                'Performance change',
+                '${_fmt(record.resolvedPerformanceChangeQuantity!)} '
+                '${record.unitCode}'
+                '${record.isIncreasedConsumptionOutcome ? ' (increased — not in Verified Total)' : ''}',
+              ),
             if (showCostRoi)
               _kv(
                 'Cost Avoided',

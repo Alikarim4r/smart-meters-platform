@@ -122,6 +122,8 @@ class SavingsVerificationService {
           adjustedBaselineValue ?? record.adjustedBaselineValue,
       estimatedSavingQuantity: result.estimatedSavingQuantity,
       verifiedSavingQuantity: null,
+      // Preserve signed change explicitly (may be negative).
+      performanceChangeQuantity: result.performanceChangeQuantity,
       unitCode: record.unitCode,
       dataCompleteness: result.dataCompleteness,
       confidenceScore: result.confidenceScore,
@@ -254,13 +256,19 @@ class SavingsVerificationService {
     final meta = Map<String, dynamic>.from(record.calculationMeta)
       ..['verified_saving_label'] = ConservationSavingLabels.verifiedSaving
       ..['verified_from_estimated'] = estimated
+      ..['performance_change_quantity'] = estimated
       ..['negative_outcome_clamped'] = estimated <= 0
+      ..['status_display'] = estimated < 0
+          ? ConservationSavingLabels.noSavingIncreasedConsumption
+          : ConservationSavingLabels.verifiedSaving
       ..['cost_roi'] = cost.toJson();
 
     final verified = _copy(
       record,
       status: MvStatus.verified,
       verifiedSavingQuantity: verifiedQty,
+      // Signed change preserved even when verified qty is clamped to 0.
+      performanceChangeQuantity: estimated,
       tariffId: tariff?.id ?? record.tariffId,
       costAvoided: cost.costAvoided,
       costCurrency: cost.costCurrency,
@@ -347,6 +355,7 @@ class SavingsVerificationService {
           newAdjustedBaselineValue ?? old.adjustedBaselineValue,
       estimatedSavingQuantity: null,
       verifiedSavingQuantity: null,
+      performanceChangeQuantity: null,
       unitCode: old.unitCode,
       dataCompleteness: dataCompleteness ?? old.dataCompleteness,
       confidenceScore: confidenceScore ?? old.confidenceScore,
@@ -377,6 +386,7 @@ class SavingsVerificationService {
     MeasurementVerification r, {
     MvStatus? status,
     Object? verifiedSavingQuantity = _unset,
+    Object? performanceChangeQuantity = _unset,
     String? tariffId,
     Object? costAvoided = _unset,
     Object? costCurrency = _unset,
@@ -414,6 +424,9 @@ class SavingsVerificationService {
       verifiedSavingQuantity: identical(verifiedSavingQuantity, _unset)
           ? r.verifiedSavingQuantity
           : verifiedSavingQuantity as double?,
+      performanceChangeQuantity: identical(performanceChangeQuantity, _unset)
+          ? r.performanceChangeQuantity
+          : performanceChangeQuantity as double?,
       unitCode: r.unitCode,
       dataCompleteness: r.dataCompleteness,
       confidenceScore: r.confidenceScore,

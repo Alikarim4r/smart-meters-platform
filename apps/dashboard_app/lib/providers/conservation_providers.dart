@@ -401,7 +401,160 @@ final conservationSectionVisibleProvider =
   if (await ref.watch(conservationCostRoiEnabledProvider(siteId).future)) {
     return true;
   }
-  return ref.watch(conservationReportsEnabledProvider(siteId).future);
+  if (await ref.watch(conservationReportsEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationWeatherNormalizationEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationOccupancyNormalizationEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationSavingPersistenceEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationCarbonAccountingEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationPortfolioOptimizationEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref.watch(conservationForecastingEnabledProvider(siteId).future)) {
+    return true;
+  }
+  return ref
+      .watch(conservationRecommendationEngineEnabledProvider(siteId).future);
+});
+
+/// True when `conservation_module` ∧ `weather_normalization`.
+final conservationWeatherNormalizationEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.weatherNormalization,
+    siteId: siteId,
+  );
+});
+
+/// True when `conservation_module` ∧ `occupancy_normalization`.
+final conservationOccupancyNormalizationEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.occupancyNormalization,
+    siteId: siteId,
+  );
+});
+
+/// True when `conservation_module` ∧ `saving_persistence`.
+final conservationSavingPersistenceEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.savingPersistence,
+    siteId: siteId,
+  );
+});
+
+/// True when `conservation_module` ∧ `carbon_accounting`.
+final conservationCarbonAccountingEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.carbonAccounting,
+    siteId: siteId,
+  );
+});
+
+/// True when `conservation_module` ∧ `portfolio_optimization`.
+final conservationPortfolioOptimizationEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.portfolioOptimization,
+    siteId: siteId,
+  );
+});
+
+/// True when `conservation_module` ∧ `forecasting`.
+final conservationForecastingEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.forecasting,
+    siteId: siteId,
+  );
+});
+
+/// True when `conservation_module` ∧ `recommendation_engine`.
+final conservationRecommendationEngineEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.recommendationEngine,
+    siteId: siteId,
+  );
 });
 
 /// Portfolio totals from M&V rows.
@@ -458,7 +611,9 @@ ConservationMvPortfolioTotals computeMvPortfolioTotals(
     }
     if (row.status == MvStatus.verified) {
       verifiedCount++;
-      verifiedTotal += row.verifiedSavingQuantity ?? 0;
+      final v = row.verifiedSavingQuantity ?? 0;
+      // Negatives never enter Verified Savings Total (clamped qty is ≥ 0).
+      if (v > 0) verifiedTotal += v;
       if (row.costAvoided != null) {
         costTotal = (costTotal ?? 0) + row.costAvoided!;
       }

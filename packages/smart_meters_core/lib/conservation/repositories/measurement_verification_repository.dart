@@ -161,6 +161,7 @@ class MeasurementVerificationRepository {
           'adjusted_baseline_value': record.adjustedBaselineValue,
           'estimated_saving_quantity': record.estimatedSavingQuantity,
           'verified_saving_quantity': record.verifiedSavingQuantity,
+          'performance_change_quantity': record.performanceChangeQuantity,
           'data_completeness': record.dataCompleteness,
           'confidence_score': record.confidenceScore,
           'status': record.status.dbValue,

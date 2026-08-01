@@ -24,7 +24,11 @@ enum MvStatus {
 enum MvVerificationMethod {
   baselineComparison('baseline_comparison'),
   beforeAfterPeriod('before_after_period'),
-  normalizedPeriodComparison('normalized_period_comparison');
+  normalizedPeriodComparison('normalized_period_comparison'),
+  /// Phase 5 — only when weather model quality gates pass.
+  weatherAdjustedBaseline('weather_adjusted_baseline'),
+  /// Phase 5 — only when occupancy data exists + gates pass.
+  occupancyAdjustedBaseline('occupancy_adjusted_baseline');
 
   const MvVerificationMethod(this.dbValue);
   final String dbValue;

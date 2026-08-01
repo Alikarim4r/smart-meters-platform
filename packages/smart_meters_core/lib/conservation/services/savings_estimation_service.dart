@@ -149,12 +149,16 @@ class SavingsEstimationResult {
   bool get hasPositiveEstimatedSaving =>
       estimatedSavingQuantity != null && estimatedSavingQuantity! > 0;
 
+  /// Alias for signed delta — same convention as Estimated Saving quantity.
+  double? get performanceChangeQuantity => estimatedSavingQuantity;
+
   Map<String, dynamic> toMetaJson() => {
         'calculation_method': SavingsEstimationService.calculationMethod,
         'quantity_label': displayLabel,
         'reference_value': referenceValue,
         'actual_post_value': actualPostValue,
         'estimated_saving_quantity': estimatedSavingQuantity,
+        'performance_change_quantity': performanceChangeQuantity,
         'performance_change_pct': performanceChange,
         'unit_code': unitCode,
         'data_completeness': dataCompleteness,

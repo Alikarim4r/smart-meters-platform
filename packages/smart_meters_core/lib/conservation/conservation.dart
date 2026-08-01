@@ -1,4 +1,4 @@
-/// Conservation layer (Phase 1 + Phase 2 + Phase 3 + Phase 4) — additive, feature-flagged.
+/// Conservation layer (Phase 1–5) — additive, feature-flagged.
 library;
 
 export 'flags/feature_flag_keys.dart';
@@ -75,3 +75,25 @@ export 'services/cost_roi_service.dart';
 export 'services/tariff_lookup_service.dart';
 export 'repositories/measurement_verification_repository.dart';
 export 'repositories/utility_tariff_repository.dart';
+
+// Phase 5 — Normalization / Persistence / Carbon / Portfolio / Forecast
+export 'domain/capability_level.dart';
+export 'domain/weather_sensitive_utilities.dart';
+export 'domain/normalization_quality_gates.dart';
+export 'domain/persistence_status.dart';
+export 'domain/forecast_methods.dart';
+export 'models/weather_dataset.dart';
+export 'models/normalization_model.dart';
+export 'models/occupancy_calendar.dart';
+export 'models/saving_persistence_result.dart';
+export 'models/emission_factor.dart';
+export 'models/portfolio_forecast.dart';
+export 'services/degree_day_normalization_service.dart';
+export 'services/occupancy_normalization_service.dart';
+export 'services/normalization_model_service.dart';
+export 'services/saving_persistence_service.dart';
+export 'services/carbon_accounting_service.dart';
+export 'services/portfolio_optimization_service.dart';
+export 'services/forecasting_service.dart';
+export 'services/recommendation_engine.dart';
+export 'repositories/phase5_repositories.dart';

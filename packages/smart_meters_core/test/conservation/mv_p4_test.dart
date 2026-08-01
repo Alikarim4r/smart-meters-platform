@@ -306,6 +306,8 @@ void main() {
       record =
           verification.applyEstimation(record: record, actualPostValue: 130);
       expect(record.estimatedSavingQuantity, -30);
+      expect(record.performanceChangeQuantity, -30);
+      expect(record.isIncreasedConsumptionOutcome, isTrue);
       record = verification.prepareVerificationPending(record);
       final outcome = verification.verify(
         record: record,
@@ -319,8 +321,54 @@ void main() {
       );
       expect(outcome.success, isTrue);
       expect(outcome.record!.verifiedSavingQuantity, 0);
+      // Signed performance change preserved (not lost when verified qty clamped).
+      expect(outcome.record!.performanceChangeQuantity, -30);
+      expect(outcome.record!.resolvedPerformanceChangeQuantity, -30);
+      expect(outcome.record!.isIncreasedConsumptionOutcome, isTrue);
+      expect(
+        outcome.record!.calculationMeta['performance_change_quantity'],
+        -30,
+      );
+      expect(
+        outcome.record!.calculationMeta['status_display'],
+        ConservationSavingLabels.noSavingIncreasedConsumption,
+      );
       expect(outcome.costRoi!.costAvoidedIsNa, isTrue);
     });
+
+    test(
+      'Example I: Ref 900 / Post 1050 → raw −150 preserved, verified 0',
+      () {
+        var record = draftMv(
+          baselineValue: 900,
+          actualPost: 1050,
+          status: MvStatus.draft,
+        );
+        record = verification.applyEstimation(
+          record: record,
+          actualPostValue: 1050,
+        );
+        expect(record.performanceChangeQuantity, -150);
+        record = verification.prepareVerificationPending(record);
+        final outcome = verification.verify(
+          record: record,
+          verifiedBy: 'admin-1',
+          actorRole: 'site_admin',
+          baselineStatus: ConservationBaselineStatus.approved,
+          actionStatus: ActionStatus.completed,
+          opportunityStatus: OpportunityStatus.resolved,
+          hasPendingCriticalDq: false,
+        );
+        expect(outcome.success, isTrue);
+        expect(outcome.record!.verifiedSavingQuantity, 0);
+        expect(outcome.record!.performanceChangeQuantity, -150);
+        // Verified totals must ignore negatives (caller sums max(0, qty)).
+        final verifiedTotal = [
+          outcome.record!.verifiedSavingQuantity!,
+        ].where((q) => q > 0).fold<double>(0, (a, b) => a + b);
+        expect(verifiedTotal, 0);
+      },
+    );
 
     test('zero estimated → zero verified allowed', () {
       var record = draftMv(actualPost: 100, status: MvStatus.draft);
@@ -678,6 +726,23 @@ void main() {
           ConservationFeatureFlags.savingsVerification,
           ConservationFeatureFlags.costRoi,
           ConservationFeatureFlags.conservationReports,
+        ]),
+      );
+    });
+  });
+
+  group('feature flags Phase 5', () {
+    test('P5 keys present in all (default OFF)', () {
+      expect(
+        ConservationFeatureFlags.all,
+        containsAll([
+          ConservationFeatureFlags.weatherNormalization,
+          ConservationFeatureFlags.occupancyNormalization,
+          ConservationFeatureFlags.savingPersistence,
+          ConservationFeatureFlags.carbonAccounting,
+          ConservationFeatureFlags.portfolioOptimization,
+          ConservationFeatureFlags.forecasting,
+          ConservationFeatureFlags.recommendationEngine,
         ]),
       );
     });
