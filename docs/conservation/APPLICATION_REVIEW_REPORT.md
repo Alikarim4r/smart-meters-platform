@@ -11,15 +11,15 @@
 
 ```text
 git rev-parse HEAD
-40425d1ada5bf828006c43eb57932ee69e43592a
+6978865d424ed0087d32ecece0526b4cb1e76b04
 ```
 
 ### Last three commits
 
 ```text
+6978865 docs: add Staging Application Review report and demo/flag scripts
 40425d1 fix(dashboard): restore UtilitySystemPanel import and motif asset path
 4bffdc1 docs: restore Phase 5 baseline SHA and set tip HEAD in Phase 6 report
-2d2e799 docs: refresh Phase 6 HEAD tip after stamp commit
 ```
 
 No Phase 7 implementation commits present.
