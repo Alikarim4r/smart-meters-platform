@@ -23,6 +23,12 @@ abstract final class ConservationFeatureFlags {
   static const actions = 'actions';
   static const evidence = 'evidence';
 
+  // Phase 4 — keys only; missing row = OFF (never auto-enabled).
+  static const savingsEstimation = 'savings_estimation';
+  static const savingsVerification = 'savings_verification';
+  static const costRoi = 'cost_roi';
+  static const conservationReports = 'conservation_reports';
+
   /// All known keys (structure only; never auto-enabled).
   static const all = <String>[
     conservationModule,
@@ -41,5 +47,9 @@ abstract final class ConservationFeatureFlags {
     investigations,
     actions,
     evidence,
+    savingsEstimation,
+    savingsVerification,
+    costRoi,
+    conservationReports,
   ];
 }

@@ -272,7 +272,79 @@ final conservationEvidenceEnabledProvider =
   );
 });
 
-/// Conservation nav/section visible when module + any P1/P2/P3 child flag.
+/// True only when `conservation_module` ∧ `savings_estimation`.
+final conservationSavingsEstimationEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.savingsEstimation,
+    siteId: siteId,
+  );
+});
+
+/// True only when `conservation_module` ∧ `savings_verification`.
+final conservationSavingsVerificationEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.savingsVerification,
+    siteId: siteId,
+  );
+});
+
+/// True only when `conservation_module` ∧ `cost_roi`.
+final conservationCostRoiEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.costRoi,
+    siteId: siteId,
+  );
+});
+
+/// True only when `conservation_module` ∧ `conservation_reports`.
+final conservationReportsEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final moduleOn =
+      await ref.watch(conservationModuleEnabledProvider(siteId).future);
+  if (!moduleOn) return false;
+  final summary =
+      await ref.watch(siteDashboardSummaryProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: summary.site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationReports,
+    siteId: siteId,
+  );
+});
+
+/// Conservation nav/section visible when module + any P1–P4 child flag.
 final conservationSectionVisibleProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
   if (await ref.watch(conservationPeriodCompareEnabledProvider(siteId).future)) {
@@ -315,7 +387,107 @@ final conservationSectionVisibleProvider =
       .watch(conservationInvestigationsEnabledProvider(siteId).future)) {
     return true;
   }
-  return ref.watch(conservationActionsEnabledProvider(siteId).future);
+  if (await ref.watch(conservationActionsEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationSavingsEstimationEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref
+      .watch(conservationSavingsVerificationEnabledProvider(siteId).future)) {
+    return true;
+  }
+  if (await ref.watch(conservationCostRoiEnabledProvider(siteId).future)) {
+    return true;
+  }
+  return ref.watch(conservationReportsEnabledProvider(siteId).future);
+});
+
+/// Portfolio totals from M&V rows.
+///
+/// Verified Saving and Cost Avoided totals use **status=verified only** —
+/// never estimated/draft/pending. Missing tariff → cost total stays N/A
+/// when no verified row has a non-null cost_avoided.
+class ConservationMvPortfolioTotals {
+  const ConservationMvPortfolioTotals({
+    required this.estimatedSavingTotal,
+    required this.verifiedSavingTotal,
+    required this.costAvoidedTotal,
+    required this.verificationPendingCount,
+    required this.estimatedCount,
+    required this.verifiedCount,
+  });
+
+  /// Sum of [MeasurementVerification.estimatedSavingQuantity] where present
+  /// (active non-superseded/archived preferred; callers pass filtered list).
+  final double estimatedSavingTotal;
+
+  /// Sum of verified_saving_quantity for status=verified only.
+  final double verifiedSavingTotal;
+
+  /// Sum of cost_avoided for verified rows with a tariff. Null = N/A.
+  final double? costAvoidedTotal;
+
+  final int verificationPendingCount;
+  final int estimatedCount;
+  final int verifiedCount;
+}
+
+/// Verified totals ONLY from status=verified (never estimated/draft).
+ConservationMvPortfolioTotals computeMvPortfolioTotals(
+  List<MeasurementVerification> rows,
+) {
+  var estimatedTotal = 0.0;
+  var estimatedCount = 0;
+  var verifiedTotal = 0.0;
+  var verifiedCount = 0;
+  double? costTotal;
+  var pendingCount = 0;
+
+  for (final row in rows) {
+    if (row.status == MvStatus.superseded || row.status == MvStatus.archived) {
+      continue;
+    }
+    if (row.estimatedSavingQuantity != null) {
+      estimatedTotal += row.estimatedSavingQuantity!;
+      estimatedCount++;
+    }
+    if (row.status == MvStatus.verificationPending) {
+      pendingCount++;
+    }
+    if (row.status == MvStatus.verified) {
+      verifiedCount++;
+      verifiedTotal += row.verifiedSavingQuantity ?? 0;
+      if (row.costAvoided != null) {
+        costTotal = (costTotal ?? 0) + row.costAvoided!;
+      }
+    }
+  }
+
+  return ConservationMvPortfolioTotals(
+    estimatedSavingTotal: estimatedTotal,
+    verifiedSavingTotal: verifiedTotal,
+    costAvoidedTotal: costTotal,
+    verificationPendingCount: pendingCount,
+    estimatedCount: estimatedCount,
+    verifiedCount: verifiedCount,
+  );
+}
+
+/// M&V rows for the site (limit 50). Short-circuits to [] when both
+/// savings_estimation and savings_verification are OFF.
+final conservationMvListProvider = FutureProvider.autoDispose
+    .family<List<MeasurementVerification>, String>((ref, siteId) async {
+  final estimationOn = await ref
+      .watch(conservationSavingsEstimationEnabledProvider(siteId).future);
+  final verificationOn = await ref
+      .watch(conservationSavingsVerificationEnabledProvider(siteId).future);
+  if (!estimationOn && !verificationOn) return const [];
+
+  return MeasurementVerificationRepository(
+    ref.read(supabaseClientProvider),
+  ).listForSite(siteId, limit: 50);
 });
 
 /// Opportunities for the site (limit 50, newest first). Never auto-generates.

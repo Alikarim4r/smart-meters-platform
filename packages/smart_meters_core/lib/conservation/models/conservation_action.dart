@@ -26,7 +26,7 @@ enum ConservationActionType {
       );
 }
 
-/// Corrective action row (`conservation_actions`) — workflow only.
+/// Corrective action row (`conservation_actions`) — workflow + optional cost.
 class ConservationAction {
   const ConservationAction({
     required this.id,
@@ -43,6 +43,10 @@ class ConservationAction {
     this.startedAt,
     this.completedAt,
     this.completionNotes,
+    this.implementationCost,
+    this.costCurrency,
+    this.costSource,
+    this.costApproved = false,
     this.createdBy,
     this.createdAt,
     this.updatedAt,
@@ -62,6 +66,12 @@ class ConservationAction {
   final DateTime? startedAt;
   final DateTime? completedAt;
   final String? completionNotes;
+
+  /// Real implementation cost for ROI/Payback. Null → financial N/A (never invent).
+  final double? implementationCost;
+  final String? costCurrency;
+  final String? costSource;
+  final bool costApproved;
   final String? createdBy;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -86,6 +96,10 @@ class ConservationAction {
       startedAt: _parseDt(json['started_at']),
       completedAt: _parseDt(json['completed_at']),
       completionNotes: json['completion_notes'] as String?,
+      implementationCost: (json['implementation_cost'] as num?)?.toDouble(),
+      costCurrency: json['cost_currency'] as String?,
+      costSource: json['cost_source'] as String?,
+      costApproved: json['cost_approved'] as bool? ?? false,
       createdBy: json['created_by'] as String?,
       createdAt: _parseDt(json['created_at']),
       updatedAt: _parseDt(json['updated_at']),
@@ -107,6 +121,10 @@ class ConservationAction {
         'started_at': startedAt?.toUtc().toIso8601String(),
         'completed_at': completedAt?.toUtc().toIso8601String(),
         'completion_notes': completionNotes,
+        'implementation_cost': implementationCost,
+        'cost_currency': costCurrency,
+        'cost_source': costSource,
+        'cost_approved': costApproved,
         'created_by': createdBy,
         'created_at': createdAt?.toUtc().toIso8601String(),
         'updated_at': updatedAt?.toUtc().toIso8601String(),
@@ -123,6 +141,11 @@ class ConservationAction {
         'priority': priority.dbValue,
         'status': status.dbValue,
         if (dueDate != null) 'due_date': _isoDate(dueDate!),
+        if (implementationCost != null)
+          'implementation_cost': implementationCost,
+        if (costCurrency != null) 'cost_currency': costCurrency,
+        if (costSource != null) 'cost_source': costSource,
+        'cost_approved': costApproved,
         if (createdBy != null) 'created_by': createdBy,
       };
 

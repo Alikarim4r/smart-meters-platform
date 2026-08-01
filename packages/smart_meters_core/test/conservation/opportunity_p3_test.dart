@@ -577,6 +577,38 @@ void main() {
         ]),
       );
     });
+
+    test('phase 4 keys coexist without breaking P3', () {
+      expect(
+        ConservationFeatureFlags.all,
+        containsAll([
+          ConservationFeatureFlags.savingsEstimation,
+          ConservationFeatureFlags.savingsVerification,
+          ConservationFeatureFlags.costRoi,
+          ConservationFeatureFlags.conservationReports,
+        ]),
+      );
+    });
+  });
+
+  group('proposed_cause', () {
+    test('investigation json round-trip keeps proposed distinct from confirmed',
+        () {
+      final inv = ConservationInvestigation.fromJson({
+        'id': 'inv-1',
+        'opportunity_id': 'opp-1',
+        'site_id': 'site-1',
+        'investigation_status': 'in_progress',
+        'proposed_cause': 'suspected irrigation overrun',
+        'confirmed_cause': 'confirmed_leak',
+        'confirmed_by': 'admin-1',
+        'confirmed_at': '2026-07-30T10:00:00Z',
+      });
+      expect(inv.proposedCause, 'suspected irrigation overrun');
+      expect(inv.confirmedCause, ConfirmedCause.confirmedLeak);
+      expect(inv.toJson()['proposed_cause'], 'suspected irrigation overrun');
+      expect(inv.toJson()['confirmed_cause'], 'confirmed_leak');
+    });
   });
 
   group('evidence path helper', () {

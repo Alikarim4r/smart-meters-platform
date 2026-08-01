@@ -2,7 +2,9 @@ import '../domain/investigation_lifecycle.dart';
 
 /// Investigation row (`conservation_investigations`).
 ///
-/// [confirmedCause] is human-only — never set from anomaly/balance engines.
+/// [proposedCause] is technician-friendly (free text). [confirmedCause] is
+/// human-approved only by site_admin / super_admin / platform_owner
+/// (DB trigger `conservation_inv_confirmed_cause_authority`).
 class ConservationInvestigation {
   const ConservationInvestigation({
     required this.id,
@@ -16,6 +18,7 @@ class ConservationInvestigation {
     this.investigationCompletedAt,
     this.findingSummary,
     this.possibleCause,
+    this.proposedCause,
     this.confirmedCause,
     this.confirmedBy,
     this.confirmedAt,
@@ -37,7 +40,12 @@ class ConservationInvestigation {
   final String? findingSummary;
   final String? possibleCause;
 
-  /// Human-confirmed only. Requires [confirmedBy] + [confirmedAt].
+  /// Technician / investigator proposed cause (free text). Distinct from
+  /// [confirmedCause].
+  final String? proposedCause;
+
+  /// Human-confirmed only (site_admin / super / owner). Requires
+  /// [confirmedBy] + [confirmedAt]. Technicians cannot set this.
   final ConfirmedCause? confirmedCause;
   final String? confirmedBy;
   final DateTime? confirmedAt;
@@ -61,6 +69,7 @@ class ConservationInvestigation {
       investigationCompletedAt: _parseDt(json['investigation_completed_at']),
       findingSummary: json['finding_summary'] as String?,
       possibleCause: json['possible_cause'] as String?,
+      proposedCause: json['proposed_cause'] as String?,
       confirmedCause: json['confirmed_cause'] == null
           ? null
           : ConfirmedCause.fromDb(json['confirmed_cause'] as String),
@@ -87,6 +96,7 @@ class ConservationInvestigation {
             investigationCompletedAt?.toUtc().toIso8601String(),
         'finding_summary': findingSummary,
         'possible_cause': possibleCause,
+        'proposed_cause': proposedCause,
         'confirmed_cause': confirmedCause?.dbValue,
         'confirmed_by': confirmedBy,
         'confirmed_at': confirmedAt?.toUtc().toIso8601String(),
@@ -106,6 +116,7 @@ class ConservationInvestigation {
         'investigation_status': investigationStatus.dbValue,
         if (findingSummary != null) 'finding_summary': findingSummary,
         if (possibleCause != null) 'possible_cause': possibleCause,
+        if (proposedCause != null) 'proposed_cause': proposedCause,
         if (notes != null) 'notes': notes,
         if (createdBy != null) 'created_by': createdBy,
       };

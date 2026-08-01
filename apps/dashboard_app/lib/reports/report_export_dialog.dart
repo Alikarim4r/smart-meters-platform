@@ -202,6 +202,7 @@ List<ReportFormat> _formatsForType(ReportType type) {
     ReportType.consumption => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.categoryConsumption => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.cop => [ReportFormat.excel, ReportFormat.pdf],
+    ReportType.conservation => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.allSitesSummary => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.siteSummary => [ReportFormat.pdf, ReportFormat.excel],
   };

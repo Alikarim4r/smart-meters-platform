@@ -9,11 +9,13 @@ import '../conservation/anomaly_card.dart';
 import '../conservation/balance_difference_card.dart';
 import '../conservation/balance_hierarchy_view.dart';
 import '../conservation/benchmark_card.dart';
+import '../conservation/mv_summary_strip.dart';
+import '../conservation/mv_verification_card.dart';
 import '../conservation/opportunity_list_panel.dart';
 import '../conservation/period_comparison_cards.dart';
 
 /// Gated Conservation section.
-/// Visible when module + any P1/P2/P3 child flag is ON.
+/// Visible when module + any P1–P4 child flag is ON.
 class SiteConservationPanel extends ConsumerWidget {
   const SiteConservationPanel({
     super.key,
@@ -82,6 +84,19 @@ class SiteConservationPanel extends ConsumerWidget {
                 .watch(conservationInvestigationsEnabledProvider(siteId))
                 .valueOrNull ??
             false;
+        final estimationOn = ref
+                .watch(conservationSavingsEstimationEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final verificationOn = ref
+                .watch(conservationSavingsVerificationEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final costRoiOn = ref
+                .watch(conservationCostRoiEnabledProvider(siteId))
+                .valueOrNull ??
+            false;
+        final mvSectionOn = estimationOn || verificationOn;
 
         return ListView(
           padding: EdgeInsets.all(useDesktop ? 20 : 12),
@@ -206,6 +221,24 @@ class SiteConservationPanel extends ConsumerWidget {
               _OpportunitiesSection(
                 siteId: siteId,
                 investigationsOn: investigationsOn,
+              ),
+            ],
+            if (mvSectionOn) ...[
+              const SizedBox(height: 16),
+              const Text(
+                'Measurement & Verification',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Estimated Saving ≠ Verified Saving. '
+                'Potential Excess is never counted as Saving.',
+                style: TextStyle(fontSize: 11),
+              ),
+              const SizedBox(height: 8),
+              _MvSection(
+                siteId: siteId,
+                showCostRoi: costRoiOn,
               ),
             ],
           ],
@@ -546,5 +579,48 @@ class _OpportunitiesSection extends ConsumerWidget {
         SnackBar(content: Text('$e')),
       );
     }
+  }
+}
+
+class _MvSection extends ConsumerWidget {
+  const _MvSection({
+    required this.siteId,
+    required this.showCostRoi,
+  });
+
+  final String siteId;
+  final bool showCostRoi;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final async = ref.watch(conservationMvListProvider(siteId));
+    return async.when(
+      loading: () => const LinearProgressIndicator(),
+      error: (e, _) => Text('$e'),
+      data: (rows) {
+        if (rows.isEmpty) {
+          return const Text(
+            'No measurement & verification records yet.',
+          );
+        }
+        final totals = computeMvPortfolioTotals(rows);
+        return Column(
+          children: [
+            MvSummaryStrip(
+              totals: totals,
+              showCostRoi: showCostRoi,
+            ),
+            const SizedBox(height: 10),
+            for (final row in rows) ...[
+              MvVerificationCard(
+                record: row,
+                showCostRoi: showCostRoi,
+              ),
+              const SizedBox(height: 8),
+            ],
+          ],
+        );
+      },
+    );
   }
 }

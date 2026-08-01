@@ -314,7 +314,10 @@ class OpportunityDetailScreen extends ConsumerWidget {
                   ],
                 ),
                 const SizedBox(height: 8),
-                _ActionsBlock(opportunityId: opportunityId),
+                _ActionsBlock(
+                  opportunityId: opportunityId,
+                  canManage: canManage,
+                ),
               ],
               if (evidenceOn) ...[
                 const SizedBox(height: 20),
@@ -911,8 +914,12 @@ class _InvestigationsBlock extends ConsumerWidget {
 }
 
 class _ActionsBlock extends ConsumerWidget {
-  const _ActionsBlock({required this.opportunityId});
+  const _ActionsBlock({
+    required this.opportunityId,
+    required this.canManage,
+  });
   final String opportunityId;
+  final bool canManage;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -931,8 +938,19 @@ class _ActionsBlock extends ConsumerWidget {
                   subtitle: Text(
                     '${a.actionType.dbValue} · ${a.status.dbValue} · '
                     '${a.priority.dbValue}'
-                    '${a.dueDate == null ? '' : '\nDue ${_iso(a.dueDate!)}'}',
+                    '${a.dueDate == null ? '' : '\nDue ${_iso(a.dueDate!)}'}'
+                    '\nImplementation cost: '
+                    '${a.implementationCost == null ? 'N/A (ROI N/A)' : '${a.implementationCost} ${a.costCurrency ?? 'QAR'}'}',
                   ),
+                  isThreeLine: true,
+                  trailing: canManage
+                      ? IconButton(
+                          tooltip: 'Set implementation cost',
+                          icon: const Icon(Icons.payments_outlined),
+                          onPressed: () =>
+                              _setCost(context, ref, a),
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(height: 8),
@@ -941,6 +959,71 @@ class _ActionsBlock extends ConsumerWidget {
         );
       },
     );
+  }
+
+  Future<void> _setCost(
+    BuildContext context,
+    WidgetRef ref,
+    ConservationAction action,
+  ) async {
+    final costCtrl = TextEditingController(
+      text: action.implementationCost?.toString() ?? '',
+    );
+    final currencyCtrl = TextEditingController(
+      text: action.costCurrency ?? 'QAR',
+    );
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Implementation cost'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: costCtrl,
+              decoration: const InputDecoration(
+                labelText: 'Cost (empty = clear / ROI N/A)',
+              ),
+              keyboardType: TextInputType.number,
+            ),
+            TextField(
+              controller: currencyCtrl,
+              decoration: const InputDecoration(labelText: 'Currency'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Save'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !context.mounted) return;
+    try {
+      final raw = costCtrl.text.trim();
+      await ActionRepository(ref.read(supabaseClientProvider)).updateCost(
+        id: action.id,
+        implementationCost: raw.isEmpty ? null : double.parse(raw),
+        costCurrency: currencyCtrl.text.trim().isEmpty
+            ? 'QAR'
+            : currencyCtrl.text.trim(),
+        costSource: 'site_admin',
+      );
+      ref.invalidate(_opportunityActionsProvider(opportunityId));
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Implementation cost saved')),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+    }
   }
 
   static String _iso(DateTime d) =>

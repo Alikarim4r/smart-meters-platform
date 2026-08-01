@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../providers/conservation_providers.dart';
 import '../../providers/dashboard_providers.dart';
 import '../../reports/report_export_controller.dart';
 import '../../reports/report_models.dart';
@@ -25,6 +26,10 @@ class SiteReportsPanel extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final padding = DashboardBreakpoints.contentPadding(context);
     final categoriesAsync = ref.watch(siteCategoriesSummaryProvider(siteId));
+    final conservationReportsOn = ref
+            .watch(conservationReportsEnabledProvider(siteId))
+            .valueOrNull ??
+        false;
 
     return categoriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -77,6 +82,15 @@ class SiteReportsPanel extends ConsumerWidget {
               icon: Icons.show_chart_outlined,
               onTap: () => _export(context, ref, type: ReportType.cop),
             ),
+            if (conservationReportsOn)
+              _ReportTile(
+                title: 'Conservation report',
+                subtitle:
+                    'Estimated vs Verified Saving · Cost Avoided (N/A if no tariff)',
+                icon: Icons.eco_outlined,
+                onTap: () =>
+                    _export(context, ref, type: ReportType.conservation),
+              ),
             _ReportTile(
               title: 'Readings export',
               subtitle: 'Excel readings for selected period',

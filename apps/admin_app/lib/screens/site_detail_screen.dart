@@ -19,6 +19,8 @@ import 'balance_groups_admin_screen.dart';
 import 'site_conservation_profile_admin_screen.dart';
 import 'opportunities_admin_screen.dart';
 import 'actions_admin_screen.dart';
+import 'mv_admin_screen.dart';
+import 'tariffs_admin_screen.dart';
 
 final _siteConservationTargetsUiProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
@@ -158,6 +160,50 @@ final _siteConservationActionsUiProvider =
   return flags.isEnabled(
     organizationId: site.organizationId,
     flagKey: ConservationFeatureFlags.actions,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationMvUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  final estimation = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.savingsEstimation,
+    siteId: siteId,
+  );
+  if (estimation) return true;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.savingsVerification,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationTariffsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.costRoi,
     siteId: siteId,
   );
 });
@@ -382,6 +428,48 @@ class SiteDetailScreen extends ConsumerWidget {
                   icon: const Icon(Icons.task_alt_outlined),
                   label: Text(
                     s.isAr ? 'إجراءات الترشيد' : 'Conservation actions',
+                  ),
+                ),
+              ],
+              // M&V: module + savings_estimation OR savings_verification.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationMvUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => MvAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.verified_outlined),
+                  label: Text(
+                    s.isAr ? 'القياس والتحقق' : 'Measurement & Verification',
+                  ),
+                ),
+              ],
+              // Tariffs: module + cost_roi.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationTariffsUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => TariffsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.payments_outlined),
+                  label: Text(
+                    s.isAr ? 'تعرفة المرافق' : 'Utility tariffs',
                   ),
                 ),
               ],

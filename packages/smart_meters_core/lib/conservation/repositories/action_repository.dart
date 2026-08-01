@@ -87,6 +87,31 @@ class ActionRepository {
     return ConservationAction.fromJson(Map<String, dynamic>.from(updated));
   }
 
+  /// Set real implementation cost. Null cost → ROI/Payback N/A (never invent).
+  Future<ConservationAction> updateCost({
+    required String id,
+    double? implementationCost,
+    String? costCurrency,
+    String? costSource,
+    bool? costApproved,
+  }) async {
+    if (implementationCost != null && implementationCost < 0) {
+      throw ArgumentError('implementation_cost must be >= 0 or null');
+    }
+    final updated = await _client
+        .from(_table)
+        .update({
+          'implementation_cost': implementationCost,
+          if (costCurrency != null) 'cost_currency': costCurrency,
+          if (costSource != null) 'cost_source': costSource,
+          if (costApproved != null) 'cost_approved': costApproved,
+        })
+        .eq('id', id)
+        .select()
+        .single();
+    return ConservationAction.fromJson(Map<String, dynamic>.from(updated));
+  }
+
   Future<List<ConservationAction>> listForSite(
     String siteId, {
     List<ActionStatus>? statuses,

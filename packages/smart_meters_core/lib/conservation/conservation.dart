@@ -1,4 +1,4 @@
-/// Conservation layer (Phase 1 + Phase 2 + Phase 3) — additive, feature-flagged.
+/// Conservation layer (Phase 1 + Phase 2 + Phase 3 + Phase 4) — additive, feature-flagged.
 library;
 
 export 'flags/feature_flag_keys.dart';
@@ -62,3 +62,16 @@ export 'repositories/investigation_repository.dart';
 export 'repositories/action_repository.dart';
 export 'repositories/evidence_repository.dart';
 export 'repositories/workflow_audit_repository.dart';
+
+// Phase 4 — Estimated / Verified Saving, Cost / ROI, M&V
+export 'domain/savings_verification_gates.dart';
+export 'domain/mv_lifecycle.dart';
+export 'domain/double_count_rules.dart';
+export 'models/measurement_verification.dart';
+export 'models/utility_tariff.dart';
+export 'services/savings_estimation_service.dart';
+export 'services/savings_verification_service.dart';
+export 'services/cost_roi_service.dart';
+export 'services/tariff_lookup_service.dart';
+export 'repositories/measurement_verification_repository.dart';
+export 'repositories/utility_tariff_repository.dart';

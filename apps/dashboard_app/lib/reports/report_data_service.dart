@@ -7,12 +7,17 @@ class ReportDataService {
   ReportDataService(
     this._repository,
     this._alertRepository,
-    this._policySettings,
-  );
+    this._policySettings, [
+    this._client,
+  ]);
 
   final DashboardRepository _repository;
   final AlertRepository _alertRepository;
   final PolicySettingsRepository _policySettings;
+
+  /// Supabase client from [supabaseClientProvider] (typed loosely to avoid
+  /// a direct supabase_flutter dependency in this file).
+  final dynamic _client;
 
   Future<AllSitesReportBundle> loadAllSitesReport({
     required String userEmail,
@@ -148,6 +153,12 @@ class ReportDataService {
       rangeOverride: range,
     );
 
+    final conservation = await _loadConservationSummary(
+      siteId: siteId,
+      organizationId: site.organizationId,
+      type: type,
+    );
+
     String? categoryFilterName;
     if (categoryId != null) {
       categoryFilterName = categories
@@ -191,6 +202,7 @@ class ReportDataService {
       copResults: copResults,
       categoryFilterName: categoryFilterName,
       alerts: alerts,
+      conservation: conservation,
     );
   }
 
@@ -370,6 +382,112 @@ class ReportDataService {
     }
   }
 
+  /// Loads M&V summary when conservation report type or reports flag is ON.
+  /// Verified totals only from status=verified. Missing tariff → Cost Avoided N/A.
+  Future<ConservationReportSummary?> _loadConservationSummary({
+    required String siteId,
+    required String organizationId,
+    required ReportType type,
+  }) async {
+    final client = _client;
+    if (client == null) return null;
+
+    reportExportLog('cons', 'load conservation start');
+    try {
+      final flags = ConservationFeatureFlagRepository(client);
+      final module = await flags.isEnabled(
+        organizationId: organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      final reportsOn = module &&
+          await flags.isEnabled(
+            organizationId: organizationId,
+            flagKey: ConservationFeatureFlags.conservationReports,
+            siteId: siteId,
+          );
+
+      // Always allow loading for conservation type (may be empty when flag off).
+      if (!reportsOn && type != ReportType.conservation) {
+        reportExportLog('cons', 'skipped (flag off)');
+        return null;
+      }
+
+      final estimationOn = module &&
+          await flags.isEnabled(
+            organizationId: organizationId,
+            flagKey: ConservationFeatureFlags.savingsEstimation,
+            siteId: siteId,
+          );
+      final verificationOn = module &&
+          await flags.isEnabled(
+            organizationId: organizationId,
+            flagKey: ConservationFeatureFlags.savingsVerification,
+            siteId: siteId,
+          );
+
+      if (!estimationOn && !verificationOn) {
+        reportExportLog('cons', 'ok (no estimation/verification flags)');
+        return ConservationReportSummary(
+          records: const [],
+          estimatedSavingTotal: 0,
+          verifiedSavingTotal: 0,
+          costAvoidedTotal: null,
+          verificationPendingCount: 0,
+          flagEnabled: reportsOn,
+        );
+      }
+
+      final records = await MeasurementVerificationRepository(client)
+          .listForSite(siteId, limit: 100);
+
+      var estimatedTotal = 0.0;
+      var verifiedTotal = 0.0;
+      double? costTotal;
+      var pending = 0;
+
+      for (final row in records) {
+        if (row.status == MvStatus.superseded ||
+            row.status == MvStatus.archived) {
+          continue;
+        }
+        if (row.estimatedSavingQuantity != null) {
+          estimatedTotal += row.estimatedSavingQuantity!;
+        }
+        if (row.status == MvStatus.verificationPending) pending++;
+        if (row.status == MvStatus.verified) {
+          verifiedTotal += row.verifiedSavingQuantity ?? 0;
+          if (row.costAvoided != null) {
+            costTotal = (costTotal ?? 0) + row.costAvoided!;
+          }
+        }
+      }
+
+      reportExportLog('cons', 'ok (${records.length} rows)');
+      return ConservationReportSummary(
+        records: records,
+        estimatedSavingTotal: estimatedTotal,
+        verifiedSavingTotal: verifiedTotal,
+        costAvoidedTotal: costTotal,
+        verificationPendingCount: pending,
+        flagEnabled: reportsOn,
+      );
+    } catch (error, stack) {
+      reportExportLog('cons', 'failed', error: error, stack: stack);
+      if (type == ReportType.conservation) {
+        return const ConservationReportSummary(
+          records: [],
+          estimatedSavingTotal: 0,
+          verifiedSavingTotal: 0,
+          costAvoidedTotal: null,
+          verificationPendingCount: 0,
+          flagEnabled: false,
+        );
+      }
+      return null;
+    }
+  }
+
   String _titleForType(ReportType type, String? categoryName) {
     return switch (type) {
       ReportType.siteSummary => 'Site Summary Report',
@@ -379,6 +497,7 @@ class ReportDataService {
         categoryName == null ? 'Category Consumption Report' : '$categoryName Consumption Report',
       ReportType.cop => 'COP Report',
       ReportType.allSitesSummary => 'All Sites Summary',
+      ReportType.conservation => 'Conservation Report',
     };
   }
 }

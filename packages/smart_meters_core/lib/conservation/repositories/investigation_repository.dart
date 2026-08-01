@@ -66,6 +66,7 @@ class InvestigationRepository {
     required String id,
     String? findingSummary,
     String? possibleCause,
+    String? proposedCause,
     String? notes,
     bool markInProgress = true,
   }) async {
@@ -73,6 +74,7 @@ class InvestigationRepository {
     final patch = <String, dynamic>{
       if (findingSummary != null) 'finding_summary': findingSummary,
       if (possibleCause != null) 'possible_cause': possibleCause,
+      if (proposedCause != null) 'proposed_cause': proposedCause,
       if (notes != null) 'notes': notes,
     };
     if (markInProgress &&
@@ -97,7 +99,26 @@ class InvestigationRepository {
     );
   }
 
-  /// Human-only confirmed cause — requires [confirmedBy] (+ timestamp).
+  /// Technician-friendly proposed cause (does not set confirmed_cause).
+  Future<ConservationInvestigation> setProposedCause({
+    required String id,
+    required String proposedCause,
+  }) async {
+    final updated = await _client
+        .from(_table)
+        .update({'proposed_cause': proposedCause})
+        .eq('id', id)
+        .select()
+        .single();
+    return ConservationInvestigation.fromJson(
+      Map<String, dynamic>.from(updated),
+    );
+  }
+
+  /// Human-only confirmed cause — site_admin / super_admin / platform_owner.
+  ///
+  /// Technicians must use [setProposedCause]. Authority is also enforced by
+  /// DB trigger `conservation_inv_confirmed_cause_authority`.
   Future<ConservationInvestigation> confirmCause({
     required String id,
     required ConfirmedCause cause,

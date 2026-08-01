@@ -21,6 +21,7 @@ final reportDataServiceProvider = Provider<ReportDataService>((ref) {
     ref.read(dashboardRepositoryProvider),
     ref.read(alertRepositoryProvider),
     ref.read(policySettingsRepositoryProvider),
+    ref.read(supabaseClientProvider),
   );
 });
 
