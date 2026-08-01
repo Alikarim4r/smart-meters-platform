@@ -22,7 +22,8 @@ class BrandSurfaceBackground extends StatelessWidget {
   final bool showMotif;
 
   static const assetPathLegacy = 'assets/branding/meter_line_art_pattern_md.png';
-  static const assetPathGray = 'assets/branding/meter_line_art_pattern_gray.png';
+  /// Falls back to the shipped MD motif until a dedicated gray asset is added.
+  static const assetPathGray = 'assets/branding/meter_line_art_pattern_md.png';
 
   /// Exact bright white — never cream / off-white.
   static const pureWhite = Color(0xFFFFFFFF);

@@ -21,6 +21,8 @@ import '../widgets/shell/dashboard_sidebar.dart';
 import '../widgets/shell/dashboard_top_header.dart';
 import '../widgets/system/site_alerts_panel.dart';
 import '../widgets/system/site_overview_panel.dart';
+import '../widgets/system/site_reports_panel.dart';
+import '../widgets/system/utility_system_panel.dart';
 import '../providers/conservation_providers.dart';
 import '../widgets/system/site_conservation_panel.dart';
 
