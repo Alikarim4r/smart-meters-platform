@@ -11,8 +11,8 @@
 | Artifact | SHA |
 |----------|-----|
 | **Phase 5 implementation** | `70b7f948824926de8762ba8700fd874a3c5f9e33` |
-| **Phase 5 closure/docs** | *(this docs commit; recorded after commit)* |
-| **Git HEAD after closure** | *(docs SHA)* |
+| **Phase 5 closure/docs** | `db56f8f3dbde746c914d34f7725aceb7fe924bdf` |
+| **Git HEAD after closure** | `db56f8f3dbde746c914d34f7725aceb7fe924bdf` |
 
 **Do not start Phase 6 until this report is explicitly approved.**
 
