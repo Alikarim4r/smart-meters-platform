@@ -20,7 +20,7 @@ git rev-parse HEAD
 | **Phase 5 tip (start of Phase 6)** | `085319f8c19115a0e8d36f67ab591183d249aacd` |
 | **Phase 6 implementation** | `1e5108a173760c5f625fee67e1a252268ed9d808` |
 | **Phase 6 closure/docs** | `32bf1928dcef9e07d53eeaf19463d177a550f0cf` |
-| **Git HEAD** | branch tip after Phase 6 closure — see Git closure section |
+| **Git HEAD** |  |
 
 **Do not start Phase 7 until this report is explicitly approved.**
 
