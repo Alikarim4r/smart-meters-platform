@@ -12,7 +12,7 @@
 
 ```text
 git rev-parse HEAD
-085319f8c19115a0e8d36f67ab591183d249aacd
+c7f43353c311e5e8e342ffcf690815f9e9460249
 ```
 
 | Artifact | SHA |
@@ -298,14 +298,14 @@ Working tree noise excluded: local CocoaPods `Podfile` untracked files under `ad
 |----------|-----|
 | Implementation | `1e5108a173760c5f625fee67e1a252268ed9d808` |
 | Closure/docs | `32bf1928dcef9e07d53eeaf19463d177a550f0cf` |
-| Exact `git rev-parse HEAD` | `325196a007fdd821d5140b647a26e926b023a52d` |
+| Exact `git rev-parse HEAD` | `c7f43353c311e5e8e342ffcf690815f9e9460249` |
 
 **PHASE_6_FINAL_GATE = PASS**  
 **PHASE_6_COMMITTED_FINAL_GATE = PASS** (clean tree except documented local Podfile noise)
 
 ```text
 git rev-parse HEAD
-325196a007fdd821d5140b647a26e926b023a52d
+c7f43353c311e5e8e342ffcf690815f9e9460249
 ```
 
 ---
