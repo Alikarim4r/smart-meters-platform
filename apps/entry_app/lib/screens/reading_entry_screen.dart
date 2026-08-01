@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../l10n/entry_strings.dart';
 import '../models/meter_entry_status.dart';
@@ -317,6 +318,37 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                       businessDate: widget.businessDate,
                       lastReading: entryState.lastReading,
                       location: widget.site.location,
+                    ),
+                    FutureBuilder<bool>(
+                      future: PlatformFeatureFlagRepository(
+                        Supabase.instance.client,
+                      ).isEnabled(
+                        organizationId: widget.site.organizationId,
+                        flagKey: PlatformFeatureFlags.unifiedIngestion,
+                        siteId: widget.site.id,
+                      ),
+                      builder: (context, snap) {
+                        if (snap.data != true) {
+                          return const SizedBox.shrink();
+                        }
+                        final source = entryState.todayReading
+                                ?.effectiveReadingSource ??
+                            'manual';
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Chip(
+                              visualDensity: VisualDensity.compact,
+                              label: Text(
+                                s.isAr
+                                    ? 'المصدر: $source'
+                                    : 'Source: $source',
+                              ),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     if (isReadOnly && displayReading != null)

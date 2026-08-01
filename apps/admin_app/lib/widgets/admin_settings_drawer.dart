@@ -3,9 +3,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../l10n/admin_strings.dart';
+import '../providers/admin_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../screens/catalog_dashboard_screen.dart';
 import '../screens/corrections_tab.dart';
+import '../screens/data_integrations_hub_screen.dart';
 import '../screens/settings_tab.dart';
 import '../utils/user_validation.dart';
 
@@ -150,6 +152,39 @@ class AdminSettingsDrawer extends ConsumerWidget {
                     title: s.catalogAdvanced,
                     child: const CatalogDashboardBody(),
                   ),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.integration_instructions_outlined),
+                  title: Text(
+                    s.isAr ? 'البيانات والتكاملات' : 'Data & Integrations',
+                  ),
+                  trailing: const Icon(Icons.chevron_right, size: 20),
+                  onTap: () async {
+                    final orgs =
+                        await ref.read(adminOrganizationsProvider.future);
+                    final orgId = orgs.isNotEmpty ? orgs.first.id : null;
+                    if (!context.mounted) return;
+                    if (orgId == null) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            s.isAr
+                                ? 'لا توجد جهة متاحة'
+                                : 'No organization available',
+                          ),
+                        ),
+                      );
+                      return;
+                    }
+                    _pushTool(
+                      context,
+                      title: s.isAr
+                          ? 'البيانات والتكاملات'
+                          : 'Data & Integrations',
+                      child: DataIntegrationsHubScreen(organizationId: orgId),
+                    );
+                  },
                 ),
               ],
             ),
