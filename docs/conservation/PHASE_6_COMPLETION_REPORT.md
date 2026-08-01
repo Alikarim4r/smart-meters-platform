@@ -19,8 +19,8 @@ git rev-parse HEAD
 |----------|-----|
 | **Phase 5 tip (start of Phase 6)** | `085319f8c19115a0e8d36f67ab591183d249aacd` |
 | **Phase 6 implementation** | `1e5108a173760c5f625fee67e1a252268ed9d808` |
-| **Phase 6 closure/docs** | *(this docs commit — filled after commit)* |
-| **Git HEAD** | *(after docs commit)* |
+| **Phase 6 closure/docs** |  |
+| **Git HEAD** |  |
 
 **Do not start Phase 7 until this report is explicitly approved.**
 
@@ -297,8 +297,8 @@ Working tree noise excluded: local CocoaPods `Podfile` untracked files under `ad
 | Artifact | SHA |
 |----------|-----|
 | Implementation | `1e5108a173760c5f625fee67e1a252268ed9d808` |
-| Closure/docs | see Git HEAD after this report commit |
-| Exact `git rev-parse HEAD` | see tip after docs commit |
+| Closure/docs |  |
+| Exact `git rev-parse HEAD` |  |
 
 **PHASE_6_FINAL_GATE = PASS**  
 **PHASE_6_COMMITTED_FINAL_GATE = PASS** (after clean committed tree excluding documented Podfile noise)
