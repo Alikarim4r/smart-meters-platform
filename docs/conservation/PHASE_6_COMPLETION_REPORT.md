@@ -297,11 +297,16 @@ Working tree noise excluded: local CocoaPods `Podfile` untracked files under `ad
 | Artifact | SHA |
 |----------|-----|
 | Implementation | `1e5108a173760c5f625fee67e1a252268ed9d808` |
-| Closure/docs | see Git HEAD after this report commit |
-| Exact `git rev-parse HEAD` | see tip after docs commit |
+| Closure/docs | `32bf1928dcef9e07d53eeaf19463d177a550f0cf` |
+| Exact `git rev-parse HEAD` | `602d23520fc8a73d80b65992b43940337df0494e` |
 
 **PHASE_6_FINAL_GATE = PASS**  
-**PHASE_6_COMMITTED_FINAL_GATE = PASS** (after clean committed tree excluding documented Podfile noise)
+**PHASE_6_COMMITTED_FINAL_GATE = PASS** (clean tree except documented local Podfile noise)
+
+```text
+git rev-parse HEAD
+602d23520fc8a73d80b65992b43940337df0494e
+```
 
 ---
 
