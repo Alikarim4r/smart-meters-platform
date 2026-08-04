@@ -31,6 +31,8 @@ Meter _meter() {
 
 LocalReadingDraft _draft(LocalReadingStatus status) {
   return LocalReadingDraft(
+    ownerUserId: 'user-1',
+    environment: 'production',
     localId: 'local-1',
     siteId: 'site-1',
     meterId: 'meter-1',

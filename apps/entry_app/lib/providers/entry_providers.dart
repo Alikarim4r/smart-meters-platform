@@ -29,8 +29,8 @@ final businessDateProvider = StateProvider<DateTime>((ref) {
   return qatarBusinessDate();
 });
 
-final sitePolicyProvider =
-    FutureProvider.autoDispose.family<PolicySettings, String>((ref, siteId) async {
+final sitePolicyProvider = FutureProvider.autoDispose
+    .family<PolicySettings, String>((ref, siteId) async {
   return ref
       .read(policySettingsRepositoryProvider)
       .getEffectivePolicyForSite(siteId);
@@ -51,24 +51,33 @@ final accessibleSitesProvider = FutureProvider<List<Site>>((ref) async {
       final sites = await siteRepo
           .getAccessibleSites(profile)
           .timeout(const Duration(seconds: 15));
-      await storage.cacheSites(sites.map(CachedSite.fromSite).toList());
+      await storage.cacheSites(
+        ownerUserId: profile.id,
+        sites: sites.map(CachedSite.fromSite).toList(),
+      );
       return sites;
     } catch (_) {
       // Fall through to cache.
     }
   }
 
-  return storage.getCachedSites().map((site) => site.toSite()).toList();
+  return storage
+      .getCachedSites(ownerUserId: profile.id)
+      .map((site) => site.toSite())
+      .toList();
 });
 
 final selectedSiteProvider = StateProvider<Site?>((ref) => null);
 
-final selectedCategoryProvider = StateProvider<MeterCategoryConfig?>((ref) => null);
+final selectedCategoryProvider = StateProvider<MeterCategoryConfig?>(
+  (ref) => null,
+);
 
 final meterListSearchProvider = StateProvider<String>((ref) => '');
 
-final meterListFilterProvider =
-    StateProvider<MeterListFilter>((ref) => MeterListFilter.all);
+final meterListFilterProvider = StateProvider<MeterListFilter>(
+  (ref) => MeterListFilter.all,
+);
 
 final availableCategoriesProvider =
     FutureProvider.family<List<MeterCategoryConfig>, String>((ref, siteId) {
@@ -106,10 +115,18 @@ class EntryMeterQuery {
 }
 
 final metersWithStatusProvider =
-    FutureProvider.family<List<MeterEntryStatus>, EntryMeterQuery>((ref, query) async {
+    FutureProvider.family<List<MeterEntryStatus>, EntryMeterQuery>((
+  ref,
+  query,
+) async {
   final storage = ref.read(offlineStorageProvider);
   final isOnline = ref.watch(isOnlineProvider);
+  final ownerUserId = ref.watch(authProvider).profile?.id;
+  if (ownerUserId == null) {
+    return [];
+  }
   final localDrafts = storage.getDraftsForSiteAndDate(
+    ownerUserId: ownerUserId,
     siteId: query.siteId,
     readingDate: query.readingDateIso,
   );
@@ -146,6 +163,7 @@ final metersWithStatusProvider =
       // Cache in background — don't block the UI on Hive writes.
       unawaited(
         storage.cacheMeters(
+          ownerUserId: ownerUserId,
           siteId: query.siteId,
           category: query.categoryCode,
           meters: meters
@@ -179,6 +197,7 @@ final metersWithStatusProvider =
   }
 
   final cachedMeters = storage.getCachedMeters(
+    ownerUserId: ownerUserId,
     siteId: query.siteId,
     category: query.categoryCode,
   );
@@ -200,11 +219,7 @@ final metersWithStatusProvider =
 });
 
 class SyncState {
-  const SyncState({
-    this.isSyncing = false,
-    this.lastSyncTime,
-    this.lastError,
-  });
+  const SyncState({this.isSyncing = false, this.lastSyncTime, this.lastError});
 
   final bool isSyncing;
   final DateTime? lastSyncTime;
@@ -215,10 +230,12 @@ class SyncState {
     DateTime? lastSyncTime,
     String? lastError,
     bool clearError = false,
+    bool clearLastSyncTime = false,
   }) {
     return SyncState(
       isSyncing: isSyncing ?? this.isSyncing,
-      lastSyncTime: lastSyncTime ?? this.lastSyncTime,
+      lastSyncTime:
+          clearLastSyncTime ? null : (lastSyncTime ?? this.lastSyncTime),
       lastError: clearError ? null : (lastError ?? this.lastError),
     );
   }
@@ -227,6 +244,11 @@ class SyncState {
 class SyncNotifier extends StateNotifier<SyncState> {
   SyncNotifier(this._ref) : super(const SyncState()) {
     _loadLastSyncTime();
+    _ref.listen(authProvider, (previous, next) {
+      if (previous?.profile?.id != next.profile?.id) {
+        _loadLastSyncTime();
+      }
+    });
     _ref.listen<bool>(isOnlineProvider, (previous, next) {
       if (previous == false && next) {
         unawaited(syncNow());
@@ -237,10 +259,17 @@ class SyncNotifier extends StateNotifier<SyncState> {
   final Ref _ref;
 
   void _loadLastSyncTime() {
-    final stored = _ref.read(offlineStorageProvider).lastSyncTime;
-    if (stored != null) {
-      state = state.copyWith(lastSyncTime: stored);
+    final userId = _ref.read(authProvider).profile?.id;
+    if (userId == null) {
+      state = state.copyWith(clearLastSyncTime: true);
+      return;
     }
+    final stored =
+        _ref.read(offlineStorageProvider).getLastSyncTime(ownerUserId: userId);
+    state = state.copyWith(
+      lastSyncTime: stored,
+      clearLastSyncTime: stored == null,
+    );
   }
 
   Future<int> syncNow() async {
@@ -249,7 +278,9 @@ class SyncNotifier extends StateNotifier<SyncState> {
     }
 
     if (!_ref.read(isOnlineProvider)) {
-      state = state.copyWith(lastError: 'لا يوجد اتصال بالإنترنت. / No internet connection.');
+      state = state.copyWith(
+        lastError: 'لا يوجد اتصال بالإنترنت. / No internet connection.',
+      );
       return 0;
     }
 
@@ -260,7 +291,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
 
     state = state.copyWith(isSyncing: true, clearError: true);
     final storage = _ref.read(offlineStorageProvider);
-    final pending = storage.getPendingSyncDrafts();
+    final pending = storage.getPendingSyncDrafts(ownerUserId: userId);
     var syncedCount = 0;
 
     for (final draft in pending) {
@@ -293,7 +324,7 @@ class SyncNotifier extends StateNotifier<SyncState> {
     }
 
     final now = DateTime.now();
-    await storage.setLastSyncTime(now);
+    await storage.setLastSyncTime(ownerUserId: userId, time: now);
     state = state.copyWith(isSyncing: false, lastSyncTime: now);
     _ref.invalidate(metersWithStatusProvider);
     return syncedCount;
@@ -304,12 +335,14 @@ final syncProvider = StateNotifierProvider<SyncNotifier, SyncState>((ref) {
   return SyncNotifier(ref);
 });
 
-final meterReadingPhotoUrlProvider =
-    FutureProvider.autoDispose.family<String?, String>((ref, storagePath) async {
+final meterReadingPhotoUrlProvider = FutureProvider.autoDispose
+    .family<String?, String>((ref, storagePath) async {
   if (storagePath.isEmpty) {
     return null;
   }
-  return ref.read(meterImageStorageRepositoryProvider).createSignedUrl(storagePath);
+  return ref
+      .read(meterImageStorageRepositoryProvider)
+      .createSignedUrl(storagePath);
 });
 
 class ReadingEntryState {
@@ -336,8 +369,7 @@ class ReadingEntryState {
   final bool savedLocally;
 
   bool get isSubmitted =>
-      todayReading != null ||
-      localDraft?.status == LocalReadingStatus.synced;
+      todayReading != null || localDraft?.status == LocalReadingStatus.synced;
 
   bool get isReadOnly =>
       todayReading != null ||
@@ -346,8 +378,7 @@ class ReadingEntryState {
       localDraft?.status == LocalReadingStatus.synced;
 
   bool get canEdit =>
-      !isReadOnly &&
-      (localDraft == null || localDraft!.isEditable);
+      !isReadOnly && (localDraft == null || localDraft!.isEditable);
 
   ReadingEntryState copyWith({
     MeterReading? lastReading,
@@ -415,7 +446,8 @@ class ReadingEntryQuery {
 }
 
 class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
-  ReadingEntryNotifier(this._ref, this._query) : super(const ReadingEntryState()) {
+  ReadingEntryNotifier(this._ref, this._query)
+      : super(const ReadingEntryState()) {
     _load();
   }
 
@@ -425,7 +457,16 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
   OfflineStorageService get _storage => _ref.read(offlineStorageProvider);
 
   Future<void> _load() async {
+    final ownerUserId = _ref.read(authProvider).profile?.id;
+    if (ownerUserId == null) {
+      state = state.copyWith(
+        isLoading: false,
+        errorMessage: 'Session expired. Please sign in again.',
+      );
+      return;
+    }
     final storageDraft = _storage.getDraftForMeterAndDate(
+      ownerUserId: ownerUserId,
       meterId: _query.meterId,
       readingDate: _query.readingDateIso,
     );
@@ -469,6 +510,7 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
 
       if (last == null) {
         final cached = _storage.getCachedMeters(
+          ownerUserId: ownerUserId,
           siteId: _query.siteId,
           category: _query.category.code,
         );
@@ -504,7 +546,9 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
 
     final profile = _ref.read(authProvider).profile;
     if (profile == null) {
-      state = state.copyWith(errorMessage: 'Session expired. Please sign in again.');
+      state = state.copyWith(
+        errorMessage: 'Session expired. Please sign in again.',
+      );
       return false;
     }
 
@@ -534,6 +578,8 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
       final existingDraft = state.localDraft;
       final draft = (existingDraft ??
               LocalReadingDraft(
+                ownerUserId: profile.id,
+                environment: _storage.currentEnvironment,
                 localId: localId,
                 siteId: _query.siteId,
                 meterId: _query.meterId,
@@ -546,23 +592,20 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
                 categoryCode: _query.category.code,
               ))
           .copyWith(
-            localPhotoPath: result.localPhotoPath,
-            watermarkedPhotoPath: result.watermarkedPhotoPath,
-            photoSource: result.source,
-            photoUploadStatus: PhotoUploadStatus.attachedLocally,
-            photoCapturedAt: now,
-            updatedAt: now,
-            organizationId: _query.organizationId,
-            categoryCode: _query.category.code,
-            clearRemotePhotoPath: true,
-            clearRemotePhotoUrl: true,
-            clearPhotoErrorMessage: true,
-          );
-
-      state = state.copyWith(
-        isAttachingPhoto: false,
-        localDraft: draft,
+        localPhotoPath: result.localPhotoPath,
+        watermarkedPhotoPath: result.watermarkedPhotoPath,
+        photoSource: result.source,
+        photoUploadStatus: PhotoUploadStatus.attachedLocally,
+        photoCapturedAt: now,
+        updatedAt: now,
+        organizationId: _query.organizationId,
+        categoryCode: _query.category.code,
+        clearRemotePhotoPath: true,
+        clearRemotePhotoUrl: true,
+        clearPhotoErrorMessage: true,
       );
+
+      state = state.copyWith(isAttachingPhoto: false, localDraft: draft);
       return true;
     } catch (error) {
       state = state.copyWith(
@@ -603,7 +646,17 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
     }
     final draft = state.localDraft;
     if (draft != null) {
-      await _storage.deleteDraft(draft.localId);
+      final ownerUserId = _ref.read(authProvider).profile?.id;
+      if (ownerUserId == null) {
+        state = state.copyWith(
+          errorMessage: 'Session expired. Please sign in again.',
+        );
+        return false;
+      }
+      await _storage.deleteDraft(
+        localId: draft.localId,
+        ownerUserId: ownerUserId,
+      );
     }
     state = state.copyWith(
       clearLocalDraft: true,
@@ -615,31 +668,37 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
     return true;
   }
 
-  Future<bool> saveReading({
-    required double rawValue,
-    String? note,
-  }) async {
+  Future<bool> saveReading({required double rawValue, String? note}) async {
     if (state.isReadOnly || state.isSaving) {
       return false;
     }
 
     final userId = _ref.read(authProvider).profile?.id;
     if (userId == null) {
-      state = state.copyWith(errorMessage: 'Session expired. Please sign in again.');
+      state = state.copyWith(
+        errorMessage: 'Session expired. Please sign in again.',
+      );
       return false;
     }
 
-    state = state.copyWith(isSaving: true, clearError: true, saveSucceeded: false);
+    state = state.copyWith(
+      isSaving: true,
+      clearError: true,
+      saveSucceeded: false,
+    );
 
     final trimmedNote = note?.trim();
     final now = DateTime.now();
     final existingDraft = state.localDraft ??
         _storage.getDraftForMeterAndDate(
+          ownerUserId: userId,
           meterId: _query.meterId,
           readingDate: _query.readingDateIso,
         );
     final draft = (existingDraft ??
             LocalReadingDraft(
+              ownerUserId: userId,
+              environment: _storage.currentEnvironment,
               localId: _newLocalId(),
               siteId: _query.siteId,
               meterId: _query.meterId,
@@ -652,12 +711,12 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
               categoryCode: _query.category.code,
             ))
         .copyWith(
-          rawValue: rawValue,
-          note: trimmedNote?.isEmpty == true ? null : trimmedNote,
-          updatedAt: now,
-          organizationId: _query.organizationId,
-          categoryCode: _query.category.code,
-        );
+      rawValue: rawValue,
+      note: trimmedNote?.isEmpty == true ? null : trimmedNote,
+      updatedAt: now,
+      organizationId: _query.organizationId,
+      categoryCode: _query.category.code,
+    );
 
     final isOnline = _ref.read(isOnlineProvider);
     final localDraft = draft.copyWith(
@@ -726,8 +785,7 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
             localDraft: syncedDraft,
             savedLocally: true,
             saveSucceeded: false,
-            errorMessage:
-                syncedDraft.errorMessage ??
+            errorMessage: syncedDraft.errorMessage ??
                 syncedDraft.photoErrorMessage ??
                 'تعذّر مزامنة القراءة. تحقق من صلاحية التاريخ وحاول مجدداً.',
           );
@@ -740,7 +798,8 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
           localDraft: syncedDraft,
           savedLocally: true,
           saveSucceeded: true,
-          errorMessage: syncedDraft.errorMessage ?? syncedDraft.photoErrorMessage,
+          errorMessage:
+              syncedDraft.errorMessage ?? syncedDraft.photoErrorMessage,
         );
         _ref.invalidate(metersWithStatusProvider);
         return true;
