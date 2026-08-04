@@ -160,6 +160,15 @@ void main() {
   });
 
   group('validatePolicySettings', () {
+    test('rejects an invalid daily cutoff time', () {
+      final result = validatePolicySettings(
+        PolicySettings.defaults(
+          'org',
+        ).copyWith(dailyReadingCutoffTime: '25:90'),
+      );
+      expect(result.isValid, isFalse);
+    });
+
     test('rejects critical completion above warning', () {
       final result = validatePolicySettings(
         PolicySettings.defaults('org').copyWith(

@@ -18,8 +18,8 @@ class PolicySettingsRepository {
           .eq('scope', 'organization')
           .eq('is_active', true);
       final match = (rows as List).cast<Map>().where(
-        (row) => row['site_id'] == null,
-      );
+            (row) => row['site_id'] == null,
+          );
       if (match.isEmpty) {
         return PolicySettings.defaults(organizationId);
       }
@@ -37,6 +37,21 @@ class PolicySettingsRepository {
           .eq('id', siteId)
           .single();
       final organizationId = site['organization_id'] as String;
+
+      final sitePolicies = await _client
+          .from('policy_settings')
+          .select()
+          .eq('site_id', siteId)
+          .eq('scope', 'site')
+          .eq('is_active', true)
+          .order('updated_at', ascending: false)
+          .limit(1);
+      if ((sitePolicies as List).isNotEmpty) {
+        return PolicySettings.fromJson(
+          Map<String, dynamic>.from(sitePolicies.first as Map),
+        );
+      }
+
       return getOrganizationPolicySettings(organizationId);
     } catch (_) {
       return PolicySettings.defaults('');

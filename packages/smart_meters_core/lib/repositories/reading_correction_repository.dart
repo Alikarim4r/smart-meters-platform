@@ -329,12 +329,16 @@ profiles:entered_by(full_name, email)
       newNote: newNote,
     );
 
-    final updated = await _client
-        .from('meter_readings')
-        .update({'raw_value': newValue, 'note': formattedNote})
-        .eq('id', readingId)
-        .select('id, raw_value, note, updated_at')
-        .single();
+    final response = await _client.rpc(
+      'admin_correct_meter_reading',
+      params: {
+        'p_reading_id': readingId,
+        'p_new_raw_value': newValue,
+        'p_new_note': formattedNote,
+        'p_reason': reason.code,
+      },
+    );
+    final updated = Map<String, dynamic>.from(response as Map);
 
     final audit = await _client
         .from('reading_audit_logs')
