@@ -1,9 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
 import 'dart:math' as math;
 
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -15,6 +13,7 @@ import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
 import '../providers/catalog_providers.dart';
 import '../providers/preferences_providers.dart';
+import '../utils/platform_image_picker.dart';
 import '../widgets/overflow_safe.dart';
 import 'meter_form_screen.dart';
 
@@ -1178,8 +1177,10 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
   }
 
   Future<ImageSource?> _chooseImageSource(AdminStrings s) async {
-    final isDesktop =
-        !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
+    final isDesktop = usesDesktopImageFileSelector(
+      platform: defaultTargetPlatform,
+      isWeb: kIsWeb,
+    );
     if (isDesktop) return ImageSource.gallery;
     return showModalBottomSheet<ImageSource>(
       context: context,
@@ -1205,18 +1206,7 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
   }
 
   Future<XFile?> _pickImageFile(ImageSource source) async {
-    final isDesktop =
-        !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
-    if (isDesktop) {
-      const typeGroup = XTypeGroup(
-        label: 'images',
-        extensions: <String>['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif'],
-      );
-      final file = await openFile(acceptedTypeGroups: [typeGroup]);
-      if (file == null) return null;
-      return XFile(file.path, mimeType: file.mimeType);
-    }
-    return ImagePicker().pickImage(
+    return pickPlatformImage(
       source: source,
       maxWidth: 900,
       maxHeight: 900,

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../providers/correction_providers.dart';
+import '../utils/platform_image_picker.dart';
 import 'reading_audit_history_screen.dart';
 
 class ReadingCorrectionFormScreen extends ConsumerStatefulWidget {
@@ -49,8 +50,7 @@ class _ReadingCorrectionFormScreenState
   Future<void> _replacePhoto(ReadingCorrectionDetails details) async {
     final profile = ref.read(authProvider).profile;
     if (profile == null) return;
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
+    final file = await pickPlatformImage(
       source: ImageSource.gallery,
       imageQuality: 85,
       maxWidth: 2000,

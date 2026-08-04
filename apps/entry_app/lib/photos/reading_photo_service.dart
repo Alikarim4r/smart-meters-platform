@@ -6,13 +6,15 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import 'meter_photo_watermark.dart';
 import 'reading_photo_models.dart';
+import '../utils/platform_image_picker.dart';
 
 final imagePickerProvider = Provider<ImagePicker>((ref) => ImagePicker());
 
-final meterPhotoWatermarkServiceProvider =
-    Provider<MeterPhotoWatermarkService>((ref) {
-  return MeterPhotoWatermarkService();
-});
+final meterPhotoWatermarkServiceProvider = Provider<MeterPhotoWatermarkService>(
+  (ref) {
+    return MeterPhotoWatermarkService();
+  },
+);
 
 final readingPhotoFileStoreProvider = Provider<ReadingPhotoFileStore>((ref) {
   return ReadingPhotoFileStore();
@@ -31,11 +33,14 @@ class ReadingPhotoService {
   final ReadingPhotoFileStore _fileStore;
   final SiteRepository _siteRepository;
 
-  Future<({
-    String localPhotoPath,
-    String watermarkedPhotoPath,
-    ReadingPhotoSource source,
-  })?> captureAndWatermark({
+  Future<
+    ({
+      String localPhotoPath,
+      String watermarkedPhotoPath,
+      ReadingPhotoSource source,
+    })?
+  >
+  captureAndWatermark({
     required ReadingPhotoSource source,
     required String localId,
     required ReadingPhotoContext context,
@@ -73,7 +78,8 @@ class ReadingPhotoService {
     final imageSource = source == ReadingPhotoSource.camera
         ? ImageSource.camera
         : ImageSource.gallery;
-    return _picker.pickImage(
+    return pickPlatformImage(
+      picker: _picker,
       source: imageSource,
       imageQuality: 92,
       maxWidth: 2400,
@@ -92,9 +98,7 @@ class ReadingPhotoService {
     String? organizationName;
     try {
       final orgs = await _siteRepository.getOrganizationsForAdmin();
-      final match = orgs
-          .where((org) => org.id == site.organizationId)
-          .toList();
+      final match = orgs.where((org) => org.id == site.organizationId).toList();
       if (match.isNotEmpty) {
         organizationName = match.first.nameEn;
       }

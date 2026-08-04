@@ -9,10 +9,10 @@ import '../utils/dashboard_date_range.dart';
 import '../utils/dashboard_filters.dart';
 import 'dashboard_providers.dart';
 
-final siteChartPeriodProvider =
-    StateProvider.autoDispose.family<ChartPeriod, String>((ref, siteId) {
-  return ChartPeriod.weekly;
-});
+final siteChartPeriodProvider = StateProvider.autoDispose
+    .family<ChartPeriod, String>((ref, siteId) {
+      return ChartPeriod.weekly;
+    });
 
 /// Site date selection — kept alive so Week/Month/Year choices are not reset
 /// when analytics sections remount.
@@ -21,12 +21,12 @@ final siteChartPeriodProvider =
 /// recreate this provider and wipe the user's Week/Month/Year selection.
 final siteDateSelectionProvider =
     StateProvider.family<DashboardDateSelection, String>((ref, siteId) {
-  ref.keepAlive();
-  return defaultDateSelectionForSite(
-    siteId,
-    ref.read(businessDateProvider),
-  );
-});
+      ref.keepAlive();
+      return defaultDateSelectionForSite(
+        siteId,
+        ref.read(businessDateProvider),
+      );
+    });
 
 /// Legacy alias — prefer [siteDateSelectionProvider].
 @Deprecated('Use siteDateSelectionProvider')
@@ -34,191 +34,210 @@ DashboardChartMonth chartMonthFromSelection(DashboardDateSelection selection) {
   return DashboardChartMonth.current;
 }
 
-final siteCategoriesSummaryForMonthProvider =
-    FutureProvider.autoDispose.family<List<SiteCategorySummary>, String>(
-  (ref, siteId) async {
-    final selection = ref.watch(siteDateSelectionProvider(siteId));
-    // KPIs only need meter counts / today submitted — skip consumption rebuild
-    // (was the main stall when every site open defaulted to Water).
-    return ref
-        .read(dashboardRepositoryProvider)
-        .getSiteCategoriesSummaryForReport(
-          siteId: siteId,
-          businessDate: selection.selectedBusinessDate,
-        );
-  },
-);
+final siteCategoriesSummaryForMonthProvider = FutureProvider.autoDispose
+    .family<List<SiteCategorySummary>, String>((ref, siteId) async {
+      final selection = ref.watch(siteDateSelectionProvider(siteId));
+      // KPIs only need meter counts / today submitted — skip consumption rebuild
+      // (was the main stall when every site open defaulted to Water).
+      return ref
+          .read(dashboardRepositoryProvider)
+          .getSiteCategoriesSummaryForReport(
+            siteId: siteId,
+            businessDate: selection.selectedBusinessDate,
+          );
+    });
 
 /// Chart period chips per utility analytics section (independent of meter dates).
-final utilityChartPeriodProvider =
-    StateProvider.autoDispose.family<UtilityChartPeriodState, String>((ref, key) {
-  // Prefer chips over the site date-bar custom range so opening a historical
-  // meter month does not force a heavy full-month chart scan.
-  return const UtilityChartPeriodState(
-    kind: UtilityChartPeriodKind.last7Days,
-    preferChipOverCustomRange: true,
-  );
-});
+final utilityChartPeriodProvider = StateProvider.autoDispose
+    .family<UtilityChartPeriodState, String>((ref, key) {
+      // Prefer chips over the site date-bar custom range so opening a historical
+      // meter month does not force a heavy full-month chart scan.
+      return const UtilityChartPeriodState(
+        kind: UtilityChartPeriodKind.last7Days,
+        preferChipOverCustomRange: true,
+      );
+    });
+
+/// Keeps a chart period in step with recognized dashboard date presets while
+/// preserving the independent chart chip for arbitrary meter-only ranges.
+UtilityChartPeriodState utilityChartPeriodAfterDateSelection({
+  required UtilityChartPeriodState current,
+  required DashboardDateSelection selection,
+}) {
+  return chartPeriodStateForDateSelection(selection) ?? current;
+}
 
 @Deprecated('Use utilityChartPeriodProvider')
-final categoryChartPeriodProvider =
-    StateProvider.autoDispose.family<ChartPeriod, String>((ref, key) {
-  return ChartPeriod.weekly;
-});
+final categoryChartPeriodProvider = StateProvider.autoDispose
+    .family<ChartPeriod, String>((ref, key) {
+      return ChartPeriod.weekly;
+    });
 
-final copChartPeriodProvider =
-    StateProvider.autoDispose.family<ChartPeriod, String>((ref, copGroupId) {
-  return ChartPeriod.weekly;
-});
+final copChartPeriodProvider = StateProvider.autoDispose
+    .family<ChartPeriod, String>((ref, copGroupId) {
+      return ChartPeriod.weekly;
+    });
 
 final siteConsumptionTrendProvider = FutureProvider.autoDispose
     .family<SiteConsumptionTrend, SiteChartQuery>((ref, query) async {
-  final DateTime businessDate = resolveBusinessDate(
-    override: query.businessDate,
-    fallback: ref.watch(businessDateProvider),
-  );
-  return ref.read(dashboardRepositoryProvider).getSiteConsumptionTrend(
-        siteId: query.siteId,
-        period: query.period,
-        businessDate: businessDate,
+      final DateTime businessDate = resolveBusinessDate(
+        override: query.businessDate,
+        fallback: ref.watch(businessDateProvider),
       );
-});
+      return ref
+          .read(dashboardRepositoryProvider)
+          .getSiteConsumptionTrend(
+            siteId: query.siteId,
+            period: query.period,
+            businessDate: businessDate,
+          );
+    });
 
-final siteTodayCompletionProvider =
-    FutureProvider.autoDispose.family<TodayReadingProgress, String>(
-  (ref, siteId) async {
-    return ref.read(dashboardRepositoryProvider).getTodayCompletion(
-          siteId: siteId,
-          businessDate: ref.watch(businessDateProvider),
-        );
-  },
-);
+final siteTodayCompletionProvider = FutureProvider.autoDispose
+    .family<TodayReadingProgress, String>((ref, siteId) async {
+      return ref
+          .read(dashboardRepositoryProvider)
+          .getTodayCompletion(
+            siteId: siteId,
+            businessDate: ref.watch(businessDateProvider),
+          );
+    });
 
 final categoryChartBundleProvider = FutureProvider.autoDispose
     .family<CategoryChartBundle, CategoryChartQuery>((ref, query) async {
-  // Keep chart results for the session so remounts don't refetch immediately.
-  final link = ref.keepAlive();
-  Timer? disposeTimer;
-  ref.onCancel(() {
-    disposeTimer?.cancel();
-    disposeTimer = Timer(const Duration(minutes: 5), link.close);
-  });
-  ref.onResume(() => disposeTimer?.cancel());
-  ref.onDispose(() => disposeTimer?.cancel());
+      // Keep chart results for the session so remounts don't refetch immediately.
+      final link = ref.keepAlive();
+      Timer? disposeTimer;
+      ref.onCancel(() {
+        disposeTimer?.cancel();
+        disposeTimer = Timer(const Duration(minutes: 5), link.close);
+      });
+      ref.onResume(() => disposeTimer?.cancel());
+      ref.onDispose(() => disposeTimer?.cancel());
 
-  final DateTime businessDate = resolveBusinessDate(
-    override: query.businessDate,
-    fallback: ref.watch(businessDateProvider),
-  );
-  final range = query.rangeOverride ??
-      resolveUtilityChartPeriodRange(
-        state: query.periodState,
-        anchorDate: businessDate,
+      final DateTime businessDate = resolveBusinessDate(
+        override: query.businessDate,
+        fallback: ref.watch(businessDateProvider),
       );
-  final legacyPeriod =
-      query.rangeOverride?.period ?? legacyChartPeriodForState(query.periodState);
+      final range =
+          query.rangeOverride ??
+          resolveUtilityChartPeriodRange(
+            state: query.periodState,
+            anchorDate: businessDate,
+          );
+      final legacyPeriod =
+          query.rangeOverride?.period ??
+          legacyChartPeriodForState(query.periodState);
 
-  if (kDebugMode) {
-    debugPrint(
-      '[chart] fetch start category=${query.categoryId} '
-      'range=${range.from.toIso8601String().substring(0, 10)}..'
-      '${range.to.toIso8601String().substring(0, 10)} '
-      'bucket=${range.bucket.name}',
-    );
-  }
-  final stopwatch = Stopwatch()..start();
-
-  try {
-    final bundle = await ref.read(dashboardRepositoryProvider).getCategoryChartBundle(
-          siteId: query.siteId,
-          categoryId: query.categoryId,
-          period: legacyPeriod,
-          businessDate: businessDate,
-          rangeOverride: range,
+      if (kDebugMode) {
+        debugPrint(
+          '[chart] fetch start category=${query.categoryId} '
+          'range=${range.from.toIso8601String().substring(0, 10)}..'
+          '${range.to.toIso8601String().substring(0, 10)} '
+          'bucket=${range.bucket.name}',
         );
+      }
+      final stopwatch = Stopwatch()..start();
 
-    if (kDebugMode) {
-      debugPrint(
-        '[chart] fetch end ${stopwatch.elapsedMilliseconds}ms '
-        'points=${bundle.trend.points.length} '
-        'nonzero=${bundle.trend.points.where((p) => p.value > 0).length}',
-      );
-    }
-    return bundle;
-  } catch (error, stack) {
-    if (kDebugMode) {
-      debugPrint(
-        '[chart] fetch FAILED ${stopwatch.elapsedMilliseconds}ms error=$error',
-      );
-      debugPrint('$stack');
-    }
-    rethrow;
-  }
-});
+      try {
+        final bundle = await ref
+            .read(dashboardRepositoryProvider)
+            .getCategoryChartBundle(
+              siteId: query.siteId,
+              categoryId: query.categoryId,
+              period: legacyPeriod,
+              businessDate: businessDate,
+              rangeOverride: range,
+            );
+
+        if (kDebugMode) {
+          debugPrint(
+            '[chart] fetch end ${stopwatch.elapsedMilliseconds}ms '
+            'points=${bundle.trend.points.length} '
+            'nonzero=${bundle.trend.points.where((p) => p.value > 0).length}',
+          );
+        }
+        return bundle;
+      } catch (error, stack) {
+        if (kDebugMode) {
+          debugPrint(
+            '[chart] fetch FAILED ${stopwatch.elapsedMilliseconds}ms error=$error',
+          );
+          debugPrint('$stack');
+        }
+        rethrow;
+      }
+    });
 
 final meterComparisonProvider = FutureProvider.autoDispose
     .family<MeterComparisonResult, MeterComparisonQuery>((ref, query) async {
-  if (query.meterIds.length < 2) {
-    return const MeterComparisonResult(
-      series: [],
-      baseUnit: '',
-      canCompare: false,
-      warningMessage: 'Select at least two meters to compare.',
-    );
-  }
+      if (query.meterIds.length < 2) {
+        return const MeterComparisonResult(
+          series: [],
+          baseUnit: '',
+          canCompare: false,
+          warningMessage: 'Select at least two meters to compare.',
+        );
+      }
 
-  final DateTime businessDate = resolveBusinessDate(
-    override: query.businessDate,
-    fallback: ref.watch(businessDateProvider),
-  );
-  final range = query.rangeOverride ??
-      resolveUtilityChartPeriodRange(
-        state: query.periodState,
-        anchorDate: businessDate,
+      final DateTime businessDate = resolveBusinessDate(
+        override: query.businessDate,
+        fallback: ref.watch(businessDateProvider),
       );
-  final legacyPeriod =
-      query.rangeOverride?.period ?? legacyChartPeriodForState(query.periodState);
+      final range =
+          query.rangeOverride ??
+          resolveUtilityChartPeriodRange(
+            state: query.periodState,
+            anchorDate: businessDate,
+          );
+      final legacyPeriod =
+          query.rangeOverride?.period ??
+          legacyChartPeriodForState(query.periodState);
 
-  return ref.read(dashboardRepositoryProvider).getMeterComparisonTrend(
-        siteId: query.siteId,
-        categoryId: query.categoryId,
-        meterIds: query.meterIds,
-        period: legacyPeriod,
-        businessDate: businessDate,
-        rangeOverride: range,
-      );
-});
+      return ref
+          .read(dashboardRepositoryProvider)
+          .getMeterComparisonTrend(
+            siteId: query.siteId,
+            categoryId: query.categoryId,
+            meterIds: query.meterIds,
+            period: legacyPeriod,
+            businessDate: businessDate,
+            rangeOverride: range,
+          );
+    });
 
 final copTrendProvider = FutureProvider.autoDispose
     .family<CopTrendResult, CopChartQuery>((ref, query) async {
-  final DateTime businessDate = resolveBusinessDate(
-    override: query.businessDate,
-    fallback: ref.watch(businessDateProvider),
-  );
-  final range = resolveUtilityChartPeriodRange(
-    state: query.periodState,
-    anchorDate: businessDate,
-  );
-  final legacyPeriod = legacyChartPeriodForState(query.periodState);
-
-  return ref.read(dashboardRepositoryProvider).getCopTrend(
-        copGroupId: query.copGroupId,
-        period: legacyPeriod,
-        businessDate: businessDate,
-        rangeOverride: range,
+      final DateTime businessDate = resolveBusinessDate(
+        override: query.businessDate,
+        fallback: ref.watch(businessDateProvider),
       );
-});
+      final range = resolveUtilityChartPeriodRange(
+        state: query.periodState,
+        anchorDate: businessDate,
+      );
+      final legacyPeriod = legacyChartPeriodForState(query.periodState);
 
-final selectedCategoryIdProvider =
-    StateProvider.autoDispose.family<String?, String>((ref, siteId) => null);
+      return ref
+          .read(dashboardRepositoryProvider)
+          .getCopTrend(
+            copGroupId: query.copGroupId,
+            period: legacyPeriod,
+            businessDate: businessDate,
+            rangeOverride: range,
+          );
+    });
 
-final meterComparisonSelectionProvider =
-    StateProvider.autoDispose.family<Set<String>, String>((ref, key) => {});
+final selectedCategoryIdProvider = StateProvider.autoDispose
+    .family<String?, String>((ref, siteId) => null);
+
+final meterComparisonSelectionProvider = StateProvider.autoDispose
+    .family<Set<String>, String>((ref, key) => {});
 
 /// Once true for a comparison key, auto-seed of main meters will not re-run
 /// (so clearing selection stays cleared until the page is disposed).
-final meterComparisonSeededProvider =
-    StateProvider.autoDispose.family<bool, String>((ref, key) => false);
+final meterComparisonSeededProvider = StateProvider.autoDispose
+    .family<bool, String>((ref, key) => false);
 
 class SiteChartQuery {
   const SiteChartQuery({
@@ -267,13 +286,8 @@ class CategoryChartQuery {
       other.rangeOverride == rangeOverride;
 
   @override
-  int get hashCode => Object.hash(
-        siteId,
-        categoryId,
-        periodState,
-        businessDate,
-        rangeOverride,
-      );
+  int get hashCode =>
+      Object.hash(siteId, categoryId, periodState, businessDate, rangeOverride);
 }
 
 class MeterComparisonQuery {
@@ -305,13 +319,13 @@ class MeterComparisonQuery {
 
   @override
   int get hashCode => Object.hash(
-        siteId,
-        categoryId,
-        Object.hashAll(meterIds),
-        periodState,
-        businessDate,
-        rangeOverride,
-      );
+    siteId,
+    categoryId,
+    Object.hashAll(meterIds),
+    periodState,
+    businessDate,
+    rangeOverride,
+  );
 }
 
 class CopChartQuery {
@@ -347,11 +361,9 @@ bool _listEquals(List<String> a, List<String> b) {
 String meterComparisonKey({
   required String siteId,
   required String categoryId,
-}) =>
-    '$siteId::$categoryId';
+}) => '$siteId::$categoryId';
 
 String utilityChartPeriodKey({
   required String siteId,
   required String categoryCode,
-}) =>
-    '$siteId::$categoryCode';
+}) => '$siteId::$categoryCode';

@@ -6,6 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
+import '../utils/platform_image_picker.dart';
 import 'report_logo_crop_dialog.dart';
 import 'report_logo_slots_editor.dart';
 
@@ -23,6 +24,7 @@ class ScopedReportLogoEditor extends ConsumerStatefulWidget {
   });
 
   final String organizationId;
+
   /// Relative key under org folder, e.g. `sites/{id}.png` or `zones/{id}.png`.
   final String storageKey;
   final String title;
@@ -46,7 +48,7 @@ class _ScopedReportLogoEditorState
 
   Future<void> _pickAndUpload() async {
     if (!widget.canEdit || _busy) return;
-    final file = await ImagePicker().pickImage(
+    final file = await pickPlatformImage(
       source: ImageSource.gallery,
       imageQuality: 95,
       maxWidth: 2400,
@@ -68,7 +70,9 @@ class _ScopedReportLogoEditorState
     try {
       final path = '${widget.organizationId}/${widget.storageKey}';
       final client = ref.read(supabaseClientProvider);
-      await client.storage.from(kReportLogosBucket).uploadBinary(
+      await client.storage
+          .from(kReportLogosBucket)
+          .uploadBinary(
             path,
             cropped,
             fileOptions: const FileOptions(
@@ -79,9 +83,9 @@ class _ScopedReportLogoEditorState
       widget.onPathChanged(path);
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logo upload failed: $error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Logo upload failed: $error')));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -105,10 +109,9 @@ class _ScopedReportLogoEditorState
               color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
             ),
             borderRadius: BorderRadius.circular(6),
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: 0.35),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
           ),
           clipBehavior: Clip.antiAlias,
           child: path == null || path.isEmpty
@@ -148,10 +151,8 @@ class _ScopedReportLogoEditorState
               child: Text(widget.canEdit ? 'Import' : 'Locked'),
             ),
             TextButton(
-              onPressed: widget.canEdit &&
-                      !_busy &&
-                      path != null &&
-                      path.isNotEmpty
+              onPressed:
+                  widget.canEdit && !_busy && path != null && path.isNotEmpty
                   ? () => widget.onPathChanged(null)
                   : null,
               child: const Text('Clear'),
