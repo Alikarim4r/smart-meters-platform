@@ -72,30 +72,12 @@ def api(method: str, path: str, token: str, body=None):
 
 
 def auth() -> str:
-    st, payload = api(
-        "POST",
-        "/auth/v1/token?grant_type=password",
-        "",
-        {
-            "email": os.environ.get(
-                "STAGING_SUPER_ADMIN_EMAIL", "test-super-admin@validation.local"
-            ),
-            "password": os.environ.get(
-                "STAGING_SUPER_ADMIN_PASSWORD", "ValidationTest1!"
-            ),
-        },
-    )
-    # auth endpoint doesn't need user bearer; pass anon via apikey only
     url = os.environ["SUPABASE_URL"].rstrip("/")
     key = os.environ["SUPABASE_ANON_KEY"]
     body = json.dumps(
         {
-            "email": os.environ.get(
-                "STAGING_SUPER_ADMIN_EMAIL", "test-super-admin@validation.local"
-            ),
-            "password": os.environ.get(
-                "STAGING_SUPER_ADMIN_PASSWORD", "ValidationTest1!"
-            ),
+            "email": os.environ["STAGING_SUPER_ADMIN_EMAIL"],
+            "password": os.environ["STAGING_SUPER_ADMIN_PASSWORD"],
         }
     ).encode()
     req = urllib.request.Request(
@@ -110,8 +92,15 @@ def auth() -> str:
 
 def main() -> int:
     load_env()
-    if "SUPABASE_URL" not in os.environ or "SUPABASE_ANON_KEY" not in os.environ:
-        print("Missing SUPABASE_URL / SUPABASE_ANON_KEY", file=sys.stderr)
+    required = (
+        "SUPABASE_URL",
+        "SUPABASE_ANON_KEY",
+        "STAGING_SUPER_ADMIN_EMAIL",
+        "STAGING_SUPER_ADMIN_PASSWORD",
+    )
+    missing = [name for name in required if not os.environ.get(name)]
+    if missing:
+        print(f"Missing required environment variables: {', '.join(missing)}", file=sys.stderr)
         return 1
 
     token = auth()

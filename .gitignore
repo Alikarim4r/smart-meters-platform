@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+docs/dashboard_full_showcase.config.local.js
 
 # Flutter / Dart
 .dart_tool/
@@ -44,8 +45,8 @@ web_deploy_root/
 
 # Local Staging backups (never commit)
 backups/
+.deploy_cache/
 
 
 # Regression snapshots may contain operational counts (ok to commit latest)
 # backups only
-

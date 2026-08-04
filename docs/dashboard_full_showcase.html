@@ -395,10 +395,10 @@ details.z summary { cursor:pointer; font-weight:600; padding:8px 0; }
     <h1 id="lgTitle">لوحة العدادات الذكية</h1>
     <p class="hint" id="lgHint">تسجيل الدخول إلى لوحة العرض</p>
     <label class="f" id="lgEmailLbl">البريد الإلكتروني
-      <input id="email" value="test-super-admin@validation.local" autocomplete="username">
+      <input id="email" autocomplete="username">
     </label>
     <label class="f" id="lgPassLbl">كلمة المرور
-      <input id="password" type="password" value="ValidationTest1!" autocomplete="current-password">
+      <input id="password" type="password" autocomplete="current-password">
     </label>
     <div class="err" id="lgErr"></div>
     <button class="btn gold block" id="btnLogin" type="button">دخول</button>
@@ -433,11 +433,13 @@ details.z summary { cursor:pointer; font-weight:600; padding:8px 0; }
 <div class="drawer" id="dr"></div>
 <div class="toast" id="toast"></div>
 
+<script src="./dashboard_full_showcase.config.local.js"></script>
 <script>
+// Runtime config must be provided by an untracked local script before this file.
 const CFG = {
-  supabaseUrl: 'https://iqcxgtpcfhoapnklxdyl.supabase.co',
-  anonKey: 'sb_publishable_AwmhCR3tYb_7x-UXgUD7Hg_0zwCiLD9',
-  siteId: '22222222-2222-4222-8222-222222222222'
+  supabaseUrl: window.SMART_METERS_CONFIG?.supabaseUrl ?? '',
+  anonKey: window.SMART_METERS_CONFIG?.anonKey ?? '',
+  siteId: window.SMART_METERS_CONFIG?.siteId ?? ''
 };
 let METERS_LIVE = null;
 let HISTORY_LIVE = null;
