@@ -829,6 +829,37 @@ class AppStrings {
   }
 
   String get signOut => logout;
+
+  // —— Site reports panel ——
+  String get reportsPanelTitle => isAr ? 'التقارير' : 'Reports';
+  String get reportsPanelSubtitle => isAr
+      ? 'صدّر نظرة عامة للموقع أو تقارير لكل مرفق. التقرير الكامل يفصل الأقسام بوضوح.'
+      : 'Export site overview or utility-specific reports. Full report uses clearly separated sections.';
+  String get reportSiteOverview => isAr ? 'نظرة عامة على الموقع' : 'Site overview';
+  String get reportSiteOverviewSubtitle => isAr
+      ? 'ملخص تشغيلي بصيغة PDF أو Excel'
+      : 'Operational summary PDF/Excel';
+  String reportUtilityTitle(UtilitySystemKey system) => isAr
+      ? 'تقرير ${utilityLabel(system)}'
+      : '${system.label} report';
+  String reportUtilitySubtitle(UtilitySystemKey system) => isAr
+      ? 'الاستهلاك بوحدة ${system.defaultUnit == 'm³' || system.defaultUnit == 'm3' ? 'م³' : system.defaultUnit} فقط'
+      : 'Consumption in ${system.defaultUnit} only';
+  String get reportBtuCop => isAr ? 'تقرير التبريد / معامل الأداء' : 'BTU / COP report';
+  String get reportBtuCopSubtitle =>
+      isAr ? 'أداء التبريد' : 'Cooling performance';
+  String get reportConservation => isAr ? 'تقرير الترشيد' : 'Conservation report';
+  String get reportConservationSubtitle => isAr
+      ? 'التوفير التقديري مقابل المُحقَّق · التكلفة المتجنَّبة (غير متاح إن لم تُحدَّد التعرفة)'
+      : 'Estimated vs Verified Saving · Cost Avoided (N/A if no tariff)';
+  String get reportReadingsExport => isAr ? 'تصدير القراءات' : 'Readings export';
+  String get reportReadingsExportSubtitle => isAr
+      ? 'قراءات Excel للفترة المحددة'
+      : 'Excel readings for selected period';
+  String get reportFullSite => isAr ? 'تقرير الموقع الكامل' : 'Full site report';
+  String get reportFullSiteSubtitle => isAr
+      ? 'جميع المرافق في أقسام منفصلة'
+      : 'All utilities in separate sections';
 }
 
 String shellUserRoleLabelEn(UserRole role) {

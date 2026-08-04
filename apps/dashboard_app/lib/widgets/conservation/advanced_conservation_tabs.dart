@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/design_system/dashboard_colors.dart';
 
 /// Phase 5 advanced Conservation drill-down.
@@ -35,23 +36,20 @@ class _AdvancedConservationTabsState
     extends ConsumerState<AdvancedConservationTabs>
     with SingleTickerProviderStateMixin {
   TabController? _tabs;
-  late final List<_AdvTab> _defs;
+  late final List<_TabKind> _kinds;
 
   @override
   void initState() {
     super.initState();
-    _defs = [
-      if (widget.weatherOn || widget.occupancyOn)
-        const _AdvTab('Normalized', _TabKind.normalized),
-      if (widget.persistenceOn)
-        const _AdvTab('Persistence', _TabKind.persistence),
-      if (widget.carbonOn) const _AdvTab('Carbon', _TabKind.carbon),
-      if (widget.forecastOn) const _AdvTab('Forecast', _TabKind.forecast),
-      if (widget.recommendationsOn)
-        const _AdvTab('Recommendations', _TabKind.recommendations),
+    _kinds = [
+      if (widget.weatherOn || widget.occupancyOn) _TabKind.normalized,
+      if (widget.persistenceOn) _TabKind.persistence,
+      if (widget.carbonOn) _TabKind.carbon,
+      if (widget.forecastOn) _TabKind.forecast,
+      if (widget.recommendationsOn) _TabKind.recommendations,
     ];
-    if (_defs.isNotEmpty) {
-      _tabs = TabController(length: _defs.length, vsync: this);
+    if (_kinds.isNotEmpty) {
+      _tabs = TabController(length: _kinds.length, vsync: this);
     }
   }
 
@@ -61,34 +59,43 @@ class _AdvancedConservationTabsState
     super.dispose();
   }
 
+  String _label(ConservationStrings s, _TabKind kind) => switch (kind) {
+        _TabKind.normalized => s.normalized,
+        _TabKind.persistence => s.persistence,
+        _TabKind.carbon => s.carbon,
+        _TabKind.forecast => s.forecast,
+        _TabKind.recommendations => s.recommendations,
+      };
+
   @override
   Widget build(BuildContext context) {
-    if (_defs.isEmpty || _tabs == null) return const SizedBox.shrink();
+    if (_kinds.isEmpty || _tabs == null) return const SizedBox.shrink();
+    final s = ConservationStrings.of(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'Advanced (on demand)',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+        Text(
+          s.advancedOnDemand,
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
         ),
         const SizedBox(height: 4),
-        const Text(
-          'Raw operational values stay primary. Normalized / models behind tabs.',
-          style: TextStyle(fontSize: 11),
+        Text(
+          s.advancedHint,
+          style: const TextStyle(fontSize: 11),
         ),
         const SizedBox(height: 8),
         TabBar(
           controller: _tabs,
           isScrollable: true,
-          tabs: [for (final t in _defs) Tab(text: t.label)],
+          tabs: [for (final k in _kinds) Tab(text: _label(s, k))],
         ),
         SizedBox(
           height: 220,
           child: TabBarView(
             controller: _tabs,
             children: [
-              for (final t in _defs) _tabBody(t.kind),
+              for (final k in _kinds) _tabBody(k, s),
             ],
           ),
         ),
@@ -96,7 +103,7 @@ class _AdvancedConservationTabsState
     );
   }
 
-  Widget _tabBody(_TabKind kind) {
+  Widget _tabBody(_TabKind kind, ConservationStrings s) {
     switch (kind) {
       case _TabKind.normalized:
         return _NormalizedTab(
@@ -107,14 +114,12 @@ class _AdvancedConservationTabsState
       case _TabKind.persistence:
         return _LazyListTab(
           siteId: widget.siteId,
-          empty: 'No persistence follow-up results yet.',
+          empty: s.noPersistenceYet,
           loader: (client) async {
             final rows = await SavingPersistenceRepository(client)
                 .listForSite(widget.siteId);
             if (rows.isEmpty) {
-              return const [
-                'No follow-up persistence rows. Original Verified Saving is never deleted.',
-              ];
+              return [s.persistenceNeverDeletesVerified];
             }
             return [
               for (final r in rows.take(10))
@@ -127,19 +132,17 @@ class _AdvancedConservationTabsState
       case _TabKind.carbon:
         return _LazyListTab(
           siteId: widget.siteId,
-          empty: 'Carbon Avoided = Not Available until an approved factor exists.',
+          empty: s.carbonNotAvailable,
           loader: (client) async {
             final rows =
                 await CarbonResultRepository(client).listForSite(widget.siteId);
             if (rows.isEmpty) {
-              return const [
-                'No carbon results. Missing factor ⇒ Not Available (never invent).',
-              ];
+              return [s.noCarbonResults];
             }
             return [
               for (final r in rows.take(8))
                 '${r.quantityBasis.dbValue}: '
-                    '${r.carbonAvoided?.toStringAsFixed(2) ?? 'N/A'} '
+                    '${r.carbonAvoided?.toStringAsFixed(2) ?? s.na} '
                     '${r.carbonUnit ?? ''} (${r.status})',
             ];
           },
@@ -147,12 +150,12 @@ class _AdvancedConservationTabsState
       case _TabKind.forecast:
         return _LazyListTab(
           siteId: widget.siteId,
-          empty: 'No forecasts. Insufficient History yields no invented number.',
+          empty: s.noForecasts,
           loader: (client) async {
             final rows =
                 await ForecastResultRepository(client).listForSite(widget.siteId);
             if (rows.isEmpty) {
-              return const ['No stored forecasts. Run forecast on demand.'];
+              return [s.insufficientHistoryForecast];
             }
             return [
               for (final r in rows.take(8))
@@ -165,14 +168,13 @@ class _AdvancedConservationTabsState
       case _TabKind.recommendations:
         return _LazyListTab(
           siteId: widget.siteId,
-          empty: 'No open recommendations.',
+          empty: s.noOpenRecommendations,
           loader: (client) async {
             final rows = await RecommendationRepository(client)
                 .listOpenForSite(widget.siteId);
-            if (rows.isEmpty) return const ['No open recommendations.'];
+            if (rows.isEmpty) return [s.noOpenRecommendations];
             return [
-              for (final r in rows.take(10))
-                '${r.title} — ${r.rationale}',
+              for (final r in rows.take(10)) '${r.title} — ${r.rationale}',
             ];
           },
         );
@@ -181,12 +183,6 @@ class _AdvancedConservationTabsState
 }
 
 enum _TabKind { normalized, persistence, carbon, forecast, recommendations }
-
-class _AdvTab {
-  const _AdvTab(this.label, this.kind);
-  final String label;
-  final _TabKind kind;
-}
 
 class _NormalizedTab extends ConsumerWidget {
   const _NormalizedTab({
@@ -201,6 +197,7 @@ class _NormalizedTab extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     return FutureBuilder<List<NormalizedResult>>(
       future: NormalizationModelRepository(ref.read(supabaseClientProvider))
           .listResultsForSite(siteId, limit: 12),
@@ -214,8 +211,8 @@ class _NormalizedTab extends ConsumerWidget {
             padding: const EdgeInsets.all(12),
             child: Text(
               weatherOn || occupancyOn
-                  ? 'No normalized results yet. Actual consumption remains the operational source of truth.'
-                  : 'Normalization flags OFF.',
+                  ? s.noNormalizedYet
+                  : s.normalizationFlagsOff,
               style: const TextStyle(fontSize: 12),
             ),
           );
@@ -231,14 +228,20 @@ class _NormalizedTab extends ConsumerWidget {
               child: ListTile(
                 dense: true,
                 title: Text(
-                  'Actual ${_fmt(r.actualConsumption)} ${r.unitCode}',
+                  s.actualConsumptionLine(
+                    _fmt(r.actualConsumption),
+                    r.unitCode,
+                  ),
                   style: const TextStyle(fontWeight: FontWeight.w700),
                 ),
                 subtitle: Text(
                   r.normalizedConsumption == null
-                      ? 'Normalized: ${r.status}'
-                      : 'Normalized: ${_fmt(r.normalizedConsumption!)} ${r.unitCode} '
-                          '(${r.reliability})',
+                      ? s.normalizedStatus(r.status)
+                      : s.normalizedValueLine(
+                          _fmt(r.normalizedConsumption!),
+                          r.unitCode,
+                          r.reliability,
+                        ),
                 ),
               ),
             );

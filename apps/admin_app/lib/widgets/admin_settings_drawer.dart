@@ -156,9 +156,7 @@ class AdminSettingsDrawer extends ConsumerWidget {
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.integration_instructions_outlined),
-                  title: Text(
-                    s.isAr ? 'البيانات والتكاملات' : 'Data & Integrations',
-                  ),
+                  title: Text(s.dataAndIntegrations),
                   trailing: const Icon(Icons.chevron_right, size: 20),
                   onTap: () async {
                     final orgs =
@@ -167,21 +165,13 @@ class AdminSettingsDrawer extends ConsumerWidget {
                     if (!context.mounted) return;
                     if (orgId == null) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            s.isAr
-                                ? 'لا توجد جهة متاحة'
-                                : 'No organization available',
-                          ),
-                        ),
+                        SnackBar(content: Text(s.noOrganizationAvailable)),
                       );
                       return;
                     }
                     _pushTool(
                       context,
-                      title: s.isAr
-                          ? 'البيانات والتكاملات'
-                          : 'Data & Integrations',
+                      title: s.dataAndIntegrations,
                       child: DataIntegrationsHubScreen(organizationId: orgId),
                     );
                   },

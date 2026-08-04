@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/dashboard_palette.dart';
 import 'opportunity_card.dart';
 
@@ -13,12 +14,12 @@ enum OpportunityListBucket {
 }
 
 extension OpportunityListBucketX on OpportunityListBucket {
-  String get label => switch (this) {
-        OpportunityListBucket.open => 'Open',
-        OpportunityListBucket.underInvestigation => 'Under Investigation',
-        OpportunityListBucket.actionsDue => 'Actions Due',
-        OpportunityListBucket.monitoring => 'Monitoring',
-        OpportunityListBucket.resolved => 'Resolved',
+  String label(ConservationStrings s) => switch (this) {
+        OpportunityListBucket.open => s.open,
+        OpportunityListBucket.underInvestigation => s.underInvestigation,
+        OpportunityListBucket.actionsDue => s.actionsDue,
+        OpportunityListBucket.monitoring => s.monitoring,
+        OpportunityListBucket.resolved => s.resolved,
       };
 
   bool matches(ConservationOpportunity o) => switch (this) {
@@ -44,13 +45,13 @@ class OpportunityListPanel extends StatefulWidget {
     required this.opportunities,
     this.onStartInvestigation,
     this.showStartInvestigation = true,
-    this.emptyMessage = 'No opportunities for this filter.',
+    this.emptyMessage,
   });
 
   final List<ConservationOpportunity> opportunities;
   final void Function(ConservationOpportunity opportunity)? onStartInvestigation;
   final bool showStartInvestigation;
-  final String emptyMessage;
+  final String? emptyMessage;
 
   @override
   State<OpportunityListPanel> createState() => _OpportunityListPanelState();
@@ -61,6 +62,8 @@ class _OpportunityListPanelState extends State<OpportunityListPanel> {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
+    final empty = widget.emptyMessage ?? s.noOpportunitiesFilter;
     final filtered =
         widget.opportunities.where(_bucket.matches).toList(growable: false);
 
@@ -73,7 +76,7 @@ class _OpportunityListPanelState extends State<OpportunityListPanel> {
             children: [
               for (final b in OpportunityListBucket.values) ...[
                 FilterChip(
-                  label: Text(b.label),
+                  label: Text(b.label(s)),
                   selected: _bucket == b,
                   onSelected: (_) => setState(() => _bucket = b),
                   visualDensity: VisualDensity.compact,
@@ -86,7 +89,7 @@ class _OpportunityListPanelState extends State<OpportunityListPanel> {
         const SizedBox(height: 8),
         if (filtered.isEmpty)
           Text(
-            widget.emptyMessage,
+            empty,
             style: TextStyle(fontSize: 12, color: DashboardPalette.textMuted),
           )
         else

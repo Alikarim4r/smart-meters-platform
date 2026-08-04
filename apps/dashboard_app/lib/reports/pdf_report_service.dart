@@ -163,7 +163,7 @@ class PdfReportService {
             ],
             if (type == ReportType.consumption ||
                 type == ReportType.categoryConsumption ||
-                type == ReportType.siteSummary) ...[
+                (type == ReportType.siteSummary && includeCharts)) ...[
               _sectionTitle('Consumption by Category'),
               _consumptionTable(bundle),
               pw.SizedBox(height: 16),
@@ -171,12 +171,16 @@ class PdfReportService {
               _rankingTable(bundle),
               pw.SizedBox(height: 16),
             ],
-            if (type == ReportType.readings || type == ReportType.siteSummary) ...[
+            if (type == ReportType.readings ||
+                (type == ReportType.siteSummary &&
+                    bundle.readings.isNotEmpty)) ...[
               _sectionTitle('Recent Readings'),
               _readingsTable(bundle, includePhotos: includePhotos),
               pw.SizedBox(height: 16),
             ],
-            if (type == ReportType.cop || type == ReportType.siteSummary) ...[
+            if (type == ReportType.cop ||
+                (type == ReportType.siteSummary &&
+                    bundle.copResults.isNotEmpty)) ...[
               _sectionTitle('COP Groups'),
               _copSection(bundle),
             ],

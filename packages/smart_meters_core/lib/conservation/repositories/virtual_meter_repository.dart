@@ -76,7 +76,7 @@ class VirtualMeterRepository {
     String? parentMeterId,
     double meterMultiplier = 1,
     int sortOrder = 0,
-    bool includeInDashboard = false,
+    bool includeInDashboard = true,
   }) async {
     if (calculationType != CalculationType.sumChildren &&
         calculationType != CalculationType.parentMinusChildren) {

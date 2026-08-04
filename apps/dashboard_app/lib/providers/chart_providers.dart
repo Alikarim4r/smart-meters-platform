@@ -38,7 +38,11 @@ final siteCategoriesSummaryForMonthProvider =
     FutureProvider.autoDispose.family<List<SiteCategorySummary>, String>(
   (ref, siteId) async {
     final selection = ref.watch(siteDateSelectionProvider(siteId));
-    return ref.read(dashboardRepositoryProvider).getSiteCategoriesSummary(
+    // KPIs only need meter counts / today submitted — skip consumption rebuild
+    // (was the main stall when every site open defaulted to Water).
+    return ref
+        .read(dashboardRepositoryProvider)
+        .getSiteCategoriesSummaryForReport(
           siteId: siteId,
           businessDate: selection.selectedBusinessDate,
         );
@@ -48,10 +52,11 @@ final siteCategoriesSummaryForMonthProvider =
 /// Chart period chips per utility analytics section (independent of meter dates).
 final utilityChartPeriodProvider =
     StateProvider.autoDispose.family<UtilityChartPeriodState, String>((ref, key) {
-  // Lighter default: last 7 days (daily) via weekly period mapping.
-  // last30Days remains available as an explicit chip.
+  // Prefer chips over the site date-bar custom range so opening a historical
+  // meter month does not force a heavy full-month chart scan.
   return const UtilityChartPeriodState(
     kind: UtilityChartPeriodKind.last7Days,
+    preferChipOverCustomRange: true,
   );
 });
 

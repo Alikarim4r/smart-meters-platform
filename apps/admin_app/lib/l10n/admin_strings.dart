@@ -688,4 +688,147 @@ class AdminStrings {
     'Policy settings reset to defaults.',
     'تمت استعادة الإعدادات الافتراضية.',
   );
+
+  // —— Conservation / Phase 6 integrations (Admin) ——
+  String get dataAndIntegrations =>
+      _t('Data & Integrations', 'البيانات والتكاملات');
+  String get dataAndIntegrationsHint => _t(
+        'Simple by default — advanced tools on demand. No BMS control.',
+        'بسيط افتراضياً — أدوات متقدمة عند الطلب. بلا تحكم في أنظمة إدارة المباني.',
+      );
+  String get noOrganizationAvailable =>
+      _t('No organization available', 'لا توجد جهة متاحة');
+  String get allPhase6FlagsOff => _t(
+        'All Phase 6 feature flags are OFF. Mechanical manual entry remains unchanged. '
+            'Enable flags in platform_feature_flags to use Import, API, Sources, Jobs, '
+            'Notifications, Automation, or AI Assistant.',
+        'جميع أعلام ميزات المرحلة ٦ متوقفة. الإدخال اليدوي للعدادات الميكانيكية يبقى كما هو. '
+            'فعّل الأعلام في platform_feature_flags لاستخدام الاستيراد أو واجهة البرمجة أو المصادر '
+            'أو المهام أو الإشعارات أو الأتمتة أو المساعد الذكي.',
+      );
+  String get importCenter => _t('Import Center', 'مركز الاستيراد');
+  String get importCenterSubtitle => _t(
+        'CSV/Excel template → preview → validate → partial accept. No silent write.',
+        'قالب CSV/Excel ← معاينة ← تحقق ← قبول جزئي. لا كتابة صامتة.',
+      );
+  String get dataSources => _t('Data Sources', 'مصادر البيانات');
+  String dataSourcesConfigured(int count) => _t(
+        '$count configured. Secrets via secret_ref only. Adapters are readiness stubs until vendor-tested.',
+        '$count مُعدّ. الأسرار عبر secret_ref فقط. المحوّلات جاهزية حتى يُختبر المورّد فعلياً.',
+      );
+  String get meterSourceMapping =>
+      _t('Meter Source Mapping', 'ربط العداد بالمصدر');
+  String get meterSourceMappingSubtitle => _t(
+        'Frequency + source priority. Mechanical remains first-class.',
+        'التردد وأولوية المصدر. العداد الميكانيكي يبقى أساسياً.',
+      );
+  String get ingestionJobs => _t('Ingestion Jobs', 'مهام الاستيعاب');
+  String get ingestionJobsSubtitle => _t(
+        'Idempotent runs, bounded retries, dead-letter retention.',
+        'تشغيل متكافئ الهوية، إعادة محاولة محدودة، والاحتفاظ بالرسائل الفاشلة.',
+      );
+  String get sourceHealth => _t('Source Health', 'صحة المصادر');
+  String get sourceHealthSubtitle => _t(
+        'Healthy / Delayed / Failed / Never Synced. Data Availability Alerts only.',
+        'سليم / متأخر / فشل / لم تتم المزامنة. تنبيهات توفّر البيانات فقط.',
+      );
+  String get automationRules => _t('Automation Rules', 'قواعد الأتمتة');
+  String get automationRulesSubtitle => _t(
+        'Admin-only activation. Suggestions only — no confirmed diagnosis or control.',
+        'التفعيل للمسؤولين فقط. اقتراحات فقط — بلا تشخيص مؤكد أو تحكم.',
+      );
+  String get notificationSettings =>
+      _t('Notification Settings', 'إعدادات الإشعارات');
+  String get notificationSettingsSubtitle => _t(
+        'In-app preferences, severity, read/unread, event-key dedupe.',
+        'تفضيلات داخل التطبيق، الشدة، مقروء/غير مقروء، ومنع التكرار بمفتاح الحدث.',
+      );
+  String get aiGovernance => _t('AI Governance', 'حوكمة الذكاء الاصطناعي');
+  String get aiGovernanceSubtitle => _t(
+        'Grounded summaries with human review. Deterministic fallback if AI unavailable.',
+        'ملخصات مستندة إلى البيانات مع مراجعة بشرية. بديل حتمي إذا تعذّر الذكاء الاصطناعي.',
+      );
+  String get ocrReadiness =>
+      _t('OCR Readiness', 'جاهزية التعرّف الضوئي على الحروف');
+  String get ocrReadinessSubtitle => _t(
+        'Suggested Reading → Human Confirm → Saved. Never auto-accepted.',
+        'قراءة مقترحة ← تأكيد بشري ← حفظ. لا قبول تلقائي أبداً.',
+      );
+  String get capabilityMatrixNote => _t(
+        'Capability matrix and interval analytics are documented metadata in Phase 6; '
+            'heavy time-series migration is deferred.',
+        'مصفوفة القدرات وتحليلات الفترات موثّقة كبيانات وصفية في المرحلة ٦؛ '
+            'ترحيل السلاسل الزمنية الثقيلة مؤجّل.',
+      );
+  String get importPasteHint => _t(
+        'Paste CSV → Preview → Validate. Commit is admin-confirmed only. '
+            'Corrections use the existing Corrections path — no silent overwrite.',
+        'الصق CSV ← معاينة ← تحقق. الاعتماد بتأكيد المسؤول فقط. '
+            'التصحيح عبر مسار التصحيحات الحالي — بلا استبدال صامت.',
+      );
+  String get pasteCsvContents =>
+      _t('Paste CSV contents…', 'الصق محتوى CSV…');
+  String get previewAndValidate =>
+      _t('Preview & Validate', 'معاينة وتحقق');
+  String get importTemplateCsv => _t('Template', 'القالب');
+  String get templateCsvCopied =>
+      _t('Template CSV copied', 'تم نسخ قالب CSV');
+  String get fingerprint => _t('Fingerprint', 'البصمة');
+  String get duplicateFileBlocked => _t(
+        'Duplicate file fingerprint — already committed. Re-upload blocked (idempotent).',
+        'بصمة ملف مكررة — سبق اعتمادها. أُعيد الحظر (تكافؤ الهوية).',
+      );
+  String importSummary({
+    required int accepted,
+    required int rejected,
+    required int duplicated,
+  }) =>
+      _t(
+        'Accepted $accepted · Rejected $rejected · Duplicated $duplicated',
+        'مقبول $accepted · مرفوض $rejected · مكرر $duplicated',
+      );
+  String importRowStatus(int row, String status) =>
+      _t('Row $row: $status', 'صف $row: $status');
+  String partialAcceptanceNote(int accepted) => _t(
+        'Partial acceptance allowed for $accepted rows. '
+            'Commit writes via authenticated batch after explicit admin action '
+            '(not auto-run from this preview).',
+        'يُسمح بالقبول الجزئي لـ $accepted صفاً. '
+            'الكتابة بعد إجراء مسؤول صريح عبر دفعة موثّقة '
+            '(لا تشغيل تلقائي من هذه المعاينة).',
+      );
+  String get headerErrors => _t('Header errors', 'أخطاء الترويسة');
+
+  String get conservationBaselines =>
+      _t('Conservation baselines', 'خطوط أساس الترشيد');
+  String get conservationTargets =>
+      _t('Conservation targets', 'أهداف الترشيد');
+  String get virtualMeters => _t('Virtual meters', 'العدادات الافتراضية');
+  String get balanceGroups => _t('Balance groups', 'مجموعات التوازن');
+  String get siteConservationProfile =>
+      _t('Site conservation profile', 'ملف ترشيد الموقع');
+  String get opportunities => _t('Opportunities', 'الفرص');
+  String get conservationOpportunities =>
+      _t('Conservation opportunities', 'فرص الترشيد');
+  String get conservationActions =>
+      _t('Conservation actions', 'إجراءات الترشيد');
+  String get utilityTariffs => _t('Utility tariffs', 'تعرفة المرافق');
+  String get investigations => _t('Investigations', 'التحقيقات');
+  String get actions => _t('Actions', 'الإجراءات');
+  String get evidence => _t('Evidence', 'الأدلة');
+  String get measurementVerification =>
+      _t('Measurement & Verification', 'القياس والتحقق');
+  String get tariffs => _t('Tariffs', 'التعرفة');
+  String get conservationPortfolio =>
+      _t('Conservation Portfolio', 'محفظة الترشيد');
+  String get potentialExcess => _t('Potential Excess', 'فائض محتمل');
+  String get notSavingOrVerified =>
+      _t('≠ Saving / Verified Saving', '≠ توفير / توفير مُحقَّق');
+  String get verifiedSavings => _t('Verified Savings', 'التوفير المُحقَّق');
+  String get estimatedSaving => _t('Estimated Saving', 'التوفير التقديري');
+  String get verifiedSaving => _t('Verified Saving', 'التوفير المُحقَّق');
+  String get featureDisabledEnableFlags => _t(
+        'Enable conservation_module and related flags for this organization/site.',
+        'فعّل conservation_module والأعلام ذات الصلة لهذه الجهة/الموقع.',
+      );
 }

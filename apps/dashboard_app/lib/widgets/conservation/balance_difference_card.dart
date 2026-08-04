@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
 
@@ -22,6 +23,7 @@ class BalanceDifferenceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final insufficient = result.isInsufficient;
     final needsReview = result.reviewStatus == 'Requires Review';
     return Card(
@@ -45,7 +47,7 @@ class BalanceDifferenceCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${result.utilityCode.toUpperCase()} · $groupName',
+                    '${s.localizeUtilityCode(result.utilityCode)} · $groupName',
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -62,7 +64,7 @@ class BalanceDifferenceCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    result.reviewStatus,
+                    s.localizeReviewStatus(result.reviewStatus),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,
@@ -74,7 +76,7 @@ class BalanceDifferenceCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              result.directionLabel,
+              s.localizeDomainLabel(result.directionLabel),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -84,38 +86,49 @@ class BalanceDifferenceCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 10),
-            _kv('Main', _meterLine(mainMeterName, result.mainMeterId,
-                result.mainConsumption, result.unitCode)),
             _kv(
-              'Submeters',
-              submeterNames.isEmpty
-                  ? '${result.childMeterIds.length} meters · '
-                      '${_fmt(result.childrenConsumption, result.unitCode)}'
-                  : '${submeterNames.join(', ')} · '
-                      '${_fmt(result.childrenConsumption, result.unitCode)}',
+              s.mainMeter,
+              _meterLine(
+                mainMeterName,
+                result.mainMeterId,
+                result.mainConsumption,
+                result.unitCode,
+                s,
+              ),
             ),
             _kv(
-              'Balance Difference',
+              s.submeters,
+              submeterNames.isEmpty
+                  ? '${s.metersCount(result.childMeterIds.length)} · '
+                      '${_fmt(result.childrenConsumption, result.unitCode, s)}'
+                  : '${submeterNames.join(', ')} · '
+                      '${_fmt(result.childrenConsumption, result.unitCode, s)}',
+            ),
+            _kv(
+              s.balanceDifference,
               insufficient
-                  ? 'Insufficient Data'
-                  : _fmt(result.balanceDifference, result.unitCode),
+                  ? s.insufficientData
+                  : _fmt(result.balanceDifference, result.unitCode, s),
             ),
             _kv(
               '%',
               result.balancePercentage == null
-                  ? 'N/A'
+                  ? s.na
                   : '${result.balancePercentage!.toStringAsFixed(1)}%',
             ),
-            _kv('Confidence', '${result.confidenceScore}'),
-            _kv('Alignment', _alignmentLabel(result.alignmentStatus)),
+            _kv(s.confidence, '${result.confidenceScore}'),
+            _kv(s.alignment, _alignmentLabel(result.alignmentStatus, s)),
             const SizedBox(height: 8),
             Text(
-              'Status: ${result.reviewStatus}. Never Leak.',
+              s.balanceStatus(s.localizeReviewStatus(result.reviewStatus)),
               style: TextStyle(fontSize: 11, color: DashboardPalette.textMuted),
             ),
             if (result.warnings.isNotEmpty)
               Text(
-                result.warnings.take(2).join(' · '),
+                result.warnings
+                    .take(2)
+                    .map(s.localizeDomainMessage)
+                    .join(' · '),
                 style: TextStyle(
                   fontSize: 10,
                   color: DashboardPalette.textMuted,
@@ -132,16 +145,18 @@ class BalanceDifferenceCard extends StatelessWidget {
     String id,
     double? value,
     String unit,
+    ConservationStrings s,
   ) {
     final label = name ?? id;
-    return '$label · ${_fmt(value, unit)}';
+    return '$label · ${_fmt(value, unit, s)}';
   }
 
-  String _alignmentLabel(ReadingAlignmentStatus s) => switch (s) {
-        ReadingAlignmentStatus.aligned => 'Aligned',
-        ReadingAlignmentStatus.partiallyAligned => 'Partially aligned',
-        ReadingAlignmentStatus.misaligned => 'Misaligned',
-        ReadingAlignmentStatus.insufficientData => 'Insufficient data',
+  String _alignmentLabel(ReadingAlignmentStatus status, ConservationStrings s) =>
+      switch (status) {
+        ReadingAlignmentStatus.aligned => s.aligned,
+        ReadingAlignmentStatus.partiallyAligned => s.partiallyAligned,
+        ReadingAlignmentStatus.misaligned => s.misaligned,
+        ReadingAlignmentStatus.insufficientData => s.insufficientData,
       };
 
   Widget _kv(String k, String v) {
@@ -168,11 +183,12 @@ class BalanceDifferenceCard extends StatelessWidget {
     );
   }
 
-  String _fmt(double? v, String unit) {
-    if (v == null) return 'N/A';
-    final s = v == v.roundToDouble()
+  String _fmt(double? v, String unit, ConservationStrings cs) {
+    if (v == null) return cs.na;
+    final n = v == v.roundToDouble()
         ? v.toStringAsFixed(0)
         : v.toStringAsFixed(1);
-    return '$s $unit';
+    final u = cs.localizeUnit(unit);
+    return u.isEmpty ? n : '$n $u';
   }
 }

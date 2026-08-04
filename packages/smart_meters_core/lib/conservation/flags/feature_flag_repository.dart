@@ -66,6 +66,35 @@ class ConservationFeatureFlagRepository {
     return false;
   }
 
+  /// One query → resolved enabled map (site override beats org-wide).
+  /// Missing keys default to false. Use this for UI flag fan-out.
+  Future<Map<String, bool>> resolvedEnabledByKey({
+    required String organizationId,
+    String? siteId,
+  }) async {
+    final rows = await listForOrganization(organizationId);
+    final orgWide = <String, bool>{};
+    final siteWide = <String, bool>{};
+    for (final row in rows) {
+      if (row.siteId == null) {
+        orgWide[row.flagKey] = row.enabled;
+      } else if (siteId != null && row.siteId == siteId) {
+        siteWide[row.flagKey] = row.enabled;
+      }
+    }
+    final resolved = <String, bool>{
+      for (final key in ConservationFeatureFlags.all)
+        key: siteWide[key] ?? orgWide[key] ?? false,
+    };
+    for (final entry in orgWide.entries) {
+      resolved.putIfAbsent(entry.key, () => entry.value);
+    }
+    for (final entry in siteWide.entries) {
+      resolved[entry.key] = entry.value;
+    }
+    return resolved;
+  }
+
   /// Master gate: module flag must be ON for any child flag to matter in UI.
   Future<bool> isModuleEnabled({
     required String organizationId,

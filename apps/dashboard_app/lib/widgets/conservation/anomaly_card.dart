@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
 
@@ -19,6 +20,7 @@ class AnomalyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final severityColor = _severityColor(result.severity);
     return Card(
       elevation: 0,
@@ -67,9 +69,7 @@ class AnomalyCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              result.detected
-                  ? 'Unusual Consumption'
-                  : result.statusLabel,
+              result.detected ? s.unusualConsumption : result.statusLabel,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -79,17 +79,17 @@ class AnomalyCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            _kv('Severity', result.severity.name),
+            _kv(s.severity, result.severity.name),
             _kv(
-              'Variance',
+              s.variance,
               result.percentageChange == null
-                  ? 'N/A'
+                  ? s.na
                   : '${result.percentageChange!.toStringAsFixed(1)}%',
             ),
-            _kv('Confidence', '${result.confidenceScore}'),
+            _kv(s.confidence, '${result.confidenceScore}'),
             if (result.currentValue != null)
               _kv(
-                'Current',
+                s.current,
                 unitCode == null
                     ? _fmt(result.currentValue!)
                     : '${_fmt(result.currentValue!)} $unitCode',
@@ -102,8 +102,8 @@ class AnomalyCard extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               result.detected
-                  ? 'Recommended: Requires Review (not a Confirmed Fault).'
-                  : 'No automatic fault classification.',
+                  ? s.requiresReviewNotFault
+                  : s.noAutomaticFault,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -113,7 +113,7 @@ class AnomalyCard extends StatelessWidget {
             if (result.investigationNotes.isNotEmpty) ...[
               const SizedBox(height: 6),
               Text(
-                'Possible investigation notes:',
+                s.possibleInvestigationNotes,
                 style: TextStyle(
                   fontSize: 11,
                   fontWeight: FontWeight.w600,
@@ -135,7 +135,7 @@ class AnomalyCard extends StatelessWidget {
     );
   }
 
-  Color _severityColor(AnomalySeverity s) => switch (s) {
+  Color _severityColor(AnomalySeverity severity) => switch (severity) {
         AnomalySeverity.info => Colors.blueGrey.shade700,
         AnomalySeverity.low => Colors.teal.shade700,
         AnomalySeverity.medium => Colors.orange.shade800,

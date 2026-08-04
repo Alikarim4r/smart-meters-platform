@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
 
@@ -19,9 +20,10 @@ class OpportunityCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final priorityColor = _priorityColor(opportunity.priority);
     final utilityLabel = opportunity.utilityType.isEmpty
-        ? 'Utility'
+        ? s.utility
         : opportunity.utilityType[0].toUpperCase() +
             opportunity.utilityType.substring(1);
 
@@ -45,7 +47,7 @@ class OpportunityCard extends StatelessWidget {
                   child: Text(
                     opportunity.title.isNotEmpty
                         ? opportunity.title
-                        : 'High $utilityLabel Consumption',
+                        : s.highUtilityConsumption(utilityLabel),
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -72,7 +74,7 @@ class OpportunityCard extends StatelessWidget {
             ),
             const SizedBox(height: 6),
             Text(
-              ConservationOpportunity.potentialExcessLabel,
+              s.potentialExcess,
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -80,12 +82,12 @@ class OpportunityCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 8),
-            _kv('Status', opportunity.status.dbValue),
-            _kv('Confidence', '${opportunity.confidenceScore}'),
-            _kv('Source', opportunity.sourceType.dbValue),
+            _kv(s.status, opportunity.status.dbValue),
+            _kv(s.confidence, '${opportunity.confidenceScore}'),
+            _kv(s.source, opportunity.sourceType.dbValue),
             if (opportunity.estimatedWasteQuantity != null)
               _kv(
-                ConservationOpportunity.potentialExcessLabel,
+                s.potentialExcess,
                 opportunity.unitCode == null
                     ? _fmt(opportunity.estimatedWasteQuantity!)
                     : '${_fmt(opportunity.estimatedWasteQuantity!)} '
@@ -100,7 +102,7 @@ class OpportunityCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              'Requires investigation — not a Confirmed Cause or Saving.',
+              s.requiresInvestigation,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
@@ -116,7 +118,7 @@ class OpportunityCard extends StatelessWidget {
                 child: OutlinedButton.icon(
                   onPressed: onStartInvestigation,
                   icon: const Icon(Icons.search_outlined, size: 18),
-                  label: const Text('Start Investigation'),
+                  label: Text(s.startInvestigation),
                 ),
               ),
             ],

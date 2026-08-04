@@ -36,6 +36,7 @@ class MeterReadingCardData {
     this.isCorrected = false,
     this.hasNegativeConsumption = false,
     this.latestReadingId,
+    this.isVirtual = false,
   });
 
   final String meterId;
@@ -68,6 +69,8 @@ class MeterReadingCardData {
   final bool isCorrected;
   final bool hasNegativeConsumption;
   final String? latestReadingId;
+  /// Virtual / derived meter (e.g. sum of members) — not a direct reading.
+  final bool isVirtual;
 
   bool get hasLatestOnDate => latestValue != null && latestDate != null;
 
@@ -111,6 +114,7 @@ class MeterReadingCardData {
       isCorrected: isCorrected,
       hasNegativeConsumption: hasNegativeConsumption,
       latestReadingId: latestReadingId,
+      isVirtual: isVirtual,
     );
   }
 }

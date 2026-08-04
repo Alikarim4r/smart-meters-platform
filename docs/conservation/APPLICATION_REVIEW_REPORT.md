@@ -156,11 +156,11 @@ Anomalies: no persisted anomaly table row — Opportunity uses `periodic_anomaly
 
 | ID | Expected | Status |
 |----|----------|--------|
-| Admin launch / Sites / Conservation screens | Planned | **Not captured** (display capture blocked) |
-| Dashboard Conservation / Data Sources | Planned | **Not captured** |
-| Entry Android flows | Planned | **Blocked** (no device) |
+| Admin launch / Sites / Conservation screens | Planned | **Not captured** (Admin interactive still Pending) |
+| Dashboard Conservation (macOS operator walkthrough) | Planned | **Captured** — see [APPLICATION_REVIEW_OPERATOR_ADDENDUM.md](./APPLICATION_REVIEW_OPERATOR_ADDENDUM.md) + `screenshots/operator-visual-review-2026-08-01/` |
+| Entry Android flows | Planned | **Blocked / Pending** (device review not completed for final gate) |
 
-Operator should capture screenshots locally during manual walkthrough and attach to a follow-up note if needed.
+Operator Dashboard visual result: **PASS WITH UX FINDINGS** (documented in Operator Addendum). Phase 7 UX backlog recorded there — **not implemented**.
 
 ---
 
@@ -168,6 +168,7 @@ Operator should capture screenshots locally during manual walkthrough and attach
 
 - Admin launches to Staging; branding motif previously threw a soft asset exception (gray PNG missing) — mitigated with fallback to existing MD asset.
 - Dashboard build was broken by missing panel imports (likely drift during Phase merges) — fixed as review blocker only; **not** a UX redesign.
+- **2026-08-01 operator visual (Dashboard Conservation):** layout whitespace, EN/AR mix, number formatting, RTL dates, unrealistic demo %, long single-page IA — full list in Operator Addendum (Phase 7 backlog only).
 - Data & Integrations hub remains flag-gated; with Review 7 ON, Import Center / Source Health tiles appear when corresponding flags are on.
 - Automation / AI / BMS not shown as operational (correct).
 
@@ -256,19 +257,29 @@ npx supabase db query --linked -f scripts/conservation/app_review_flags_review0.
 
 # **STOP**
 
-### Why STOP (not PASS)
+### Why STOP (not PASS WITH UX FINDINGS)
 
-1. **Entry Android review incomplete** — no device in `adb devices`; phone install/run not performed.
-2. **Interactive visual QA incomplete** — apps launched successfully on macOS, but GUI click-through + screenshots could not be executed in this agent environment.
+1. **Entry Android Review BLOCKED** — `adb devices` empty; Login / reading / photo / offline / sync not exercised on device.
+2. **Admin Interactive Visual Review** — data-layer + routes **PASS** (demo entities readable; Staging Admin launched); full GUI screenshots still operator-assisted (agent cannot capture macOS display).
+3. Dashboard macOS visual walkthrough: **PASS WITH UX FINDINGS** — Phase 7 backlog only (not implemented).
 
-### What passed
+### What passed / prepared
 
 - Committed code on `feature/conservation-management` used; Git HEAD recorded.
-- Admin + Dashboard Staging builds launched after one allowed blocker fix.
-- Demo data seeded safely (`meter_readings` still **43845**).
-- Feature flag graduation scripts applied through Review 7 (without Smart/BMS/API/Automation/AI).
+- Admin + Dashboard kept on Staging; relaunched for this final operator pass.
+- **Dashboard Conservation operator visual review (macOS):** PASS WITH UX FINDINGS; screenshots inventoried.
+- Admin conservation screens prepared (Sites → MOEHE HQ links + Data & Integrations hub); no RLS blocker on demo reads.
+- Demo data seeded safely; **not cleaned**.
+- Feature flags **left ON** (Review set retained; Smart/BMS/API/Automation/AI still OFF).
 - No Phase 7 work started.
+
+### Required to flip FINAL → PASS WITH UX FINDINGS
+
+Connect Android (`device`), run Entry Staging smoke on a disposable/demo meter, document any test reading, then update the Operator Addendum.
 
 ---
 
-*Stop here. Do not start Phase 7 or create a Phase 7 plan until the operator completes Android + visual walkthrough and approves.*
+*Stop here. Do not start Phase 7, clean Demo Data, or disable Review flags until the operator approves.*
+
+*Operator detail:* [APPLICATION_REVIEW_OPERATOR_ADDENDUM.md](./APPLICATION_REVIEW_OPERATOR_ADDENDUM.md)  
+*Comprehensive status (AR):* [APPLICATION_REVIEW_COMPREHENSIVE.md](./APPLICATION_REVIEW_COMPREHENSIVE.md)

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/admin_strings.dart';
+import '../providers/preferences_providers.dart';
 import 'import_center_screen.dart';
+import 'notification_settings_screen.dart';
 
 /// Admin hub for Phase 6 Data & Integrations (flag-gated sections).
 class DataIntegrationsHubScreen extends ConsumerStatefulWidget {
@@ -74,6 +77,8 @@ class _DataIntegrationsHubScreenState
 
   @override
   Widget build(BuildContext context) {
+    final s = AdminStrings(ref.watch(adminLocaleProvider));
+
     if (_loading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -85,17 +90,13 @@ class _DataIntegrationsHubScreenState
     if (!anyOn) {
       return ListView(
         padding: const EdgeInsets.all(24),
-        children: const [
+        children: [
           Text(
-            'Data & Integrations',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+            s.dataAndIntegrations,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
           ),
-          SizedBox(height: 12),
-          Text(
-            'All Phase 6 feature flags are OFF. Mechanical manual entry remains unchanged. '
-            'Enable flags in platform_feature_flags to use Import, API, Sources, Jobs, '
-            'Notifications, Automation, or AI Assistant.',
-          ),
+          const SizedBox(height: 12),
+          Text(s.allPhase6FlagsOff),
         ],
       );
     }
@@ -103,13 +104,13 @@ class _DataIntegrationsHubScreenState
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        const Text(
-          'Data & Integrations',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        Text(
+          s.dataAndIntegrations,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
         ),
         const SizedBox(height: 4),
         Text(
-          'Simple by default — advanced tools on demand. No BMS control.',
+          s.dataAndIntegrationsHint,
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
@@ -118,16 +119,14 @@ class _DataIntegrationsHubScreenState
             margin: const EdgeInsets.only(bottom: 10),
             child: ListTile(
               leading: const Icon(Icons.upload_file_outlined),
-              title: const Text('Import Center'),
-              subtitle: const Text(
-                'CSV/Excel template → preview → validate → partial accept. No silent write.',
-              ),
+              title: Text(s.importCenter),
+              subtitle: Text(s.importCenterSubtitle),
               trailing: const Icon(Icons.chevron_right),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
                     builder: (_) => Scaffold(
-                      appBar: AppBar(title: const Text('Import Center')),
+                      appBar: AppBar(title: Text(s.importCenter)),
                       body: ImportCenterScreen(
                         organizationId: widget.organizationId,
                         siteId: widget.siteId,
@@ -143,63 +142,69 @@ class _DataIntegrationsHubScreenState
             _on(PlatformFeatureFlags.bmsSources))
           _tile(
             icon: Icons.hub_outlined,
-            title: 'Data Sources',
-            subtitle:
-                '${_sources.length} configured. Secrets via secret_ref only. Adapters are readiness stubs until vendor-tested.',
+            title: s.dataSources,
+            subtitle: s.dataSourcesConfigured(_sources.length),
           ),
         if (_on(PlatformFeatureFlags.smartMeterSources) ||
             _on(PlatformFeatureFlags.bmsSources))
           _tile(
             icon: Icons.link_outlined,
-            title: 'Meter Source Mapping',
-            subtitle:
-                'Frequency + source priority. Mechanical remains first-class.',
+            title: s.meterSourceMapping,
+            subtitle: s.meterSourceMappingSubtitle,
           ),
         if (_on(PlatformFeatureFlags.ingestionJobs))
           _tile(
             icon: Icons.schedule_outlined,
-            title: 'Ingestion Jobs',
-            subtitle: 'Idempotent runs, bounded retries, dead-letter retention.',
+            title: s.ingestionJobs,
+            subtitle: s.ingestionJobsSubtitle,
           ),
         if (_on(PlatformFeatureFlags.sourceHealth))
           _tile(
             icon: Icons.monitor_heart_outlined,
-            title: 'Source Health',
-            subtitle:
-                'Healthy / Delayed / Failed / Never Synced. Data Availability Alerts only.',
+            title: s.sourceHealth,
+            subtitle: s.sourceHealthSubtitle,
           ),
         if (_on(PlatformFeatureFlags.automationRules))
           _tile(
             icon: Icons.rule_outlined,
-            title: 'Automation Rules',
-            subtitle:
-                'Admin-only activation. Suggestions only — no confirmed diagnosis or control.',
+            title: s.automationRules,
+            subtitle: s.automationRulesSubtitle,
           ),
         if (_on(PlatformFeatureFlags.notificationCenter))
-          _tile(
-            icon: Icons.notifications_outlined,
-            title: 'Notification Settings',
-            subtitle:
-                'In-app preferences, severity, read/unread, event-key dedupe.',
+          Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            child: ListTile(
+              leading: const Icon(Icons.notifications_outlined),
+              title: Text(s.notificationSettings),
+              subtitle: Text(s.notificationSettingsSubtitle),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: Text(s.notificationSettings)),
+                      body: const NotificationSettingsScreen(),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         if (_on(PlatformFeatureFlags.aiAssistant))
           _tile(
             icon: Icons.psychology_outlined,
-            title: 'AI Governance',
-            subtitle:
-                'Grounded summaries with human review. Deterministic fallback if AI unavailable.',
+            title: s.aiGovernance,
+            subtitle: s.aiGovernanceSubtitle,
           ),
         if (_on(PlatformFeatureFlags.ocrReadiness))
           _tile(
             icon: Icons.document_scanner_outlined,
-            title: 'OCR Readiness',
-            subtitle:
-                'Suggested Reading → Human Confirm → Saved. Never auto-accepted.',
+            title: s.ocrReadiness,
+            subtitle: s.ocrReadinessSubtitle,
           ),
         const SizedBox(height: 24),
         Text(
-          'Capability matrix and interval analytics are documented metadata in Phase 6; '
-          'heavy time-series migration is deferred.',
+          s.capabilityMatrixNote,
           style: Theme.of(context).textTheme.bodySmall,
         ),
       ],

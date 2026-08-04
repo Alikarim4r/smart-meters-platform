@@ -55,13 +55,15 @@ class SiteDashboardScreen extends ConsumerWidget {
         ref.read(siteDashboardSectionProvider.notifier).state = section;
       });
     }
-    final categoriesAsync = ref.watch(siteCategoriesSummaryProvider(siteId));
-    // Desktop chrome only when the permanent sidebar is visible.
-    // On phones, parent [_MobileDashboardShell] owns the AppBar + drawer.
     final useShellChrome = DashboardBreakpoints.useSidebar(context);
     final dateSelection = ref.watch(siteDateSelectionProvider(siteId));
-    final exportCategoryId =
-        _exportCategoryId(categoriesAsync.valueOrNull, section);
+    // Only fetch categories when export needs a utility category id.
+    // Overview/Reports/Conservation panels watch their own providers.
+    final needsExportCategory = section.utilityKey != null;
+    final exportCategories = needsExportCategory
+        ? ref.watch(siteCategoriesSummaryProvider(siteId)).valueOrNull
+        : null;
+    final exportCategoryId = _exportCategoryId(exportCategories, section);
 
     Future<void> refreshSite() async {
       ref.read(dashboardRepositoryProvider).invalidateSiteCaches(siteId);

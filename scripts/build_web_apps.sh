@@ -43,7 +43,7 @@ build_app() {
   echo "=== Building web: $title ==="
   cd "$ROOT/apps/$folder"
   flutter pub get
-  flutter build web --release \
+  flutter build web --release --no-wasm-dry-run \
     --base-href="${BASE_HREF}/${slug}/" \
     "${DART_DEFINES[@]}"
   mkdir -p "$DEPLOY_DIR/$slug"

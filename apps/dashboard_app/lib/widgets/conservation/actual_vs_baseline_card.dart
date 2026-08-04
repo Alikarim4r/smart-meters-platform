@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
 
@@ -15,6 +16,7 @@ class ActualVsBaselineCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final insufficient = result.isInsufficient;
     return Card(
       elevation: 0,
@@ -29,12 +31,12 @@ class ActualVsBaselineCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Actual vs Baseline · v${result.baselineVersion}',
+              s.actualVsBaseline(result.baselineVersion),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
-              result.directionLabel,
+              s.localizeDomainLabel(result.directionLabel),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -46,37 +48,35 @@ class ActualVsBaselineCard extends StatelessWidget {
             const SizedBox(height: 10),
             if (insufficient)
               Text(
-                result.message ?? 'Insufficient Data',
+                s.localizeDomainMessage(result.message),
                 style: TextStyle(
                   fontSize: 12,
                   color: DashboardPalette.textMuted,
                 ),
               )
             else ...[
-              _kv('Actual', _fmt(result.actualValue, result.unitCode)),
-              _kv('Baseline', _fmt(result.baselineValue, result.unitCode)),
+              _kv(s.actual, _fmt(result.actualValue, result.unitCode, s)),
+              _kv(s.baseline, _fmt(result.baselineValue, result.unitCode, s)),
               _kv(
-                'Absolute variance (Actual − Baseline)',
-                _fmt(result.absoluteVariance, result.unitCode),
+                s.absoluteVarianceActualMinusBaseline,
+                _fmt(result.absoluteVariance, result.unitCode, s),
               ),
               _kv(
-                'Percentage variance',
+                s.percentageVariance,
                 result.percentageVariance == null
-                    ? 'N/A'
+                    ? s.na
                     : '${result.percentageVariance!.toStringAsFixed(1)}%',
               ),
-              _kv('Method', result.calculationMethod.dbValue),
+              _kv(s.method, s.localizeMethod(result.calculationMethod.dbValue)),
             ],
             const SizedBox(height: 8),
             Text(
-              'Combined confidence: ${result.confidenceScore} '
-              '(min baseline ${result.baselineConfidence} / '
-              'actual ${result.actualConfidence}) · '
-              'Completeness: ${(result.completeness * 100).toStringAsFixed(0)}%',
+              '${s.combinedConfidenceDetail(combined: result.confidenceScore, baseline: result.baselineConfidence, actual: result.actualConfidence)} · '
+              '${s.completenessPct((result.completeness * 100).toStringAsFixed(0))}',
               style: TextStyle(fontSize: 11, color: DashboardPalette.textMuted),
             ),
             Text(
-              'Baseline ≠ Target. Gap is Above/Below Baseline — not Saving.',
+              s.baselineNotTargetNote,
               style: TextStyle(fontSize: 10, color: DashboardPalette.textMuted),
             ),
           ],
@@ -105,11 +105,12 @@ class ActualVsBaselineCard extends StatelessWidget {
     );
   }
 
-  String _fmt(double? v, String unit) {
-    if (v == null) return 'N/A';
-    final s = v == v.roundToDouble()
+  String _fmt(double? v, String unit, ConservationStrings cs) {
+    if (v == null) return cs.na;
+    final n = v == v.roundToDouble()
         ? v.toStringAsFixed(0)
         : v.toStringAsFixed(1);
-    return '$s $unit';
+    final u = cs.localizeUnit(unit);
+    return u.isEmpty ? n : '$n $u';
   }
 }

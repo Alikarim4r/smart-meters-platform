@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../providers/conservation_providers.dart';
 import '../conservation/actual_vs_baseline_card.dart';
 import '../conservation/actual_vs_target_card.dart';
@@ -10,6 +11,7 @@ import '../conservation/anomaly_card.dart';
 import '../conservation/balance_difference_card.dart';
 import '../conservation/balance_hierarchy_view.dart';
 import '../conservation/benchmark_card.dart';
+import '../conservation/conservation_trends_section.dart';
 import '../conservation/mv_summary_strip.dart';
 import '../conservation/mv_verification_card.dart';
 import '../conservation/opportunity_list_panel.dart';
@@ -29,11 +31,12 @@ class SiteConservationPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final visibleAsync =
         ref.watch(conservationSectionVisibleProvider(siteId));
     return visibleAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('$e')),
+      error: (e, _) => Center(child: Text(s.friendlyLoadError(e))),
       data: (visible) {
         if (!visible) return const SizedBox.shrink();
 
@@ -132,162 +135,129 @@ class SiteConservationPanel extends ConsumerWidget {
             carbonOn ||
             forecastOn ||
             recoOn;
+        final trendsOn = periodOn ||
+            anomaliesOn ||
+            copOn ||
+            benchmarkingOn ||
+            intensityOn ||
+            waterBalanceOn ||
+            energyBalanceOn;
 
+        final s = ConservationStrings.of(context);
         return ListView(
           padding: EdgeInsets.all(useDesktop ? 20 : 12),
           children: [
-            const Text(
-              'Conservation',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+            Text(
+              s.conservation,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
             ),
             const SizedBox(height: 4),
-            const Text(
-              'Derived metrics only. Gaps are Above/Below Target or Baseline — not Saving.',
-              style: TextStyle(fontSize: 12),
+            Text(
+              s.derivedMetricsOnly,
+              style: const TextStyle(fontSize: 12),
             ),
-            if (periodOn) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Period comparisons',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            const SizedBox(height: 4),
+            Text(
+              s.tapToExpandSection,
+              style: TextStyle(
+                fontSize: 11,
+                color: Theme.of(context).hintColor,
               ),
-              const SizedBox(height: 8),
-              _PeriodSection(siteId: siteId),
-            ],
-            if (targetsOn) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Actual vs Target',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              _TargetsSection(siteId: siteId),
-            ],
-            if (baselineOn) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Actual vs Baseline',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              _BaselinesSection(siteId: siteId),
-            ],
-            if (virtualOn) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Virtual meters (preview)',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              _VirtualSection(siteId: siteId),
-            ],
-            if (waterBalanceOn || energyBalanceOn) ...[
-              const SizedBox(height: 16),
-              Text(
-                waterBalanceOn && energyBalanceOn
-                    ? 'Water & Energy Balance'
-                    : waterBalanceOn
-                        ? 'Water Balance'
-                        : 'Energy Balance',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              _BalanceSection(
-                siteId: siteId,
-                waterOn: waterBalanceOn,
-                energyOn: energyBalanceOn,
-              ),
-            ],
-            if (benchmarkingOn || intensityOn) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Benchmark',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(height: 8),
-              _BenchmarkSection(siteId: siteId),
-            ],
-            if (anomaliesOn || copOn) ...[
-              const SizedBox(height: 16),
-              Text(
-                anomaliesOn && copOn
-                    ? 'Anomalies & COP trend'
-                    : anomaliesOn
-                        ? 'Anomalies'
-                        : 'COP trend',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-              ),
-              if (copOn) ...[
-                const SizedBox(height: 4),
-                const Text(
-                  'COP trend uses existing dashboard COP values — formulas unchanged.',
-                  style: TextStyle(fontSize: 11),
+            ),
+            if (trendsOn)
+              _LazyConservationAccordion(
+                title: s.trendsAndCharts,
+                subtitle: s.trendsAndChartsHint,
+                child: ConservationTrendsSection(
+                  siteId: siteId,
+                  useDesktop: useDesktop,
                 ),
-              ],
-              const SizedBox(height: 8),
-              _AnomaliesSection(siteId: siteId),
-            ],
-            if (opportunitiesOn) ...[
-              const SizedBox(height: 16),
-              Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      'Opportunities',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                  OutlinedButton.icon(
-                    onPressed: () => _refreshOpportunities(context, ref),
-                    icon: const Icon(Icons.refresh, size: 18),
-                    label: const Text('Refresh opportunities'),
-                  ),
-                ],
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Potential Excess only — not Saving. Refresh is manual; never auto-runs on load.',
-                style: TextStyle(fontSize: 11),
+            if (periodOn)
+              _LazyConservationAccordion(
+                title: s.periodComparisons,
+                child: _PeriodSection(siteId: siteId),
               ),
-              const SizedBox(height: 8),
-              _OpportunitiesSection(
-                siteId: siteId,
-                investigationsOn: investigationsOn,
+            if (targetsOn)
+              _LazyConservationAccordion(
+                title: s.actualVsTargetTitle,
+                child: _TargetsSection(siteId: siteId),
               ),
-            ],
-            if (mvSectionOn) ...[
-              const SizedBox(height: 16),
-              const Text(
-                'Measurement & Verification',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            if (baselineOn)
+              _LazyConservationAccordion(
+                title: s.actualVsBaselineTitle,
+                child: _BaselinesSection(siteId: siteId),
               ),
-              const SizedBox(height: 4),
-              const Text(
-                'Estimated Saving ≠ Verified Saving. '
-                'Potential Excess is never counted as Saving.',
-                style: TextStyle(fontSize: 11),
+            if (virtualOn)
+              _LazyConservationAccordion(
+                title: s.virtualMetersPreview,
+                child: _VirtualSection(siteId: siteId),
               ),
-              const SizedBox(height: 8),
-              _MvSection(
-                siteId: siteId,
-                showCostRoi: costRoiOn,
+            if (waterBalanceOn || energyBalanceOn)
+              _LazyConservationAccordion(
+                title: waterBalanceOn && energyBalanceOn
+                    ? s.waterAndEnergyBalance
+                    : waterBalanceOn
+                        ? s.waterBalance
+                        : s.energyBalance,
+                child: _BalanceSection(
+                  siteId: siteId,
+                  waterOn: waterBalanceOn,
+                  energyOn: energyBalanceOn,
+                ),
               ),
-            ],
-            if (advancedOn) ...[
-              const SizedBox(height: 16),
-              AdvancedConservationTabs(
-                siteId: siteId,
-                weatherOn: weatherOn,
-                occupancyOn: occupancyOn,
-                persistenceOn: persistenceOn,
-                carbonOn: carbonOn,
-                forecastOn: forecastOn,
-                recommendationsOn: recoOn,
+            if (benchmarkingOn || intensityOn)
+              _LazyConservationAccordion(
+                title: s.benchmarking,
+                child: _BenchmarkSection(siteId: siteId),
               ),
-            ],
+            if (anomaliesOn || copOn)
+              _LazyConservationAccordion(
+                title: anomaliesOn && copOn
+                    ? s.anomaliesAndCop
+                    : anomaliesOn
+                        ? s.anomalies
+                        : s.copTrend,
+                subtitle: copOn ? s.copTrendNote : null,
+                child: _AnomaliesSection(siteId: siteId),
+              ),
+            if (opportunitiesOn)
+              _LazyConservationAccordion(
+                title: s.opportunities,
+                subtitle: s.manualRefreshOnly,
+                trailing: OutlinedButton.icon(
+                  onPressed: () => _refreshOpportunities(context, ref),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: Text(s.refreshOpportunities),
+                ),
+                child: _OpportunitiesSection(
+                  siteId: siteId,
+                  investigationsOn: investigationsOn,
+                ),
+              ),
+            if (mvSectionOn)
+              _LazyConservationAccordion(
+                title: s.measurementVerification,
+                subtitle: s.mvDisclaimer,
+                child: _MvSection(
+                  siteId: siteId,
+                  showCostRoi: costRoiOn,
+                ),
+              ),
+            if (advancedOn)
+              _LazyConservationAccordion(
+                title: s.advancedOnDemand,
+                subtitle: s.advancedHint,
+                child: AdvancedConservationTabs(
+                  siteId: siteId,
+                  weatherOn: weatherOn,
+                  occupancyOn: occupancyOn,
+                  persistenceOn: persistenceOn,
+                  carbonOn: carbonOn,
+                  forecastOn: forecastOn,
+                  recommendationsOn: recoOn,
+                ),
+              ),
           ],
         );
       },
@@ -298,24 +268,121 @@ class SiteConservationPanel extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
   ) async {
+    final s = ConservationStrings.of(context);
     try {
       final result = await refreshConservationOpportunities(ref, siteId);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Opportunities: ${result.generation.created} created, '
-            '${result.generation.refreshed} refreshed '
-            '(${result.candidateCount} candidates).',
+            s.opportunitiesRefreshResult(
+              created: result.generation.created,
+              refreshed: result.generation.refreshed,
+              candidates: result.candidateCount,
+            ),
           ),
         ),
       );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
+        SnackBar(content: Text(s.friendlyLoadError(e))),
       );
     }
+  }
+}
+
+/// Collapsed by default — mounts [child] (and its providers) only when opened.
+class _LazyConservationAccordion extends StatefulWidget {
+  const _LazyConservationAccordion({
+    required this.title,
+    required this.child,
+    this.subtitle,
+    this.trailing,
+  });
+
+  final String title;
+  final String? subtitle;
+  final Widget? trailing;
+  final Widget child;
+
+  @override
+  State<_LazyConservationAccordion> createState() =>
+      _LazyConservationAccordionState();
+}
+
+class _LazyConservationAccordionState extends State<_LazyConservationAccordion> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final border = Theme.of(context).dividerColor.withValues(alpha: 0.55);
+    return Padding(
+      padding: const EdgeInsets.only(top: 12),
+      child: Material(
+        color: Theme.of(context).cardColor,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+          side: BorderSide(color: border),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            InkWell(
+              onTap: () => setState(() => _expanded = !_expanded),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(
+                      _expanded ? Icons.expand_less : Icons.expand_more,
+                      size: 24,
+                    ),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            widget.title,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          if (widget.subtitle != null) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              widget.subtitle!,
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Theme.of(context).hintColor,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    if (widget.trailing != null && _expanded) ...[
+                      const SizedBox(width: 8),
+                      widget.trailing!,
+                    ],
+                  ],
+                ),
+              ),
+            ),
+            // Lazy mount: providers inside [child] only run when expanded.
+            if (_expanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                child: widget.child,
+              ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
@@ -325,25 +392,26 @@ class _PeriodSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationPeriodComparisonsProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (bundles) {
         if (bundles.isEmpty) {
-          return const Text('No utility meters available for period comparison.');
+          return Text(s.noUtilityMetersPeriod);
         }
         return Column(
           children: [
             for (final b in bundles) ...[
               PeriodComparisonCard(
-                title: 'Previous period',
+                title: s.previousPeriod,
                 utilityLabel: b.utilityLabel,
                 result: b.previous,
               ),
               const SizedBox(height: 8),
               PeriodComparisonCard(
-                title: 'Compared with same period last year',
+                title: s.comparedWithSamePeriodLastYear,
                 utilityLabel: b.utilityLabel,
                 result: b.yoy,
               ),
@@ -362,13 +430,14 @@ class _TargetsSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationActualVsTargetProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (results) {
         if (results.isEmpty) {
-          return const Text('No active targets for this site.');
+          return Text(s.noActiveTargets);
         }
         return Column(
           children: [
@@ -389,13 +458,14 @@ class _BaselinesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationActualVsBaselineProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (results) {
         if (results.isEmpty) {
-          return const Text('No approved baselines for this site.');
+          return Text(s.noApprovedBaselines);
         }
         return Column(
           children: [
@@ -416,26 +486,26 @@ class _VirtualSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationVirtualMeterPreviewsProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (results) {
         if (results.isEmpty) {
-          return const Text('No virtual meters configured for this site.');
+          return Text(s.noVirtualMeters);
         }
         return Column(
           children: [
             for (final r in results) ...[
               Card(
                 child: ListTile(
-                  title: Text(r.directionLabel),
+                  title: Text(s.localizeDomainLabel(r.directionLabel)),
                   subtitle: Text(
-                    '${r.isInsufficient ? 'Insufficient Data' : (r.value?.toStringAsFixed(1) ?? 'N/A')} '
-                    '${r.unitCode}\n'
-                    'Confidence ${r.confidenceScore} · '
-                    'Completeness ${(r.completeness * 100).toStringAsFixed(0)}%\n'
-                    '${r.warnings.isEmpty ? 'Residual/Balance Difference only — not Leak.' : r.warnings.join(' · ')}',
+                    '${r.isInsufficient ? s.insufficientData : (r.value?.toStringAsFixed(1) ?? s.na)} '
+                    '${s.localizeUnit(r.unitCode)}\n'
+                    '${s.confidenceCompleteness(confidence: r.confidenceScore, completenessPct: (r.completeness * 100).toStringAsFixed(0))}\n'
+                    '${r.warnings.isEmpty ? s.residualNotLeak : r.warnings.map(s.localizeDomainMessage).join(' · ')}',
                   ),
                   isThreeLine: true,
                 ),
@@ -462,10 +532,11 @@ class _BalanceSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationBalanceResultsProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (bundles) {
         final filtered = [
           for (final b in bundles)
@@ -475,7 +546,7 @@ class _BalanceSection extends ConsumerWidget {
               b,
         ];
         if (filtered.isEmpty) {
-          return const Text('No active balance groups for this site.');
+          return Text(s.noActiveBalanceGroups);
         }
         return Column(
           children: [
@@ -513,13 +584,14 @@ class _BenchmarkSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationBenchmarkProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (bundles) {
         if (bundles.isEmpty) {
-          return const Text('No water/electricity totals for benchmark.');
+          return Text(s.noBenchmarkTotals);
         }
         return Column(
           children: [
@@ -540,13 +612,14 @@ class _AnomaliesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationAnomaliesProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (bundles) {
         if (bundles.isEmpty) {
-          return const Text('No anomaly signals for this period.');
+          return Text(s.noAnomalySignals);
         }
         return Column(
           children: [
@@ -576,18 +649,18 @@ class _OpportunitiesSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationOpportunitiesProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (opportunities) {
         if (opportunities.isEmpty) {
-          return const Text(
-            'No opportunities yet. Tap Refresh opportunities to scan current signals.',
-          );
+          return Text(s.noOpportunitiesYet);
         }
         return OpportunityListPanel(
           opportunities: opportunities,
+          emptyMessage: s.noOpportunitiesFilter,
           showStartInvestigation: investigationsOn,
           onStartInvestigation: investigationsOn
               ? (o) => _startInvestigation(context, ref, o)
@@ -602,6 +675,7 @@ class _OpportunitiesSection extends ConsumerWidget {
     WidgetRef ref,
     ConservationOpportunity opportunity,
   ) async {
+    final s = ConservationStrings.of(context);
     try {
       final client = ref.read(supabaseClientProvider);
       final userId = client.auth.currentUser?.id;
@@ -618,12 +692,12 @@ class _OpportunitiesSection extends ConsumerWidget {
       ref.invalidate(conservationOpportunitiesProvider(siteId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Investigation started')),
+        SnackBar(content: Text(s.investigationStarted)),
       );
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
+        SnackBar(content: Text(s.friendlyLoadError(e))),
       );
     }
   }
@@ -640,15 +714,14 @@ class _MvSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = ConservationStrings.of(context);
     final async = ref.watch(conservationMvListProvider(siteId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(s.friendlyLoadError(e)),
       data: (rows) {
         if (rows.isEmpty) {
-          return const Text(
-            'No measurement & verification records yet.',
-          );
+          return Text(s.noMvRecordsYet);
         }
         final totals = computeMvPortfolioTotals(rows);
         return Column(

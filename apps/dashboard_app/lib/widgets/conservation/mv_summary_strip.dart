@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../providers/conservation_providers.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
@@ -22,6 +22,7 @@ class MvSummaryStrip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final unit = unitHint == null || unitHint!.isEmpty ? '' : ' $unitHint';
     return Card(
       elevation: 0,
@@ -39,22 +40,22 @@ class MvSummaryStrip extends StatelessWidget {
           runSpacing: 8,
           children: [
             _chip(
-              ConservationSavingLabels.estimatedSaving,
+              s.estimatedSaving,
               '${_fmt(totals.estimatedSavingTotal)}$unit',
             ),
             _chip(
-              ConservationSavingLabels.verifiedSaving,
+              s.verifiedSaving,
               '${_fmt(totals.verifiedSavingTotal)}$unit',
             ),
             if (showCostRoi)
               _chip(
-                'Cost Avoided',
+                s.costAvoided,
                 totals.costAvoidedTotal == null
-                    ? ConservationSavingLabels.costAvoidedNa
+                    ? s.costAvoidedNa
                     : '${_fmt(totals.costAvoidedTotal!)} QAR',
               ),
             _chip(
-              'Verification Pending',
+              s.verificationPending,
               '${totals.verificationPendingCount}',
             ),
           ],

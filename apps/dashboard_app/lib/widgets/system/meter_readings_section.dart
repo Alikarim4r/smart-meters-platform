@@ -131,11 +131,18 @@ class MeterReadingsSliverSection extends ConsumerWidget {
           );
         }
 
+        final virtualCards =
+            cards.where((card) => card.isVirtual).toList(growable: false);
+        final physicalCards =
+            cards.where((card) => !card.isVirtual).toList(growable: false);
+        final highlight =
+            search.trim().isEmpty ? null : search.trim();
+
         // On phones, show a flat card list — collapsible source groups hide
         // meters and feel broken on small screens.
         final grouped = useDesktop
             ? _resolveGroups(
-                cards: cards,
+                cards: physicalCards,
                 isWater: isWater,
                 waterChip: waterChip,
                 strings: s,
@@ -155,7 +162,7 @@ class MeterReadingsSliverSection extends ConsumerWidget {
                 dateSelection: dateSelection,
                 onViewReadings: openHistory,
                 categoryId: categoryId,
-                searchHighlight: search.trim().isEmpty ? null : search.trim(),
+                searchHighlight: highlight,
               );
             },
           );
@@ -164,6 +171,27 @@ class MeterReadingsSliverSection extends ConsumerWidget {
         final prefix = '$siteId::${system.categoryCode}';
         return SliverMainAxisGroup(
           slivers: [
+            if (virtualCards.isNotEmpty)
+              SliverLayoutBuilder(
+                builder: (context, constraints) {
+                  return _buildCardsSliver(
+                    context: context,
+                    ref: ref,
+                    cards: virtualCards,
+                    maxWidth: constraints.crossAxisExtent,
+                    useDesktop: useDesktop,
+                    siteId: siteId,
+                    dateSelection: dateSelection,
+                    onViewReadings: openHistory,
+                    categoryId: categoryId,
+                    searchHighlight: highlight,
+                  );
+                },
+              ),
+            if (virtualCards.isNotEmpty)
+              const SliverToBoxAdapter(
+                child: SizedBox(height: DashboardSpacing.md),
+              ),
             for (final entry in grouped.groups.entries) ...[
               _GroupHeaderSliver(
                 groupKey: '$prefix::${entry.key}',
@@ -179,7 +207,7 @@ class MeterReadingsSliverSection extends ConsumerWidget {
                 dateSelection: dateSelection,
                 onViewReadings: openHistory,
                 categoryId: categoryId,
-                searchHighlight: search.trim().isEmpty ? null : search.trim(),
+                searchHighlight: highlight,
               ),
               const SliverToBoxAdapter(child: SizedBox(height: DashboardSpacing.md)),
             ],
@@ -354,7 +382,7 @@ Widget _buildCardsSliver({
   final useGridLayout = useDesktop && maxWidth >= 520;
   final spacing = DashboardSpacing.sm;
 
-  Widget buildCard(MeterReadingCardData card) {
+  Widget buildCard(MeterReadingCardData card, {required bool expandToFill}) {
     return RepaintBoundary(
       child: MeterReadingCard(
         data: card,
@@ -362,7 +390,7 @@ Widget _buildCardsSliver({
         dateSelection: dateSelection,
         categoryId: categoryId,
         searchHighlight: searchHighlight,
-        expandToFill: useGridLayout,
+        expandToFill: expandToFill,
         onViewReadings: () => onViewReadings(card),
         onCompare: categoryId == null
             ? null
@@ -376,35 +404,109 @@ Widget _buildCardsSliver({
     );
   }
 
-  final crossAxisCount = useGridLayout
-      ? ((maxWidth + spacing) / (cardWidth + spacing)).floor().clamp(1, 12)
-      : 1;
+  final virtualCards =
+      cards.where((card) => card.isVirtual).toList(growable: false);
+  final physicalCards =
+      cards.where((card) => !card.isVirtual).toList(growable: false);
 
-  if (crossAxisCount <= 1) {
+  SliverList virtualSliver() {
     return SliverList(
       delegate: SliverChildBuilderDelegate(
         (context, index) => Padding(
-          padding: const EdgeInsets.only(bottom: DashboardSpacing.sm),
-          child: buildCard(cards[index]),
+          padding: EdgeInsets.only(
+            bottom: index == virtualCards.length - 1 && physicalCards.isEmpty
+                ? 0
+                : DashboardSpacing.sm,
+          ),
+          child: SizedBox(
+            width: maxWidth,
+            height: _meterCardRowExtent,
+            child: buildCard(virtualCards[index], expandToFill: true),
+          ),
         ),
-        childCount: cards.length,
+        childCount: virtualCards.length,
         addRepaintBoundaries: false,
       ),
     );
   }
 
-  return SliverGrid(
-    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: crossAxisCount,
-      mainAxisSpacing: spacing,
-      crossAxisSpacing: spacing,
-      mainAxisExtent: _meterCardRowExtent,
-    ),
-    delegate: SliverChildBuilderDelegate(
-      (context, index) => buildCard(cards[index]),
-      childCount: cards.length,
-      addRepaintBoundaries: false,
-    ),
+  Widget physicalSliver() {
+    final crossAxisCount = useGridLayout
+        ? ((maxWidth + spacing) / (cardWidth + spacing)).floor().clamp(1, 12)
+        : 1;
+
+    if (crossAxisCount <= 1) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
+            padding: const EdgeInsets.only(bottom: DashboardSpacing.sm),
+            child: buildCard(physicalCards[index], expandToFill: false),
+          ),
+          childCount: physicalCards.length,
+          addRepaintBoundaries: false,
+        ),
+      );
+    }
+
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        mainAxisExtent: _meterCardRowExtent,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) =>
+            buildCard(physicalCards[index], expandToFill: true),
+        childCount: physicalCards.length,
+        addRepaintBoundaries: false,
+      ),
+    );
+  }
+
+  if (virtualCards.isEmpty) {
+    // Preserve prior path when there are no virtual meters.
+    final allPhysical = physicalCards.isEmpty ? cards : physicalCards;
+    final crossAxisCount = useGridLayout
+        ? ((maxWidth + spacing) / (cardWidth + spacing)).floor().clamp(1, 12)
+        : 1;
+    if (crossAxisCount <= 1) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
+            padding: const EdgeInsets.only(bottom: DashboardSpacing.sm),
+            child: buildCard(allPhysical[index], expandToFill: false),
+          ),
+          childCount: allPhysical.length,
+          addRepaintBoundaries: false,
+        ),
+      );
+    }
+    return SliverGrid(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: crossAxisCount,
+        mainAxisSpacing: spacing,
+        crossAxisSpacing: spacing,
+        mainAxisExtent: _meterCardRowExtent,
+      ),
+      delegate: SliverChildBuilderDelegate(
+        (context, index) =>
+            buildCard(allPhysical[index], expandToFill: true),
+        childCount: allPhysical.length,
+        addRepaintBoundaries: false,
+      ),
+    );
+  }
+
+  if (physicalCards.isEmpty) {
+    return virtualSliver();
+  }
+
+  return SliverMainAxisGroup(
+    slivers: [
+      virtualSliver(),
+      physicalSliver(),
+    ],
   );
 }
 

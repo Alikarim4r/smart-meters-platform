@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/conservation_strings.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../../theme/dashboard_palette.dart';
@@ -15,6 +16,7 @@ class ActualVsTargetCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final insufficient = result.isInsufficient;
     return Card(
       elevation: 0,
@@ -29,12 +31,12 @@ class ActualVsTargetCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Actual vs Target · v${result.targetVersion}',
+              s.actualVsTarget(result.targetVersion),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             const SizedBox(height: 4),
             Text(
-              result.directionLabel,
+              s.localizeDomainLabel(result.directionLabel),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -46,46 +48,46 @@ class ActualVsTargetCard extends StatelessWidget {
             const SizedBox(height: 10),
             if (insufficient)
               Text(
-                result.message ?? 'Insufficient Data',
+                s.localizeDomainMessage(result.message),
                 style: TextStyle(
                   fontSize: 12,
                   color: DashboardPalette.textMuted,
                 ),
               )
             else ...[
-              _kv('Actual', _fmt(result.actualValue, result.unitCode)),
+              _kv(s.actual, _fmt(result.actualValue, result.unitCode, s)),
               _kv(
                 result.comparisonMode ==
                         ActualVsTargetComparisonMode.periodToDateProrated
-                    ? 'Prorated target'
-                    : 'Target',
-                _fmt(result.effectiveTargetValue, result.unitCode),
+                    ? s.proratedTarget
+                    : s.target,
+                _fmt(result.effectiveTargetValue, result.unitCode, s),
               ),
               if (result.comparisonMode ==
                   ActualVsTargetComparisonMode.periodToDateProrated)
                 _kv(
-                  'Full-period target',
-                  _fmt(result.targetValue, result.unitCode),
+                  s.fullPeriodTarget,
+                  _fmt(result.targetValue, result.unitCode, s),
                 ),
               _kv(
-                'Difference (Actual − Target)',
-                _fmt(result.absoluteDifference, result.unitCode),
+                s.differenceActualMinusTarget,
+                _fmt(result.absoluteDifference, result.unitCode, s),
               ),
               _kv(
-                '% of effective target',
+                s.percentOfEffectiveTarget,
                 result.percentageOfTarget == null
-                    ? 'N/A'
+                    ? s.na
                     : '${result.percentageOfTarget!.toStringAsFixed(1)}%',
               ),
             ],
             const SizedBox(height: 8),
             Text(
-              'Confidence: ${result.confidenceScore} · '
-              'Completeness: ${(result.completeness * 100).toStringAsFixed(0)}%',
+              '${s.confidenceLabel(result.confidenceScore)} · '
+              '${s.completenessPct((result.completeness * 100).toStringAsFixed(0))}',
               style: TextStyle(fontSize: 11, color: DashboardPalette.textMuted),
             ),
             Text(
-              'Targets ≠ Baselines. Gap is Above/Below Target — not Saving.',
+              s.targetsNotBaselinesNote,
               style: TextStyle(fontSize: 10, color: DashboardPalette.textMuted),
             ),
           ],
@@ -114,11 +116,12 @@ class ActualVsTargetCard extends StatelessWidget {
     );
   }
 
-  String _fmt(double? v, String unit) {
-    if (v == null) return 'N/A';
-    final s = v == v.roundToDouble()
+  String _fmt(double? v, String unit, ConservationStrings cs) {
+    if (v == null) return cs.na;
+    final n = v == v.roundToDouble()
         ? v.toStringAsFixed(0)
         : v.toStringAsFixed(1);
-    return '$s $unit';
+    final u = cs.localizeUnit(unit);
+    return u.isEmpty ? n : '$n $u';
   }
 }

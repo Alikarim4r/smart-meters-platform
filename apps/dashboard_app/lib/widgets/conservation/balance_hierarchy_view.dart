@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
 
@@ -20,7 +21,8 @@ class BalanceHierarchyView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final chip = _statusChip();
+    final s = ConservationStrings.of(context);
+    final chip = _statusChip(s);
     return Card(
       elevation: 0,
       color: DashboardColors.card(context),
@@ -35,19 +37,22 @@ class BalanceHierarchyView extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text(
-                  'Balance hierarchy',
-                  style: TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                Text(
+                  s.balanceHierarchy,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 13,
+                  ),
                 ),
                 const Spacer(),
                 chip,
               ],
             ),
             const SizedBox(height: 10),
-            _node('Source', result.utilityCode.toUpperCase()),
+            _node(s.source, result.utilityCode.toUpperCase()),
             _indentChild(
               _node(
-                'Main',
+                s.mainMeter,
                 mainMeterName ?? result.mainMeterId,
               ),
             ),
@@ -56,16 +61,16 @@ class BalanceHierarchyView extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _node(
-                    'Submeters',
+                    s.submeters,
                     submeterNames.isEmpty
-                        ? '${result.childMeterIds.length} members'
+                        ? s.membersCount(result.childMeterIds.length)
                         : submeterNames.join(', '),
                   ),
                   if (result.missingMeterIds.isNotEmpty)
                     Padding(
                       padding: const EdgeInsets.only(left: 12, top: 2),
                       child: Text(
-                        'Missing: ${result.missingMeterIds.length}',
+                        s.missingCount(result.missingMeterIds.length),
                         style: TextStyle(
                           fontSize: 11,
                           color: DashboardPalette.textMuted,
@@ -78,9 +83,9 @@ class BalanceHierarchyView extends StatelessWidget {
             ),
             _indentChild(
               _node(
-                'Balance Difference',
+                s.balanceDifference,
                 result.balanceDifference == null
-                    ? 'Insufficient Data'
+                    ? s.insufficientData
                     : '${result.balanceDifference!.toStringAsFixed(1)} '
                         '${result.unitCode}',
                 emphasize: true,
@@ -93,24 +98,24 @@ class BalanceHierarchyView extends StatelessWidget {
     );
   }
 
-  Widget _statusChip() {
+  Widget _statusChip(ConservationStrings s) {
     late final String label;
     late final Color color;
     if (result.missingMeterIds.isNotEmpty ||
         result.alignmentStatus == ReadingAlignmentStatus.insufficientData) {
-      label = 'Missing data';
+      label = s.missingData;
       color = Colors.brown.shade700;
     } else if (result.alignmentStatus == ReadingAlignmentStatus.misaligned) {
-      label = 'Misaligned';
+      label = s.misaligned;
       color = Colors.orange.shade800;
     } else if (result.confidenceScore < 60) {
-      label = 'Low confidence';
+      label = s.lowConfidence;
       color = Colors.deepOrange.shade700;
     } else if (result.alignmentStatus == ReadingAlignmentStatus.aligned) {
-      label = 'Normal';
+      label = s.normal;
       color = Colors.teal.shade700;
     } else {
-      label = 'Partial';
+      label = s.partial;
       color = Colors.blueGrey.shade700;
     }
     return Container(

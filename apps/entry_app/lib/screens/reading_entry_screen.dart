@@ -340,11 +340,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                             alignment: AlignmentDirectional.centerStart,
                             child: Chip(
                               visualDensity: VisualDensity.compact,
-                              label: Text(
-                                s.isAr
-                                    ? 'المصدر: $source'
-                                    : 'Source: $source',
-                              ),
+                              label: Text(s.readingSourceLabel(source)),
                             ),
                           ),
                         );

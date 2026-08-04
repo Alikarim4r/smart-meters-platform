@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
@@ -138,11 +140,21 @@ final meterCardSortAscendingProvider =
 final meterReadingCardsRawProvider = FutureProvider.autoDispose
     .family<List<MeterReadingCardData>, MeterReadingCardsDataQuery>(
   (ref, query) async {
+    final link = ref.keepAlive();
+    Timer? disposeTimer;
+    ref.onCancel(() {
+      disposeTimer?.cancel();
+      disposeTimer = Timer(const Duration(minutes: 2), link.close);
+    });
+    ref.onResume(() => disposeTimer?.cancel());
+    ref.onDispose(() => disposeTimer?.cancel());
+
     return ref.read(dashboardRepositoryProvider).getMeterReadingCardsForSite(
           siteId: query.siteId,
           utilityKey: query.utilityKey,
           businessDate: query.businessDate,
-          previousBusinessDate: query.isRangeMode ? null : query.previousBusinessDate,
+          previousBusinessDate:
+              query.isRangeMode ? null : query.previousBusinessDate,
           rangeStart: query.isRangeMode ? query.rangeStart : null,
         );
   },

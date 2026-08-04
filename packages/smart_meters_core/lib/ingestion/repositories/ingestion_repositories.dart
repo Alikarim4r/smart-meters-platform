@@ -78,10 +78,91 @@ class NotificationRepository {
         .toList();
   }
 
+  Future<List<Map<String, dynamic>>> listUnread(String userId) async {
+    final rows = await _client
+        .from('in_app_notifications')
+        .select()
+        .eq('user_id', userId)
+        .eq('is_read', false)
+        .order('generated_at', ascending: false)
+        .limit(50);
+    return (rows as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+  }
+
   Future<void> markRead(String id) async {
     await _client.from('in_app_notifications').update({
       'is_read': true,
       'read_at': DateTime.now().toUtc().toIso8601String(),
     }).eq('id', id);
+  }
+
+  Future<Map<String, dynamic>?> insertNotification({
+    required String organizationId,
+    required String notificationType,
+    required String severity,
+    required String title,
+    required String body,
+    required String eventKey,
+    String? siteId,
+    String? userId,
+    String? relatedEntityType,
+    String? relatedEntityId,
+    Map<String, dynamic> payload = const {},
+  }) async {
+    final row = await _client
+        .from('in_app_notifications')
+        .insert({
+          'organization_id': organizationId,
+          if (siteId != null) 'site_id': siteId,
+          if (userId != null) 'user_id': userId,
+          'notification_type': notificationType,
+          'severity': severity,
+          'title': title,
+          'body': body,
+          'event_key': eventKey,
+          if (relatedEntityType != null)
+            'related_entity_type': relatedEntityType,
+          if (relatedEntityId != null) 'related_entity_id': relatedEntityId,
+          'payload': payload,
+          'is_read': false,
+        })
+        .select()
+        .maybeSingle();
+    return row == null ? null : Map<String, dynamic>.from(row);
+  }
+
+  Future<List<Map<String, dynamic>>> listPreferences({
+    required String userId,
+    required String organizationId,
+  }) async {
+    final rows = await _client
+        .from('notification_preferences')
+        .select()
+        .eq('user_id', userId)
+        .eq('organization_id', organizationId);
+    return (rows as List)
+        .map((e) => Map<String, dynamic>.from(e as Map))
+        .toList();
+  }
+
+  Future<void> upsertPreference({
+    required String userId,
+    required String organizationId,
+    required String notificationType,
+    required bool enabled,
+    String minSeverity = 'info',
+    String? siteId,
+  }) async {
+    await _client.from('notification_preferences').upsert({
+      'user_id': userId,
+      'organization_id': organizationId,
+      'notification_type': notificationType,
+      'enabled': enabled,
+      'min_severity': minSeverity,
+      if (siteId != null) 'site_id': siteId,
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    });
   }
 }

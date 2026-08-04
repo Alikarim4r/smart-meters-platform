@@ -5,555 +5,290 @@ import '../utils/site_system_navigation.dart';
 import 'chart_providers.dart';
 import 'dashboard_providers.dart';
 
-/// True when master conservation module flag is ON (defaults OFF).
-final conservationModuleEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+/// One network round-trip for all conservation flags for a site.
+/// All per-flag providers below read from this cached map.
+final conservationFlagMapProvider =
+    FutureProvider.autoDispose.family<Map<String, bool>, String>((ref, siteId) async {
   final summary =
       await ref.watch(siteDashboardSummaryProvider(siteId).future);
   final flags = ConservationFeatureFlagRepository(
     ref.read(supabaseClientProvider),
   );
-  return flags.isEnabled(
+  return flags.resolvedEnabledByKey(
     organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
     siteId: siteId,
   );
+});
+
+Future<bool> _conservationFlagOn(
+  Ref ref,
+  String siteId,
+  String flagKey, {
+  String? requireAlso,
+}) async {
+  final map = await ref.watch(conservationFlagMapProvider(siteId).future);
+  if (!(map[ConservationFeatureFlags.conservationModule] ?? false)) {
+    return false;
+  }
+  if (flagKey == ConservationFeatureFlags.conservationModule) return true;
+  if (requireAlso != null && !(map[requireAlso] ?? false)) return false;
+  return map[flagKey] ?? false;
+}
+
+/// True when master conservation module flag is ON (defaults OFF).
+final conservationModuleEnabledProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final map = await ref.watch(conservationFlagMapProvider(siteId).future);
+  return map[ConservationFeatureFlags.conservationModule] ?? false;
 });
 
 /// True only when both `conservation_module` and `period_compare` are enabled.
 final conservationPeriodCompareEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.periodCompare,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.periodCompare);
 });
 
 /// True only when both `conservation_module` and `targets` are enabled.
 final conservationTargetsEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.targets,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.targets);
 });
 
 /// True only when both `conservation_module` and `baseline` are enabled.
 final conservationBaselineEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.baseline,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.baseline);
 });
 
 /// True only when both `conservation_module` and `virtual_meters` are enabled.
 final conservationVirtualMetersEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.virtualMeters,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.virtualMeters);
 });
 
 /// True only when both `conservation_module` and `water_balance` are enabled.
 final conservationWaterBalanceEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.waterBalance,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.waterBalance);
 });
 
 /// True only when both `conservation_module` and `energy_balance` are enabled.
 final conservationEnergyBalanceEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.energyBalance,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.energyBalance);
 });
 
 /// True only when both `conservation_module` and `benchmarking` are enabled.
 final conservationBenchmarkingEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.benchmarking,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.benchmarking);
 });
 
 /// True only when both `conservation_module` and `intensity` are enabled.
 final conservationIntensityEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.intensity,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.intensity);
 });
 
 /// True only when both `conservation_module` and `periodic_anomalies` are enabled.
 final conservationPeriodicAnomaliesEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.periodicAnomalies,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.periodicAnomalies,
   );
 });
 
 /// True only when both `conservation_module` and `cop_conservation` are enabled.
 final conservationCopConservationEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.copConservation,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.copConservation,
   );
 });
 
 /// True only when both `conservation_module` and `opportunities` are enabled.
 final conservationOpportunitiesEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.opportunities,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.opportunities);
 });
 
 /// True only when module ∧ opportunities ∧ investigations.
 final conservationInvestigationsEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final opportunitiesOn =
-      await ref.watch(conservationOpportunitiesEnabledProvider(siteId).future);
-  if (!opportunitiesOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.investigations,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.investigations,
+    requireAlso: ConservationFeatureFlags.opportunities,
   );
 });
 
 /// True only when module ∧ opportunities ∧ actions.
 final conservationActionsEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final opportunitiesOn =
-      await ref.watch(conservationOpportunitiesEnabledProvider(siteId).future);
-  if (!opportunitiesOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.actions,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.actions,
+    requireAlso: ConservationFeatureFlags.opportunities,
   );
 });
 
 /// True only when module ∧ opportunities ∧ evidence.
 final conservationEvidenceEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final opportunitiesOn =
-      await ref.watch(conservationOpportunitiesEnabledProvider(siteId).future);
-  if (!opportunitiesOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.evidence,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.evidence,
+    requireAlso: ConservationFeatureFlags.opportunities,
   );
 });
 
 /// True only when `conservation_module` ∧ `savings_estimation`.
 final conservationSavingsEstimationEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.savingsEstimation,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.savingsEstimation,
   );
 });
 
 /// True only when `conservation_module` ∧ `savings_verification`.
 final conservationSavingsVerificationEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.savingsVerification,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.savingsVerification,
   );
 });
 
 /// True only when `conservation_module` ∧ `cost_roi`.
 final conservationCostRoiEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.costRoi,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.costRoi);
 });
 
 /// True only when `conservation_module` ∧ `conservation_reports`.
 final conservationReportsEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationReports,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.conservationReports,
   );
 });
 
-/// Conservation nav/section visible when module + any P1–P4 child flag.
+/// Keys that make the Conservation nav/section visible (any one is enough).
+const _conservationSectionChildKeys = <String>[
+  ConservationFeatureFlags.periodCompare,
+  ConservationFeatureFlags.targets,
+  ConservationFeatureFlags.baseline,
+  ConservationFeatureFlags.virtualMeters,
+  ConservationFeatureFlags.waterBalance,
+  ConservationFeatureFlags.energyBalance,
+  ConservationFeatureFlags.benchmarking,
+  ConservationFeatureFlags.intensity,
+  ConservationFeatureFlags.periodicAnomalies,
+  ConservationFeatureFlags.copConservation,
+  ConservationFeatureFlags.opportunities,
+  ConservationFeatureFlags.investigations,
+  ConservationFeatureFlags.actions,
+  ConservationFeatureFlags.savingsEstimation,
+  ConservationFeatureFlags.savingsVerification,
+  ConservationFeatureFlags.costRoi,
+  ConservationFeatureFlags.conservationReports,
+  ConservationFeatureFlags.weatherNormalization,
+  ConservationFeatureFlags.occupancyNormalization,
+  ConservationFeatureFlags.savingPersistence,
+  ConservationFeatureFlags.carbonAccounting,
+  ConservationFeatureFlags.portfolioOptimization,
+  ConservationFeatureFlags.forecasting,
+  ConservationFeatureFlags.recommendationEngine,
+];
+
+/// Conservation nav/section visible when module + any P1–P5 child flag.
 final conservationSectionVisibleProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  if (await ref.watch(conservationPeriodCompareEnabledProvider(siteId).future)) {
-    return true;
+  final map = await ref.watch(conservationFlagMapProvider(siteId).future);
+  if (!(map[ConservationFeatureFlags.conservationModule] ?? false)) {
+    return false;
   }
-  if (await ref.watch(conservationTargetsEnabledProvider(siteId).future)) {
-    return true;
+  for (final key in _conservationSectionChildKeys) {
+    if (map[key] ?? false) return true;
   }
-  if (await ref.watch(conservationBaselineEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationVirtualMetersEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationWaterBalanceEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationEnergyBalanceEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationBenchmarkingEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationIntensityEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationPeriodicAnomaliesEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationCopConservationEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationOpportunitiesEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationInvestigationsEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationActionsEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationSavingsEstimationEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationSavingsVerificationEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationCostRoiEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationReportsEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationWeatherNormalizationEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationOccupancyNormalizationEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationSavingPersistenceEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationCarbonAccountingEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref
-      .watch(conservationPortfolioOptimizationEnabledProvider(siteId).future)) {
-    return true;
-  }
-  if (await ref.watch(conservationForecastingEnabledProvider(siteId).future)) {
-    return true;
-  }
-  return ref
-      .watch(conservationRecommendationEngineEnabledProvider(siteId).future);
+  return false;
 });
 
 /// True when `conservation_module` ∧ `weather_normalization`.
 final conservationWeatherNormalizationEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.weatherNormalization,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.weatherNormalization,
   );
 });
 
 /// True when `conservation_module` ∧ `occupancy_normalization`.
 final conservationOccupancyNormalizationEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.occupancyNormalization,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.occupancyNormalization,
   );
 });
 
 /// True when `conservation_module` ∧ `saving_persistence`.
 final conservationSavingPersistenceEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.savingPersistence,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.savingPersistence,
   );
 });
 
 /// True when `conservation_module` ∧ `carbon_accounting`.
 final conservationCarbonAccountingEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.carbonAccounting,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.carbonAccounting,
   );
 });
 
 /// True when `conservation_module` ∧ `portfolio_optimization`.
 final conservationPortfolioOptimizationEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.portfolioOptimization,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.portfolioOptimization,
   );
 });
 
 /// True when `conservation_module` ∧ `forecasting`.
 final conservationForecastingEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.forecasting,
-    siteId: siteId,
-  );
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(ref, siteId, ConservationFeatureFlags.forecasting);
 });
 
 /// True when `conservation_module` ∧ `recommendation_engine`.
 final conservationRecommendationEngineEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final moduleOn =
-      await ref.watch(conservationModuleEnabledProvider(siteId).future);
-  if (!moduleOn) return false;
-  final summary =
-      await ref.watch(siteDashboardSummaryProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  return flags.isEnabled(
-    organizationId: summary.site.organizationId,
-    flagKey: ConservationFeatureFlags.recommendationEngine,
-    siteId: siteId,
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) {
+  return _conservationFlagOn(
+    ref,
+    siteId,
+    ConservationFeatureFlags.recommendationEngine,
   );
 });
 
@@ -1275,11 +1010,19 @@ class ConservationAnomalyBundle {
     required this.title,
     required this.result,
     this.unitCode,
+    this.historicalPeriodConsumptions = const [],
+    this.currentPeriodConsumption,
   });
 
   final String title;
   final ConsumptionAnomalyResult result;
   final String? unitCode;
+
+  /// Prior equal-length windows (oldest → newest), for trend bars.
+  final List<double?> historicalPeriodConsumptions;
+
+  /// Current window total used for anomaly detection.
+  final double? currentPeriodConsumption;
 }
 
 String _isoDate(DateTime d) {
@@ -1740,6 +1483,8 @@ final conservationAnomaliesProvider = FutureProvider.autoDispose
           title: '${system.label} consumption',
           result: detected,
           unitCode: unitCode,
+          historicalPeriodConsumptions: historical,
+          currentPeriodConsumption: current.value,
         ),
       );
     }

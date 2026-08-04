@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/conservation_strings.dart';
+
 /// Compact dashboard summary for Phase 6 source health (flag-gated).
 /// Mount only when `source_health` platform flag is ON.
 class DataSourcesSummaryCard extends StatelessWidget {
@@ -23,6 +25,7 @@ class DataSourcesSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final s = ConservationStrings.of(context);
     return Card(
       child: InkWell(
         onTap: onOpenDetails,
@@ -31,17 +34,17 @@ class DataSourcesSummaryCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('Data sources', style: theme.textTheme.titleMedium),
+              Text(s.dataSources, style: theme.textTheme.titleMedium),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 12,
                 runSpacing: 8,
                 children: [
-                  _chip('Healthy', healthy, Colors.green),
-                  _chip('Delayed', delayed, Colors.orange),
-                  _chip('Imports pending', importsPending, Colors.blueGrey),
+                  _chip(s.healthy, healthy, Colors.green),
+                  _chip(s.delayed, delayed, Colors.orange),
+                  _chip(s.importsPending, importsPending, Colors.blueGrey),
                   _chip(
-                    'Availability alerts',
+                    s.availabilityAlerts,
                     availabilityAlerts,
                     Colors.redAccent,
                   ),
@@ -50,13 +53,13 @@ class DataSourcesSummaryCard extends StatelessWidget {
               if (latestSync != null) ...[
                 const SizedBox(height: 8),
                 Text(
-                  'Latest sync: ${latestSync!.toLocal()}',
+                  s.latestSync(latestSync!.toLocal().toString()),
                   style: theme.textTheme.bodySmall,
                 ),
               ],
               const SizedBox(height: 4),
               Text(
-                'Details in drill-down. Data Availability ≠ Equipment Fault.',
+                s.dataAvailabilityNotFault,
                 style: theme.textTheme.bodySmall,
               ),
             ],

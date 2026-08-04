@@ -307,9 +307,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.track_changes_outlined),
-                  label: Text(
-                    s.isAr ? 'أهداف الترشيد' : 'Conservation targets',
-                  ),
+                  label: Text(s.conservationTargets),
                 ),
               ],
               // Conservation baselines: link only when module + baseline flags ON.
@@ -328,9 +326,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.insights_outlined),
-                  label: Text(
-                    s.isAr ? 'خطوط الأساس' : 'Conservation baselines',
-                  ),
+                  label: Text(s.conservationBaselines),
                 ),
               ],
               // Virtual meters: link only when module + virtual_meters flags ON.
@@ -352,9 +348,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.account_tree_outlined),
-                  label: Text(
-                    s.isAr ? 'عدادات افتراضية' : 'Virtual meters',
-                  ),
+                  label: Text(s.virtualMeters),
                 ),
               ],
               // Balance groups: module + water_balance OR energy_balance.
@@ -376,9 +370,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.account_balance_outlined),
-                  label: Text(
-                    s.isAr ? 'مجموعات التوازن' : 'Balance groups',
-                  ),
+                  label: Text(s.balanceGroups),
                 ),
               ],
               // Site conservation profile: module + benchmarking OR intensity.
@@ -399,11 +391,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.apartment_outlined),
-                  label: Text(
-                    s.isAr
-                        ? 'ملف ترشيد الموقع'
-                        : 'Site conservation profile',
-                  ),
+                  label: Text(s.siteConservationProfile),
                 ),
               ],
               // Opportunities: module + opportunities.
@@ -425,9 +413,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.lightbulb_outline),
-                  label: Text(
-                    s.isAr ? 'فرص الترشيد' : 'Conservation opportunities',
-                  ),
+                  label: Text(s.conservationOpportunities),
                 ),
               ],
               // Actions: module + opportunities + actions.
@@ -446,9 +432,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.task_alt_outlined),
-                  label: Text(
-                    s.isAr ? 'إجراءات الترشيد' : 'Conservation actions',
-                  ),
+                  label: Text(s.conservationActions),
                 ),
               ],
               // M&V: module + savings_estimation OR savings_verification.
@@ -467,9 +451,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.verified_outlined),
-                  label: Text(
-                    s.isAr ? 'القياس والتحقق' : 'Measurement & Verification',
-                  ),
+                  label: Text(s.measurementVerification),
                 ),
               ],
               // Tariffs: module + cost_roi.
@@ -488,9 +470,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.payments_outlined),
-                  label: Text(
-                    s.isAr ? 'تعرفة المرافق' : 'Utility tariffs',
-                  ),
+                  label: Text(s.utilityTariffs),
                 ),
               ],
               // Portfolio: module + portfolio_optimization (org-level screen).
@@ -511,9 +491,7 @@ class SiteDetailScreen extends ConsumerWidget {
                     );
                   },
                   icon: const Icon(Icons.account_tree_outlined),
-                  label: Text(
-                    s.isAr ? 'محفظة الترشيد' : 'Conservation portfolio',
-                  ),
+                  label: Text(s.conservationPortfolio),
                 ),
               ],
               if (ref.watch(canEditReportLogoSecondaryProvider)) ...[

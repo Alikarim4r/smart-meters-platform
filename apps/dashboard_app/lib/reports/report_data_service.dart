@@ -54,6 +54,8 @@ class ReportDataService {
     required DateTime businessDate,
     String? categoryId,
     ReportType type = ReportType.siteSummary,
+    ReportFormat format = ReportFormat.pdf,
+    bool includeCharts = false,
     DateTime? rangeStart,
     DateTime? rangeEnd,
   }) async {
@@ -63,95 +65,199 @@ class ReportDataService {
       rangeStart: rangeStart,
       rangeEnd: rangeEnd,
     );
-    final readingsRequired = type == ReportType.readings;
 
-    final summary = await _loadEssential(
-      'A',
-      () => _repository.getSiteDashboardSummary(
-        siteId: siteId,
-        businessDate: businessDate,
-      ),
-    );
+    // Heavy consumption scan:
+    // - always for consumption / category / readings-with-consumption exports
+    // - for site summary only when charts (or Excel rankings) requested
+    final isConsumptionReport = type == ReportType.consumption ||
+        type == ReportType.categoryConsumption;
+    final needsTrend = isConsumptionReport ||
+        (includeCharts && type == ReportType.siteSummary);
+    final loadRankings = isConsumptionReport ||
+        (includeCharts && type == ReportType.siteSummary);
+    final needsReadings = type == ReportType.readings ||
+        isConsumptionReport ||
+        // Overview PDF without charts: skip readings sample for speed.
+        (type == ReportType.siteSummary &&
+            (includeCharts || format == ReportFormat.excel));
+    final needsSharedConsumption = needsTrend || loadRankings;
+    final readingsRequired = type == ReportType.readings;
+    final readingsLimit = _readingsLimit(type: type, format: format);
+    // Overview PDF without charts: avoid consumption rebuild + 180-day meter scan.
+    final useLiteMetadata = type == ReportType.siteSummary &&
+        !includeCharts &&
+        !needsSharedConsumption;
+
+    late SiteDashboardSummary summary;
+    late List<SiteCategorySummary> categories;
+    late List<DashboardMeterRow> meters;
+    late TodayReadingProgress completion;
+    late List<DashboardExportReadingRow> readings;
+    late List<Map<String, dynamic>> sharedConsumption;
+    late PolicySettings policy;
+
+    if (useLiteMetadata) {
+      // One metadata round-trip + slim readings sample in parallel.
+      reportExportLog('A', 'start (lite one-shot)');
+      try {
+        final liteLimit = format == ReportFormat.pdf ? 40 : 80;
+        final results = await Future.wait<Object>([
+          _repository.getSiteReportLiteMetadata(
+            siteId: siteId,
+            businessDate: businessDate,
+          ),
+          needsReadings
+              ? _loadReadings(
+                  siteId: siteId,
+                  fromDate: range.from,
+                  toDate: range.to,
+                  categoryId: categoryId,
+                  essential: readingsRequired,
+                  limit: liteLimit,
+                  slim: true,
+                )
+              : Future<List<DashboardExportReadingRow>>.value(const []),
+          _policySettings.getEffectivePolicyForSite(siteId).then(
+                (value) => value,
+                onError: (_) => PolicySettings.defaults(''),
+              ),
+        ]);
+        final lite = results[0] as SiteReportLiteMetadata;
+        summary = lite.summary;
+        categories = lite.categories;
+        meters = lite.meters;
+        completion = lite.completion;
+        readings = results[1] as List<DashboardExportReadingRow>;
+        final loadedPolicy = results[2] as PolicySettings;
+        policy = loadedPolicy.organizationId.isEmpty
+            ? PolicySettings.defaults(summary.site.organizationId)
+            : loadedPolicy;
+        sharedConsumption = const [];
+        reportExportLog(
+          'A',
+          'lite ok (meters=${meters.length}, readings=${readings.length})',
+        );
+      } catch (error, stack) {
+        reportExportLog('A', 'lite failed', error: error, stack: stack);
+        rethrow;
+      }
+      reportExportLog('E', 'skipped (charts/rankings not requested)');
+    } else {
+      reportExportLog('A', 'start');
+      try {
+        final parallel = await Future.wait<Object>([
+          _repository.getSiteDashboardSummary(
+            siteId: siteId,
+            businessDate: businessDate,
+          ),
+          _repository.getSiteCategoriesSummary(
+            siteId: siteId,
+            businessDate: businessDate,
+          ),
+          _repository.getSiteMetersWithLatestReadings(
+            siteId: siteId,
+            businessDate: businessDate,
+          ),
+          _repository.getTodayCompletion(
+            siteId: siteId,
+            businessDate: businessDate,
+          ),
+        ]);
+        summary = parallel[0] as SiteDashboardSummary;
+        categories = parallel[1] as List<SiteCategorySummary>;
+        meters = parallel[2] as List<DashboardMeterRow>;
+        completion = parallel[3] as TodayReadingProgress;
+        reportExportLog('A', 'ok');
+        reportExportLog('B', 'ok');
+        reportExportLog('C', 'ok');
+        reportExportLog('completion', 'ok');
+      } catch (error, stack) {
+        reportExportLog('A', 'failed', error: error, stack: stack);
+        rethrow;
+      }
+
+      policy = await _loadOptional(
+        'policy',
+        () => _policySettings.getEffectivePolicyForSite(siteId),
+        fallback: PolicySettings.defaults(summary.site.organizationId),
+      );
+
+      sharedConsumption = const [];
+      if (needsSharedConsumption) {
+        reportExportLog('E', 'shared consumption start');
+        try {
+          sharedConsumption = await _repository.fetchConsumptionRowsForReport(
+            siteId: siteId,
+            from: range.from,
+            to: range.to,
+            categoryId: categoryId,
+            bucket: range.bucket,
+          );
+          reportExportLog(
+            'E',
+            'shared consumption ok (${sharedConsumption.length} rows)',
+          );
+        } catch (error, stack) {
+          reportExportLog(
+            'E',
+            'shared consumption failed (empty)',
+            error: error,
+            stack: stack,
+          );
+          sharedConsumption = const [];
+        }
+      } else {
+        reportExportLog('E', 'skipped (charts/rankings not requested)');
+      }
+
+      readings = needsReadings
+          ? await _loadReadings(
+              siteId: siteId,
+              fromDate: range.from,
+              toDate: range.to,
+              categoryId: categoryId,
+              essential: readingsRequired,
+              limit: readingsLimit,
+              prefetchedConsumptionRows: sharedConsumption,
+              slim: false,
+            )
+          : const <DashboardExportReadingRow>[];
+    }
+
     final site = summary.site;
 
-    final categories = await _loadEssential(
-      'B',
-      () => _repository.getSiteCategoriesSummary(
-        siteId: siteId,
-        businessDate: businessDate,
-      ),
-    );
-    final meters = await _loadEssential(
-      'C',
-      () => _repository.getSiteMetersWithLatestReadings(
-        siteId: siteId,
-        businessDate: businessDate,
-      ),
-    );
+    final consumptionTrend = needsTrend
+        ? _trendFromRows(rows: sharedConsumption, range: range)
+        : const SiteConsumptionTrend(
+            series: [],
+            emptyMessage: 'Charts not included in this export',
+          );
 
-    final completion = await _loadOptional(
-      'completion',
-      () => _repository.getTodayCompletion(
-        siteId: siteId,
-        businessDate: businessDate,
-      ),
-      fallback: const TodayReadingProgress(submitted: 0, total: 0, pending: 0),
-    );
-
-    final consumptionTrend = await _loadOptional(
-      'E',
-      () => _repository.getSiteConsumptionTrend(
-        siteId: siteId,
-        period: period,
-        businessDate: businessDate,
-        rangeOverride: range,
-      ),
-      fallback: const SiteConsumptionTrend(
-        series: [],
-        emptyMessage: 'Consumption data unavailable',
-      ),
-    );
-
-    final readings = await _loadReadings(
-      siteId: siteId,
-      fromDate: range.from,
-      toDate: range.to,
-      categoryId: categoryId,
-      essential: readingsRequired,
-    );
-
-    final policy = await _loadOptional(
-      'policy',
-      () => _policySettings.getEffectivePolicyForSite(siteId),
-      fallback: PolicySettings.defaults(site.organizationId),
-    );
-
-    final alerts = policy.includeAlertSectionDefault
-        ? await _loadAlertsOptional(
-            step: 'alerts-site',
-            loader: () => _alertRepository.getSiteAlerts(
-              siteId: siteId,
-              businessDate: businessDate,
-            ),
+    final rankings = loadRankings
+        ? _rankingsFromRows(
+            rows: sharedConsumption,
+            categories: categories,
+            categoryId: categoryId,
           )
-        : <DashboardAlert>[];
+        : <String, List<CategoryRankingItem>>{};
 
-    final rankings = await _loadRankings(
-      siteId: siteId,
-      categories: categories,
-      categoryId: categoryId,
-      period: period,
-      businessDate: businessDate,
-      rangeOverride: range,
-    );
+    // Alerts are expensive (another readings window) — skip on export.
+    reportExportLog('alerts-site', 'skipped (export fast path)');
+    const alerts = <DashboardAlert>[];
 
-    final copResults = await _loadCopResults(
-      siteId: siteId,
-      type: type,
-      period: period,
-      businessDate: businessDate,
-      rangeOverride: range,
-    );
+    // COP only for dedicated COP reports (each group re-scans consumption).
+    final copResults = type == ReportType.cop
+        ? await _loadCopResults(
+            siteId: siteId,
+            type: type,
+            period: period,
+            businessDate: businessDate,
+            rangeOverride: range,
+          )
+        : const <CopTrendResult>[];
+    if (type != ReportType.cop) {
+      reportExportLog('F', 'skipped (not COP report)');
+    }
 
     final conservation = await _loadConservationSummary(
       siteId: siteId,
@@ -206,6 +312,59 @@ class ReportDataService {
     );
   }
 
+  int _readingsLimit({
+    required ReportType type,
+    required ReportFormat format,
+  }) {
+    if (type == ReportType.readings) return 5000;
+    if (format == ReportFormat.pdf) return 200;
+    return 2000;
+  }
+
+  SiteConsumptionTrend _trendFromRows({
+    required List<Map<String, dynamic>> rows,
+    required ChartPeriodRange range,
+  }) {
+    reportExportLog('E', 'derive trend start');
+    final series = aggregateCategoryConsumption(rows: rows, range: range);
+    if (series.isEmpty) {
+      reportExportLog('E', 'derive trend ok (empty)');
+      return const SiteConsumptionTrend(
+        series: [],
+        emptyMessage: 'No readings for this period',
+      );
+    }
+    reportExportLog('E', 'derive trend ok (${series.length} series)');
+    return SiteConsumptionTrend(series: series);
+  }
+
+  Map<String, List<CategoryRankingItem>> _rankingsFromRows({
+    required List<Map<String, dynamic>> rows,
+    required List<SiteCategorySummary> categories,
+    String? categoryId,
+  }) {
+    final rankings = <String, List<CategoryRankingItem>>{};
+    final targetCategories = categoryId == null
+        ? categories
+        : categories.where((c) => c.category.id == categoryId);
+
+    for (final category in targetCategories) {
+      final step = 'ranking-${category.category.code}';
+      reportExportLog(step, 'start');
+      try {
+        rankings[category.category.id] = aggregateMeterRanking(
+          rows: rows,
+          categoryId: category.category.id,
+        );
+        reportExportLog(step, 'ok');
+      } catch (error, stack) {
+        reportExportLog(step, 'failed (skipping)', error: error, stack: stack);
+        rankings[category.category.id] = const [];
+      }
+    }
+    return rankings;
+  }
+
   ChartPeriodRange _resolveReportRange({
     required ChartPeriod period,
     required DateTime businessDate,
@@ -227,18 +386,6 @@ class ReportDataService {
       );
     }
     return chartPeriodRange(period: period, businessDate: businessDate);
-  }
-
-  Future<T> _loadEssential<T>(String step, Future<T> Function() loader) async {
-    reportExportLog(step, 'start');
-    try {
-      final result = await loader();
-      reportExportLog(step, 'ok');
-      return result;
-    } catch (error, stack) {
-      reportExportLog(step, 'failed', error: error, stack: stack);
-      rethrow;
-    }
   }
 
   Future<T> _loadOptional<T>(
@@ -263,15 +410,28 @@ class ReportDataService {
     required DateTime toDate,
     String? categoryId,
     required bool essential,
+    required int limit,
+    List<Map<String, dynamic>>? prefetchedConsumptionRows,
+    bool slim = false,
   }) async {
-    reportExportLog('D', 'start');
+    reportExportLog('D', 'start (limit=$limit${slim ? ", slim" : ""})');
     try {
-      final result = await _repository.getExportReadings(
-        siteId: siteId,
-        fromDate: fromDate,
-        toDate: toDate,
-        categoryId: categoryId,
-      );
+      final result = slim
+          ? await _repository.getExportReadingsSlim(
+              siteId: siteId,
+              fromDate: fromDate,
+              toDate: toDate,
+              categoryId: categoryId,
+              limit: limit > 100 ? 100 : limit,
+            )
+          : await _repository.getExportReadings(
+              siteId: siteId,
+              fromDate: fromDate,
+              toDate: toDate,
+              categoryId: categoryId,
+              limit: limit,
+              prefetchedConsumptionRows: prefetchedConsumptionRows,
+            );
       reportExportLog('D', 'ok (${result.length} rows)');
       return result;
     } catch (error, stack) {
@@ -296,39 +456,6 @@ class ReportDataService {
       reportExportLog(step, 'failed (skipping alerts)', error: error, stack: stack);
       return const [];
     }
-  }
-
-  Future<Map<String, List<CategoryRankingItem>>> _loadRankings({
-    required String siteId,
-    required List<SiteCategorySummary> categories,
-    required ChartPeriod period,
-    required DateTime businessDate,
-    String? categoryId,
-    ChartPeriodRange? rangeOverride,
-  }) async {
-    final rankings = <String, List<CategoryRankingItem>>{};
-    final targetCategories = categoryId == null
-        ? categories
-        : categories.where((c) => c.category.id == categoryId);
-
-    for (final category in targetCategories) {
-      final step = 'ranking-${category.category.code}';
-      reportExportLog(step, 'start');
-      try {
-        rankings[category.category.id] = await _repository.getCategoryRanking(
-          siteId: siteId,
-          categoryId: category.category.id,
-          period: period,
-          businessDate: businessDate,
-          rangeOverride: rangeOverride,
-        );
-        reportExportLog(step, 'ok');
-      } catch (error, stack) {
-        reportExportLog(step, 'failed (skipping)', error: error, stack: stack);
-        rankings[category.category.id] = const [];
-      }
-    }
-    return rankings;
   }
 
   Future<List<CopTrendResult>> _loadCopResults({
@@ -382,8 +509,7 @@ class ReportDataService {
     }
   }
 
-  /// Loads M&V summary when conservation report type or reports flag is ON.
-  /// Verified totals only from status=verified. Missing tariff → Cost Avoided N/A.
+  /// Loads M&V only for Conservation reports (or empty shell when type is conservation).
   Future<ConservationReportSummary?> _loadConservationSummary({
     required String siteId,
     required String organizationId,
@@ -392,39 +518,27 @@ class ReportDataService {
     final client = _client;
     if (client == null) return null;
 
+    // Avoid extra flag/network work on every site summary when demo flags are ON.
+    if (type != ReportType.conservation) {
+      reportExportLog('cons', 'skipped (not conservation report)');
+      return null;
+    }
+
     reportExportLog('cons', 'load conservation start');
     try {
       final flags = ConservationFeatureFlagRepository(client);
-      final module = await flags.isEnabled(
+      final map = await flags.resolvedEnabledByKey(
         organizationId: organizationId,
-        flagKey: ConservationFeatureFlags.conservationModule,
         siteId: siteId,
       );
+      final module =
+          map[ConservationFeatureFlags.conservationModule] ?? false;
       final reportsOn = module &&
-          await flags.isEnabled(
-            organizationId: organizationId,
-            flagKey: ConservationFeatureFlags.conservationReports,
-            siteId: siteId,
-          );
-
-      // Always allow loading for conservation type (may be empty when flag off).
-      if (!reportsOn && type != ReportType.conservation) {
-        reportExportLog('cons', 'skipped (flag off)');
-        return null;
-      }
-
+          (map[ConservationFeatureFlags.conservationReports] ?? false);
       final estimationOn = module &&
-          await flags.isEnabled(
-            organizationId: organizationId,
-            flagKey: ConservationFeatureFlags.savingsEstimation,
-            siteId: siteId,
-          );
+          (map[ConservationFeatureFlags.savingsEstimation] ?? false);
       final verificationOn = module &&
-          await flags.isEnabled(
-            organizationId: organizationId,
-            flagKey: ConservationFeatureFlags.savingsVerification,
-            siteId: siteId,
-          );
+          (map[ConservationFeatureFlags.savingsVerification] ?? false);
 
       if (!estimationOn && !verificationOn) {
         reportExportLog('cons', 'ok (no estimation/verification flags)');
@@ -474,17 +588,14 @@ class ReportDataService {
       );
     } catch (error, stack) {
       reportExportLog('cons', 'failed', error: error, stack: stack);
-      if (type == ReportType.conservation) {
-        return const ConservationReportSummary(
-          records: [],
-          estimatedSavingTotal: 0,
-          verifiedSavingTotal: 0,
-          costAvoidedTotal: null,
-          verificationPendingCount: 0,
-          flagEnabled: false,
-        );
-      }
-      return null;
+      return const ConservationReportSummary(
+        records: [],
+        estimatedSavingTotal: 0,
+        verifiedSavingTotal: 0,
+        costAvoidedTotal: null,
+        verificationPendingCount: 0,
+        flagEnabled: false,
+      );
     }
   }
 
@@ -494,7 +605,9 @@ class ReportDataService {
       ReportType.readings => 'Site Readings Report',
       ReportType.consumption => 'Site Consumption Report',
       ReportType.categoryConsumption =>
-        categoryName == null ? 'Category Consumption Report' : '$categoryName Consumption Report',
+        categoryName == null
+            ? 'Category Consumption Report'
+            : '$categoryName Consumption Report',
       ReportType.cop => 'COP Report',
       ReportType.allSitesSummary => 'All Sites Summary',
       ReportType.conservation => 'Conservation Report',

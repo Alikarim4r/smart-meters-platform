@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
+import '../providers/preferences_providers.dart';
 
 /// CSV import preview/validate workflow (no silent write).
 class ImportCenterScreen extends ConsumerStatefulWidget {
@@ -32,7 +34,7 @@ class _ImportCenterScreenState extends ConsumerState<ImportCenterScreen> {
     super.dispose();
   }
 
-  Future<void> _runPreview() async {
+  Future<void> _runPreview(AdminStrings s) async {
     setState(() {
       _error = null;
       _preview = null;
@@ -48,10 +50,7 @@ class _ImportCenterScreenState extends ConsumerState<ImportCenterScreen> {
         fileFingerprint: _fingerprint!,
       );
       if (dup) {
-        setState(() {
-          _error =
-              'Duplicate file fingerprint — already committed. Re-upload blocked (idempotent).';
-        });
+        setState(() => _error = s.duplicateFileBlocked);
         return;
       }
 
@@ -73,9 +72,53 @@ class _ImportCenterScreenState extends ConsumerState<ImportCenterScreen> {
         expectedSiteId: widget.siteId,
       );
       setState(() => _preview = preview);
+      await _notifyImportPreview(preview);
     } catch (e) {
       setState(() => _error = e.toString());
+      await _notifyImportFailure(e.toString());
     }
+  }
+
+  Future<void> _notifyImportPreview(ImportPreviewResult preview) async {
+    final session = ref.read(notificationSessionProvider);
+    if (session == null) return;
+    final failed = preview.rejectedCount > 0 || !preview.headersValid;
+    await session.emit(
+      NotificationDraft(
+        organizationId: widget.organizationId,
+        siteId: widget.siteId,
+        notificationType: failed ? 'import_failed' : 'import_completed',
+        severity: failed ? 'warning' : 'info',
+        title: failed ? 'معاينة استيراد بأخطاء' : 'معاينة استيراد جاهزة',
+        body:
+            'مقبول: ${preview.acceptedCount} · مرفوض: ${preview.rejectedCount} · مكرر: ${preview.duplicatedCount}',
+        eventKey:
+            'import|preview|${_fingerprint ?? DateTime.now().millisecondsSinceEpoch}',
+      ),
+    );
+    await HomeWidgetSync(androidWidgetNames: AppWidgetNames.admin).syncAdmin(
+      unreadCount: failed ? 1 : 0,
+      topTitle: failed ? 'معاينة استيراد بأخطاء' : 'معاينة استيراد جاهزة',
+      importStatus: failed ? 'import_failed' : 'import_completed',
+      importHint:
+          'مقبول ${preview.acceptedCount} / مرفوض ${preview.rejectedCount}',
+    );
+  }
+
+  Future<void> _notifyImportFailure(String message) async {
+    final session = ref.read(notificationSessionProvider);
+    if (session == null) return;
+    await session.emit(
+      NotificationDraft(
+        organizationId: widget.organizationId,
+        siteId: widget.siteId,
+        notificationType: 'import_failed',
+        severity: 'critical',
+        title: 'فشل معاينة الاستيراد',
+        body: message.length > 160 ? '${message.substring(0, 160)}…' : message,
+        eventKey: 'import|error|${DateTime.now().millisecondsSinceEpoch}',
+      ),
+    );
   }
 
   Future<Map<String, ImportMeterRef>> _loadMetersByCode() async {
@@ -115,6 +158,8 @@ class _ImportCenterScreenState extends ConsumerState<ImportCenterScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final s = AdminStrings(ref.watch(adminLocaleProvider));
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -122,7 +167,7 @@ class _ImportCenterScreenState extends ConsumerState<ImportCenterScreen> {
           children: [
             Expanded(
               child: Text(
-                'Import Center',
+                s.importCenter,
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -133,57 +178,63 @@ class _ImportCenterScreenState extends ConsumerState<ImportCenterScreen> {
                 );
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Template CSV copied')),
+                  SnackBar(content: Text(s.templateCsvCopied)),
                 );
               },
               icon: const Icon(Icons.download_outlined),
-              label: const Text('Template'),
+              label: Text(s.importTemplateCsv),
             ),
           ],
         ),
         const SizedBox(height: 8),
-        const Text(
-          'Paste CSV → Preview → Validate. Commit is admin-confirmed only. '
-          'Corrections use the existing Corrections path — no silent overwrite.',
-        ),
+        Text(s.importPasteHint),
         const SizedBox(height: 12),
         TextField(
           controller: _controller,
           maxLines: 12,
-          decoration: const InputDecoration(
-            border: OutlineInputBorder(),
-            hintText: 'Paste CSV contents…',
+          decoration: InputDecoration(
+            border: const OutlineInputBorder(),
+            hintText: s.pasteCsvContents,
           ),
         ),
         const SizedBox(height: 12),
         FilledButton(
-          onPressed: _runPreview,
-          child: const Text('Preview & Validate'),
+          onPressed: () => _runPreview(s),
+          child: Text(s.previewAndValidate),
         ),
         if (_fingerprint != null) ...[
           const SizedBox(height: 8),
-          Text('Fingerprint: $_fingerprint',
-              style: Theme.of(context).textTheme.bodySmall),
+          Text(
+            '${s.fingerprint}: $_fingerprint',
+            style: Theme.of(context).textTheme.bodySmall,
+          ),
         ],
         if (_error != null) ...[
           const SizedBox(height: 12),
-          Text(_error!, style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          Text(
+            _error!,
+            style: TextStyle(color: Theme.of(context).colorScheme.error),
+          ),
         ],
         if (_preview != null) ...[
           const SizedBox(height: 16),
           Text(
-            'Accepted ${_preview!.acceptedCount} · '
-            'Rejected ${_preview!.rejectedCount} · '
-            'Duplicated ${_preview!.duplicatedCount}',
+            s.importSummary(
+              accepted: _preview!.acceptedCount,
+              rejected: _preview!.rejectedCount,
+              duplicated: _preview!.duplicatedCount,
+            ),
             style: Theme.of(context).textTheme.titleMedium,
           ),
           if (!_preview!.headersValid)
-            Text('Header errors: ${_preview!.headerErrors.join(", ")}'),
+            Text(
+              '${s.headerErrors}: ${_preview!.headerErrors.join(", ")}',
+            ),
           const SizedBox(height: 8),
           ..._preview!.rows.take(50).map(
                 (r) => ListTile(
                   dense: true,
-                  title: Text('Row ${r.rowNumber}: ${r.status.name}'),
+                  title: Text(s.importRowStatus(r.rowNumber, r.status.name)),
                   subtitle: Text(r.errorMessage ?? r.raw.toString()),
                 ),
               ),
@@ -191,9 +242,7 @@ class _ImportCenterScreenState extends ConsumerState<ImportCenterScreen> {
             Padding(
               padding: const EdgeInsets.only(top: 12),
               child: Text(
-                'Partial acceptance allowed for ${_preview!.acceptedCount} rows. '
-                'Commit writes via authenticated batch after explicit admin action '
-                '(not auto-run from this preview).',
+                s.partialAcceptanceNote(_preview!.acceptedCount),
                 style: Theme.of(context).textTheme.bodySmall,
               ),
             ),

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../l10n/conservation_strings.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../../theme/dashboard_palette.dart';
@@ -19,6 +20,7 @@ class PeriodComparisonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final insufficient = result.isInsufficient;
     return Card(
       elevation: 0,
@@ -41,7 +43,7 @@ class PeriodComparisonCard extends StatelessWidget {
             ),
             const SizedBox(height: 4),
             Text(
-              result.directionLabel,
+              s.localizeDomainLabel(result.directionLabel),
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 fontSize: 13,
@@ -53,35 +55,38 @@ class PeriodComparisonCard extends StatelessWidget {
             const SizedBox(height: 10),
             if (insufficient)
               Text(
-                result.message ?? 'Insufficient Data',
+                s.localizeDomainMessage(result.message),
                 style: TextStyle(
                   fontSize: 12,
                   color: DashboardPalette.textMuted,
                 ),
               )
             else ...[
-              _kv('Current', _fmt(result.currentValue, result.unitCode)),
+              _kv(s.current, _fmt(result.currentValue, result.unitCode, s)),
               _kv(
-                'Comparison',
-                _fmt(result.comparisonValue, result.unitCode),
+                s.comparison,
+                _fmt(result.comparisonValue, result.unitCode, s),
               ),
               _kv(
-                'Absolute difference',
-                _fmt(result.absoluteDifference, result.unitCode),
+                s.absoluteDifference,
+                _fmt(result.absoluteDifference, result.unitCode, s),
               ),
-              _kv('Percentage change', result.percentageDisplay),
+              _kv(s.percentageChange, result.percentageDisplay),
             ],
             const SizedBox(height: 8),
             Text(
-              'Confidence: ${result.confidenceScore} '
-              '(current ${result.currentPeriodConfidence} · '
-              'comparison ${result.comparisonPeriodConfidence})',
+              s.periodConfidenceDetail(
+                confidence: result.confidenceScore,
+                current: result.currentPeriodConfidence,
+                comparison: result.comparisonPeriodConfidence,
+              ),
               style: TextStyle(fontSize: 11, color: DashboardPalette.textMuted),
             ),
             Text(
-              'Completeness: '
-              '${(result.currentCompleteness * 100).toStringAsFixed(0)}% / '
-              '${(result.comparisonCompleteness * 100).toStringAsFixed(0)}%',
+              s.completenessPair(
+                (result.currentCompleteness * 100).toStringAsFixed(0),
+                (result.comparisonCompleteness * 100).toStringAsFixed(0),
+              ),
               style: TextStyle(fontSize: 11, color: DashboardPalette.textMuted),
             ),
             Text(
@@ -116,12 +121,13 @@ class PeriodComparisonCard extends StatelessWidget {
     );
   }
 
-  String _fmt(double? v, String unit) {
-    if (v == null) return 'N/A';
-    final s = v == v.roundToDouble()
+  String _fmt(double? v, String unit, ConservationStrings cs) {
+    if (v == null) return cs.na;
+    final n = v == v.roundToDouble()
         ? v.toStringAsFixed(0)
         : v.toStringAsFixed(1);
-    return '$s $unit';
+    final u = cs.localizeUnit(unit);
+    return u.isEmpty ? n : '$n $u';
   }
 
   String _d(DateTime d) =>

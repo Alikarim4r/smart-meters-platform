@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../providers/conservation_providers.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
@@ -16,6 +17,7 @@ class BenchmarkCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final intensity = bundle.intensity;
     final missingNorm = intensity?.missingNormalization == true ||
         bundle.warnings.contains(IntensityResult.normalizationMissingMessage);
@@ -32,44 +34,44 @@ class BenchmarkCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${bundle.utilityLabel} · Benchmark',
+              s.utilityBenchmark(bundle.utilityLabel),
               style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
             ),
             const SizedBox(height: 8),
             _kv(
-              'Consumption',
+              s.consumption,
               bundle.consumption == null
-                  ? 'N/A'
+                  ? s.na
                   : '${_fmt(bundle.consumption!)} ${bundle.unitCode}',
             ),
             if (intensity != null) ...[
               _kv(
-                'Intensity / m²',
+                s.intensityPerM2,
                 intensity.perM2 == null
-                    ? IntensityResult.normalizationMissingMessage
+                    ? s.normalizationDataMissing
                     : '${_fmt(intensity.perM2!)} ${bundle.unitCode}/m²',
               ),
               _kv(
-                'Intensity / occupant',
+                s.intensityPerOccupant,
                 intensity.perOccupant == null
-                    ? IntensityResult.normalizationMissingMessage
+                    ? s.normalizationDataMissing
                     : '${_fmt(intensity.perOccupant!)} ${bundle.unitCode}/occ',
               ),
             ],
             _kv(
-              'Peer median',
+              s.peerMedian,
               bundle.peerMedian == null
                   ? (bundle.peerProfileCount > 0
-                      ? 'N/A (${bundle.peerProfileCount} peer profiles)'
-                      : 'N/A')
+                      ? s.peerProfilesNa(bundle.peerProfileCount)
+                      : s.na)
                   : '${_fmt(bundle.peerMedian!)} ${bundle.unitCode}',
             ),
             if (bundle.snapshot.peerGroup != null)
-              _kv('Peer group', bundle.snapshot.peerGroup!.dbValue),
+              _kv(s.peerGroup, bundle.snapshot.peerGroup!.dbValue),
             const SizedBox(height: 8),
             if (missingNorm)
               Text(
-                IntensityResult.normalizationMissingMessage,
+                s.normalizationDataMissing,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -80,16 +82,15 @@ class BenchmarkCard extends StatelessWidget {
               (w) => w.contains('Not normalized'),
             ))
               Text(
-                BenchmarkingService.notNormalizedWarning,
+                s.notNormalized,
                 style: TextStyle(
                   fontSize: 11,
                   color: DashboardPalette.textMuted,
                 ),
               ),
             Text(
-              'Confidence: ${bundle.snapshot.confidenceScore} · '
-              'Completeness: '
-              '${(bundle.snapshot.completeness * 100).toStringAsFixed(0)}%',
+              '${s.confidenceLabel(bundle.snapshot.confidenceScore)} · '
+              '${s.completenessPct((bundle.snapshot.completeness * 100).toStringAsFixed(0))}',
               style: TextStyle(fontSize: 11, color: DashboardPalette.textMuted),
             ),
           ],

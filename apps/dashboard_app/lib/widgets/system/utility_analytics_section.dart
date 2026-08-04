@@ -460,17 +460,25 @@ class _AnalyticsChart extends ConsumerWidget {
         ? const AsyncValue<CategoryChartBundle>.loading()
         : ref.watch(categoryChartBundleProvider(chartQuery));
 
-    final meterDataQuery = MeterReadingCardsDataQuery(
-      siteId: siteId,
-      utilityKey: system.categoryCode,
-      businessDate: dateSelection.meterQueryBusinessDate,
-      previousBusinessDate: dateSelection.meterQueryPreviousDate,
-      rangeStart: dateSelection.meterQueryRangeStart,
-    );
-    final meterCardsAsync =
-        ref.watch(meterReadingCardsRawProvider(meterDataQuery));
-    final meterCards =
-        meterCardsAsync.valueOrNull ?? const <MeterReadingCardData>[];
+    // Only source-split needs meter cards; avoid stacking a second heavy
+    // historical card fetch under every chart type.
+    final meterCards = activeChartType == UtilityChartType.sourceSplit
+        ? (ref
+                .watch(
+                  meterReadingCardsRawProvider(
+                    MeterReadingCardsDataQuery(
+                      siteId: siteId,
+                      utilityKey: system.categoryCode,
+                      businessDate: dateSelection.meterQueryBusinessDate,
+                      previousBusinessDate:
+                          dateSelection.meterQueryPreviousDate,
+                      rangeStart: dateSelection.meterQueryRangeStart,
+                    ),
+                  ),
+                )
+                .valueOrNull ??
+            const <MeterReadingCardData>[])
+        : const <MeterReadingCardData>[];
 
     final periodLabel = resolved.useCustom
         ? dateSelection.displayLabel

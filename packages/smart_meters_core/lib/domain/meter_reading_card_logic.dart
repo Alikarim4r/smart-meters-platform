@@ -87,6 +87,107 @@ MeterReadingCardData buildMeterReadingCardData({
     isCorrected: corrected,
     hasNegativeConsumption: negative,
     latestReadingId: latestOnDate?.id,
+    isVirtual: meter.meterKind == MeterKind.virtual,
+  );
+}
+
+/// Derived card for virtual sum / residual meters from member readings.
+MeterReadingCardData buildVirtualMeterReadingCardData({
+  required Meter meter,
+  required List<String> memberIds,
+  required Map<String, MeterReading> latestByMeter,
+  required Map<String, MeterReading> previousByMeter,
+}) {
+  assert(meter.meterKind == MeterKind.virtual);
+
+  double? latestSum;
+  double? previousSum;
+  DateTime? latestDate;
+  DateTime? previousDate;
+  var latestComplete = memberIds.isNotEmpty;
+  var previousComplete = memberIds.isNotEmpty;
+
+  for (final id in memberIds) {
+    final latest = latestByMeter[id];
+    if (latest == null) {
+      latestComplete = false;
+    } else {
+      latestSum = (latestSum ?? 0) + latest.rawValue;
+      final at = latest.readingDate;
+      if (latestDate == null || at.isAfter(latestDate)) latestDate = at;
+    }
+    final previous = previousByMeter[id];
+    if (previous == null) {
+      previousComplete = false;
+    } else {
+      previousSum = (previousSum ?? 0) + previous.rawValue;
+      final at = previous.readingDate;
+      if (previousDate == null || at.isAfter(previousDate)) previousDate = at;
+    }
+  }
+
+  if (meter.calculationType == CalculationType.parentMinusChildren &&
+      meter.parentMeterId != null) {
+    final parentLatest = latestByMeter[meter.parentMeterId!];
+    final parentPrev = previousByMeter[meter.parentMeterId!];
+    // Members are children; residual = parent − sum(children).
+    if (parentLatest == null || !latestComplete || latestSum == null) {
+      latestComplete = false;
+      latestSum = null;
+      latestDate = null;
+    } else {
+      latestSum = parentLatest.rawValue - latestSum;
+      latestDate = parentLatest.readingDate;
+      latestComplete = true;
+    }
+    if (parentPrev == null || !previousComplete || previousSum == null) {
+      previousComplete = false;
+      previousSum = null;
+      previousDate = null;
+    } else {
+      previousSum = parentPrev.rawValue - previousSum;
+      previousDate = parentPrev.readingDate;
+      previousComplete = true;
+    }
+  } else {
+    if (!latestComplete) {
+      latestSum = null;
+      latestDate = null;
+    }
+    if (!previousComplete) {
+      previousSum = null;
+      previousDate = null;
+    }
+  }
+
+  final consumption = calculateMeterReadingConsumption(
+    latestValue: latestSum,
+    previousValue: previousSum,
+  );
+
+  return MeterReadingCardData(
+    meterId: meter.id,
+    meterCode: meter.meterCode,
+    meterName: meter.nameEn,
+    meterNameAr: meter.nameAr,
+    categoryName: meter.categoryConfig?.nameEn ?? meter.category.label,
+    sourceName: meter.sourceDisplayName,
+    sourceCode: meter.sourceConfig?.code ?? meter.source.dbValue,
+    unitLabel: meter.unitDisplayLabel,
+    status: latestSum != null
+        ? MeterReadingCardStatus.submittedOnDate
+        : (meter.isActive
+            ? MeterReadingCardStatus.pendingOnDate
+            : MeterReadingCardStatus.noReadingOnDate),
+    isActive: meter.isActive,
+    isMain: true,
+    previousValue: previousSum,
+    previousDate: previousDate,
+    latestValue: latestSum,
+    latestDate: latestDate,
+    consumptionValue: consumption,
+    hasNegativeConsumption: isNegativeMeterConsumption(consumption),
+    isVirtual: true,
   );
 }
 
@@ -114,6 +215,10 @@ int compareMeterReadingCards(
   MeterReadingCardData b,
   String sortKey,
 ) {
+  // Virtual sum/residual cards stay pinned above physical meters.
+  if (a.isVirtual != b.isVirtual) {
+    return a.isVirtual ? -1 : 1;
+  }
   return switch (sortKey) {
     'highest_consumption' => _compareNullableDouble(
       b.consumptionValue,

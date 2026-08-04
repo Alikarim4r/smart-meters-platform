@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="12dp"
+    android:background="@color/widget_bg">
+    <TextView android:id="@+id/widget_label" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/widget_muted" android:textSize="11sp" android:text="تنبيه" />
+    <TextView android:id="@+id/widget_value" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/widget_accent" android:textStyle="bold" android:textSize="28sp" android:text="0" />
+    <TextView android:id="@+id/widget_title" android:layout_width="match_parent" android:layout_height="wrap_content" android:textColor="@color/widget_fg" android:textSize="13sp" android:maxLines="2" android:ellipsize="end" android:text="—" />
+</LinearLayout>

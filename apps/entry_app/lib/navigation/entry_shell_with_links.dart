@@ -4,6 +4,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import 'entry_partner_navigation.dart';
 import '../screens/entry_shell_screen.dart';
+import '../services/entry_notification_bridge.dart';
 
 /// Entry shell with incoming partner deep-link handling.
 class EntryShellWithLinks extends ConsumerWidget {
@@ -23,7 +24,9 @@ class EntryShellWithLinks extends ConsumerWidget {
       onLink: (intent) {
         ref.read(pendingEntryPartnerLinkProvider.notifier).state = intent;
       },
-      child: const EntryShellScreen(),
+      child: const EntryNotificationBridge(
+        child: EntryShellScreen(),
+      ),
     );
   }
 }

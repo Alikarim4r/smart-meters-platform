@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/conservation_strings.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/design_system/dashboard_colors.dart';
 
@@ -21,10 +22,14 @@ class MvVerificationCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final s = ConservationStrings.of(context);
     final statusColor = _statusColor(record.status);
     final estimated = record.estimatedSavingQuantity;
     final verified = record.verifiedSavingQuantity;
     final increased = estimated != null && estimated < 0;
+    final shortId = record.baselineId.length > 8
+        ? record.baselineId.substring(0, 8)
+        : record.baselineId;
 
     return Card(
       elevation: 0,
@@ -69,17 +74,17 @@ class MvVerificationCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             _kv(
-              ConservationSavingLabels.estimatedSaving,
+              s.estimatedSaving,
               estimated == null
                   ? '—'
                   : increased
-                      ? '${ConservationSavingLabels.noSavingIncreasedConsumption}: '
+                      ? '${s.noSavingIncreased}: '
                           '${_fmt(estimated)} ${record.unitCode}'
                       : '${_fmt(estimated)} ${record.unitCode}',
               emphasize: true,
             ),
             _kv(
-              ConservationSavingLabels.verifiedSaving,
+              s.verifiedSaving,
               record.status == MvStatus.verified
                   ? (verified == null
                       ? '—'
@@ -89,33 +94,32 @@ class MvVerificationCard extends StatelessWidget {
             ),
             if (record.resolvedPerformanceChangeQuantity != null)
               _kv(
-                'Performance change',
+                s.performanceChange,
                 '${_fmt(record.resolvedPerformanceChangeQuantity!)} '
                 '${record.unitCode}'
-                '${record.isIncreasedConsumptionOutcome ? ' (increased — not in Verified Total)' : ''}',
+                '${record.isIncreasedConsumptionOutcome ? ' ${s.increasedNotInVerifiedTotal}' : ''}',
               ),
             if (showCostRoi)
               _kv(
-                'Cost Avoided',
+                s.costAvoided,
                 record.costAvoided == null
-                    ? ConservationSavingLabels.costAvoidedNa
+                    ? s.costAvoidedNa
                     : '${_fmt(record.costAvoided!)} '
                         '${record.costCurrency ?? 'QAR'}',
               ),
-            _kv('Confidence', '${record.confidenceScore}'),
+            _kv(s.confidence, '${record.confidenceScore}'),
             _kv(
-              'Baseline',
-              baselineVersionLabel ??
-                  'bound ${record.baselineId.length > 8 ? record.baselineId.substring(0, 8) : record.baselineId}…',
+              s.baseline,
+              baselineVersionLabel ?? s.boundBaseline(shortId),
             ),
             _kv(
-              'Post period',
+              s.postPeriod,
               '${_iso(record.postPeriodStart)} → ${_iso(record.postPeriodEnd)}',
             ),
             if (record.status == MvStatus.verificationPending) ...[
               const SizedBox(height: 6),
               Text(
-                'Ready for Verification',
+                s.readyForVerification,
                 style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w700,
@@ -127,7 +131,7 @@ class MvVerificationCard extends StatelessWidget {
                 record.verifiedBy != null) ...[
               const SizedBox(height: 4),
               _kv(
-                'Verified by',
+                s.verifiedBy,
                 record.verifiedAt == null
                     ? record.verifiedBy!
                     : '${record.verifiedBy} · ${_iso(record.verifiedAt!)}',
@@ -136,7 +140,7 @@ class MvVerificationCard extends StatelessWidget {
             if (record.needsRecalculation) ...[
               const SizedBox(height: 4),
               Text(
-                'Needs recalculation'
+                '${s.needsRecalculation}'
                 '${record.staleReason == null ? '' : ': ${record.staleReason}'}',
                 style: TextStyle(
                   fontSize: 11,
@@ -147,7 +151,7 @@ class MvVerificationCard extends StatelessWidget {
             ],
             const SizedBox(height: 6),
             Text(
-              'Potential Excess ≠ Estimated Saving ≠ Verified Saving',
+              s.terminologyChain,
               style: TextStyle(
                 fontSize: 11,
                 fontWeight: FontWeight.w600,
