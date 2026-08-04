@@ -32,9 +32,7 @@ final canManageOrganizationsProvider = Provider<bool>((ref) {
 final canManageScopeUsersProvider = Provider<bool>((ref) {
   final profile = ref.watch(authProvider).profile;
   if (profile == null) return false;
-  return profile.isPlatformOwner ||
-      profile.isSuperAdmin ||
-      profile.isSiteAdmin;
+  return profile.isPlatformOwner || profile.isSuperAdmin || profile.isSiteAdmin;
 });
 
 class OrganizationsTab extends ConsumerStatefulWidget {
@@ -92,9 +90,9 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
     final s = AdminStrings(ref.read(adminLocaleProvider));
     final canForce = ref.read(canForceDeleteProvider);
     final confirmed = canForce
-        ? await confirmForceDelete(
+        ? await confirmArchive(
             context: context,
-            title: s.deleteOrganizationTitle,
+            title: s.archiveOrganizationTitle,
             entityName: org.nameEn,
           )
         : await showDialog<bool>(
@@ -121,15 +119,19 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
     try {
       final repo = ref.read(siteRepositoryProvider);
       if (canForce) {
-        await repo.forceDeleteOrganization(org.id);
+        await repo.archiveOrganization(org.id);
       } else {
         await repo.deleteOrganization(org.id);
       }
       _invalidate();
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('${org.nameEn} deleted')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            canForce ? '${org.nameEn} archived' : '${org.nameEn} deleted',
+          ),
+        ),
+      );
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -148,6 +150,7 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
   Widget build(BuildContext context) {
     final canAddOrg = ref.watch(canAddOrganizationProvider);
     final canManage = ref.watch(canManageOrganizationsProvider);
+    final canForce = ref.watch(canForceDeleteProvider);
     final orgsAsync = ref.watch(adminAllOrganizationsProvider);
     final listBottomPadding = catalogListBottomPadding(context);
     final s = AdminStrings(ref.watch(adminLocaleProvider));
@@ -310,7 +313,9 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
                                       ),
                                       PopupMenuItem(
                                         value: 'delete',
-                                        child: Text(s.delete),
+                                        child: Text(
+                                          canForce ? s.archive : s.delete,
+                                        ),
                                       ),
                                     ],
                                   ),

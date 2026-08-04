@@ -243,11 +243,11 @@ class _MetersTabState extends ConsumerState<MetersTab> {
                       title: s.isAr ? 'لا توجد عدادات' : 'No meters',
                       message: canManage
                           ? (s.isAr
-                              ? 'لا توجد عدادات مطابقة. اضغط إضافة عداد لإنشاء واحد.'
-                              : 'No meters match your filters. Tap Add meter to create one.')
+                                ? 'لا توجد عدادات مطابقة. اضغط إضافة عداد لإنشاء واحد.'
+                                : 'No meters match your filters. Tap Add meter to create one.')
                           : (s.isAr
-                              ? 'لا توجد عدادات مطابقة للفلاتر.'
-                              : 'No meters match your filters.'),
+                                ? 'لا توجد عدادات مطابقة للفلاتر.'
+                                : 'No meters match your filters.'),
                       icon: Icons.speed_outlined,
                     );
                   }
@@ -385,20 +385,19 @@ class _MetersTabState extends ConsumerState<MetersTab> {
                                         );
                                       }
                                     case 'delete':
-                                      final confirmed =
-                                          await confirmForceDelete(
-                                            context: context,
-                                            title: s.isAr
-                                                ? 'حذف العداد؟'
-                                                : 'Delete meter?',
-                                            entityName: meter.nameEn,
-                                          );
+                                      final confirmed = await confirmArchive(
+                                        context: context,
+                                        title: s.isAr
+                                            ? 'أرشفة العداد؟'
+                                            : 'Archive meter?',
+                                        entityName: meter.nameEn,
+                                      );
                                       if (confirmed != true) return;
                                       try {
                                         final repo = ref.read(
                                           meterRepositoryProvider,
                                         );
-                                        await repo.forceDeleteMeter(meter.id);
+                                        await repo.archiveMeter(meter.id);
                                         ref.invalidate(adminMetersProvider);
                                       } catch (error) {
                                         if (!context.mounted) return;
@@ -430,7 +429,7 @@ class _MetersTabState extends ConsumerState<MetersTab> {
                                   if (canDelete)
                                     PopupMenuItem(
                                       value: 'delete',
-                                      child: Text(s.delete),
+                                      child: Text(s.archive),
                                     ),
                                 ],
                               ),

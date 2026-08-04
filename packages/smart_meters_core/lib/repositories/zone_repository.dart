@@ -20,8 +20,10 @@ class ZoneRepository {
     if (organizationId != null) {
       query = query.eq('organization_id', organizationId);
     }
-    final rows =
-        await query.order('sort_order').order('name_en').timeout(_queryTimeout);
+    final rows = await query
+        .order('sort_order')
+        .order('name_en')
+        .timeout(_queryTimeout);
     return _mapZones(rows);
   }
 
@@ -131,10 +133,19 @@ class ZoneRepository {
     await _client.from('zones').delete().eq('id', zoneId);
   }
 
-  /// Super-admin cascade delete via RPC (nested zones first).
-  Future<void> forceDeleteZone(String zoneId) async {
-    await _client.rpc('admin_force_delete_zone', params: {'p_zone_id': zoneId});
+  /// Reversible archival of the zone tree; sites remain linked and intact.
+  Future<void> archiveZone(
+    String zoneId, {
+    String reason = 'Archived from Admin app',
+  }) async {
+    await _client.rpc(
+      'admin_archive_zone',
+      params: {'p_zone_id': zoneId, 'p_reason': reason},
+    );
   }
+
+  @Deprecated('Use archiveZone; force delete is retained as a safe alias')
+  Future<void> forceDeleteZone(String zoneId) => archiveZone(zoneId);
 
   Future<List<OrganizationSiteType>> getSiteTypesForOrganization(
     String organizationId,

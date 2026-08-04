@@ -58,3 +58,31 @@ Future<bool?> confirmForceDelete({
     ),
   );
 }
+
+Future<bool?> confirmArchive({
+  required BuildContext context,
+  required String title,
+  required String entityName,
+}) {
+  return showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      title: Text(title),
+      content: Text(
+        'Archive "$entityName"?\n\n'
+        'It will become inactive. Readings, audit history, and linked data are preserved and can be restored later.',
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('Cancel'),
+        ),
+        FilledButton.icon(
+          onPressed: () => Navigator.pop(ctx, true),
+          icon: const Icon(Icons.archive_outlined),
+          label: const Text('Archive'),
+        ),
+      ],
+    ),
+  );
+}

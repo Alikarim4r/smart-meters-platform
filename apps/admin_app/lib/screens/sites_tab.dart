@@ -314,9 +314,9 @@ class _SitesTabState extends ConsumerState<SitesTab> {
                                       );
                                     case 'delete':
                                       final confirmed = canForceDelete
-                                          ? await confirmForceDelete(
+                                          ? await confirmArchive(
                                               context: context,
-                                              title: 'Force-delete site?',
+                                              title: s.archiveSiteTitle,
                                               entityName: site.nameEn,
                                             )
                                           : await confirmRestrictedDelete(
@@ -333,7 +333,7 @@ class _SitesTabState extends ConsumerState<SitesTab> {
                                           siteRepositoryProvider,
                                         );
                                         if (canForceDelete) {
-                                          await repo.forceDeleteSite(site.id);
+                                          await repo.archiveSite(site.id);
                                         } else {
                                           await repo.deleteSite(site.id);
                                         }
@@ -370,7 +370,9 @@ class _SitesTabState extends ConsumerState<SitesTab> {
                                   if (canDelete)
                                     PopupMenuItem(
                                       value: 'delete',
-                                      child: Text(s.delete),
+                                      child: Text(
+                                        canForceDelete ? s.archive : s.delete,
+                                      ),
                                     ),
                                 ],
                               ),

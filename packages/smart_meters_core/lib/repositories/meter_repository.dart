@@ -289,13 +289,19 @@ destination_tank:destination_tank_id(name_en, name_ar)
     await _client.from('meters').delete().eq('id', meterId);
   }
 
-  /// Super-admin cascade delete via RPC.
-  Future<void> forceDeleteMeter(String meterId) async {
+  /// Reversible archival that preserves readings, audit history, and links.
+  Future<void> archiveMeter(
+    String meterId, {
+    String reason = 'Archived from Admin app',
+  }) async {
     await _client.rpc(
-      'admin_force_delete_meter',
-      params: {'p_meter_id': meterId},
+      'admin_archive_meter',
+      params: {'p_meter_id': meterId, 'p_reason': reason},
     );
   }
+
+  @Deprecated('Use archiveMeter; force delete is retained as a safe alias')
+  Future<void> forceDeleteMeter(String meterId) => archiveMeter(meterId);
 
   /// Legacy helper — queries by enum column. Use catalog + category_id instead.
   @Deprecated('Use MeterCatalogRepository.getCategoriesForSite')

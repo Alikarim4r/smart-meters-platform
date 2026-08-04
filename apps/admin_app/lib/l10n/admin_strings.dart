@@ -51,10 +51,8 @@ class AdminStrings {
   String get aboutApp => _t('About', 'حول التطبيق');
   String get createdDevelopedBy =>
       _t('Created and developed by', 'تم الإنشاء والتطوير بواسطة');
-  String get developerName => _t(
-    'Eng. Ali Abdulkarim Elhassan',
-    'المهندس: علي عبد الكريم الحسن',
-  );
+  String get developerName =>
+      _t('Eng. Ali Abdulkarim Elhassan', 'المهندس: علي عبد الكريم الحسن');
   String get developerPhone => '+974 3005 8899';
   String get developerEmail => 'Support@AliMind.com';
   String get changePassword => _t('Change password', 'تغيير كلمة المرور');
@@ -77,6 +75,7 @@ class AdminStrings {
   String get close => _t('Close', 'إغلاق');
   String get edit => _t('Edit', 'تعديل');
   String get delete => _t('Delete', 'حذف');
+  String get archive => _t('Archive', 'أرشفة');
   String get activate => _t('Activate', 'تفعيل');
   String get deactivate => _t('Deactivate', 'إيقاف');
   String get active => _t('Active', 'مفعّل');
@@ -92,12 +91,10 @@ class AdminStrings {
   String get addZone => _t('Add zone', 'إضافة منطقة');
   String get addSite => _t('Add site', 'إضافة موقع');
   String get addMeter => _t('Add meter', 'إضافة عداد');
-  String get copEerGroups =>
-      _t('COP / EER groups', 'مجموعات COP / EER');
+  String get copEerGroups => _t('COP / EER groups', 'مجموعات COP / EER');
   String get addCopGroup => _t('Add COP/EER group', 'إضافة مجموعة COP/EER');
   String get editCopGroup => _t('Edit COP/EER group', 'تعديل مجموعة COP/EER');
-  String get deleteCopGroup =>
-      _t('Delete COP/EER group', 'حذف مجموعة COP/EER');
+  String get deleteCopGroup => _t('Delete COP/EER group', 'حذف مجموعة COP/EER');
   String get deleteCopGroupConfirm => _t(
     'Delete this efficiency group and its meter links?',
     'حذف مجموعة الكفاءة وروابط العدادات الخاصة بها؟',
@@ -109,11 +106,10 @@ class AdminStrings {
   String copGroupMeterSummary({
     required int btuCount,
     required int elecCount,
-  }) =>
-      _t(
-        'Cooling meters: $btuCount · Electricity: $elecCount',
-        'عدادات التبريد: $btuCount · الكهرباء: $elecCount',
-      );
+  }) => _t(
+    'Cooling meters: $btuCount · Electricity: $elecCount',
+    'عدادات التبريد: $btuCount · الكهرباء: $elecCount',
+  );
   String get copEerFormulaHint => _t(
     'COP = cooling energy (kWh) ÷ electricity (kWh). EER ≈ COP × 3.412.',
     'COP = طاقة التبريد (ك.و.س) ÷ الكهرباء (ك.و.س). EER ≈ COP × 3.412.',
@@ -153,10 +149,8 @@ class AdminStrings {
       _t('Save efficiency meters', 'حفظ عدادات الكفاءة');
   String get efficiencyMetersSaved =>
       _t('Efficiency meters saved', 'تم حفظ عدادات الكفاءة');
-  String get noSitesForOrg => _t(
-    'No sites for this organization.',
-    'لا توجد مواقع لهذه الجهة.',
-  );
+  String get noSitesForOrg =>
+      _t('No sites for this organization.', 'لا توجد مواقع لهذه الجهة.');
   String get reportLogosTitle =>
       _t('Report logos (6 × 2 cm)', 'شعارات التقارير (عرض ٦ × ارتفاع ٢ سم)');
   String get reportLogosHint => _t(
@@ -187,22 +181,14 @@ class AdminStrings {
   String get assignExistingAccount =>
       _t('Assign existing account', 'تعيين حساب موجود');
   String get assign => _t('Assign', 'تعيين');
-  String get assignSuperAdminsHint => _t(
-    'Registered Super Admin accounts',
-    'حسابات السوبر أدمن المسجّلة',
-  );
-  String get assignAdminsHint => _t(
-    'Registered Admin accounts',
-    'حسابات الأدمن المسجّلة',
-  );
-  String get assignTechniciansHint => _t(
-    'Registered technician accounts',
-    'حسابات الفنيين المسجّلة',
-  );
-  String get assignViewersHint => _t(
-    'Registered viewer accounts',
-    'حسابات العرض المسجّلة',
-  );
+  String get assignSuperAdminsHint =>
+      _t('Registered Super Admin accounts', 'حسابات السوبر أدمن المسجّلة');
+  String get assignAdminsHint =>
+      _t('Registered Admin accounts', 'حسابات الأدمن المسجّلة');
+  String get assignTechniciansHint =>
+      _t('Registered technician accounts', 'حسابات الفنيين المسجّلة');
+  String get assignViewersHint =>
+      _t('Registered viewer accounts', 'حسابات العرض المسجّلة');
   String get scopeInheritHint => _t(
     'Organization Super Admins already control zones and sites. Zone Admins already control sites under their zone.',
     'من له تحكم كامل بالجهة (سوبر أدمن) يتحكم تلقائياً بالمناطق والمواقع. ومن له تحكم بالمنطقة يتحكم تلقائياً بمواقعها.',
@@ -229,8 +215,7 @@ class AdminStrings {
       _t('Accounts with permission', 'الحسابات التي لها الصلاحية');
   String get noAccountsInTab =>
       _t('No accounts in this tab yet', 'لا حسابات في هذا التبويب بعد');
-  String get removeScopeAccess =>
-      _t('Remove access', 'إزالة الصلاحية');
+  String get removeScopeAccess => _t('Remove access', 'إزالة الصلاحية');
   String get searchOrganizations =>
       _t('Search organizations…', 'ابحث في الجهات…');
   String get searchZones => _t('Search zones…', 'ابحث في المناطق…');
@@ -284,8 +269,7 @@ class AdminStrings {
   String get meterCode => _t('Meter code', 'رمز العداد');
   String get categoryAndMeasurement =>
       _t('Category & measurement', 'الفئة والقياس');
-  String get meterHasReadings =>
-      _t('Meter has readings', 'العداد لديه قراءات');
+  String get meterHasReadings => _t('Meter has readings', 'العداد لديه قراءات');
   String get meterHasReadingsHint => _t(
     'This meter has readings. Category and unit cannot be changed.',
     'هذا العداد لديه قراءات. لا يمكن تغيير الفئة أو الوحدة.',
@@ -396,8 +380,10 @@ class AdminStrings {
   String get networkAddInlet => _t('Add inlet', 'إضافة مدخل');
   String get networkAddOutlet => _t('Add outlet', 'إضافة مخرج');
   String get networkRemovePort => _t('Remove port', 'حذف المنفذ');
-  String get networkServiceType => _t('Water / service type', 'نوع المياه / الخدمة');
-  String get networkSaveServiceType => _t('Save service type', 'حفظ نوع الخدمة');
+  String get networkServiceType =>
+      _t('Water / service type', 'نوع المياه / الخدمة');
+  String get networkSaveServiceType =>
+      _t('Save service type', 'حفظ نوع الخدمة');
   String get networkConnections => _t('Connections', 'العلاقات');
   String get networkModeView => _t('View', 'عرض');
   String get networkModeEdit => _t('Edit draft', 'تحرير المسودة');
@@ -519,8 +505,12 @@ class AdminStrings {
   // Cards / dialogs -----------------------------------------------------------------
   String get deleteOrganizationTitle =>
       _t('Delete organization?', 'حذف الجهة؟');
+  String get archiveOrganizationTitle =>
+      _t('Archive organization?', 'أرشفة الجهة؟');
   String get deleteZoneTitle => _t('Delete zone?', 'حذف المنطقة؟');
+  String get archiveZoneTitle => _t('Archive zone?', 'أرشفة المنطقة؟');
   String get deleteSiteTitle => _t('Delete site?', 'حذف الموقع؟');
+  String get archiveSiteTitle => _t('Archive site?', 'أرشفة الموقع؟');
   String get deleteUserTitle => _t('Delete user?', 'حذف المستخدم؟');
   String get forceDelete => _t('Force delete', 'حذف نهائي');
   String sitesCount(int count) => isAr
@@ -615,10 +605,8 @@ class AdminStrings {
   );
   String get dailyCutoff =>
       _t('Daily reading cutoff time', 'وقت إقفال القراءة اليومية');
-  String get cutoffHint => _t(
-    'Tap to pick time (Qatar)',
-    'اضغط لاختيار الوقت (بتوقيت قطر)',
-  );
+  String get cutoffHint =>
+      _t('Tap to pick time (Qatar)', 'اضغط لاختيار الوقت (بتوقيت قطر)');
   String get backdatePerUser =>
       _t('Backdated entry (per user)', 'الإدخال بتواريخ سابقة (لكل مستخدم)');
   String get backdatePerUserHint => _t(
@@ -693,116 +681,111 @@ class AdminStrings {
   String get dataAndIntegrations =>
       _t('Data & Integrations', 'البيانات والتكاملات');
   String get dataAndIntegrationsHint => _t(
-        'Simple by default — advanced tools on demand. No BMS control.',
-        'بسيط افتراضياً — أدوات متقدمة عند الطلب. بلا تحكم في أنظمة إدارة المباني.',
-      );
+    'Simple by default — advanced tools on demand. No BMS control.',
+    'بسيط افتراضياً — أدوات متقدمة عند الطلب. بلا تحكم في أنظمة إدارة المباني.',
+  );
   String get noOrganizationAvailable =>
       _t('No organization available', 'لا توجد جهة متاحة');
   String get allPhase6FlagsOff => _t(
-        'All Phase 6 feature flags are OFF. Mechanical manual entry remains unchanged. '
-            'Enable flags in platform_feature_flags to use Import, API, Sources, Jobs, '
-            'Notifications, Automation, or AI Assistant.',
-        'جميع أعلام ميزات المرحلة ٦ متوقفة. الإدخال اليدوي للعدادات الميكانيكية يبقى كما هو. '
-            'فعّل الأعلام في platform_feature_flags لاستخدام الاستيراد أو واجهة البرمجة أو المصادر '
-            'أو المهام أو الإشعارات أو الأتمتة أو المساعد الذكي.',
-      );
+    'All Phase 6 feature flags are OFF. Mechanical manual entry remains unchanged. '
+        'Enable flags in platform_feature_flags to use Import, API, Sources, Jobs, '
+        'Notifications, Automation, or AI Assistant.',
+    'جميع أعلام ميزات المرحلة ٦ متوقفة. الإدخال اليدوي للعدادات الميكانيكية يبقى كما هو. '
+        'فعّل الأعلام في platform_feature_flags لاستخدام الاستيراد أو واجهة البرمجة أو المصادر '
+        'أو المهام أو الإشعارات أو الأتمتة أو المساعد الذكي.',
+  );
   String get importCenter => _t('Import Center', 'مركز الاستيراد');
   String get importCenterSubtitle => _t(
-        'CSV/Excel template → preview → validate → partial accept. No silent write.',
-        'قالب CSV/Excel ← معاينة ← تحقق ← قبول جزئي. لا كتابة صامتة.',
-      );
+    'CSV/Excel template → preview → validate → partial accept. No silent write.',
+    'قالب CSV/Excel ← معاينة ← تحقق ← قبول جزئي. لا كتابة صامتة.',
+  );
   String get dataSources => _t('Data Sources', 'مصادر البيانات');
   String dataSourcesConfigured(int count) => _t(
-        '$count configured. Secrets via secret_ref only. Adapters are readiness stubs until vendor-tested.',
-        '$count مُعدّ. الأسرار عبر secret_ref فقط. المحوّلات جاهزية حتى يُختبر المورّد فعلياً.',
-      );
+    '$count configured. Secrets via secret_ref only. Adapters are readiness stubs until vendor-tested.',
+    '$count مُعدّ. الأسرار عبر secret_ref فقط. المحوّلات جاهزية حتى يُختبر المورّد فعلياً.',
+  );
   String get meterSourceMapping =>
       _t('Meter Source Mapping', 'ربط العداد بالمصدر');
   String get meterSourceMappingSubtitle => _t(
-        'Frequency + source priority. Mechanical remains first-class.',
-        'التردد وأولوية المصدر. العداد الميكانيكي يبقى أساسياً.',
-      );
+    'Frequency + source priority. Mechanical remains first-class.',
+    'التردد وأولوية المصدر. العداد الميكانيكي يبقى أساسياً.',
+  );
   String get ingestionJobs => _t('Ingestion Jobs', 'مهام الاستيعاب');
   String get ingestionJobsSubtitle => _t(
-        'Idempotent runs, bounded retries, dead-letter retention.',
-        'تشغيل متكافئ الهوية، إعادة محاولة محدودة، والاحتفاظ بالرسائل الفاشلة.',
-      );
+    'Idempotent runs, bounded retries, dead-letter retention.',
+    'تشغيل متكافئ الهوية، إعادة محاولة محدودة، والاحتفاظ بالرسائل الفاشلة.',
+  );
   String get sourceHealth => _t('Source Health', 'صحة المصادر');
   String get sourceHealthSubtitle => _t(
-        'Healthy / Delayed / Failed / Never Synced. Data Availability Alerts only.',
-        'سليم / متأخر / فشل / لم تتم المزامنة. تنبيهات توفّر البيانات فقط.',
-      );
+    'Healthy / Delayed / Failed / Never Synced. Data Availability Alerts only.',
+    'سليم / متأخر / فشل / لم تتم المزامنة. تنبيهات توفّر البيانات فقط.',
+  );
   String get automationRules => _t('Automation Rules', 'قواعد الأتمتة');
   String get automationRulesSubtitle => _t(
-        'Admin-only activation. Suggestions only — no confirmed diagnosis or control.',
-        'التفعيل للمسؤولين فقط. اقتراحات فقط — بلا تشخيص مؤكد أو تحكم.',
-      );
+    'Admin-only activation. Suggestions only — no confirmed diagnosis or control.',
+    'التفعيل للمسؤولين فقط. اقتراحات فقط — بلا تشخيص مؤكد أو تحكم.',
+  );
   String get notificationSettings =>
       _t('Notification Settings', 'إعدادات الإشعارات');
   String get notificationSettingsSubtitle => _t(
-        'In-app preferences, severity, read/unread, event-key dedupe.',
-        'تفضيلات داخل التطبيق، الشدة، مقروء/غير مقروء، ومنع التكرار بمفتاح الحدث.',
-      );
+    'In-app preferences, severity, read/unread, event-key dedupe.',
+    'تفضيلات داخل التطبيق، الشدة، مقروء/غير مقروء، ومنع التكرار بمفتاح الحدث.',
+  );
   String get aiGovernance => _t('AI Governance', 'حوكمة الذكاء الاصطناعي');
   String get aiGovernanceSubtitle => _t(
-        'Grounded summaries with human review. Deterministic fallback if AI unavailable.',
-        'ملخصات مستندة إلى البيانات مع مراجعة بشرية. بديل حتمي إذا تعذّر الذكاء الاصطناعي.',
-      );
+    'Grounded summaries with human review. Deterministic fallback if AI unavailable.',
+    'ملخصات مستندة إلى البيانات مع مراجعة بشرية. بديل حتمي إذا تعذّر الذكاء الاصطناعي.',
+  );
   String get ocrReadiness =>
       _t('OCR Readiness', 'جاهزية التعرّف الضوئي على الحروف');
   String get ocrReadinessSubtitle => _t(
-        'Suggested Reading → Human Confirm → Saved. Never auto-accepted.',
-        'قراءة مقترحة ← تأكيد بشري ← حفظ. لا قبول تلقائي أبداً.',
-      );
+    'Suggested Reading → Human Confirm → Saved. Never auto-accepted.',
+    'قراءة مقترحة ← تأكيد بشري ← حفظ. لا قبول تلقائي أبداً.',
+  );
   String get capabilityMatrixNote => _t(
-        'Capability matrix and interval analytics are documented metadata in Phase 6; '
-            'heavy time-series migration is deferred.',
-        'مصفوفة القدرات وتحليلات الفترات موثّقة كبيانات وصفية في المرحلة ٦؛ '
-            'ترحيل السلاسل الزمنية الثقيلة مؤجّل.',
-      );
+    'Capability matrix and interval analytics are documented metadata in Phase 6; '
+        'heavy time-series migration is deferred.',
+    'مصفوفة القدرات وتحليلات الفترات موثّقة كبيانات وصفية في المرحلة ٦؛ '
+        'ترحيل السلاسل الزمنية الثقيلة مؤجّل.',
+  );
   String get importPasteHint => _t(
-        'Paste CSV → Preview → Validate. Commit is admin-confirmed only. '
-            'Corrections use the existing Corrections path — no silent overwrite.',
-        'الصق CSV ← معاينة ← تحقق. الاعتماد بتأكيد المسؤول فقط. '
-            'التصحيح عبر مسار التصحيحات الحالي — بلا استبدال صامت.',
-      );
-  String get pasteCsvContents =>
-      _t('Paste CSV contents…', 'الصق محتوى CSV…');
-  String get previewAndValidate =>
-      _t('Preview & Validate', 'معاينة وتحقق');
+    'Paste CSV → Preview → Validate. Commit is admin-confirmed only. '
+        'Corrections use the existing Corrections path — no silent overwrite.',
+    'الصق CSV ← معاينة ← تحقق. الاعتماد بتأكيد المسؤول فقط. '
+        'التصحيح عبر مسار التصحيحات الحالي — بلا استبدال صامت.',
+  );
+  String get pasteCsvContents => _t('Paste CSV contents…', 'الصق محتوى CSV…');
+  String get previewAndValidate => _t('Preview & Validate', 'معاينة وتحقق');
   String get importTemplateCsv => _t('Template', 'القالب');
-  String get templateCsvCopied =>
-      _t('Template CSV copied', 'تم نسخ قالب CSV');
+  String get templateCsvCopied => _t('Template CSV copied', 'تم نسخ قالب CSV');
   String get fingerprint => _t('Fingerprint', 'البصمة');
   String get duplicateFileBlocked => _t(
-        'Duplicate file fingerprint — already committed. Re-upload blocked (idempotent).',
-        'بصمة ملف مكررة — سبق اعتمادها. أُعيد الحظر (تكافؤ الهوية).',
-      );
+    'Duplicate file fingerprint — already committed. Re-upload blocked (idempotent).',
+    'بصمة ملف مكررة — سبق اعتمادها. أُعيد الحظر (تكافؤ الهوية).',
+  );
   String importSummary({
     required int accepted,
     required int rejected,
     required int duplicated,
-  }) =>
-      _t(
-        'Accepted $accepted · Rejected $rejected · Duplicated $duplicated',
-        'مقبول $accepted · مرفوض $rejected · مكرر $duplicated',
-      );
+  }) => _t(
+    'Accepted $accepted · Rejected $rejected · Duplicated $duplicated',
+    'مقبول $accepted · مرفوض $rejected · مكرر $duplicated',
+  );
   String importRowStatus(int row, String status) =>
       _t('Row $row: $status', 'صف $row: $status');
   String partialAcceptanceNote(int accepted) => _t(
-        'Partial acceptance allowed for $accepted rows. '
-            'Commit writes via authenticated batch after explicit admin action '
-            '(not auto-run from this preview).',
-        'يُسمح بالقبول الجزئي لـ $accepted صفاً. '
-            'الكتابة بعد إجراء مسؤول صريح عبر دفعة موثّقة '
-            '(لا تشغيل تلقائي من هذه المعاينة).',
-      );
+    'Partial acceptance allowed for $accepted rows. '
+        'Commit writes via authenticated batch after explicit admin action '
+        '(not auto-run from this preview).',
+    'يُسمح بالقبول الجزئي لـ $accepted صفاً. '
+        'الكتابة بعد إجراء مسؤول صريح عبر دفعة موثّقة '
+        '(لا تشغيل تلقائي من هذه المعاينة).',
+  );
   String get headerErrors => _t('Header errors', 'أخطاء الترويسة');
 
   String get conservationBaselines =>
       _t('Conservation baselines', 'خطوط أساس الترشيد');
-  String get conservationTargets =>
-      _t('Conservation targets', 'أهداف الترشيد');
+  String get conservationTargets => _t('Conservation targets', 'أهداف الترشيد');
   String get virtualMeters => _t('Virtual meters', 'العدادات الافتراضية');
   String get balanceGroups => _t('Balance groups', 'مجموعات التوازن');
   String get siteConservationProfile =>
@@ -828,7 +811,7 @@ class AdminStrings {
   String get estimatedSaving => _t('Estimated Saving', 'التوفير التقديري');
   String get verifiedSaving => _t('Verified Saving', 'التوفير المُحقَّق');
   String get featureDisabledEnableFlags => _t(
-        'Enable conservation_module and related flags for this organization/site.',
-        'فعّل conservation_module والأعلام ذات الصلة لهذه الجهة/الموقع.',
-      );
+    'Enable conservation_module and related flags for this organization/site.',
+    'فعّل conservation_module والأعلام ذات الصلة لهذه الجهة/الموقع.',
+  );
 }
