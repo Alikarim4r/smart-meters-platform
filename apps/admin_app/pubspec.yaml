@@ -60,7 +60,7 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   image_path: assets/branding/app_icon_simple.png
-  adaptive_icon_background: "#6B7280"
+  adaptive_icon_background: "#6B2D3C"
   adaptive_icon_foreground: assets/branding/app_icon_simple.png
   adaptive_icon_foreground_inset: 8
   macos:
@@ -69,8 +69,8 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: assets/branding/app_icon_simple.png
-    background_color: "#6B7280"
-    theme_color: "#6B7280"
+    background_color: "#6B2D3C"
+    theme_color: "#6B2D3C"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
