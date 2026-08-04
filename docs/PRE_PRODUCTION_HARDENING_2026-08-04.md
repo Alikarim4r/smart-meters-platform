@@ -5,82 +5,114 @@
 - Branch: `hardening/pre-production-20260804`
 - Pre-change checkpoint: `7fdac76`
 - Rollback tag: `pre-production-hardening-20260804`
-- Phase 7: deferred; no Phase 7 implementation is part of this branch.
-- Dependency upgrades: deferred. The only dependency manifest change is an
-  explicit `supabase_flutter: ^2.9.1` declaration in Admin for a package it
-  already imported and already resolved transitively.
+- Supabase Staging project: `iqcxgtpcfhoapnklxdyl`
+- Production was not changed.
+- Phase 7 and dependency upgrades remain deferred.
 
-## Safety backup
+## Safety backups
 
-Verified local safety artifacts were created outside the repository:
+Verified safety artifacts exist outside the repository:
 
 - complete Git history bundle;
-- working-tree source archive, including the pre-hardening untracked source;
-- existing Staging database backup remains available under
-  `backups/staging_20260729T172256Z/`.
+- pre-hardening working-tree source archive;
+- PostgreSQL 17 custom-format dump taken immediately before the live migrations;
+- PostgreSQL schema-only dump taken after the live migrations;
+- exact pre/post counts for protected tables.
 
-A fresh live Staging database backup is still required immediately before
-applying migrations 115–116. Do not apply them to production first.
+The Supabase project is on the Free Plan, which has no managed scheduled
+backups. The manual pre-migration dump was validated with `pg_restore --list`
+before any migration was applied.
 
-## Completed changes
+## Completed hardening
 
 1. Removed embedded staging/demo passwords and made validation credentials
    runtime-only.
-2. Cleared analyzer diagnostics across Core, Dashboard, Entry, and Admin.
-3. Isolated Entry offline drafts and caches by Supabase user and `APP_ENV`.
-   Legacy unscoped drafts are retained in quarantine and are never synced.
-4. Added migration 115:
+2. Rotated the direct database password and stored the final value in macOS
+   Keychain, not in the repository.
+3. Rotated all four validation-account passwords, invalidated their prior
+   sessions and refresh tokens, and stored the new values in Keychain.
+4. Cleared analyzer diagnostics across Core, Dashboard, Entry, and Admin.
+5. Isolated Entry offline drafts and caches by Supabase user and `APP_ENV`.
+   Legacy unscoped drafts remain quarantined and are never synced.
+6. Applied migration 115 to Staging:
    - effective organization/site reading policy on the server;
-   - photo, business-date, late-reading, and Qatar cutoff enforcement for
-     technician inserts;
+   - photo, business-date, late-reading, and Qatar cutoff enforcement;
    - reason-bearing admin correction RPC;
    - direct reading value/note corrections blocked for authenticated clients.
-5. Added migration 116:
+7. Applied migration 116 to Staging:
    - reversible archive metadata and immutable archive audit rows;
    - organization/site/zone/meter/network archive RPCs;
-   - old `admin_force_delete_*` names converted to non-destructive archive
-     wrappers;
-   - readings, reading audit history, relationships, and network revisions are
-     preserved.
+   - old `admin_force_delete_*` names converted to non-destructive wrappers;
+   - readings, audit history, relationships, and network revisions preserved.
+8. Applied migration 117 after the live hierarchy smoke test exposed a legacy
+   validation edge case. Archive/status-only meter updates no longer revalidate
+   unrelated legacy parent metadata; real hierarchy edits remain validated.
+9. Fixed the validation-user setup script so a trigger-created profile is
+   explicitly approved and activated on conflict.
 
-## Verification evidence
+## Staging evidence
 
-- PostgreSQL 16 syntax test for migration 115: pass.
-- PostgreSQL 16 functional policy/correction test: pass.
-- PostgreSQL 16 functional archive/legacy-wrapper test: pass.
+Live database checks passed for:
+
+- platform owner, super admin, site admin, technician, and viewer scopes;
+- validation-account password login and immediate local logout;
+- required-photo reading acceptance;
+- missing-photo rejection;
+- future-date rejection;
+- authorized backdated reading acceptance;
+- direct correction rejection;
+- reason-bearing correction RPC and reading audit row;
+- new archive RPC;
+- legacy site, network, zone, and organization wrapper names;
+- reactivation metadata clearing with immutable archive audit retained.
+
+The 15 mutation smoke checks ran inside one PostgreSQL transaction and ended
+with `ROLLBACK`. No smoke reading or archive row remained afterward.
+
+Protected row counts before and after were unchanged:
+
+| Table | Before | After |
+|---|---:|---:|
+| organizations | 1 | 1 |
+| zones | 8 | 8 |
+| sites | 4 | 4 |
+| meters | 38 | 38 |
+| meter_readings | 43,846 | 43,846 |
+| reading_audit_logs | 167,444 | 167,444 |
+| site_utility_networks | 7 | 7 |
+| site_utility_network_revisions | 12 | 12 |
+
+`profiles` and `user_site_access` each increased by one because the missing
+technician validation account and its intended site assignment were created.
+
+## Local verification
+
 - Core: analyzer clean, 373 tests passed.
 - Dashboard: analyzer clean, 77 tests passed.
 - Entry: analyzer clean, 18 tests passed.
 - Admin: analyzer clean, 21 tests passed.
 - Total: 489 tests passed, zero failures.
 
-## Required Staging gate
+No dependency versions were upgraded. Analyzer output only reported that newer
+incompatible versions exist; the lockfiles remained unchanged.
 
-The following work requires an authenticated Supabase owner session and is not
-complete merely because local tests pass:
+## Migration history note
 
-1. Rotate exposed validation/demo account passwords and invalidate old sessions.
-2. Create a fresh database backup and record row counts before migration.
-3. Apply migration 115, then 116, to Staging only.
-4. Re-run role checks for platform owner, super admin, site admin, technician,
-   and viewer.
-5. Smoke-test:
-   - required-photo reading;
-   - missing-photo rejection;
-   - future-date rejection;
-   - authorized late reading;
-   - correction with reason and audit row;
-   - archive via both new and legacy RPC names;
-   - unchanged reading/audit/network counts after archive.
-6. Record post-migration counts and keep Phase 7/dependency upgrades frozen.
+The live project previously ended at migration 101. Migration 114 already
+existed locally but is unrelated to this hardening gate, so it was not applied
+implicitly. Staging now records 115, 116, and 117. Review 114 separately before
+the next CLI migration push because it is an out-of-order pending migration.
 
 ## Rollback rules
 
 - Application rollback: return to tag `pre-production-hardening-20260804` or
-  the verified checkpoint commit.
+  checkpoint commit `7fdac76`.
+- Database rollback: restore the verified pre-migration custom dump into a new
+  recovery project; do not overwrite Staging without an explicit incident
+  decision.
 - Offline data: do not delete Hive boxes. Legacy drafts are intentionally
   quarantined for explicit ownership recovery.
-- Migration 115: prefer a forward fix if Staging exposes a policy edge case.
-- Migration 116: do **not** restore the former destructive force-delete
-  function bodies. Keep the safe wrappers even if the Admin UI is rolled back.
-- Production promotion is blocked until the full Staging gate above passes.
+- Migration 115: prefer a forward fix for policy edge cases.
+- Migrations 116–117: do not restore destructive force-delete bodies. Keep the
+  safe archive wrappers even if an application UI is rolled back.
+- Production promotion requires a separate, explicit decision.

@@ -160,7 +160,10 @@ values
 on conflict (id) do update set
   role = excluded.role,
   full_name = excluded.full_name,
-  email = excluded.email;
+  email = excluded.email,
+  is_active = true,
+  approval_status = 'approved',
+  updated_at = now();
 
 -- Site access for non-super users (MOEHE HQ)
 insert into public.user_site_access (user_id, site_id, role, can_read, can_write, can_manage_meters)
