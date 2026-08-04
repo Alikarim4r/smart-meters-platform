@@ -10,12 +10,14 @@ void main() {
     const config = SupabaseConfig.fromEnvironment;
     config.validate();
 
-    await bootstrapSupabase(config: config);
+    await bootstrapSupabase(config: config, appKey: 'entry-integration-test');
 
     const email = String.fromEnvironment('STAGING_TEST_EMAIL');
     const password = String.fromEnvironment('STAGING_TEST_PASSWORD');
     if (email.isEmpty || password.isEmpty) {
-      fail('STAGING_TEST_EMAIL and STAGING_TEST_PASSWORD dart-defines are required');
+      fail(
+        'STAGING_TEST_EMAIL and STAGING_TEST_PASSWORD dart-defines are required',
+      );
     }
 
     final container = ProviderContainer();

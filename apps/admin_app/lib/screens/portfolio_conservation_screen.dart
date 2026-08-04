@@ -2,15 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
-import '../providers/admin_providers.dart';
-
 /// Executive portfolio dashboard — limited cards, verified-only totals.
 /// Visible only when portfolio_optimization flag is ON.
 class PortfolioConservationScreen extends ConsumerWidget {
-  const PortfolioConservationScreen({
-    super.key,
-    required this.organizationId,
-  });
+  const PortfolioConservationScreen({super.key, required this.organizationId});
 
   final String organizationId;
 
@@ -20,10 +15,9 @@ class PortfolioConservationScreen extends ConsumerWidget {
     return Scaffold(
       appBar: AppBar(title: const Text('Conservation Portfolio')),
       body: FutureBuilder<List<PortfolioSummary>>(
-        future: PortfolioSummaryRepository(client).listForOrg(
-          organizationId,
-          limit: 50,
-        ),
+        future: PortfolioSummaryRepository(
+          client,
+        ).listForOrg(organizationId, limit: 50),
         builder: (context, snap) {
           if (snap.connectionState != ConnectionState.done) {
             return const Center(child: CircularProgressIndicator());
@@ -36,8 +30,10 @@ class PortfolioConservationScreen extends ConsumerWidget {
               break;
             }
           }
-          final siteRows =
-              rows.where((e) => e.scopeLevel == 'site').take(20).toList();
+          final siteRows = rows
+              .where((e) => e.scopeLevel == 'site')
+              .take(20)
+              .toList();
 
           // No cached rows ⇒ empty state (never invent 0 portfolio totals).
           if (rows.isEmpty || org == null) {
@@ -73,28 +69,19 @@ class PortfolioConservationScreen extends ConsumerWidget {
                     org.costAvoidedTotal == null
                         ? 'N/A'
                         : '${org.costAvoidedTotal!.toStringAsFixed(1)} '
-                            '${org.costCurrency ?? 'QAR'}',
+                              '${org.costCurrency ?? 'QAR'}',
                   ),
                   _card(
                     'Carbon Avoided',
                     org.carbonAvoidedTotal == null
                         ? 'N/A'
                         : '${org.carbonAvoidedTotal!.toStringAsFixed(1)} '
-                            '${org.carbonUnit ?? ''}',
+                              '${org.carbonUnit ?? ''}',
                   ),
                   _card('Sites Above Target', '${org.sitesAboveTarget}'),
-                  _card(
-                    'Open High-Priority Opps',
-                    '${org.openOpportunities}',
-                  ),
-                  _card(
-                    'Verification Pending',
-                    '${org.verificationPending}',
-                  ),
-                  _card(
-                    'Savings Not Sustained',
-                    '${org.savingsNotSustained}',
-                  ),
+                  _card('Open High-Priority Opps', '${org.openOpportunities}'),
+                  _card('Verification Pending', '${org.verificationPending}'),
+                  _card('Savings Not Sustained', '${org.savingsNotSustained}'),
                   _card(
                     'Data Confidence',
                     org.dataConfidenceAvg == null

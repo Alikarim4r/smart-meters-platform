@@ -1,6 +1,5 @@
 import '../../domain/chart_period.dart';
 import '../domain/baseline_approval_gates.dart';
-import '../domain/period_windows.dart';
 import '../models/calculation_meta.dart';
 import '../models/conservation_baseline.dart';
 import 'period_comparison_service.dart';
@@ -128,8 +127,7 @@ class BaselineCalculationService {
       );
     }
 
-    final incompatible =
-        meters.where((m) => m.unitCode != unitCode).toList();
+    final incompatible = meters.where((m) => m.unitCode != unitCode).toList();
     if (incompatible.isNotEmpty) {
       return _fail(
         method: method,
@@ -181,8 +179,9 @@ class BaselineCalculationService {
       }
     }
 
-    final completeness =
-        (withEndpoints / meters.length).clamp(0.0, 1.0).toDouble();
+    final completeness = (withEndpoints / meters.length)
+        .clamp(0.0, 1.0)
+        .toDouble();
     var confidence = 100;
     if (withEndpoints == 0) confidence -= 50;
     if (completeness < 1.0) confidence -= 15;

@@ -1,5 +1,4 @@
 import '../../domain/chart_period.dart';
-import '../domain/period_windows.dart';
 import '../models/actual_vs_baseline_result.dart';
 import '../models/calculation_meta.dart';
 import '../models/conservation_baseline.dart';
@@ -50,15 +49,17 @@ class ActualVsBaselineService {
       }
     }
 
-    final incompatible =
-        meters.where((m) => m.unitCode != baseline.unitCode).toList();
+    final incompatible = meters
+        .where((m) => m.unitCode != baseline.unitCode)
+        .toList();
     if (incompatible.isNotEmpty) {
       return _insufficient(
         baseline: baseline,
         asOf: asOf,
         periodStart: periodStart,
         periodEnd: periodEnd,
-        reason: 'Incompatible meter units for baseline unit ${baseline.unitCode}.',
+        reason:
+            'Incompatible meter units for baseline unit ${baseline.unitCode}.',
         actualCompleteness: 0,
         actualConfidence: 0,
         baselineCompleteness: baselineCompleteness,
@@ -73,10 +74,9 @@ class ActualVsBaselineService {
     );
 
     // Combined confidence = min(baseline, actual) — conservative.
-    final combinedConfidence =
-        actual.confidence < baselineConfidence
-            ? actual.confidence
-            : baselineConfidence;
+    final combinedConfidence = actual.confidence < baselineConfidence
+        ? actual.confidence
+        : baselineConfidence;
     final combinedCompleteness = actual.completeness < baselineCompleteness
         ? actual.completeness
         : baselineCompleteness;
@@ -176,7 +176,7 @@ class ActualVsBaselineService {
   }
 
   ({double? value, bool hasValidEndpoints, double completeness, int confidence})
-      _computeActual({
+  _computeActual({
     required List<PeriodMeterReadingSeries> meters,
     required DateTime periodStart,
     required DateTime periodEnd,
@@ -210,8 +210,9 @@ class ActualVsBaselineService {
       withEndpoints++;
     }
 
-    final completeness =
-        (withEndpoints / meters.length).clamp(0.0, 1.0).toDouble();
+    final completeness = (withEndpoints / meters.length)
+        .clamp(0.0, 1.0)
+        .toDouble();
     var confidence = 100;
     if (withEndpoints == 0) confidence -= 40;
     if (completeness < 1.0) confidence -= 15;
@@ -233,11 +234,11 @@ class ActualVsBaselineService {
   }
 
   String _label(ActualVsBaselineStanding standing) => switch (standing) {
-        ActualVsBaselineStanding.aboveBaseline => 'Above Baseline',
-        ActualVsBaselineStanding.belowBaseline => 'Below Baseline',
-        ActualVsBaselineStanding.onBaseline => 'On Baseline',
-        ActualVsBaselineStanding.insufficientData => 'Insufficient Data',
-      };
+    ActualVsBaselineStanding.aboveBaseline => 'Above Baseline',
+    ActualVsBaselineStanding.belowBaseline => 'Below Baseline',
+    ActualVsBaselineStanding.onBaseline => 'On Baseline',
+    ActualVsBaselineStanding.insufficientData => 'Insufficient Data',
+  };
 
   ActualVsBaselineResult _insufficient({
     required ConservationBaseline baseline,

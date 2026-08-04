@@ -10,118 +10,122 @@ import '../widgets/catalog_widgets.dart';
 
 final _opportunityDetailProvider = FutureProvider.autoDispose
     .family<ConservationOpportunity?, String>((ref, opportunityId) {
-  return OpportunityRepository(ref.read(supabaseClientProvider))
-      .getById(opportunityId);
-});
+      return OpportunityRepository(
+        ref.read(supabaseClientProvider),
+      ).getById(opportunityId);
+    });
 
 final _opportunityInvestigationsProvider = FutureProvider.autoDispose
     .family<List<ConservationInvestigation>, String>((ref, opportunityId) {
-  return InvestigationRepository(ref.read(supabaseClientProvider))
-      .listByOpportunity(opportunityId);
-});
+      return InvestigationRepository(
+        ref.read(supabaseClientProvider),
+      ).listByOpportunity(opportunityId);
+    });
 
 final _opportunityActionsProvider = FutureProvider.autoDispose
     .family<List<ConservationAction>, String>((ref, opportunityId) {
-  return ActionRepository(ref.read(supabaseClientProvider))
-      .listByOpportunity(opportunityId);
-});
+      return ActionRepository(
+        ref.read(supabaseClientProvider),
+      ).listByOpportunity(opportunityId);
+    });
 
 final _opportunityEvidenceProvider = FutureProvider.autoDispose
     .family<List<ConservationEvidence>, String>((ref, opportunityId) {
-  return EvidenceRepository(ref.read(supabaseClientProvider))
-      .listByOpportunity(opportunityId);
-});
+      return EvidenceRepository(
+        ref.read(supabaseClientProvider),
+      ).listByOpportunity(opportunityId);
+    });
 
-final _siteInvestigationsFlagProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  final opportunities = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.opportunities,
-    siteId: siteId,
-  );
-  if (!opportunities) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.investigations,
-    siteId: siteId,
-  );
-});
+final _siteInvestigationsFlagProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      final opportunities = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.opportunities,
+        siteId: siteId,
+      );
+      if (!opportunities) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.investigations,
+        siteId: siteId,
+      );
+    });
 
-final _siteActionsFlagProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  final opportunities = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.opportunities,
-    siteId: siteId,
-  );
-  if (!opportunities) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.actions,
-    siteId: siteId,
-  );
-});
+final _siteActionsFlagProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      final opportunities = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.opportunities,
+        siteId: siteId,
+      );
+      if (!opportunities) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.actions,
+        siteId: siteId,
+      );
+    });
 
-final _siteEvidenceFlagProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  final opportunities = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.opportunities,
-    siteId: siteId,
-  );
-  if (!opportunities) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.evidence,
-    siteId: siteId,
-  );
-});
+final _siteEvidenceFlagProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      final opportunities = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.opportunities,
+        siteId: siteId,
+      );
+      if (!opportunities) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.evidence,
+        siteId: siteId,
+      );
+    });
 
 /// Assignees: approved + active profiles with site access.
 final _siteAssignableProfilesProvider = FutureProvider.autoDispose
     .family<List<AdminUser>, String>((ref, siteId) async {
-  final users = await ref.watch(usersProvider.future);
-  final repo = ref.read(userAdminRepositoryProvider);
-  final out = <AdminUser>[];
-  for (final u in users) {
-    if (!u.profile.isApprovedForAccess) continue;
-    final access = await repo.getUserSiteAccess(u.profile.id);
-    if (access.any((a) => a.siteId == siteId && a.canRead)) {
-      out.add(u);
-    }
-  }
-  return out;
-});
+      final users = await ref.watch(usersProvider.future);
+      final repo = ref.read(userAdminRepositoryProvider);
+      final out = <AdminUser>[];
+      for (final u in users) {
+        if (!u.profile.isApprovedForAccess) continue;
+        final access = await repo.getUserSiteAccess(u.profile.id);
+        if (access.any((a) => a.siteId == siteId && a.canRead)) {
+          out.add(u);
+        }
+      }
+      return out;
+    });
 
 /// Opportunity detail — investigation / actions / evidence workflow.
 class OpportunityDetailScreen extends ConsumerWidget {
@@ -218,7 +222,10 @@ class OpportunityDetailScreen extends ConsumerWidget {
                     opp.sourceSnapshot.entries
                         .map((e) => '${e.key}: ${e.value}')
                         .join('\n'),
-                    style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontFamily: 'monospace',
+                    ),
                   ),
                 ),
               ),
@@ -373,9 +380,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
       );
       _invalidateAll(ref);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Investigation started')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Investigation started')));
     } catch (e) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
@@ -465,10 +472,8 @@ class OpportunityDetailScreen extends ConsumerWidget {
               ),
             ),
             DropdownButtonFormField<ConservationActionType>(
-              value: type,
-              decoration: InputDecoration(
-                labelText: s.isAr ? 'النوع' : 'Type',
-              ),
+              initialValue: type,
+              decoration: InputDecoration(labelText: s.isAr ? 'النوع' : 'Type'),
               items: [
                 for (final t in ConservationActionType.values)
                   DropdownMenuItem(value: t, child: Text(t.dbValue)),
@@ -494,8 +499,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
     if (ok != true) return;
     try {
       final client = ref.read(supabaseClientProvider);
-      final investigations = await InvestigationRepository(client)
-          .listByOpportunity(opp.id, limit: 1);
+      final investigations = await InvestigationRepository(
+        client,
+      ).listByOpportunity(opp.id, limit: 1);
       await ActionRepository(client).create(
         opportunityId: opp.id,
         siteId: opp.siteId,
@@ -503,8 +509,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
             ? 'Follow-up action'
             : titleCtrl.text.trim(),
         actionType: type,
-        investigationId:
-            investigations.isEmpty ? null : investigations.first.id,
+        investigationId: investigations.isEmpty
+            ? null
+            : investigations.first.id,
         priority: opp.priority,
         createdBy: client.auth.currentUser?.id,
       );
@@ -544,7 +551,7 @@ class OpportunityDetailScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<ConservationEvidenceKind>(
-                      value: kind,
+                      initialValue: kind,
                       items: [
                         DropdownMenuItem(
                           value: ConservationEvidenceKind.note,
@@ -575,9 +582,7 @@ class OpportunityDetailScreen extends ConsumerWidget {
                     if (kind == ConservationEvidenceKind.documentLink)
                       TextField(
                         controller: urlCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'URL',
-                        ),
+                        decoration: const InputDecoration(labelText: 'URL'),
                       ),
                   ],
                 ),
@@ -657,9 +662,7 @@ class _InvestigationsBlock extends ConsumerWidget {
       error: (e, _) => Text('$e'),
       data: (items) {
         if (items.isEmpty) {
-          return Text(
-            s.isAr ? 'لا تحقيقات بعد' : 'No investigations yet',
-          );
+          return Text(s.isAr ? 'لا تحقيقات بعد' : 'No investigations yet');
         }
         return Column(
           children: [
@@ -691,26 +694,20 @@ class _InvestigationsBlock extends ConsumerWidget {
                           spacing: 8,
                           children: [
                             OutlinedButton(
-                              onPressed: () =>
-                                  _assign(context, ref, inv, s),
+                              onPressed: () => _assign(context, ref, inv, s),
                               child: Text(
                                 s.isAr ? 'تعيين فني' : 'Assign technician',
                               ),
                             ),
                             OutlinedButton(
-                              onPressed: () =>
-                                  _findings(context, ref, inv, s),
-                              child: Text(
-                                s.isAr ? 'نتائج' : 'Findings',
-                              ),
+                              onPressed: () => _findings(context, ref, inv, s),
+                              child: Text(s.isAr ? 'نتائج' : 'Findings'),
                             ),
                             OutlinedButton(
                               onPressed: () =>
                                   _confirmCause(context, ref, inv, s),
                               child: Text(
-                                s.isAr
-                                    ? 'تأكيد السبب'
-                                    : 'Confirm cause',
+                                s.isAr ? 'تأكيد السبب' : 'Confirm cause',
                               ),
                             ),
                           ],
@@ -734,8 +731,9 @@ class _InvestigationsBlock extends ConsumerWidget {
     ConservationInvestigation inv,
     AdminStrings s,
   ) async {
-    final assignees =
-        await ref.read(_siteAssignableProfilesProvider(siteId).future);
+    final assignees = await ref.read(
+      _siteAssignableProfilesProvider(siteId).future,
+    );
     if (!context.mounted) return;
     if (assignees.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -755,13 +753,10 @@ class _InvestigationsBlock extends ConsumerWidget {
       builder: (ctx) => AlertDialog(
         title: Text(s.isAr ? 'تعيين' : 'Assign'),
         content: DropdownButtonFormField<String>(
-          value: selected,
+          initialValue: selected,
           items: [
             for (final u in assignees)
-              DropdownMenuItem(
-                value: u.profile.id,
-                child: Text(u.displayName),
-              ),
+              DropdownMenuItem(value: u.profile.id, child: Text(u.displayName)),
           ],
           onChanged: (v) => selected = v,
         ),
@@ -782,11 +777,9 @@ class _InvestigationsBlock extends ConsumerWidget {
       final client = ref.read(supabaseClientProvider);
       final actor = client.auth.currentUser?.id;
       if (actor == null) throw StateError('Not signed in');
-      await InvestigationRepository(client).assign(
-        id: inv.id,
-        assignedTo: selected!,
-        assignedBy: actor,
-      );
+      await InvestigationRepository(
+        client,
+      ).assign(id: inv.id, assignedTo: selected!, assignedBy: actor);
       ref.invalidate(_opportunityInvestigationsProvider(opportunityId));
     } catch (e) {
       if (!context.mounted) return;
@@ -800,8 +793,7 @@ class _InvestigationsBlock extends ConsumerWidget {
     ConservationInvestigation inv,
     AdminStrings s,
   ) async {
-    final summaryCtrl =
-        TextEditingController(text: inv.findingSummary ?? '');
+    final summaryCtrl = TextEditingController(text: inv.findingSummary ?? '');
     final causeCtrl = TextEditingController(text: inv.possibleCause ?? '');
     final ok = await showDialog<bool>(
       context: context,
@@ -839,8 +831,9 @@ class _InvestigationsBlock extends ConsumerWidget {
     );
     if (ok != true) return;
     try {
-      await InvestigationRepository(ref.read(supabaseClientProvider))
-          .updateFindings(
+      await InvestigationRepository(
+        ref.read(supabaseClientProvider),
+      ).updateFindings(
         id: inv.id,
         findingSummary: summaryCtrl.text.trim(),
         possibleCause: causeCtrl.text.trim().isEmpty
@@ -868,10 +861,12 @@ class _InvestigationsBlock extends ConsumerWidget {
           builder: (ctx, setLocal) {
             return AlertDialog(
               title: Text(
-                s.isAr ? 'تأكيد السبب (بشري فقط)' : 'Confirm cause (human only)',
+                s.isAr
+                    ? 'تأكيد السبب (بشري فقط)'
+                    : 'Confirm cause (human only)',
               ),
               content: DropdownButtonFormField<ConfirmedCause>(
-                value: cause,
+                initialValue: cause,
                 items: [
                   for (final c in ConfirmedCause.values)
                     DropdownMenuItem(value: c, child: Text(c.dbValue)),
@@ -900,11 +895,9 @@ class _InvestigationsBlock extends ConsumerWidget {
       final client = ref.read(supabaseClientProvider);
       final actor = client.auth.currentUser?.id;
       if (actor == null) throw StateError('Not signed in');
-      await InvestigationRepository(client).confirmCause(
-        id: inv.id,
-        cause: cause,
-        confirmedBy: actor,
-      );
+      await InvestigationRepository(
+        client,
+      ).confirmCause(id: inv.id, cause: cause, confirmedBy: actor);
       ref.invalidate(_opportunityInvestigationsProvider(opportunityId));
     } catch (e) {
       if (!context.mounted) return;
@@ -914,10 +907,7 @@ class _InvestigationsBlock extends ConsumerWidget {
 }
 
 class _ActionsBlock extends ConsumerWidget {
-  const _ActionsBlock({
-    required this.opportunityId,
-    required this.canManage,
-  });
+  const _ActionsBlock({required this.opportunityId, required this.canManage});
   final String opportunityId;
   final bool canManage;
 
@@ -947,8 +937,7 @@ class _ActionsBlock extends ConsumerWidget {
                       ? IconButton(
                           tooltip: 'Set implementation cost',
                           icon: const Icon(Icons.payments_outlined),
-                          onPressed: () =>
-                              _setCost(context, ref, a),
+                          onPressed: () => _setCost(context, ref, a),
                         )
                       : null,
                 ),

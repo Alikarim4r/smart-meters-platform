@@ -29,6 +29,7 @@ class OpportunityCandidate {
     this.meterId,
     this.balanceGroupId,
     this.unitCode,
+
     /// Potential excess / quantity at risk — never Saving.
     this.estimatedWasteQuantity,
     this.origin = OpportunityOrigin.automatic,
@@ -224,7 +225,8 @@ class OpportunityEngine {
         'quantity_label': ConservationOpportunityLabels.potentialExcess,
       },
       ruleVersion: ruleVersion,
-      meterId: meterId ??
+      meterId:
+          meterId ??
           (anomaly.contributingMeterIds.isNotEmpty
               ? anomaly.contributingMeterIds.first
               : null),
@@ -253,7 +255,7 @@ class OpportunityEngine {
 
     final diff = balance.balanceDifference;
     // Potential excess = positive unaccounted quantity (abs when meaningful).
-    final potentialExcess = diff == null ? null : diff.abs();
+    final potentialExcess = diff?.abs();
 
     final priority = OpportunityPriority.compute(
       confidenceScore: balance.confidenceScore,
@@ -324,8 +326,8 @@ class OpportunityEngine {
       ruleVersion: ruleVersion,
     );
 
-    final potentialExcess = result.absoluteDifference != null &&
-            result.absoluteDifference! > 0
+    final potentialExcess =
+        result.absoluteDifference != null && result.absoluteDifference! > 0
         ? result.absoluteDifference
         : null;
 
@@ -395,8 +397,8 @@ class OpportunityEngine {
       ruleVersion: ruleVersion,
     );
 
-    final potentialExcess = result.absoluteVariance != null &&
-            result.absoluteVariance! > 0
+    final potentialExcess =
+        result.absoluteVariance != null && result.absoluteVariance! > 0
         ? result.absoluteVariance
         : null;
 
@@ -449,48 +451,48 @@ class OpportunityEngine {
   }
 
   static String _anomalyTitle(AnomalyKind kind) => switch (kind) {
-        AnomalyKind.unusualIncrease => 'Unusual Increase — Potential Excess',
-        AnomalyKind.repeatedHigh => 'Repeated High Consumption',
-        AnomalyKind.farAboveBaseline => 'Far Above Baseline — Potential Excess',
-        AnomalyKind.aboveTarget => 'Above Target Signal',
-        AnomalyKind.copDeclining => 'COP Declining Trend',
-        AnomalyKind.suddenChange => 'Sudden Consumption Change',
-        _ => 'Consumption Anomaly Signal',
-      };
+    AnomalyKind.unusualIncrease => 'Unusual Increase — Potential Excess',
+    AnomalyKind.repeatedHigh => 'Repeated High Consumption',
+    AnomalyKind.farAboveBaseline => 'Far Above Baseline — Potential Excess',
+    AnomalyKind.aboveTarget => 'Above Target Signal',
+    AnomalyKind.copDeclining => 'COP Declining Trend',
+    AnomalyKind.suddenChange => 'Sudden Consumption Change',
+    _ => 'Consumption Anomaly Signal',
+  };
 
-  static List<String> _anomalyPossibleCauses(AnomalyKind kind) => switch (kind) {
+  static List<String> _anomalyPossibleCauses(AnomalyKind kind) =>
+      switch (kind) {
         AnomalyKind.copDeclining => const [
-            'hvac_performance',
-            'operational_usage',
-            'meter_error',
-            'unknown',
-          ],
+          'hvac_performance',
+          'operational_usage',
+          'meter_error',
+          'unknown',
+        ],
         AnomalyKind.unusualIncrease ||
         AnomalyKind.repeatedHigh ||
         AnomalyKind.farAboveBaseline ||
         AnomalyKind.aboveTarget ||
-        AnomalyKind.suddenChange =>
-          const [
-            'suspected_leak',
-            'operational_usage',
-            'meter_error',
-            'reading_error',
-            'unknown',
-          ],
+        AnomalyKind.suddenChange => const [
+          'suspected_leak',
+          'operational_usage',
+          'meter_error',
+          'reading_error',
+          'unknown',
+        ],
         _ => const ['unknown'],
       };
 
   static List<String> _defaultInvestigations(OpportunitySourceType t) =>
       switch (t) {
         OpportunitySourceType.copDeterioration => const [
-            'Review COP group completeness',
-            'Inspect HVAC operating conditions',
-          ],
+          'Review COP group completeness',
+          'Inspect HVAC operating conditions',
+        ],
         _ => const [
-            'Review source readings and completeness',
-            'Compare to prior periods',
-            'Check for operational changes',
-          ],
+          'Review source readings and completeness',
+          'Compare to prior periods',
+          'Check for operational changes',
+        ],
       };
 
   static AnomalySeverity _severityFromBalancePct(double? pct) {

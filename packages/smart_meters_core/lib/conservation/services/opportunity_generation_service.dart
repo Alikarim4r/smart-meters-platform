@@ -24,9 +24,9 @@ class GenerationResult {
 /// explicitly. No historical backfill beyond the provided period signals.
 class OpportunityGenerationService {
   OpportunityGenerationService({
-    required OpportunityGenerationStore repository,
+    required this._repository,
     this.engine = const OpportunityEngine(),
-  }) : _repository = repository;
+  });
 
   final OpportunityGenerationStore _repository;
   final OpportunityEngine engine;

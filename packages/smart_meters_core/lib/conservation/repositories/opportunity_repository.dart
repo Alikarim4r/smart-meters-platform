@@ -56,8 +56,7 @@ class OpportunityRepository implements OpportunityGenerationStore {
   }
 
   Future<ConservationOpportunity?> getById(String id) async {
-    final row =
-        await _client.from(_table).select().eq('id', id).maybeSingle();
+    final row = await _client.from(_table).select().eq('id', id).maybeSingle();
     if (row == null) return null;
     return ConservationOpportunity.fromJson(Map<String, dynamic>.from(row));
   }
@@ -102,8 +101,12 @@ class OpportunityRepository implements OpportunityGenerationStore {
     String id,
     Map<String, dynamic> patch,
   ) async {
-    final updated =
-        await _client.from(_table).update(patch).eq('id', id).select().single();
+    final updated = await _client
+        .from(_table)
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
     return ConservationOpportunity.fromJson(Map<String, dynamic>.from(updated));
   }
 
@@ -131,13 +134,11 @@ class OpportunityRepository implements OpportunityGenerationStore {
       'confidence_score': confidenceScore,
       'priority': priority.dbValue,
       'source_snapshot': sourceSnapshot,
-      if (estimatedWasteQuantity != null)
-        'estimated_waste_quantity': estimatedWasteQuantity,
-      if (possibleCauses != null) 'possible_causes': possibleCauses,
-      if (suggestedInvestigations != null)
-        'suggested_investigations': suggestedInvestigations,
-      if (title != null) 'title': title,
-      if (description != null) 'description': description,
+      'estimated_waste_quantity': ?estimatedWasteQuantity,
+      'possible_causes': ?possibleCauses,
+      'suggested_investigations': ?suggestedInvestigations,
+      'title': ?title,
+      'description': ?description,
     });
   }
 }

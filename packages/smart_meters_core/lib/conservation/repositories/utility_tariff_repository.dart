@@ -31,7 +31,7 @@ class UtilityTariffRepository {
         .from(_table)
         .insert({
           'organization_id': organizationId,
-          if (siteId != null) 'site_id': siteId,
+          'site_id': ?siteId,
           'utility_type': utilityType,
           'rate': rate,
           'currency': currency,
@@ -39,8 +39,8 @@ class UtilityTariffRepository {
           'effective_from': _isoDate(effectiveFrom),
           if (effectiveTo != null) 'effective_to': _isoDate(effectiveTo),
           'status': UtilityTariffStatus.active.dbValue,
-          if (sourceNotes != null) 'source_notes': sourceNotes,
-          if (createdBy != null) 'created_by': createdBy,
+          'source_notes': ?sourceNotes,
+          'created_by': ?createdBy,
         })
         .select()
         .single();
@@ -68,13 +68,13 @@ class UtilityTariffRepository {
     }
     final rows = await q.order('effective_from', ascending: false);
     final all = (rows as List)
-        .map(
-          (e) => UtilityTariff.fromJson(Map<String, dynamic>.from(e as Map)),
-        )
+        .map((e) => UtilityTariff.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
     // Include org-wide (null site) and matching site-specific.
     return all
-        .where((t) => t.siteId == null || (siteId != null && t.siteId == siteId))
+        .where(
+          (t) => t.siteId == null || (siteId != null && t.siteId == siteId),
+        )
         .toList();
   }
 

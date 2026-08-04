@@ -25,8 +25,8 @@ class InvestigationRepository {
           'opportunity_id': opportunityId,
           'site_id': siteId,
           'investigation_status': InvestigationStatus.open.dbValue,
-          if (createdBy != null) 'created_by': createdBy,
-          if (notes != null) 'notes': notes,
+          'created_by': ?createdBy,
+          'notes': ?notes,
         })
         .select()
         .single();
@@ -72,10 +72,10 @@ class InvestigationRepository {
   }) async {
     final existing = await _get(id);
     final patch = <String, dynamic>{
-      if (findingSummary != null) 'finding_summary': findingSummary,
-      if (possibleCause != null) 'possible_cause': possibleCause,
-      if (proposedCause != null) 'proposed_cause': proposedCause,
-      if (notes != null) 'notes': notes,
+      'finding_summary': ?findingSummary,
+      'possible_cause': ?possibleCause,
+      'proposed_cause': ?proposedCause,
+      'notes': ?notes,
     };
     if (markInProgress &&
         existing.investigationStatus != InvestigationStatus.completed &&
@@ -87,13 +87,18 @@ class InvestigationRepository {
         );
         patch['investigation_status'] = InvestigationStatus.inProgress.dbValue;
         if (existing.investigationStartedAt == null) {
-          patch['investigation_started_at'] =
-              DateTime.now().toUtc().toIso8601String();
+          patch['investigation_started_at'] = DateTime.now()
+              .toUtc()
+              .toIso8601String();
         }
       }
     }
-    final updated =
-        await _client.from(_table).update(patch).eq('id', id).select().single();
+    final updated = await _client
+        .from(_table)
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
     return ConservationInvestigation.fromJson(
       Map<String, dynamic>.from(updated),
     );
@@ -158,8 +163,9 @@ class InvestigationRepository {
         .from(_table)
         .update({
           'investigation_status': InvestigationStatus.completed.dbValue,
-          'investigation_completed_at':
-              DateTime.now().toUtc().toIso8601String(),
+          'investigation_completed_at': DateTime.now()
+              .toUtc()
+              .toIso8601String(),
         })
         .eq('id', id)
         .select()
@@ -189,8 +195,7 @@ class InvestigationRepository {
   }
 
   Future<ConservationInvestigation> _get(String id) async {
-    final row =
-        await _client.from(_table).select().eq('id', id).single();
+    final row = await _client.from(_table).select().eq('id', id).single();
     return ConservationInvestigation.fromJson(Map<String, dynamic>.from(row));
   }
 }

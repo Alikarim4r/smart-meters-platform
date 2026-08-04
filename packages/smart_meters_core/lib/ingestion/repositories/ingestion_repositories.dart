@@ -15,18 +15,22 @@ class ImportBatchRepository {
     Map<String, dynamic>? columnMapping,
     required String importedBy,
   }) async {
-    final row = await _client.from('import_batches').insert({
-      'organization_id': organizationId,
-      'site_id': siteId,
-      'source_type': sourceType,
-      'file_fingerprint': fileFingerprint,
-      'file_name': fileName,
-      'storage_path': storagePath,
-      'column_mapping': columnMapping ?? {},
-      'status': 'preview',
-      'dry_run': true,
-      'imported_by': importedBy,
-    }).select().single();
+    final row = await _client
+        .from('import_batches')
+        .insert({
+          'organization_id': organizationId,
+          'site_id': siteId,
+          'source_type': sourceType,
+          'file_fingerprint': fileFingerprint,
+          'file_name': fileName,
+          'storage_path': storagePath,
+          'column_mapping': columnMapping ?? {},
+          'status': 'preview',
+          'dry_run': true,
+          'imported_by': importedBy,
+        })
+        .select()
+        .single();
     return Map<String, dynamic>.from(row);
   }
 
@@ -92,10 +96,13 @@ class NotificationRepository {
   }
 
   Future<void> markRead(String id) async {
-    await _client.from('in_app_notifications').update({
-      'is_read': true,
-      'read_at': DateTime.now().toUtc().toIso8601String(),
-    }).eq('id', id);
+    await _client
+        .from('in_app_notifications')
+        .update({
+          'is_read': true,
+          'read_at': DateTime.now().toUtc().toIso8601String(),
+        })
+        .eq('id', id);
   }
 
   Future<Map<String, dynamic>?> insertNotification({
@@ -115,16 +122,15 @@ class NotificationRepository {
         .from('in_app_notifications')
         .insert({
           'organization_id': organizationId,
-          if (siteId != null) 'site_id': siteId,
-          if (userId != null) 'user_id': userId,
+          'site_id': ?siteId,
+          'user_id': ?userId,
           'notification_type': notificationType,
           'severity': severity,
           'title': title,
           'body': body,
           'event_key': eventKey,
-          if (relatedEntityType != null)
-            'related_entity_type': relatedEntityType,
-          if (relatedEntityId != null) 'related_entity_id': relatedEntityId,
+          'related_entity_type': ?relatedEntityType,
+          'related_entity_id': ?relatedEntityId,
           'payload': payload,
           'is_read': false,
         })
@@ -161,7 +167,7 @@ class NotificationRepository {
       'notification_type': notificationType,
       'enabled': enabled,
       'min_severity': minSeverity,
-      if (siteId != null) 'site_id': siteId,
+      'site_id': ?siteId,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     });
   }

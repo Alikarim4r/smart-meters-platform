@@ -106,23 +106,20 @@ class BalanceGroupRepository {
     }
     return [
       for (final g in groups)
-        BalanceGroup.fromJson(
-          {
-            'id': g.id,
-            'site_id': g.siteId,
-            'name': g.name,
-            'utility_code': g.utilityCode,
-            'unit_code': g.unitCode,
-            'main_meter_id': g.mainMeterId,
-            'virtual_meter_id': g.virtualMeterId,
-            'status': g.status.dbValue,
-            'notes': g.notes,
-            'created_by': g.createdBy,
-            'created_at': g.createdAt?.toIso8601String(),
-            'updated_at': g.updatedAt?.toIso8601String(),
-          },
-          memberMeterIds: byGroup[g.id] ?? const [],
-        ),
+        BalanceGroup.fromJson({
+          'id': g.id,
+          'site_id': g.siteId,
+          'name': g.name,
+          'utility_code': g.utilityCode,
+          'unit_code': g.unitCode,
+          'main_meter_id': g.mainMeterId,
+          'virtual_meter_id': g.virtualMeterId,
+          'status': g.status.dbValue,
+          'notes': g.notes,
+          'created_by': g.createdBy,
+          'created_at': g.createdAt?.toIso8601String(),
+          'updated_at': g.updatedAt?.toIso8601String(),
+        }, memberMeterIds: byGroup[g.id] ?? const []),
     ];
   }
 
@@ -190,10 +187,7 @@ class BalanceGroupRepository {
     if (memberMeterIds.isNotEmpty) {
       await _client.from(_members).insert([
         for (final id in memberMeterIds.toSet())
-          {
-            'balance_group_id': group.id,
-            'member_meter_id': id,
-          },
+          {'balance_group_id': group.id, 'member_meter_id': id},
       ]);
     }
     return BalanceGroup.fromJson(
@@ -214,11 +208,11 @@ class BalanceGroupRepository {
   }) async {
     final payload = <String, dynamic>{
       if (name != null) 'name': name.trim(),
-      if (unitCode != null) 'unit_code': unitCode,
-      if (mainMeterId != null) 'main_meter_id': mainMeterId,
-      if (virtualMeterId != null) 'virtual_meter_id': virtualMeterId,
+      'unit_code': ?unitCode,
+      'main_meter_id': ?mainMeterId,
+      'virtual_meter_id': ?virtualMeterId,
       if (status != null) 'status': status.dbValue,
-      if (notes != null) 'notes': notes,
+      'notes': ?notes,
     };
     Map<String, dynamic> row;
     if (payload.isEmpty) {
@@ -245,10 +239,7 @@ class BalanceGroupRepository {
       if (memberMeterIds.isNotEmpty) {
         await _client.from(_members).insert([
           for (final mid in memberMeterIds.toSet())
-            {
-              'balance_group_id': id,
-              'member_meter_id': mid,
-            },
+            {'balance_group_id': id, 'member_meter_id': mid},
         ]);
       }
     }

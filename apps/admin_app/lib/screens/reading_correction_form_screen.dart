@@ -60,7 +60,9 @@ class _ReadingCorrectionFormScreenState
     // Resolve organization from site via accessible sites list if needed.
     String? organizationId;
     try {
-      final sites = await ref.read(siteRepositoryProvider).getAccessibleSites(profile);
+      final sites = await ref
+          .read(siteRepositoryProvider)
+          .getAccessibleSites(profile);
       for (final site in sites) {
         if (site.id == details.reading.siteId) {
           organizationId = site.organizationId;
@@ -74,10 +76,12 @@ class _ReadingCorrectionFormScreenState
     try {
       final bytes = await file.readAsBytes();
       final oldPath = details.reading.imageStoragePath;
-      await ref.read(readingCorrectionRepositoryProvider).replaceReadingPhoto(
+      await ref
+          .read(readingCorrectionRepositoryProvider)
+          .replaceReadingPhoto(
             readingId: widget.readingId,
             bytes: bytes,
-            organizationId: organizationId!,
+            organizationId: organizationId,
           );
       if (oldPath != null) {
         ref.invalidate(correctionPhotoUrlProvider(oldPath));

@@ -38,8 +38,11 @@ class ConservationBaselineRepository {
         .eq('status', ConservationBaselineStatus.approved.dbValue)
         .order('unit_code');
     return (rows as List)
-        .map((e) =>
-            ConservationBaseline.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => ConservationBaseline.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
         .toList();
   }
 
@@ -83,8 +86,11 @@ class ConservationBaselineRepository {
         .order('version_number', ascending: false)
         .order('created_at', ascending: false);
     return (rows as List)
-        .map((e) =>
-            ConservationBaseline.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => ConservationBaseline.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
         .toList();
   }
 
@@ -185,25 +191,26 @@ class ConservationBaselineRepository {
     Map<String, dynamic>? calculationMeta,
   }) async {
     final existing = await _client.from(_table).select().eq('id', id).single();
-    final status =
-        ConservationBaselineStatus.fromDb(existing['status'] as String);
+    final status = ConservationBaselineStatus.fromDb(
+      existing['status'] as String,
+    );
     if (status != ConservationBaselineStatus.draft) {
       throw StateError('Only draft baselines may be updated in place.');
     }
     final payload = <String, dynamic>{
-      if (label != null) 'label': label,
+      'label': ?label,
       if (referencePeriodStart != null)
         'reference_period_start': _iso(referencePeriodStart),
       if (referencePeriodEnd != null)
         'reference_period_end': _iso(referencePeriodEnd),
       if (calculationMethod != null)
         'calculation_method': calculationMethod.dbValue,
-      if (baselineValue != null) 'baseline_value': baselineValue,
-      if (notes != null) 'notes': notes,
-      if (dataCompleteness != null) 'data_completeness': dataCompleteness,
-      if (confidenceScore != null) 'confidence_score': confidenceScore,
+      'baseline_value': ?baselineValue,
+      'notes': ?notes,
+      'data_completeness': ?dataCompleteness,
+      'confidence_score': ?confidenceScore,
       if (boundaryQuality != null) 'boundary_quality': boundaryQuality.dbValue,
-      if (calculationMeta != null) 'calculation_meta': calculationMeta,
+      'calculation_meta': ?calculationMeta,
     };
     final updated = await _client
         .from(_table)

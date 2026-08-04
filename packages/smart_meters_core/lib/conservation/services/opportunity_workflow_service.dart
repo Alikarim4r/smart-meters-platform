@@ -9,8 +9,8 @@ class OpportunityWorkflowService {
   OpportunityWorkflowService({
     required OpportunityRepository opportunityRepository,
     required WorkflowAuditRepository auditRepository,
-  })  : _opps = opportunityRepository,
-        _audit = auditRepository;
+  }) : _opps = opportunityRepository,
+       _audit = auditRepository;
 
   final OpportunityRepository _opps;
   final WorkflowAuditRepository _audit;
@@ -18,89 +18,83 @@ class OpportunityWorkflowService {
   Future<ConservationOpportunity> triage(
     String opportunityId, {
     String? notes,
-  }) =>
-      _transition(
-        opportunityId,
-        to: OpportunityStatus.triaged,
-        action: 'triage',
-        notes: notes,
-      );
+  }) => _transition(
+    opportunityId,
+    to: OpportunityStatus.triaged,
+    action: 'triage',
+    notes: notes,
+  );
 
   Future<ConservationOpportunity> startInvestigation(
     String opportunityId, {
     String? notes,
-  }) =>
-      _transition(
-        opportunityId,
-        to: OpportunityStatus.underInvestigation,
-        action: 'start_investigation',
-        notes: notes,
-      );
+  }) => _transition(
+    opportunityId,
+    to: OpportunityStatus.underInvestigation,
+    action: 'start_investigation',
+    notes: notes,
+  );
 
   Future<ConservationOpportunity> markActionRequired(
     String opportunityId, {
     String? notes,
-  }) =>
-      _transition(
-        opportunityId,
-        to: OpportunityStatus.actionRequired,
-        action: 'mark_action_required',
-        notes: notes,
-      );
+  }) => _transition(
+    opportunityId,
+    to: OpportunityStatus.actionRequired,
+    action: 'mark_action_required',
+    notes: notes,
+  );
 
   Future<ConservationOpportunity> startMonitoring(
     String opportunityId, {
     String? notes,
     DateTime? followUpStart,
     DateTime? followUpEnd,
-  }) =>
-      _transition(
-        opportunityId,
-        to: OpportunityStatus.monitoring,
-        action: 'start_monitoring',
-        notes: notes,
-        patch: {
-          if (followUpStart != null) 'follow_up_start': _isoDate(followUpStart),
-          if (followUpEnd != null) 'follow_up_end': _isoDate(followUpEnd),
-        },
-      );
+  }) => _transition(
+    opportunityId,
+    to: OpportunityStatus.monitoring,
+    action: 'start_monitoring',
+    notes: notes,
+    patch: {
+      if (followUpStart != null) 'follow_up_start': _isoDate(followUpStart),
+      if (followUpEnd != null) 'follow_up_end': _isoDate(followUpEnd),
+    },
+  );
 
   Future<ConservationOpportunity> resolve(
     String opportunityId, {
     String? resolutionReason,
     String? notes,
-  }) =>
-      _transition(
-        opportunityId,
-        to: OpportunityStatus.resolved,
-        action: 'resolve',
-        notes: notes,
-        patch: {
-          'closed_at': DateTime.now().toUtc().toIso8601String(),
-          if (resolutionReason != null) 'resolution_reason': resolutionReason,
-        },
-      );
+  }) => _transition(
+    opportunityId,
+    to: OpportunityStatus.resolved,
+    action: 'resolve',
+    notes: notes,
+    patch: {
+      'closed_at': DateTime.now().toUtc().toIso8601String(),
+      'resolution_reason': ?resolutionReason,
+    },
+  );
 
   Future<ConservationOpportunity> dismiss(
     String opportunityId, {
     required OpportunityDismissReason reason,
     String? notes,
     String? dismissedBy,
-  }) =>
-      _transition(
-        opportunityId,
-        to: OpportunityStatus.dismissed,
-        action: 'dismiss',
-        notes: notes,
-        patch: {
-          'dismiss_reason': reason.dbValue,
-          'dismiss_notes': notes,
-          'dismissed_by': dismissedBy,
-          'dismissed_at': DateTime.now().toUtc().toIso8601String(),
-          'closed_at': DateTime.now().toUtc().toIso8601String(),
-        },
-        metadata: {'dismiss_reason': reason.dbValue},
-      );
+  }) => _transition(
+    opportunityId,
+    to: OpportunityStatus.dismissed,
+    action: 'dismiss',
+    notes: notes,
+    patch: {
+      'dismiss_reason': reason.dbValue,
+      'dismiss_notes': notes,
+      'dismissed_by': dismissedBy,
+      'dismissed_at': DateTime.now().toUtc().toIso8601String(),
+      'closed_at': DateTime.now().toUtc().toIso8601String(),
+    },
+    metadata: {'dismiss_reason': reason.dbValue},
+  );
 
   /// Reopen from resolved/dismissed → detected (clears dismiss fields).
   Future<ConservationOpportunity> reopen(

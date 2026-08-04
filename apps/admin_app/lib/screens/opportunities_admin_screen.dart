@@ -8,32 +8,40 @@ import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 import 'opportunity_detail_screen.dart';
 
-final _siteOpportunitiesEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.opportunities,
-    siteId: siteId,
-  );
-});
+final _siteOpportunitiesEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.opportunities,
+        siteId: siteId,
+      );
+    });
 
 final _siteOpportunitiesProvider = FutureProvider.autoDispose
     .family<List<ConservationOpportunity>, String>((ref, siteId) {
-  return OpportunityRepository(ref.read(supabaseClientProvider))
-      .listForSite(siteId, limit: 100);
-});
+      return OpportunityRepository(
+        ref.read(supabaseClientProvider),
+      ).listForSite(siteId, limit: 100);
+    });
 
-enum _OppFilter { all, open, underInvestigation, actionsDue, monitoring, closed }
+enum _OppFilter {
+  all,
+  open,
+  underInvestigation,
+  actionsDue,
+  monitoring,
+  closed,
+}
 
 /// Admin list for conservation opportunities (gated by module + opportunities).
 class OpportunitiesAdminScreen extends ConsumerStatefulWidget {
@@ -54,8 +62,9 @@ class _OpportunitiesAdminScreenState
   @override
   Widget build(BuildContext context) {
     final s = AdminStrings(ref.watch(adminLocaleProvider));
-    final enabledAsync =
-        ref.watch(_siteOpportunitiesEnabledProvider(widget.siteId));
+    final enabledAsync = ref.watch(
+      _siteOpportunitiesEnabledProvider(widget.siteId),
+    );
     final canManage = ref.watch(canManageMetersProvider);
 
     return Scaffold(
@@ -105,8 +114,9 @@ class _OpportunitiesAdminScreenState
               icon: Icons.flag_outlined,
             );
           }
-          final listAsync =
-              ref.watch(_siteOpportunitiesProvider(widget.siteId));
+          final listAsync = ref.watch(
+            _siteOpportunitiesProvider(widget.siteId),
+          );
           return listAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => CatalogErrorView(
@@ -179,14 +189,13 @@ class _OpportunitiesAdminScreenState
                                       ? PopupMenuButton<String>(
                                           onSelected: (action) =>
                                               _runWorkflowAction(
-                                            context,
-                                            s,
-                                            o,
-                                            action,
-                                          ),
+                                                context,
+                                                s,
+                                                o,
+                                                action,
+                                              ),
                                           itemBuilder: (_) => [
-                                            if (OpportunityLifecycle
-                                                .canTransition(
+                                            if (OpportunityLifecycle.canTransition(
                                               o.status,
                                               OpportunityStatus.triaged,
                                             ))
@@ -196,8 +205,7 @@ class _OpportunitiesAdminScreenState
                                                   s.isAr ? 'فرز' : 'Triage',
                                                 ),
                                               ),
-                                            if (OpportunityLifecycle
-                                                .canTransition(
+                                            if (OpportunityLifecycle.canTransition(
                                               o.status,
                                               OpportunityStatus.resolved,
                                             ))
@@ -207,8 +215,7 @@ class _OpportunitiesAdminScreenState
                                                   s.isAr ? 'إغلاق' : 'Resolve',
                                                 ),
                                               ),
-                                            if (OpportunityLifecycle
-                                                .canTransition(
+                                            if (OpportunityLifecycle.canTransition(
                                               o.status,
                                               OpportunityStatus.dismissed,
                                             ))
@@ -245,27 +252,26 @@ class _OpportunitiesAdminScreenState
   }
 
   bool _matchesFilter(ConservationOpportunity o) => switch (_filter) {
-        _OppFilter.all => true,
-        _OppFilter.open =>
-          o.status == OpportunityStatus.detected ||
-              o.status == OpportunityStatus.triaged,
-        _OppFilter.underInvestigation =>
-          o.status == OpportunityStatus.underInvestigation,
-        _OppFilter.actionsDue =>
-          o.status == OpportunityStatus.actionRequired,
-        _OppFilter.monitoring => o.status == OpportunityStatus.monitoring,
-        _OppFilter.closed => o.status.isClosed,
-      };
+    _OppFilter.all => true,
+    _OppFilter.open =>
+      o.status == OpportunityStatus.detected ||
+          o.status == OpportunityStatus.triaged,
+    _OppFilter.underInvestigation =>
+      o.status == OpportunityStatus.underInvestigation,
+    _OppFilter.actionsDue => o.status == OpportunityStatus.actionRequired,
+    _OppFilter.monitoring => o.status == OpportunityStatus.monitoring,
+    _OppFilter.closed => o.status.isClosed,
+  };
 
   String _filterLabel(_OppFilter f, AdminStrings s) => switch (f) {
-        _OppFilter.all => s.isAr ? 'الكل' : 'All',
-        _OppFilter.open => s.isAr ? 'مفتوحة' : 'Open',
-        _OppFilter.underInvestigation =>
-          s.isAr ? 'قيد التحقيق' : 'Under Investigation',
-        _OppFilter.actionsDue => s.isAr ? 'إجراءات' : 'Actions Due',
-        _OppFilter.monitoring => s.isAr ? 'متابعة' : 'Monitoring',
-        _OppFilter.closed => s.isAr ? 'مغلقة' : 'Resolved',
-      };
+    _OppFilter.all => s.isAr ? 'الكل' : 'All',
+    _OppFilter.open => s.isAr ? 'مفتوحة' : 'Open',
+    _OppFilter.underInvestigation =>
+      s.isAr ? 'قيد التحقيق' : 'Under Investigation',
+    _OppFilter.actionsDue => s.isAr ? 'إجراءات' : 'Actions Due',
+    _OppFilter.monitoring => s.isAr ? 'متابعة' : 'Monitoring',
+    _OppFilter.closed => s.isAr ? 'مغلقة' : 'Resolved',
+  };
 
   OpportunityWorkflowService _workflow() {
     final client = ref.read(supabaseClientProvider);
@@ -300,14 +306,12 @@ class _OpportunitiesAdminScreenState
       }
       ref.invalidate(_siteOpportunitiesProvider(widget.siteId));
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.isAr ? 'تم' : 'Updated')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.isAr ? 'تم' : 'Updated')));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
@@ -345,7 +349,7 @@ class _OpportunitiesAdminScreenState
                       maxLines: 2,
                     ),
                     DropdownButtonFormField<String>(
-                      value: utility,
+                      initialValue: utility,
                       decoration: InputDecoration(
                         labelText: s.isAr ? 'المنفعة' : 'Utility',
                       ),
@@ -428,22 +432,15 @@ class _OpportunitiesAdminScreenState
       ref.invalidate(_siteOpportunitiesProvider(widget.siteId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(s.isAr ? 'تم الإنشاء' : 'Created'),
-        ),
+        SnackBar(content: Text(s.isAr ? 'تم الإنشاء' : 'Created')),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     }
   }
 
-  Future<void> _refreshFromSignals(
-    BuildContext context,
-    AdminStrings s,
-  ) async {
+  Future<void> _refreshFromSignals(BuildContext context, AdminStrings s) async {
     setState(() => _refreshing = true);
     try {
       final client = ref.read(supabaseClientProvider);
@@ -452,10 +449,10 @@ class _OpportunitiesAdminScreenState
       final orgId = site.organizationId;
 
       Future<bool> flagOn(String key) => flags.isEnabled(
-            organizationId: orgId,
-            flagKey: key,
-            siteId: widget.siteId,
-          );
+        organizationId: orgId,
+        flagKey: key,
+        siteId: widget.siteId,
+      );
 
       final now = DateTime.now();
       final periodStart = DateTime(now.year, now.month, 1);
@@ -467,10 +464,12 @@ class _OpportunitiesAdminScreenState
       final waterBal = await flagOn(ConservationFeatureFlags.waterBalance);
       final energyBal = await flagOn(ConservationFeatureFlags.energyBalance);
       if (waterBal || energyBal) {
-        final groups =
-            await BalanceGroupRepository(client).listForSite(widget.siteId);
-        final meters =
-            await ref.read(meterRepositoryProvider).getMetersForSite(widget.siteId);
+        final groups = await BalanceGroupRepository(
+          client,
+        ).listForSite(widget.siteId);
+        final meters = await ref
+            .read(meterRepositoryProvider)
+            .getMetersForSite(widget.siteId);
         final byMeter = await _loadReadings(
           widget.siteId,
           meters.map((m) => m.id).toList(),
@@ -530,12 +529,12 @@ class _OpportunitiesAdminScreenState
       }
 
       if (await flagOn(ConservationFeatureFlags.targets)) {
-        final targets = await ConservationTargetRepository(client).listForSite(
-          widget.siteId,
-          status: ConservationTargetStatus.active,
-        );
-        final meters =
-            await ref.read(meterRepositoryProvider).getMetersForSite(widget.siteId);
+        final targets = await ConservationTargetRepository(
+          client,
+        ).listForSite(widget.siteId, status: ConservationTargetStatus.active);
+        final meters = await ref
+            .read(meterRepositoryProvider)
+            .getMetersForSite(widget.siteId);
         final active = meters.where((m) => m.isActive).toList();
         final byMeter = await _loadReadings(
           widget.siteId,
@@ -573,12 +572,12 @@ class _OpportunitiesAdminScreenState
       }
 
       if (await flagOn(ConservationFeatureFlags.baseline)) {
-        final baselines =
-            await ConservationBaselineRepository(client).listApprovedForSite(
-          widget.siteId,
-        );
-        final meters =
-            await ref.read(meterRepositoryProvider).getMetersForSite(widget.siteId);
+        final baselines = await ConservationBaselineRepository(
+          client,
+        ).listApprovedForSite(widget.siteId);
+        final meters = await ref
+            .read(meterRepositoryProvider)
+            .getMetersForSite(widget.siteId);
         final active = meters.where((m) => m.isActive).toList();
         final byMeter = await _loadReadings(
           widget.siteId,
@@ -617,15 +616,16 @@ class _OpportunitiesAdminScreenState
         }
       }
 
-      final generation = await OpportunityGenerationService(
-        repository: OpportunityRepository(client),
-      ).refreshForSite(
-        siteId: widget.siteId,
-        periodStart: periodStart,
-        periodEnd: periodEnd,
-        candidates: candidates,
-        createdBy: client.auth.currentUser?.id,
-      );
+      final generation =
+          await OpportunityGenerationService(
+            repository: OpportunityRepository(client),
+          ).refreshForSite(
+            siteId: widget.siteId,
+            periodStart: periodStart,
+            periodEnd: periodEnd,
+            candidates: candidates,
+            createdBy: client.auth.currentUser?.id,
+          );
       ref.invalidate(_siteOpportunitiesProvider(widget.siteId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -634,16 +634,14 @@ class _OpportunitiesAdminScreenState
             s.isAr
                 ? 'تم: ${generation.created} جديد / ${generation.refreshed} محدّث'
                 : 'Done: ${generation.created} created / '
-                    '${generation.refreshed} refreshed '
-                    '(${candidates.length} candidates)',
+                      '${generation.refreshed} refreshed '
+                      '(${candidates.length} candidates)',
           ),
         ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$e')),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
     } finally {
       if (mounted) setState(() => _refreshing = false);
     }
@@ -673,7 +671,9 @@ class _OpportunitiesAdminScreenState
     for (final row in (rows as List)) {
       final map = Map<String, dynamic>.from(row as Map);
       final id = map['meter_id'] as String;
-      byMeter.putIfAbsent(id, () => []).add(
+      byMeter
+          .putIfAbsent(id, () => [])
+          .add(
             PeriodReadingPoint(
               date: DateTime.parse(map['reading_date'] as String),
               value: (map['normalized_value'] as num).toDouble(),

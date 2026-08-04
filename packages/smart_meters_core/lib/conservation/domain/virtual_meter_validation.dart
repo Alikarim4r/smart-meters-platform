@@ -37,18 +37,16 @@ class VirtualMeterValidationResult {
     List<String> leafMeterIds = const [],
     int hierarchyDepth = 0,
     List<VirtualMeterValidationIssue> warnings = const [],
-  }) =>
-      VirtualMeterValidationResult(
-        ok: true,
-        issues: warnings,
-        leafMeterIds: leafMeterIds,
-        hierarchyDepth: hierarchyDepth,
-      );
+  }) => VirtualMeterValidationResult(
+    ok: true,
+    issues: warnings,
+    leafMeterIds: leafMeterIds,
+    hierarchyDepth: hierarchyDepth,
+  );
 
   factory VirtualMeterValidationResult.fail(
     List<VirtualMeterValidationIssue> issues,
-  ) =>
-      VirtualMeterValidationResult(ok: false, issues: issues);
+  ) => VirtualMeterValidationResult(ok: false, issues: issues);
 }
 
 /// Pure hierarchy / config validation for virtual meters (defense in depth).
@@ -72,108 +70,136 @@ class VirtualMeterValidation {
     final issues = <VirtualMeterValidationIssue>[];
 
     if (meterKind != MeterKind.virtual) {
-      issues.add(const VirtualMeterValidationIssue(
-        code: 'not_virtual',
-        message: 'Meter kind must be virtual.',
-      ));
+      issues.add(
+        const VirtualMeterValidationIssue(
+          code: 'not_virtual',
+          message: 'Meter kind must be virtual.',
+        ),
+      );
     }
 
     if (calculationType != CalculationType.sumChildren &&
         calculationType != CalculationType.parentMinusChildren) {
-      issues.add(VirtualMeterValidationIssue(
-        code: 'invalid_calculation_type',
-        message:
-            'P1E supports sum_children and parent_minus_children only (got ${calculationType.dbValue}).',
-      ));
+      issues.add(
+        VirtualMeterValidationIssue(
+          code: 'invalid_calculation_type',
+          message:
+              'P1E supports sum_children and parent_minus_children only (got ${calculationType.dbValue}).',
+        ),
+      );
     }
 
     if (calculationType == CalculationType.parentMinusChildren &&
         (parentMeterId == null || parentMeterId.isEmpty)) {
-      issues.add(const VirtualMeterValidationIssue(
-        code: 'parent_required',
-        message: 'parent_minus_children requires a parent meter reference.',
-      ));
+      issues.add(
+        const VirtualMeterValidationIssue(
+          code: 'parent_required',
+          message: 'parent_minus_children requires a parent meter reference.',
+        ),
+      );
     }
 
     if (calculationType == CalculationType.sumChildren &&
         parentMeterId != null) {
       // Allowed to be null; warn if set unexpectedly for sum_children.
-      issues.add(const VirtualMeterValidationIssue(
-        code: 'sum_children_parent_ignored',
-        message: 'sum_children ignores parent_meter_id; use members only.',
-        severity: VirtualMeterValidationSeverity.warning,
-      ));
+      issues.add(
+        const VirtualMeterValidationIssue(
+          code: 'sum_children_parent_ignored',
+          message: 'sum_children ignores parent_meter_id; use members only.',
+          severity: VirtualMeterValidationSeverity.warning,
+        ),
+      );
     }
 
     if (memberMeters.isEmpty) {
-      issues.add(const VirtualMeterValidationIssue(
-        code: 'no_members',
-        message: 'At least one child/member meter is required.',
-      ));
+      issues.add(
+        const VirtualMeterValidationIssue(
+          code: 'no_members',
+          message: 'At least one child/member meter is required.',
+        ),
+      );
     }
 
     final seenMembers = <String>{};
     for (final m in memberMeters) {
       if (!seenMembers.add(m.id)) {
-        issues.add(VirtualMeterValidationIssue(
-          code: 'duplicate_child',
-          message: 'Duplicate child meter ${m.id}.',
-        ));
+        issues.add(
+          VirtualMeterValidationIssue(
+            code: 'duplicate_child',
+            message: 'Duplicate child meter ${m.id}.',
+          ),
+        );
       }
       if (virtualMeterId != null && m.id == virtualMeterId) {
-        issues.add(const VirtualMeterValidationIssue(
-          code: 'self_member',
-          message: 'Virtual meter cannot include itself as a member.',
-        ));
+        issues.add(
+          const VirtualMeterValidationIssue(
+            code: 'self_member',
+            message: 'Virtual meter cannot include itself as a member.',
+          ),
+        );
       }
       if (m.siteId != siteId) {
-        issues.add(VirtualMeterValidationIssue(
-          code: 'cross_site',
-          message: 'Child ${m.meterCode} is on a different site (rejected).',
-        ));
+        issues.add(
+          VirtualMeterValidationIssue(
+            code: 'cross_site',
+            message: 'Child ${m.meterCode} is on a different site (rejected).',
+          ),
+        );
       }
       if (m.categoryId != categoryId) {
-        issues.add(VirtualMeterValidationIssue(
-          code: 'utility_mismatch',
-          message:
-              'Child ${m.meterCode} category/utility incompatible with virtual meter.',
-        ));
+        issues.add(
+          VirtualMeterValidationIssue(
+            code: 'utility_mismatch',
+            message:
+                'Child ${m.meterCode} category/utility incompatible with virtual meter.',
+          ),
+        );
       }
       final childUnit = m.baseUnit.isNotEmpty ? m.baseUnit : m.unit.dbValue;
       if (childUnit != unitCode) {
-        issues.add(VirtualMeterValidationIssue(
-          code: 'unit_mismatch',
-          message:
-              'Child ${m.meterCode} unit incompatible ($childUnit vs $unitCode).',
-        ));
+        issues.add(
+          VirtualMeterValidationIssue(
+            code: 'unit_mismatch',
+            message:
+                'Child ${m.meterCode} unit incompatible ($childUnit vs $unitCode).',
+          ),
+        );
       }
     }
 
     if (parentMeterId != null) {
       if (virtualMeterId != null && parentMeterId == virtualMeterId) {
-        issues.add(const VirtualMeterValidationIssue(
-          code: 'self_parent',
-          message: 'Meter cannot be parent of itself.',
-        ));
+        issues.add(
+          const VirtualMeterValidationIssue(
+            code: 'self_parent',
+            message: 'Meter cannot be parent of itself.',
+          ),
+        );
       }
       final parent = metersById[parentMeterId];
       if (parent == null) {
-        issues.add(const VirtualMeterValidationIssue(
-          code: 'parent_missing',
-          message: 'Parent meter not found in site catalog.',
-        ));
+        issues.add(
+          const VirtualMeterValidationIssue(
+            code: 'parent_missing',
+            message: 'Parent meter not found in site catalog.',
+          ),
+        );
       } else {
         if (parent.siteId != siteId) {
-          issues.add(const VirtualMeterValidationIssue(
-            code: 'cross_site_parent',
-            message: 'Parent meter must be on the same site.',
-          ));
+          issues.add(
+            const VirtualMeterValidationIssue(
+              code: 'cross_site_parent',
+              message: 'Parent meter must be on the same site.',
+            ),
+          );
         }
         if (parent.categoryId != categoryId) {
-          issues.add(const VirtualMeterValidationIssue(
-            code: 'utility_mismatch_parent',
-            message: 'Parent meter utility/category mismatch.',
-          ));
+          issues.add(
+            const VirtualMeterValidationIssue(
+              code: 'utility_mismatch_parent',
+              message: 'Parent meter utility/category mismatch.',
+            ),
+          );
         }
       }
     }
@@ -186,8 +212,7 @@ class VirtualMeterValidation {
       metersById: metersById,
       memberIdsByVirtualId: {
         ...memberMap,
-        if (virtualMeterId != null)
-          virtualMeterId: memberMeters.map((m) => m.id).toList(),
+        ?virtualMeterId: memberMeters.map((m) => m.id).toList(),
       },
       draftMemberIds: virtualMeterId == null
           ? memberMeters.map((m) => m.id).toList()
@@ -211,7 +236,8 @@ class VirtualMeterValidation {
     List<String> leafMeterIds,
     int depth,
     List<VirtualMeterValidationIssue> issues,
-  }) expandLeaves({
+  })
+  expandLeaves({
     required String rootVirtualId,
     required List<String> directMemberIds,
     required Map<String, Meter> metersById,
@@ -225,18 +251,22 @@ class VirtualMeterValidation {
 
     void walk(String meterId, Set<String> path, int depth) {
       if (depth > kVirtualMeterMaxDepth) {
-        issues.add(VirtualMeterValidationIssue(
-          code: 'max_depth',
-          message:
-              'Virtual hierarchy depth exceeds $kVirtualMeterMaxDepth (bounded recursion).',
-        ));
+        issues.add(
+          VirtualMeterValidationIssue(
+            code: 'max_depth',
+            message:
+                'Virtual hierarchy depth exceeds $kVirtualMeterMaxDepth (bounded recursion).',
+          ),
+        );
         return;
       }
       if (path.contains(meterId)) {
-        issues.add(VirtualMeterValidationIssue(
-          code: 'cycle',
-          message: 'Circular hierarchy detected at meter $meterId.',
-        ));
+        issues.add(
+          VirtualMeterValidationIssue(
+            code: 'cycle',
+            message: 'Circular hierarchy detected at meter $meterId.',
+          ),
+        );
         return;
       }
       maxDepth = depth > maxDepth ? depth : maxDepth;
@@ -253,10 +283,12 @@ class VirtualMeterValidation {
 
       if (childIds != null) {
         if (childIds.isEmpty) {
-          issues.add(VirtualMeterValidationIssue(
-            code: 'empty_nested_virtual',
-            message: 'Nested virtual $meterId has no members.',
-          ));
+          issues.add(
+            VirtualMeterValidationIssue(
+              code: 'empty_nested_virtual',
+              message: 'Nested virtual $meterId has no members.',
+            ),
+          );
           return;
         }
         for (final c in childIds) {
@@ -267,11 +299,13 @@ class VirtualMeterValidation {
 
       // Physical (or unknown) leaf.
       if (!leafSeen.add(meterId)) {
-        issues.add(VirtualMeterValidationIssue(
-          code: 'duplicate_leaf',
-          message:
-              'Duplicate leaf $meterId in nested expansion (double-counting risk).',
-        ));
+        issues.add(
+          VirtualMeterValidationIssue(
+            code: 'duplicate_leaf',
+            message:
+                'Duplicate leaf $meterId in nested expansion (double-counting risk).',
+          ),
+        );
         return;
       }
       leaves.add(meterId);

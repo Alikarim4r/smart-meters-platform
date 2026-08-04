@@ -25,8 +25,7 @@ class PeriodicAnomalyService {
   /// Critical requires confidence at/above this (else warn + cap).
   static const criticalMinConfidence = 70;
 
-  static const lowConfidenceWarning =
-      'Low confidence — not a confirmed fault';
+  static const lowConfidenceWarning = 'Low confidence — not a confirmed fault';
 
   ConsumptionAnomalyResult detect({
     required double? currentConsumption,
@@ -51,7 +50,8 @@ class PeriodicAnomalyService {
         kind: null,
         severity: AnomalySeverity.info,
         statusLabel: ConsumptionAnomalyResult.insufficientData,
-        reason: 'Insufficient Data: current period consumption unavailable '
+        reason:
+            'Insufficient Data: current period consumption unavailable '
             'or completeness below 50%.',
         confidenceScore: confidence.clamp(0, 100),
         completeness: completeness,
@@ -91,8 +91,7 @@ class PeriodicAnomalyService {
           'Current consumption above target '
           '(${currentConsumption.toStringAsFixed(2)} > ${target.toStringAsFixed(2)}).';
     } else if (baseline != null && baseline > 0) {
-      final vsBase =
-          ((currentConsumption - baseline) / baseline) * 100.0;
+      final vsBase = ((currentConsumption - baseline) / baseline) * 100.0;
       if (vsBase > farAboveBaselineThresholdPct) {
         kind = AnomalyKind.farAboveBaseline;
         reference = baseline;
@@ -109,7 +108,7 @@ class PeriodicAnomalyService {
         previousConsumption > 0) {
       final vsPrev =
           ((currentConsumption - previousConsumption) / previousConsumption) *
-              100.0;
+          100.0;
       pctChange = vsPrev;
       reference = previousConsumption;
       if (vsPrev > unusualChangeThresholdPct) {
@@ -192,16 +191,12 @@ class PeriodicAnomalyService {
   }
 
   ({AnomalyKind kind, String reason, double magnitudePct, double? reference})?
-      _detectRepeated({
+  _detectRepeated({
     required double current,
     required List<double?> historical,
   }) {
     // historical = older → newer periods before current; we append current.
-    final series = <double>[
-      for (final v in historical)
-        if (v != null) v,
-      current,
-    ];
+    final series = <double>[for (final v in historical) ?v, current];
     if (series.length < repeatedPatternMinPeriods) return null;
 
     final window = series.sublist(series.length - repeatedPatternMinPeriods);
@@ -209,10 +204,7 @@ class PeriodicAnomalyService {
     if (mean <= 0) return null;
 
     // All periods in window above mean of a longer history → repeated high.
-    final histOnly = [
-      for (final v in historical)
-        if (v != null) v,
-    ];
+    final histOnly = [for (final v in historical) ?v];
     if (histOnly.length < repeatedPatternMinPeriods) {
       // Use relative: each value >= 1.15 * min of window and rising/high band.
       final minW = window.reduce((a, b) => a < b ? a : b);
@@ -247,7 +239,8 @@ class PeriodicAnomalyService {
 
     final earlier = histOnly.sublist(
       0,
-      histOnly.length - (repeatedPatternMinPeriods - 1).clamp(0, histOnly.length),
+      histOnly.length -
+          (repeatedPatternMinPeriods - 1).clamp(0, histOnly.length),
     );
     if (earlier.isEmpty) {
       // All history is the repeated window — compare last N vs prior N if possible.

@@ -32,12 +32,12 @@ class ActionRepository {
           'title': title,
           'description': description,
           'action_type': actionType.dbValue,
-          if (investigationId != null) 'investigation_id': investigationId,
-          if (ownerId != null) 'owner_id': ownerId,
+          'investigation_id': ?investigationId,
+          'owner_id': ?ownerId,
           'priority': priority.dbValue,
           'status': ActionStatus.open.dbValue,
           if (dueDate != null) 'due_date': _isoDate(dueDate),
-          if (createdBy != null) 'created_by': createdBy,
+          'created_by': ?createdBy,
         })
         .select()
         .single();
@@ -52,10 +52,7 @@ class ActionRepository {
     ActionLifecycle.assertCanTransition(existing.status, ActionStatus.assigned);
     final updated = await _client
         .from(_table)
-        .update({
-          'owner_id': ownerId,
-          'status': ActionStatus.assigned.dbValue,
-        })
+        .update({'owner_id': ownerId, 'status': ActionStatus.assigned.dbValue})
         .eq('id', id)
         .select()
         .single();
@@ -71,9 +68,7 @@ class ActionRepository {
     final existing = await _get(id);
     ActionLifecycle.assertCanTransition(existing.status, to);
 
-    final patch = <String, dynamic>{
-      'status': to.dbValue,
-    };
+    final patch = <String, dynamic>{'status': to.dbValue};
     if (to == ActionStatus.inProgress && existing.startedAt == null) {
       patch['started_at'] = DateTime.now().toUtc().toIso8601String();
     }
@@ -82,8 +77,12 @@ class ActionRepository {
       if (completionNotes != null) patch['completion_notes'] = completionNotes;
     }
 
-    final updated =
-        await _client.from(_table).update(patch).eq('id', id).select().single();
+    final updated = await _client
+        .from(_table)
+        .update(patch)
+        .eq('id', id)
+        .select()
+        .single();
     return ConservationAction.fromJson(Map<String, dynamic>.from(updated));
   }
 
@@ -102,9 +101,9 @@ class ActionRepository {
         .from(_table)
         .update({
           'implementation_cost': implementationCost,
-          if (costCurrency != null) 'cost_currency': costCurrency,
-          if (costSource != null) 'cost_source': costSource,
-          if (costApproved != null) 'cost_approved': costApproved,
+          'cost_currency': ?costCurrency,
+          'cost_source': ?costSource,
+          'cost_approved': ?costApproved,
         })
         .eq('id', id)
         .select()
@@ -127,9 +126,8 @@ class ActionRepository {
         .range(offset, offset + limit - 1);
     return (rows as List)
         .map(
-          (e) => ConservationAction.fromJson(
-            Map<String, dynamic>.from(e as Map),
-          ),
+          (e) =>
+              ConservationAction.fromJson(Map<String, dynamic>.from(e as Map)),
         )
         .toList();
   }
@@ -146,9 +144,8 @@ class ActionRepository {
         .limit(limit);
     return (rows as List)
         .map(
-          (e) => ConservationAction.fromJson(
-            Map<String, dynamic>.from(e as Map),
-          ),
+          (e) =>
+              ConservationAction.fromJson(Map<String, dynamic>.from(e as Map)),
         )
         .toList();
   }

@@ -39,7 +39,8 @@ class ForecastingService {
       warnings.add('seasonal_fallback_to_run_rate');
     }
 
-    final method = (preferredMethod == ForecastMethod.seasonalAverage &&
+    final method =
+        (preferredMethod == ForecastMethod.seasonalAverage &&
             n < minHistorySeasonal)
         ? ForecastMethod.runRate
         : preferredMethod;
@@ -89,8 +90,8 @@ class ForecastingService {
     if (horizon == ForecastHorizon.annualConsumption ||
         horizon == ForecastHorizon.annualTarget) {
       projected = expected * 12;
-      low = (low ?? expected) * 12;
-      high = (high ?? expected) * 12;
+      low *= 12;
+      high *= 12;
     } else {
       projected = expected;
     }
@@ -112,8 +113,8 @@ class ForecastingService {
     final confidence = n >= 12
         ? 'high'
         : n >= 6
-            ? 'medium'
-            : 'low';
+        ? 'medium'
+        : 'low';
 
     return ForecastComputation(
       siteId: siteId,
@@ -148,7 +149,8 @@ class ForecastingService {
   static double _std(List<double> xs) {
     if (xs.length < 2) return 0;
     final m = _mean(xs);
-    final v = xs.map((x) => (x - m) * (x - m)).reduce((a, b) => a + b) /
+    final v =
+        xs.map((x) => (x - m) * (x - m)).reduce((a, b) => a + b) /
         (xs.length - 1);
     return math.sqrt(v);
   }

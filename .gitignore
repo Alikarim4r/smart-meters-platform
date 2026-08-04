@@ -42,6 +42,8 @@ web_deploy_root/
 **/Pods/
 **/DerivedData/
 .venv-import/
+__pycache__/
+*.pyc
 
 # Local Staging backups (never commit)
 backups/
