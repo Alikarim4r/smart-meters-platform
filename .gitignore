@@ -49,6 +49,8 @@ __pycache__/
 backups/
 .deploy_cache/
 
+# Agent / cache directories
+.claude/
 
 # Regression snapshots may contain operational counts (ok to commit latest)
 # backups only
