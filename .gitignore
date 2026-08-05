@@ -54,3 +54,4 @@ backups/
 
 # Regression snapshots may contain operational counts (ok to commit latest)
 # backups only
+web_portal/downloads/
