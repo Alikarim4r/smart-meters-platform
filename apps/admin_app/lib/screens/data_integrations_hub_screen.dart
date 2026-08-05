@@ -6,6 +6,7 @@ import '../l10n/admin_strings.dart';
 import '../providers/preferences_providers.dart';
 import 'import_center_screen.dart';
 import 'notification_settings_screen.dart';
+import 'source_health_screen.dart';
 
 /// Admin hub for Phase 6 Data & Integrations (flag-gated sections).
 class DataIntegrationsHubScreen extends ConsumerStatefulWidget {
@@ -159,10 +160,31 @@ class _DataIntegrationsHubScreenState
             subtitle: s.ingestionJobsSubtitle,
           ),
         if (_on(PlatformFeatureFlags.sourceHealth))
-          _tile(
-            icon: Icons.monitor_heart_outlined,
-            title: s.sourceHealth,
-            subtitle: s.sourceHealthSubtitle,
+          Card(
+            margin: const EdgeInsets.only(bottom: 10),
+            child: ListTile(
+              leading: const Icon(Icons.monitor_heart_outlined),
+              title: Text(s.sourceHealth),
+              subtitle: Text(
+                _sources.isEmpty
+                    ? s.sourceHealthEmptyTitle
+                    : s.sourceHealthSubtitle,
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute<void>(
+                    builder: (_) => Scaffold(
+                      appBar: AppBar(title: Text(s.sourceHealth)),
+                      body: SourceHealthScreen(
+                        organizationId: widget.organizationId,
+                        sources: _sources,
+                      ),
+                    ),
+                  ),
+                );
+              },
+            ),
           ),
         if (_on(PlatformFeatureFlags.automationRules))
           _tile(

@@ -144,122 +144,232 @@ class SiteConservationPanel extends ConsumerWidget {
             energyBalanceOn;
 
         final s = ConservationStrings.of(context);
-        return ListView(
-          padding: EdgeInsets.all(useDesktop ? 20 : 12),
-          children: [
-            Text(
-              s.conservation,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+
+        final tabs = <_ConservationTab>[];
+        if (trendsOn) {
+          tabs.add(
+            _ConservationTab(
+              label: s.tabOverview,
+              body: [
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
+                  child: Text(
+                    s.overviewKpiHint,
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).hintColor,
+                    ),
+                  ),
+                ),
+                _LazyConservationAccordion(
+                  title: s.trendsAndCharts,
+                  subtitle: s.trendsAndChartsHint,
+                  initiallyExpanded: true,
+                  child: ConservationTrendsSection(
+                    siteId: siteId,
+                    useDesktop: useDesktop,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              s.derivedMetricsOnly,
-              style: const TextStyle(fontSize: 12),
+          );
+        }
+        if (periodOn || targetsOn || baselineOn || virtualOn) {
+          tabs.add(
+            _ConservationTab(
+              label: s.tabComparisons,
+              body: [
+                if (periodOn)
+                  _LazyConservationAccordion(
+                    title: s.periodComparisons,
+                    initiallyExpanded: true,
+                    child: _PeriodSection(siteId: siteId),
+                  ),
+                if (targetsOn)
+                  _LazyConservationAccordion(
+                    title: s.actualVsTargetTitle,
+                    child: _TargetsSection(siteId: siteId),
+                  ),
+                if (baselineOn)
+                  _LazyConservationAccordion(
+                    title: s.actualVsBaselineTitle,
+                    child: _BaselinesSection(siteId: siteId),
+                  ),
+                if (virtualOn)
+                  _LazyConservationAccordion(
+                    title: s.virtualMetersPreview,
+                    child: _VirtualSection(siteId: siteId),
+                  ),
+              ],
             ),
-            const SizedBox(height: 4),
-            Text(
-              s.tapToExpandSection,
-              style: TextStyle(
-                fontSize: 11,
-                color: Theme.of(context).hintColor,
-              ),
+          );
+        }
+        if (waterBalanceOn || energyBalanceOn) {
+          tabs.add(
+            _ConservationTab(
+              label: s.tabBalance,
+              body: [
+                _LazyConservationAccordion(
+                  title: waterBalanceOn && energyBalanceOn
+                      ? s.waterAndEnergyBalance
+                      : waterBalanceOn
+                          ? s.waterBalance
+                          : s.energyBalance,
+                  initiallyExpanded: true,
+                  child: _BalanceSection(
+                    siteId: siteId,
+                    waterOn: waterBalanceOn,
+                    energyOn: energyBalanceOn,
+                  ),
+                ),
+              ],
             ),
-            if (trendsOn)
-              _LazyConservationAccordion(
-                title: s.trendsAndCharts,
-                subtitle: s.trendsAndChartsHint,
-                child: ConservationTrendsSection(
-                  siteId: siteId,
-                  useDesktop: useDesktop,
+          );
+        }
+        if (benchmarkingOn || intensityOn || anomaliesOn || copOn ||
+            opportunitiesOn) {
+          tabs.add(
+            _ConservationTab(
+              label: s.tabOpportunities,
+              body: [
+                if (benchmarkingOn || intensityOn)
+                  _LazyConservationAccordion(
+                    title: s.benchmarking,
+                    child: _BenchmarkSection(siteId: siteId),
+                  ),
+                if (anomaliesOn || copOn)
+                  _LazyConservationAccordion(
+                    title: anomaliesOn && copOn
+                        ? s.anomaliesAndCop
+                        : anomaliesOn
+                            ? s.anomalies
+                            : s.copTrend,
+                    subtitle: copOn ? s.copTrendNote : null,
+                    initiallyExpanded: true,
+                    child: _AnomaliesSection(siteId: siteId),
+                  ),
+                if (opportunitiesOn)
+                  _LazyConservationAccordion(
+                    title: s.opportunities,
+                    subtitle: s.manualRefreshOnly,
+                    trailing: OutlinedButton.icon(
+                      onPressed: () => _refreshOpportunities(context, ref),
+                      icon: const Icon(Icons.refresh, size: 18),
+                      label: Text(s.refreshOpportunities),
+                    ),
+                    child: _OpportunitiesSection(
+                      siteId: siteId,
+                      investigationsOn: investigationsOn,
+                    ),
+                  ),
+              ],
+            ),
+          );
+        }
+        if (mvSectionOn) {
+          tabs.add(
+            _ConservationTab(
+              label: s.tabMv,
+              body: [
+                _LazyConservationAccordion(
+                  title: s.measurementVerification,
+                  subtitle: s.mvDisclaimer,
+                  initiallyExpanded: true,
+                  child: _MvSection(
+                    siteId: siteId,
+                    showCostRoi: costRoiOn,
+                  ),
                 ),
-              ),
-            if (periodOn)
-              _LazyConservationAccordion(
-                title: s.periodComparisons,
-                child: _PeriodSection(siteId: siteId),
-              ),
-            if (targetsOn)
-              _LazyConservationAccordion(
-                title: s.actualVsTargetTitle,
-                child: _TargetsSection(siteId: siteId),
-              ),
-            if (baselineOn)
-              _LazyConservationAccordion(
-                title: s.actualVsBaselineTitle,
-                child: _BaselinesSection(siteId: siteId),
-              ),
-            if (virtualOn)
-              _LazyConservationAccordion(
-                title: s.virtualMetersPreview,
-                child: _VirtualSection(siteId: siteId),
-              ),
-            if (waterBalanceOn || energyBalanceOn)
-              _LazyConservationAccordion(
-                title: waterBalanceOn && energyBalanceOn
-                    ? s.waterAndEnergyBalance
-                    : waterBalanceOn
-                        ? s.waterBalance
-                        : s.energyBalance,
-                child: _BalanceSection(
-                  siteId: siteId,
-                  waterOn: waterBalanceOn,
-                  energyOn: energyBalanceOn,
+              ],
+            ),
+          );
+        }
+        if (advancedOn) {
+          tabs.add(
+            _ConservationTab(
+              label: s.tabAdvanced,
+              body: [
+                _LazyConservationAccordion(
+                  title: s.advancedOnDemand,
+                  subtitle: s.advancedHint,
+                  initiallyExpanded: true,
+                  child: AdvancedConservationTabs(
+                    siteId: siteId,
+                    weatherOn: weatherOn,
+                    occupancyOn: occupancyOn,
+                    persistenceOn: persistenceOn,
+                    carbonOn: carbonOn,
+                    forecastOn: forecastOn,
+                    recommendationsOn: recoOn,
+                  ),
                 ),
-              ),
-            if (benchmarkingOn || intensityOn)
-              _LazyConservationAccordion(
-                title: s.benchmarking,
-                child: _BenchmarkSection(siteId: siteId),
-              ),
-            if (anomaliesOn || copOn)
-              _LazyConservationAccordion(
-                title: anomaliesOn && copOn
-                    ? s.anomaliesAndCop
-                    : anomaliesOn
-                        ? s.anomalies
-                        : s.copTrend,
-                subtitle: copOn ? s.copTrendNote : null,
-                child: _AnomaliesSection(siteId: siteId),
-              ),
-            if (opportunitiesOn)
-              _LazyConservationAccordion(
-                title: s.opportunities,
-                subtitle: s.manualRefreshOnly,
-                trailing: OutlinedButton.icon(
-                  onPressed: () => _refreshOpportunities(context, ref),
-                  icon: const Icon(Icons.refresh, size: 18),
-                  label: Text(s.refreshOpportunities),
+              ],
+            ),
+          );
+        }
+
+        if (tabs.isEmpty) {
+          return Padding(
+            padding: EdgeInsets.all(useDesktop ? 20 : 12),
+            child: Text(s.emptyTabSection),
+          );
+        }
+
+        return DefaultTabController(
+          length: tabs.length,
+          child: Padding(
+            padding: EdgeInsets.fromLTRB(
+              useDesktop ? 20 : 12,
+              useDesktop ? 16 : 10,
+              useDesktop ? 20 : 12,
+              0,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  s.conservation,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-                child: _OpportunitiesSection(
-                  siteId: siteId,
-                  investigationsOn: investigationsOn,
+                const SizedBox(height: 4),
+                Text(
+                  s.derivedMetricsOnly,
+                  style: const TextStyle(fontSize: 12),
                 ),
-              ),
-            if (mvSectionOn)
-              _LazyConservationAccordion(
-                title: s.measurementVerification,
-                subtitle: s.mvDisclaimer,
-                child: _MvSection(
-                  siteId: siteId,
-                  showCostRoi: costRoiOn,
+                const SizedBox(height: 8),
+                TabBar(
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  tabs: [for (final t in tabs) Tab(text: t.label)],
                 ),
-              ),
-            if (advancedOn)
-              _LazyConservationAccordion(
-                title: s.advancedOnDemand,
-                subtitle: s.advancedHint,
-                child: AdvancedConservationTabs(
-                  siteId: siteId,
-                  weatherOn: weatherOn,
-                  occupancyOn: occupancyOn,
-                  persistenceOn: persistenceOn,
-                  carbonOn: carbonOn,
-                  forecastOn: forecastOn,
-                  recommendationsOn: recoOn,
+                const SizedBox(height: 4),
+                Text(
+                  s.tapToExpandSection,
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(context).hintColor,
+                  ),
                 ),
-              ),
-          ],
+                const SizedBox(height: 4),
+                Expanded(
+                  child: TabBarView(
+                    children: [
+                      for (final t in tabs)
+                        ListView(
+                          padding: const EdgeInsets.only(bottom: 24),
+                          children: t.body,
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
         );
+
       },
     );
   }
@@ -299,12 +409,14 @@ class _LazyConservationAccordion extends StatefulWidget {
     required this.child,
     this.subtitle,
     this.trailing,
+    this.initiallyExpanded = false,
   });
 
   final String title;
   final String? subtitle;
   final Widget? trailing;
   final Widget child;
+  final bool initiallyExpanded;
 
   @override
   State<_LazyConservationAccordion> createState() =>
@@ -312,7 +424,7 @@ class _LazyConservationAccordion extends StatefulWidget {
 }
 
 class _LazyConservationAccordionState extends State<_LazyConservationAccordion> {
-  bool _expanded = false;
+  late bool _expanded = widget.initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
@@ -384,6 +496,12 @@ class _LazyConservationAccordionState extends State<_LazyConservationAccordion> 
       ),
     );
   }
+}
+
+class _ConservationTab {
+  const _ConservationTab({required this.label, required this.body});
+  final String label;
+  final List<Widget> body;
 }
 
 class _PeriodSection extends ConsumerWidget {
@@ -502,8 +620,7 @@ class _VirtualSection extends ConsumerWidget {
                 child: ListTile(
                   title: Text(s.localizeDomainLabel(r.directionLabel)),
                   subtitle: Text(
-                    '${r.isInsufficient ? s.insufficientData : (r.value?.toStringAsFixed(1) ?? s.na)} '
-                    '${s.localizeUnit(r.unitCode)}\n'
+                    '${r.isInsufficient ? s.insufficientData : s.formatQuantity(r.value, r.unitCode)}\n'
                     '${s.confidenceCompleteness(confidence: r.confidenceScore, completenessPct: (r.completeness * 100).toStringAsFixed(0))}\n'
                     '${r.warnings.isEmpty ? s.residualNotLeak : r.warnings.map(s.localizeDomainMessage).join(' · ')}',
                   ),

@@ -47,7 +47,10 @@ class MvVerificationCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: Text(
-                    '${record.utilityType} · M&V v${record.calculationVersion}',
+                    s.formatMvTitle(
+                      record.utilityType,
+                      record.calculationVersion,
+                    ),
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 14,
@@ -62,7 +65,7 @@ class MvVerificationCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
-                    record.status.dbValue,
+                    s.localizeDomainLabel(record.status.dbValue),
                     style: TextStyle(
                       fontSize: 11,
                       fontWeight: FontWeight.w700,

@@ -114,7 +114,9 @@ class BalanceDifferenceCard extends StatelessWidget {
               '%',
               result.balancePercentage == null
                   ? s.na
-                  : '${result.balancePercentage!.toStringAsFixed(1)}%',
+                  : s.formatPercentageDisplay(
+                      '${result.balancePercentage!.toStringAsFixed(1)}%',
+                    ),
             ),
             _kv(s.confidence, '${result.confidenceScore}'),
             _kv(s.alignment, _alignmentLabel(result.alignmentStatus, s)),
@@ -183,12 +185,6 @@ class BalanceDifferenceCard extends StatelessWidget {
     );
   }
 
-  String _fmt(double? v, String unit, ConservationStrings cs) {
-    if (v == null) return cs.na;
-    final n = v == v.roundToDouble()
-        ? v.toStringAsFixed(0)
-        : v.toStringAsFixed(1);
-    final u = cs.localizeUnit(unit);
-    return u.isEmpty ? n : '$n $u';
-  }
+  String _fmt(double? v, String unit, ConservationStrings cs) =>
+      cs.formatQuantity(v, unit);
 }

@@ -116,12 +116,6 @@ class ActualVsTargetCard extends StatelessWidget {
     );
   }
 
-  String _fmt(double? v, String unit, ConservationStrings cs) {
-    if (v == null) return cs.na;
-    final n = v == v.roundToDouble()
-        ? v.toStringAsFixed(0)
-        : v.toStringAsFixed(1);
-    final u = cs.localizeUnit(unit);
-    return u.isEmpty ? n : '$n $u';
-  }
+  String _fmt(double? v, String unit, ConservationStrings cs) =>
+      cs.formatQuantity(v, unit);
 }

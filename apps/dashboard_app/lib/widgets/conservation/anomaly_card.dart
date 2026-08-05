@@ -22,114 +22,127 @@ class AnomalyCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final s = ConservationStrings.of(context);
     final severityColor = _severityColor(result.severity);
-    return Card(
-      elevation: 0,
-      color: DashboardColors.card(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: result.detected
-              ? severityColor.withValues(alpha: 0.45)
-              : DashboardPalette.border.withValues(alpha: 0.7),
-        ),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
+    return Align(
+      alignment: AlignmentDirectional.centerStart,
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: Card(
+          elevation: 0,
+          color: DashboardColors.card(context),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(
+              color: result.detected
+                  ? severityColor.withValues(alpha: 0.45)
+                  : DashboardPalette.border.withValues(alpha: 0.7),
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w800,
-                      fontSize: 14,
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        s.localizeDomainLabel(title),
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: 14,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: severityColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    result.statusLabel,
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: severityColor,
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: severityColor.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        s.localizeDomainLabel(result.statusLabel),
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                          color: severityColor,
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              result.detected ? s.unusualConsumption : result.statusLabel,
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 13,
-                color: result.detected
-                    ? DashboardPalette.navy
-                    : DashboardPalette.textMuted,
-              ),
-            ),
-            const SizedBox(height: 8),
-            _kv(s.severity, result.severity.name),
-            _kv(
-              s.variance,
-              result.percentageChange == null
-                  ? s.na
-                  : '${result.percentageChange!.toStringAsFixed(1)}%',
-            ),
-            _kv(s.confidence, '${result.confidenceScore}'),
-            if (result.currentValue != null)
-              _kv(
-                s.current,
-                unitCode == null
-                    ? _fmt(result.currentValue!)
-                    : '${_fmt(result.currentValue!)} $unitCode',
-              ),
-            const SizedBox(height: 6),
-            Text(
-              result.reason,
-              style: TextStyle(fontSize: 12, color: DashboardPalette.textMuted),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              result.detected
-                  ? s.requiresReviewNotFault
-                  : s.noAutomaticFault,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w600,
-                color: DashboardPalette.navy,
-              ),
-            ),
-            if (result.investigationNotes.isNotEmpty) ...[
-              const SizedBox(height: 6),
-              Text(
-                s.possibleInvestigationNotes,
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: DashboardPalette.textMuted,
-                ),
-              ),
-              for (final note in result.investigationNotes.take(3))
+                const SizedBox(height: 6),
                 Text(
-                  '· $note',
+                  result.detected
+                      ? s.unusualConsumption
+                      : s.localizeDomainLabel(result.statusLabel),
                   style: TextStyle(
-                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                    color: result.detected
+                        ? DashboardPalette.navy
+                        : DashboardPalette.textMuted,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                _kv(s.severity, s.severityLabel(result.severity.name)),
+                _kv(
+                  s.variance,
+                  result.percentageChange == null
+                      ? s.na
+                      : s.formatPercentageDisplay(
+                          '${result.percentageChange!.toStringAsFixed(1)}%',
+                        ),
+                ),
+                _kv(s.confidence, '${result.confidenceScore}'),
+                if (result.currentValue != null)
+                  _kv(
+                    s.current,
+                    s.formatQuantity(result.currentValue, unitCode),
+                  ),
+                const SizedBox(height: 6),
+                Text(
+                  s.localizeDomainMessage(result.reason),
+                  style: TextStyle(
+                    fontSize: 12,
                     color: DashboardPalette.textMuted,
                   ),
                 ),
-            ],
-          ],
+                const SizedBox(height: 4),
+                Text(
+                  result.detected
+                      ? s.requiresReviewNotFault
+                      : s.noAutomaticFault,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: DashboardPalette.navy,
+                  ),
+                ),
+                if (result.investigationNotes.isNotEmpty) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    s.possibleInvestigationNotes,
+                    style: TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: DashboardPalette.textMuted,
+                    ),
+                  ),
+                  for (final note in result.investigationNotes.take(3))
+                    Text(
+                      '· ${s.localizeDomainMessage(note)}',
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: DashboardPalette.textMuted,
+                      ),
+                    ),
+                ],
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -145,7 +158,7 @@ class AnomalyCard extends StatelessWidget {
 
   Widget _kv(String k, String v) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
+      padding: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
           Expanded(
@@ -162,7 +175,4 @@ class AnomalyCard extends StatelessWidget {
       ),
     );
   }
-
-  String _fmt(double v) =>
-      v == v.roundToDouble() ? v.toStringAsFixed(0) : v.toStringAsFixed(1);
 }

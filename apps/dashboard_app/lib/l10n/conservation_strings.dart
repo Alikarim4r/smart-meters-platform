@@ -25,6 +25,72 @@ class ConservationStrings {
         'تبقى القيم التشغيلية الأصلية أساسية. القيم المعيّرة والنماذج خلف التبويبات.',
       );
 
+  // —— Phase 7 top-level tabs ——
+  String get tabOverview => _t('Overview', 'نظرة عامة');
+  String get tabComparisons =>
+      _t('Consumption & Comparisons', 'الاستهلاك والمقارنات');
+  String get tabBalance => _t('Balance', 'التوازن');
+  String get tabOpportunities =>
+      _t('Opportunities & Actions', 'الفرص والإجراءات');
+  String get tabMv => _t('Savings & M&V', 'التوفير والقياس والتحقق');
+  String get tabAdvanced => _t('Advanced Analytics', 'تحليلات متقدمة');
+  String get overviewKpiHint => _t(
+        'Primary indicators and trends. Open other tabs for detail.',
+        'المؤشرات الأساسية والاتجاهات. افتح التبويبات الأخرى للتفاصيل.',
+      );
+  String get currentPeriodLabel => _t('Current period', 'الفترة الحالية');
+  String get comparisonPeriodLabel =>
+      _t('Comparison period', 'فترة المقارنة');
+  String get percentageChangeUnrealistic => _t(
+        'Unusually large % — check baselines or demo data.',
+        'نسبة تغيّر غير معتادة — راجع خط الأساس أو بيانات العرض.',
+      );
+  String get emptyTabSection => _t(
+        'No enabled modules in this tab.',
+        'لا توجد وحدات مفعّلة في هذا التبويب.',
+      );
+  String get mainMeter => _t('Main Meter', 'العداد الرئيسي');
+  String get estimated => _t('Estimated', 'تقديري');
+  String get verified => _t('Verified', 'مُحقَّق');
+  String get mvShort => _t('M&V', 'القياس والتحقق');
+  String get avgShort => _t('Avg', 'متوسط');
+  String get minShort => _t('Min', 'أدنى');
+  String get maxShort => _t('Max', 'أعلى');
+  String severityLabel(String name) {
+    if (!isAr) return name;
+    return switch (name.trim().toLowerCase()) {
+      'info' => 'معلومة',
+      'low' => 'منخفضة',
+      'medium' => 'متوسطة',
+      'high' => 'عالية',
+      'critical' => 'حرجة',
+      _ => name,
+    };
+  }
+  String utilityConsumptionTitle(String utilityEn) {
+    final u = localizeUtilityName(utilityEn);
+    return _t('$utilityEn consumption', 'استهلاك $u');
+  }
+  String copTrendTitle(String name) =>
+      _t('COP trend · $name', 'اتجاه معامل الأداء · $name');
+  String localizeUtilityName(String label) {
+    final t = label.trim();
+    if (!isAr) return t;
+    final lower = t.toLowerCase();
+    if (lower.contains('water') || lower == 'المياه') return 'المياه';
+    if (lower.contains('electric')) return 'الكهرباء';
+    if (lower.contains('btu') || lower.contains('cool')) return 'التبريد';
+    if (lower.contains('fuel') || lower.contains('diesel')) return 'الوقود';
+    return t;
+  }
+  String formatMvTitle(String utilityType, int version) {
+    final u = localizeUtilityCode(utilityType);
+    return _t(
+      '$utilityType · M&V v$version',
+      '$u · $mvShort الإصدار $version',
+    );
+  }
+
   // —— Period / target / baseline ——
   String get periodComparison => _t('Period comparison', 'مقارنة الفترات');
   String get absoluteDifference => _t('Absolute difference', 'الفرق المطلق');
@@ -118,7 +184,7 @@ class ConservationStrings {
   String get target => _t('Target', 'الهدف');
   String get percentOfEffectiveTarget =>
       _t('% of effective target', '٪ من الهدف الفعّال');
-  String get mainMeter => _t('Main', 'الرئيسي');
+  String get mainShort => _t('Main', 'الرئيسي');
   String metersCount(int n) => _t('$n meters', '$n عدادات');
   String get increasedNotInVerifiedTotal => _t(
         '(increased — not in Verified Total)',
@@ -509,6 +575,48 @@ class ConservationStrings {
     if (lower == 'sum of children') return sumOfChildren;
     if (lower == 'requires review') return requiresReview;
     if (lower == 'unusual consumption') return unusualConsumption;
+    if (lower == 'no significant change') {
+      return 'لا تغيّر يُذكر';
+    }
+    if (lower.contains('higher than previous period')) {
+      return lower.contains('increase')
+          ? 'أعلى من الفترة السابقة · زيادة'
+          : 'أعلى من الفترة السابقة';
+    }
+    if (lower.contains('lower than previous period')) {
+      return lower.contains('decrease')
+          ? 'أدنى من الفترة السابقة · انخفاض'
+          : 'أدنى من الفترة السابقة';
+    }
+    if (lower.contains('higher than same period last year')) {
+      return lower.contains('increase')
+          ? 'أعلى من نفس الفترة العام الماضي · زيادة'
+          : 'أعلى من نفس الفترة العام الماضي';
+    }
+    if (lower.contains('lower than same period last year')) {
+      return lower.contains('decrease')
+          ? 'أدنى من نفس الفترة العام الماضي · انخفاض'
+          : 'أدنى من نفس الفترة العام الماضي';
+    }
+    if (lower == 'increase') return 'زيادة';
+    if (lower == 'decrease') return 'انخفاض';
+    if (lower == 'partially aligned') return partiallyAligned;
+    if (lower == 'aligned') return aligned;
+    if (lower == 'estimated') return estimated;
+    if (lower == 'verified') return verified;
+    if (lower == 'm&v' || lower == 'measurement & verification') {
+      return measurementVerification;
+    }
+    if (lower == 'main meter' || lower == 'main') return mainMeter;
+    if (lower.endsWith(' consumption')) {
+      final util = t.substring(0, t.length - ' consumption'.length);
+      return utilityConsumptionTitle(util);
+    }
+    if (lower.startsWith('cop trend')) {
+      final parts = t.split('·');
+      final name = parts.length > 1 ? parts.sublist(1).join('·').trim() : '';
+      return name.isEmpty ? 'اتجاه معامل الأداء' : copTrendTitle(name);
+    }
     if (lower.contains('balance difference') && lower.contains('residual')) {
       if (lower.contains('on balance')) {
         return 'فرق التوازن (متبقٍ) · متوازن';
@@ -522,8 +630,13 @@ class ConservationStrings {
         lower == 'balance difference · residual') {
       return 'فرق التوازن (متبقٍ)';
     }
+    if (lower.contains('unaccounted consumption')) {
+      return 'استهلاك غير محسوب';
+    }
     if (lower.startsWith('residual')) return residual;
     if (lower.contains('unaccounted')) return unaccounted;
+    if (lower.contains('water balance')) return waterBalance;
+    if (lower.contains('energy balance')) return energyBalance;
     return t;
   }
 
@@ -566,10 +679,54 @@ class ConservationStrings {
     return m.startsWith('.') ? m.substring(1).trim() : m;
   }
 
+  /// Grouped number with optional unit after the value (e.g. `300,123.1 م³`).
+  String formatNumber(num value, {int? fractionDigits}) {
+    final digits = fractionDigits ??
+        (value == value.roundToDouble() ? 0 : (value.abs() >= 100 ? 1 : 2));
+    final raw = value.toStringAsFixed(digits);
+    final negative = raw.startsWith('-');
+    final body = negative ? raw.substring(1) : raw;
+    final parts = body.split('.');
+    final intPart = parts[0].replaceAllMapped(
+      RegExp(r'\B(?=(\d{3})+(?!\d))'),
+      (_) => ',',
+    );
+    final grouped =
+        parts.length == 1 ? intPart : '$intPart.${parts[1]}';
+    return negative ? '-$grouped' : grouped;
+  }
+
   String formatQuantity(double? value, String? unit) {
     if (value == null) return na;
     final u = localizeUnit(unit);
-    final n = value.toStringAsFixed(value.abs() >= 100 ? 1 : 2);
-    return u.isEmpty ? n : '$u $n';
+    final n = formatNumber(value);
+    return u.isEmpty ? n : '$n $u';
+  }
+
+  /// Caps unrealistic demo percentages in the UI without mutating source data.
+  String formatPercentageDisplay(String display) {
+    final trimmed = display.trim();
+    if (trimmed.isEmpty || trimmed.toUpperCase() == 'N/A') {
+      return isAr && trimmed.toUpperCase() == 'N/A' ? na : trimmed;
+    }
+    final match = RegExp(r'^-?[\d,]+\.?\d*').firstMatch(trimmed);
+    if (match == null) return trimmed;
+    final parsed = double.tryParse(match.group(0)!.replaceAll(',', ''));
+    if (parsed == null) return trimmed;
+    if (parsed.abs() >= 500) {
+      final shown = formatNumber(parsed, fractionDigits: 0);
+      return isAr ? '$shown٪ · تنبيه' : '$shown% · warn';
+    }
+    if (isAr && trimmed.endsWith('%')) {
+      return '${trimmed.substring(0, trimmed.length - 1)}٪';
+    }
+    return trimmed;
+  }
+
+  bool isUnrealisticPercentage(String display) {
+    final match = RegExp(r'^-?[\d,]+\.?\d*').firstMatch(display.trim());
+    if (match == null) return false;
+    final parsed = double.tryParse(match.group(0)!.replaceAll(',', ''));
+    return parsed != null && parsed.abs() >= 500;
   }
 }
