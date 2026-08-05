@@ -255,8 +255,9 @@ class AppStrings {
       isAr ? 'تعذر تحميل خريطة الشبكة' : 'Could not load network map';
   String get pleaseRefreshNetworkMap =>
       isAr ? 'حدّث الصفحة أو جرّب لاحقًا' : 'Refresh or try again later';
-  String get networkMapEmpty =>
-      isAr ? 'لا توجد شبكة مياه بعد' : 'No water network yet';
+  String get networkMapEmpty => isAr
+      ? 'لا توجد شبكة مياه بعد'
+      : 'No water network yet';
   String get networkMapEmptyHint => isAr
       ? 'أضف عناصر في تطبيق الإدارة — تظهر هنا مباشرة وتُحدَّث باستمرار.'
       : 'Add elements in Meter Admin — they appear here and stay in sync.';
@@ -513,8 +514,7 @@ class AppStrings {
       AlertType.highConsumption => alert.message,
       AlertType.zeroUnexpected => 'الاستهلاك صفر رغم وجود قراءات سابقة.',
       AlertType.missingPhoto => 'قراءة اليوم بدون صورة مرفقة.',
-      AlertType.inactiveMeterReading =>
-        'هذا العداد غير نشط لكن لديه قراءة حديثة.',
+      AlertType.inactiveMeterReading => 'هذا العداد غير نشط لكن لديه قراءة حديثة.',
       AlertType.lowCop => alert.message,
       AlertType.copMissingData => 'مجموعة COP تحتاج ربط عدادات BTU والكهرباء.',
       AlertType.lowCompletion => alert.message,
@@ -750,9 +750,8 @@ class AppStrings {
   String zonesCount(int count) {
     if (!isAr) return count == 1 ? '1 zone' : '$count zones';
     if (count == 0) return 'لا مناطق';
-    if (count == 1) {
+    if (count == 1)
       return '\u0645\u0646\u0637\u0642\u0629 \u0648\u0627\u062d\u062f\u0629';
-    }
     if (count == 2) return 'منطقتان';
     if (count >= 3 && count <= 10) return '$count مناطق';
     return '$count منطقة';
@@ -836,31 +835,28 @@ class AppStrings {
   String get reportsPanelSubtitle => isAr
       ? 'صدّر نظرة عامة للموقع أو تقارير لكل مرفق. التقرير الكامل يفصل الأقسام بوضوح.'
       : 'Export site overview or utility-specific reports. Full report uses clearly separated sections.';
-  String get reportSiteOverview =>
-      isAr ? 'نظرة عامة على الموقع' : 'Site overview';
-  String get reportSiteOverviewSubtitle =>
-      isAr ? 'ملخص تشغيلي بصيغة PDF أو Excel' : 'Operational summary PDF/Excel';
-  String reportUtilityTitle(UtilitySystemKey system) =>
-      isAr ? 'تقرير ${utilityLabel(system)}' : '${system.label} report';
+  String get reportSiteOverview => isAr ? 'نظرة عامة على الموقع' : 'Site overview';
+  String get reportSiteOverviewSubtitle => isAr
+      ? 'ملخص تشغيلي بصيغة PDF أو Excel'
+      : 'Operational summary PDF/Excel';
+  String reportUtilityTitle(UtilitySystemKey system) => isAr
+      ? 'تقرير ${utilityLabel(system)}'
+      : '${system.label} report';
   String reportUtilitySubtitle(UtilitySystemKey system) => isAr
       ? 'الاستهلاك بوحدة ${system.defaultUnit == 'm³' || system.defaultUnit == 'm3' ? 'م³' : system.defaultUnit} فقط'
       : 'Consumption in ${system.defaultUnit} only';
-  String get reportBtuCop =>
-      isAr ? 'تقرير التبريد / معامل الأداء' : 'BTU / COP report';
+  String get reportBtuCop => isAr ? 'تقرير التبريد / معامل الأداء' : 'BTU / COP report';
   String get reportBtuCopSubtitle =>
       isAr ? 'أداء التبريد' : 'Cooling performance';
-  String get reportConservation =>
-      isAr ? 'تقرير الترشيد' : 'Conservation report';
+  String get reportConservation => isAr ? 'تقرير الترشيد' : 'Conservation report';
   String get reportConservationSubtitle => isAr
       ? 'التوفير التقديري مقابل المُحقَّق · التكلفة المتجنَّبة (غير متاح إن لم تُحدَّد التعرفة)'
       : 'Estimated vs Verified Saving · Cost Avoided (N/A if no tariff)';
-  String get reportReadingsExport =>
-      isAr ? 'تصدير القراءات' : 'Readings export';
+  String get reportReadingsExport => isAr ? 'تصدير القراءات' : 'Readings export';
   String get reportReadingsExportSubtitle => isAr
       ? 'قراءات Excel للفترة المحددة'
       : 'Excel readings for selected period';
-  String get reportFullSite =>
-      isAr ? 'تقرير الموقع الكامل' : 'Full site report';
+  String get reportFullSite => isAr ? 'تقرير الموقع الكامل' : 'Full site report';
   String get reportFullSiteSubtitle => isAr
       ? 'جميع المرافق في أقسام منفصلة'
       : 'All utilities in separate sections';

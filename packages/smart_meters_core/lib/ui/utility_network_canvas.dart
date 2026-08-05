@@ -53,7 +53,10 @@ const double kUtilityNetworkNodeMaxWidth = 360;
 const double kUtilityNetworkNodeMaxHeight = 240;
 const double kUtilityNetworkPortSize = 14;
 
-double utilityNetworkNodeWidth(UtilityViewNode placement, {String? assetType}) {
+double utilityNetworkNodeWidth(
+  UtilityViewNode placement, {
+  String? assetType,
+}) {
   final fallback = switch (assetType) {
     'meter' => kUtilityNetworkMeterSize,
     'pump' => kUtilityNetworkPumpWidth,
@@ -104,12 +107,13 @@ double utilityNetworkNodeHeight(
 String? utilityNetworkAssetTypeForNode(
   UtilityNetworkSnapshot snapshot,
   String nodeId,
-) => snapshot.nodes
-    .where((n) => n.id == nodeId)
-    .firstOrNull
-    ?.asset
-    ?.assetType
-    .dbValue;
+) =>
+    snapshot.nodes
+        .where((n) => n.id == nodeId)
+        .firstOrNull
+        ?.asset
+        ?.assetType
+        .dbValue;
 
 /// Bounds used by the canvas, including node dimensions and padding.
 Rect utilityNetworkFitBounds(
@@ -363,7 +367,10 @@ class UtilityNetworkMeterDetailCard {
 
 /// Optional dashboard overlays for meter circles (reading + detail card).
 class UtilityNetworkMeterOverlay {
-  const UtilityNetworkMeterOverlay({this.readingLabel, this.detail});
+  const UtilityNetworkMeterOverlay({
+    this.readingLabel,
+    this.detail,
+  });
 
   /// Latest entered reading shown alone in the center of the meter circle.
   final String? readingLabel;
@@ -410,7 +417,6 @@ class UtilityNetworkCanvas extends StatefulWidget {
   final bool showLegend;
   final bool autoFitOnLoad;
   final bool showFitControl;
-
   /// When true, disables pan/zoom (e.g. while dragging from an external palette).
   final bool lockInteraction;
 
@@ -625,18 +631,18 @@ class UtilityNetworkCanvasState extends State<UtilityNetworkCanvas> {
               });
             }
             return Stack(
-              children: [
-                InteractiveViewer(
+          children: [
+            InteractiveViewer(
                   transformationController: _transform,
-                  constrained: false,
+              constrained: false,
                   boundaryMargin: const EdgeInsets.all(240),
                   minScale: 0.25,
                   maxScale: 5.0,
                   panEnabled: !_interactionLocked && !widget.lockInteraction,
                   scaleEnabled: !_interactionLocked && !widget.lockInteraction,
-                  child: SizedBox(
-                    width: canvasSize.width,
-                    height: canvasSize.height,
+              child: SizedBox(
+                width: canvasSize.width,
+                height: canvasSize.height,
                     child: GestureDetector(
                       behavior: HitTestBehavior.translucent,
                       onTapUp: (details) {
@@ -653,27 +659,27 @@ class UtilityNetworkCanvasState extends State<UtilityNetworkCanvas> {
                           _finishPortConnect(null, null);
                         }
                       },
-                      child: Stack(
-                        children: [
-                          CustomPaint(
-                            size: canvasSize,
-                            painter: _UtilityEdgesPainter(
+                child: Stack(
+                  children: [
+                    CustomPaint(
+                      size: canvasSize,
+                      painter: _UtilityEdgesPainter(
                               snapshot: widget.snapshot,
-                              nodeById: nodeById,
-                              placements: placements,
-                              shift: shift,
+                        nodeById: nodeById,
+                        placements: placements,
+                        shift: shift,
                               isArabic: widget.isArabic,
                               showPorts: _portsVisible,
                               selectedConnectionId: widget.selectedConnectionId,
-                            ),
-                          ),
-                          for (final node in nodes)
+                      ),
+                    ),
+                    for (final node in nodes)
                             if (placements[node.id] != null)
-                              Positioned(
-                                left: placements[node.id]!.posX + shift.dx,
-                                top: placements[node.id]!.posY + shift.dy,
-                                child: _UtilityNode(
-                                  node: node,
+                      Positioned(
+                        left: placements[node.id]!.posX + shift.dx,
+                        top: placements[node.id]!.posY + shift.dy,
+                        child: _UtilityNode(
+                          node: node,
                                   placement: placements[node.id]!,
                                   isArabic: widget.isArabic,
                                   selected: node.id == widget.selectedNodeId,
@@ -696,10 +702,8 @@ class UtilityNetworkCanvasState extends State<UtilityNetworkCanvas> {
                                       ? null
                                       : () => widget.onNodeDoubleTap!(node),
                                   onChanged: widget.editMode
-                                      ? (placement) => widget.onNodeMoved?.call(
-                                          node,
-                                          placement,
-                                        )
+                                      ? (placement) => widget.onNodeMoved
+                                            ?.call(node, placement)
                                       : null,
                                   onDragLock: (locked) => setState(
                                     () => _interactionLocked = locked,
@@ -718,12 +722,12 @@ class UtilityNetworkCanvasState extends State<UtilityNetworkCanvas> {
                                       });
                                     }
                                   },
-                                ),
-                              ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                  ],
+                ),
+              ),
+            ),
                 ),
                 if (widget.showFitControl)
                   PositionedDirectional(
@@ -767,12 +771,12 @@ class UtilityNetworkCanvasState extends State<UtilityNetworkCanvas> {
                     ),
                   ),
                 if (widget.showLegend)
-                  PositionedDirectional(
-                    end: 12,
-                    bottom: 12,
+            PositionedDirectional(
+              end: 12,
+              bottom: 12,
                     child: _Legend(isArabic: widget.isArabic),
-                  ),
-              ],
+            ),
+          ],
             );
           },
         ),
@@ -965,8 +969,8 @@ class _UtilityNodeState extends State<_UtilityNode> {
                         ),
                       ],
                     ),
-                    child: Material(
-                      color: Theme.of(context).colorScheme.surface,
+      child: Material(
+        color: Theme.of(context).colorScheme.surface,
                       elevation: 0,
                       shadowColor: Colors.transparent,
                       clipBehavior: Clip.antiAlias,
@@ -1026,9 +1030,12 @@ class _UtilityNodeState extends State<_UtilityNode> {
               child: IgnorePointer(
                 child: FractionalTranslation(
                   translation: const Offset(0, -1),
-                  child: Padding(
+          child: Padding(
                     padding: const EdgeInsets.only(bottom: 10),
-                    child: _MeterDetailPopup(detail: detail, accent: cardColor),
+                    child: _MeterDetailPopup(
+                      detail: detail,
+                      accent: cardColor,
+                    ),
                   ),
                 ),
               ),
@@ -1165,14 +1172,13 @@ class _MeterNodeContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final hasReading = readingLabel != null && readingLabel!.trim().isNotEmpty;
+    final hasReading =
+        readingLabel != null && readingLabel!.trim().isNotEmpty;
 
     if (readingOnly && hasReading) {
       final parts = readingLabel!.split('\n');
       final valueLine = parts.first.trim();
-      final unitLine = parts.length > 1
-          ? parts.sublist(1).join(' ').trim()
-          : '';
+      final unitLine = parts.length > 1 ? parts.sublist(1).join(' ').trim() : '';
       return LayoutBuilder(
         builder: (context, constraints) {
           final side = math.min(
@@ -1314,9 +1320,9 @@ class _MeterDetailPopup extends StatelessWidget {
       final dateText = date?.trim().isNotEmpty == true ? date!.trim() : null;
       return Padding(
         padding: const EdgeInsets.only(top: 4),
-        child: Row(
+            child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+              children: [
             Padding(
               padding: const EdgeInsets.only(top: 1),
               child: Text(
@@ -1331,16 +1337,16 @@ class _MeterDetailPopup extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: Column(
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
+                    children: [
+                      Text(
                     valueText,
                     softWrap: false,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                     textAlign: TextAlign.end,
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontSize: 12,
@@ -1363,11 +1369,11 @@ class _MeterDetailPopup extends StatelessWidget {
                         color: onSurface.withValues(alpha: 0.45),
                       ),
                     ),
-                ],
-              ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
       );
     }
 
@@ -1542,6 +1548,7 @@ class _RectNodeContent extends StatelessWidget {
   }
 }
 
+
 class _PortHandle extends StatelessWidget {
   const _PortHandle({
     required this.port,
@@ -1570,6 +1577,39 @@ class _PortHandle extends StatelessWidget {
             border: Border.all(color: color, width: 2),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _PortStrip extends StatelessWidget {
+  const _PortStrip({required this.ports});
+  final List<UtilityAssetPort> ports;
+
+  @override
+  Widget build(BuildContext context) {
+    if (ports.isEmpty) return const SizedBox.shrink();
+    return Align(
+      alignment: AlignmentDirectional.bottomStart,
+      child: Wrap(
+        spacing: 3,
+        runSpacing: 2,
+        children: [
+          for (final p in ports.take(4))
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 3, vertical: 0),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(3),
+              ),
+              child: Text(
+                p.code,
+                style: Theme.of(
+                  context,
+                ).textTheme.labelSmall?.copyWith(fontSize: 8, height: 1.1),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -1681,12 +1721,7 @@ class _UtilityEdgesPainter extends CustomPainter {
     return null;
   }
 
-  void _drawPath(
-    Canvas canvas,
-    Path path,
-    Paint paint, {
-    required bool dashed,
-  }) {
+  void _drawPath(Canvas canvas, Path path, Paint paint, {required bool dashed}) {
     if (!dashed) {
       canvas.drawPath(path, paint);
       return;
@@ -1818,8 +1853,7 @@ Color utilityNetworkAssetColor(String type) => switch (type) {
 
 /// Resolves potable / TSE / RO product (and similar) for node coloring.
 String? utilityNetworkServiceWaterKey(UtilityAsset asset) {
-  final raw =
-      asset.serviceType?.dbValue ??
+  final raw = asset.serviceType?.dbValue ??
       asset.properties['service_type']?.toString() ??
       asset.properties['water_type']?.toString() ??
       asset.properties['source']?.toString();

@@ -3,7 +3,6 @@
 /// Deprecated for new work: prefer UtilityNetworkSnapshot /
 /// UtilityNetworkRepository (v2 Asset→Port→Connection). Kept for
 /// Admin/Dashboard until Phase C UI cutover. No dual-write.
-library;
 
 enum NetworkNodeKind {
   meter('meter'),

@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Platform;
 import 'dart:math' as math;
 
+import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -13,7 +15,6 @@ import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
 import '../providers/catalog_providers.dart';
 import '../providers/preferences_providers.dart';
-import '../utils/platform_image_picker.dart';
 import '../widgets/overflow_safe.dart';
 import 'meter_form_screen.dart';
 
@@ -175,7 +176,7 @@ String networkWaterTypeLabel(String value, {required bool isArabic}) =>
       'ro_reject' => isArabic ? 'مرفوض تحلية (RO)' : 'RO Reject',
       'rainwater' => isArabic ? 'مياه أمطار' : 'Rainwater',
       'rainwater_filtered' =>
-        isArabic ? 'مياه أمطار مفلترة' : 'Rainwater (filtered)',
+          isArabic ? 'مياه أمطار مفلترة' : 'Rainwater (filtered)',
       'irrigation' => isArabic ? 'ري' : 'Irrigation',
       'drainage' => isArabic ? 'صرف' : 'Drainage',
       'discharge' => isArabic ? 'تصريف' : 'Discharge',
@@ -378,9 +379,7 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
   }
 
   bool get _movesBusy =>
-      _flushingMoves ||
-      _pendingMoves.isNotEmpty ||
-      (_moveDebounce?.isActive ?? false);
+      _flushingMoves || _pendingMoves.isNotEmpty || (_moveDebounce?.isActive ?? false);
 
   /// Places every active site meter missing from the current view onto the canvas.
   Future<void> _ensureAllMetersOnView({bool force = false}) async {
@@ -1177,10 +1176,8 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
   }
 
   Future<ImageSource?> _chooseImageSource(AdminStrings s) async {
-    final isDesktop = usesDesktopImageFileSelector(
-      platform: defaultTargetPlatform,
-      isWeb: kIsWeb,
-    );
+    final isDesktop =
+        !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
     if (isDesktop) return ImageSource.gallery;
     return showModalBottomSheet<ImageSource>(
       context: context,
@@ -1206,7 +1203,18 @@ class _NetworkTabState extends ConsumerState<NetworkTab> {
   }
 
   Future<XFile?> _pickImageFile(ImageSource source) async {
-    return pickPlatformImage(
+    final isDesktop =
+        !kIsWeb && (Platform.isMacOS || Platform.isWindows || Platform.isLinux);
+    if (isDesktop) {
+      const typeGroup = XTypeGroup(
+        label: 'images',
+        extensions: <String>['jpg', 'jpeg', 'png', 'webp', 'heic', 'gif'],
+      );
+      final file = await openFile(acceptedTypeGroups: [typeGroup]);
+      if (file == null) return null;
+      return XFile(file.path, mimeType: file.mimeType);
+    }
+    return ImagePicker().pickImage(
       source: source,
       maxWidth: 900,
       maxHeight: 900,
@@ -3082,7 +3090,8 @@ class _DetailsPanelState extends State<_DetailsPanel> {
             Align(
               alignment: AlignmentDirectional.centerStart,
               child: FilledButton.tonal(
-                onPressed: () => widget.onSaveServiceType!(node, _serviceType),
+                onPressed: () =>
+                    widget.onSaveServiceType!(node, _serviceType),
                 child: Text(s.networkSaveServiceType),
               ),
             ),
@@ -3093,7 +3102,10 @@ class _DetailsPanelState extends State<_DetailsPanel> {
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 4),
-          Text(s.networkInlets, style: Theme.of(context).textTheme.labelMedium),
+          Text(
+            s.networkInlets,
+            style: Theme.of(context).textTheme.labelMedium,
+          ),
           for (final p in inlets)
             ListTile(
               dense: true,
@@ -3318,8 +3330,16 @@ class _NamedAssetForm {
 }
 
 class _NewMeterDialog extends StatefulWidget {
-  const _NewMeterDialog({required this.strings});
+  const _NewMeterDialog({
+    required this.strings,
+    this.initialCode,
+    this.initialNameEn,
+    this.initialNameAr,
+  });
   final AdminStrings strings;
+  final String? initialCode;
+  final String? initialNameEn;
+  final String? initialNameAr;
   @override
   State<_NewMeterDialog> createState() => _NewMeterDialogState();
 }
@@ -3332,9 +3352,9 @@ class _NewMeterDialogState extends State<_NewMeterDialog> {
   @override
   void initState() {
     super.initState();
-    _code = TextEditingController();
-    _nameEn = TextEditingController();
-    _nameAr = TextEditingController();
+    _code = TextEditingController(text: widget.initialCode ?? '');
+    _nameEn = TextEditingController(text: widget.initialNameEn ?? '');
+    _nameAr = TextEditingController(text: widget.initialNameAr ?? '');
   }
 
   @override

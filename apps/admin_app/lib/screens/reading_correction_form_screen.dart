@@ -5,7 +5,6 @@ import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../providers/correction_providers.dart';
-import '../utils/platform_image_picker.dart';
 import 'reading_audit_history_screen.dart';
 
 class ReadingCorrectionFormScreen extends ConsumerStatefulWidget {
@@ -50,7 +49,8 @@ class _ReadingCorrectionFormScreenState
   Future<void> _replacePhoto(ReadingCorrectionDetails details) async {
     final profile = ref.read(authProvider).profile;
     if (profile == null) return;
-    final file = await pickPlatformImage(
+    final picker = ImagePicker();
+    final file = await picker.pickImage(
       source: ImageSource.gallery,
       imageQuality: 85,
       maxWidth: 2000,
@@ -60,9 +60,7 @@ class _ReadingCorrectionFormScreenState
     // Resolve organization from site via accessible sites list if needed.
     String? organizationId;
     try {
-      final sites = await ref
-          .read(siteRepositoryProvider)
-          .getAccessibleSites(profile);
+      final sites = await ref.read(siteRepositoryProvider).getAccessibleSites(profile);
       for (final site in sites) {
         if (site.id == details.reading.siteId) {
           organizationId = site.organizationId;
@@ -76,12 +74,10 @@ class _ReadingCorrectionFormScreenState
     try {
       final bytes = await file.readAsBytes();
       final oldPath = details.reading.imageStoragePath;
-      await ref
-          .read(readingCorrectionRepositoryProvider)
-          .replaceReadingPhoto(
+      await ref.read(readingCorrectionRepositoryProvider).replaceReadingPhoto(
             readingId: widget.readingId,
             bytes: bytes,
-            organizationId: organizationId,
+            organizationId: organizationId!,
           );
       if (oldPath != null) {
         ref.invalidate(correctionPhotoUrlProvider(oldPath));

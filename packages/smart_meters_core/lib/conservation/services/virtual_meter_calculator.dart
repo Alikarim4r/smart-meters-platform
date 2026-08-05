@@ -1,5 +1,6 @@
 import '../../domain/chart_period.dart';
 import '../../models/enums.dart';
+import '../domain/period_windows.dart';
 import '../domain/virtual_meter_validation.dart';
 import '../models/calculation_meta.dart';
 import '../models/virtual_meter_result.dart';
@@ -36,17 +37,15 @@ class VirtualMeterCalculator {
         periodEnd: end,
       );
       if (!endpoints.hasValidConsumptionEndpoints) {
-        out.add(
-          VirtualMeterContributorInput(
-            meterId: series.meterId,
-            consumption: null,
-            hasValidEndpoints: false,
-            completeness: 0,
-            confidence: 40,
-            unitCode: series.unitCode,
-            isMissing: true,
-          ),
-        );
+        out.add(VirtualMeterContributorInput(
+          meterId: series.meterId,
+          consumption: null,
+          hasValidEndpoints: false,
+          completeness: 0,
+          confidence: 40,
+          unitCode: series.unitCode,
+          isMissing: true,
+        ));
         continue;
       }
       final value = periodConsumptionFromEndpoints(
@@ -67,18 +66,16 @@ class VirtualMeterCalculator {
         spanEnd = d;
       }
 
-      out.add(
-        VirtualMeterContributorInput(
-          meterId: series.meterId,
-          consumption: value,
-          hasValidEndpoints: true,
-          completeness: 1.0,
-          confidence: confidence.clamp(0, 100),
-          unitCode: series.unitCode,
-          readingSpanStart: spanStart,
-          readingSpanEnd: spanEnd,
-        ),
-      );
+      out.add(VirtualMeterContributorInput(
+        meterId: series.meterId,
+        consumption: value,
+        hasValidEndpoints: true,
+        completeness: 1.0,
+        confidence: confidence.clamp(0, 100),
+        unitCode: series.unitCode,
+        readingSpanStart: spanStart,
+        readingSpanEnd: spanEnd,
+      ));
     }
     return out;
   }
@@ -133,18 +130,12 @@ class VirtualMeterCalculator {
       );
     }
 
-    final missing = children
-        .where((c) => c.isMissing || !c.hasValidEndpoints)
-        .toList();
-    final present = children
-        .where((c) => c.hasValidEndpoints && c.consumption != null)
-        .toList();
+    final missing = children.where((c) => c.isMissing || !c.hasValidEndpoints).toList();
+    final present = children.where((c) => c.hasValidEndpoints && c.consumption != null).toList();
     final contributingIds = present.map((c) => c.meterId).toList();
     final missingIds = missing.map((c) => c.meterId).toList();
 
-    final completeness = (present.length / children.length)
-        .clamp(0.0, 1.0)
-        .toDouble();
+    final completeness = (present.length / children.length).clamp(0.0, 1.0).toDouble();
 
     // Conservative confidence = min(contributors) with penalties.
     var confidence = 100;
@@ -227,9 +218,7 @@ class VirtualMeterCalculator {
     }
 
     // parent_minus_children
-    if (parent == null ||
-        !parent.hasValidEndpoints ||
-        parent.consumption == null) {
+    if (parent == null || !parent.hasValidEndpoints || parent.consumption == null) {
       return _insufficient(
         calculationType: calculationType,
         unitCode: unitCode,
@@ -242,10 +231,7 @@ class VirtualMeterCalculator {
         completeness: completeness * 0.5,
         confidence: (confidence - 30).clamp(0, 100),
         contributing: contributingIds,
-        missing: [
-          ...missingIds,
-          if (parent != null) parent.meterId else 'parent',
-        ],
+        missing: [...missingIds, if (parent != null) parent.meterId else 'parent'],
         warnings: warnings,
       );
     }
@@ -264,8 +250,8 @@ class VirtualMeterCalculator {
     final label = residual.abs() < 1e-9
         ? 'Residual (Balance Difference) · On balance'
         : residual > 0
-        ? 'Residual (Balance Difference)'
-        : 'Residual (Balance Difference) · Negative';
+            ? 'Residual (Balance Difference)'
+            : 'Residual (Balance Difference) · Negative';
 
     final meta = _meta(
       calculationType: calculationType,
@@ -349,7 +335,7 @@ class VirtualMeterCalculator {
     required String expression,
   }) {
     return CalculationMeta(
-      calculationMethod: '$method:${calculationType.dbValue}',
+      calculationMethod: '${method}:${calculationType.dbValue}',
       periodStart: start,
       periodEnd: end,
       dataCompleteness: completeness,
@@ -384,7 +370,7 @@ class VirtualMeterCalculator {
     List<String> warnings = const [],
   }) {
     final meta = CalculationMeta(
-      calculationMethod: '$method:${calculationType.dbValue}',
+      calculationMethod: '${method}:${calculationType.dbValue}',
       periodStart: start,
       periodEnd: end,
       dataCompleteness: completeness,

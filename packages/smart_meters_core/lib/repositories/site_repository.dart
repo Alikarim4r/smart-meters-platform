@@ -16,9 +16,9 @@ class SiteRepository {
   static const _zoneEmbed =
       'zones(*, organization_site_types!zones_default_site_type_id_fkey(*))';
   static const _siteSelect = '*, $_zoneEmbed, organization_site_types(*)';
-
   /// Fast first-paint select (skips meters(count) embed).
-  static const _adminSelectLight = '*, $_zoneEmbed, organization_site_types(*)';
+  static const _adminSelectLight =
+      '*, $_zoneEmbed, organization_site_types(*)';
   static const _adminSelect =
       '*, meters(count), $_zoneEmbed, organization_site_types(*)';
   static const _orgSelect = '*, sites(count), organization_site_types(*)';
@@ -36,9 +36,8 @@ class SiteRepository {
       return _mapSites(rows);
     }
 
-    final ids = await _client
-        .rpc('list_readable_site_ids')
-        .timeout(_queryTimeout);
+    final ids =
+        await _client.rpc('list_readable_site_ids').timeout(_queryTimeout);
     final idList = _uuidListFromRpc(ids);
     if (idList.isEmpty) return [];
 
@@ -63,9 +62,8 @@ class SiteRepository {
       return _mapSites(rows);
     }
 
-    final ids = await _client
-        .rpc('list_writable_site_ids')
-        .timeout(_queryTimeout);
+    final ids =
+        await _client.rpc('list_writable_site_ids').timeout(_queryTimeout);
     final idList = _uuidListFromRpc(ids);
     if (idList.isEmpty) return [];
 
@@ -199,22 +197,13 @@ class SiteRepository {
     await _client.from('organizations').delete().eq('id', organizationId);
   }
 
-  /// Reversible hierarchy archival that preserves all related operational data.
-  Future<void> archiveOrganization(
-    String organizationId, {
-    String reason = 'Archived from Admin app',
-  }) async {
+  /// Super-admin cascade delete via RPC (sites, zones, then organization).
+  Future<void> forceDeleteOrganization(String organizationId) async {
     await _client.rpc(
-      'admin_archive_organization',
-      params: {'p_organization_id': organizationId, 'p_reason': reason},
+      'admin_force_delete_organization',
+      params: {'p_organization_id': organizationId},
     );
   }
-
-  @Deprecated(
-    'Use archiveOrganization; force delete is retained as a safe alias',
-  )
-  Future<void> forceDeleteOrganization(String organizationId) =>
-      archiveOrganization(organizationId);
 
   Future<Site> createSite({
     required String organizationId,
@@ -300,19 +289,10 @@ class SiteRepository {
     await _client.from('sites').delete().eq('id', siteId);
   }
 
-  /// Reversible archival that preserves meters, readings, audit logs, and links.
-  Future<void> archiveSite(
-    String siteId, {
-    String reason = 'Archived from Admin app',
-  }) async {
-    await _client.rpc(
-      'admin_archive_site',
-      params: {'p_site_id': siteId, 'p_reason': reason},
-    );
+  /// Super-admin cascade delete via RPC.
+  Future<void> forceDeleteSite(String siteId) async {
+    await _client.rpc('admin_force_delete_site', params: {'p_site_id': siteId});
   }
-
-  @Deprecated('Use archiveSite; force delete is retained as a safe alias')
-  Future<void> forceDeleteSite(String siteId) => archiveSite(siteId);
 
   List<Site> _mapSites(dynamic rows, {bool includeInactive = false}) {
     return (rows as List)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate synchronized launcher, in-app brand, and portal icon assets."""
+"""Generate flat solid-color launcher icons with METERS wordmark."""
 
 from __future__ import annotations
 
@@ -16,21 +16,21 @@ APPS = {
     "admin": "admin_app",
 }
 
-# Keep these values synchronized with AppBrandPalette.<app>.primary.
+# Solid backgrounds + contrasting METERS text.
 ICON_SPECS = {
-    # Dashboard: charcoal
-    "dashboard": {
-        "bg": (27, 36, 48),  # #1B2430
-        "fg": (255, 255, 255),
-    },
-    # Entry: official turquoise
-    "entry": {
-        "bg": (14, 107, 106),  # #0E6B6A
-        "fg": (255, 255, 255),
-    },
-    # Admin: muted burgundy
+    # Admin: gray bg → white text
     "admin": {
-        "bg": (107, 45, 60),  # #6B2D3C
+        "bg": (107, 114, 128),  # slate gray
+        "fg": (255, 255, 255),
+    },
+    # Dashboard (viewer): gold bg → deep ink text
+    "dashboard": {
+        "bg": (201, 162, 39),  # brand gold
+        "fg": (44, 34, 8),  # dark on-accent
+    },
+    # Entry: blue bg → white text
+    "entry": {
+        "bg": (11, 31, 58),  # navy blue
         "fg": (255, 255, 255),
     },
 }
@@ -138,22 +138,6 @@ def write_branding_assets(app_key: str, master: Image.Image) -> None:
     if out.exists():
         out.unlink()
     master.save(out, format="PNG")
-
-    core_dir = ROOT / "packages" / "smart_meters_core" / "assets" / "branding"
-    core_dir.mkdir(parents=True, exist_ok=True)
-    master.save(core_dir / f"mark_{app_key}.png", format="PNG")
-
-    portal_dir = ROOT / "web_portal" / "assets"
-    portal_dir.mkdir(parents=True, exist_ok=True)
-    master.save(portal_dir / f"mark_{app_key}.png", format="PNG")
-
-    if app_key == "dashboard":
-        master.save(portal_dir / "portal_mark.png", format="PNG")
-        for px in (32, 180, 192, 512):
-            master.resize((px, px), Image.Resampling.LANCZOS).save(
-                portal_dir / f"portal_icon_{px}.png",
-                format="PNG",
-            )
 
 
 def write_windows_icon(app_key: str, master: Image.Image) -> None:

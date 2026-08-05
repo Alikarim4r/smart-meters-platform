@@ -5,26 +5,6 @@
 
 begin;
 
--- Supply passwords as PostgreSQL session settings; never store real values here.
--- Example with psql: set each value with set_config(...) before running this file.
-do $credential_guard$
-declare
-  setting_name text;
-begin
-  foreach setting_name in array array[
-    'app.validation_password_super_admin',
-    'app.validation_password_site_admin',
-    'app.validation_password_technician',
-    'app.validation_password_viewer'
-  ]
-  loop
-    if nullif(current_setting(setting_name, true), '') is null then
-      raise exception 'Missing session credential setting: %', setting_name;
-    end if;
-  end loop;
-end
-$credential_guard$;
-
 -- Fixed UUIDs for RLS validation (reproducible)
 -- super_admin:  aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa1
 -- site_admin:   aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2
@@ -58,7 +38,7 @@ values
     'authenticated',
     'authenticated',
     'test-super-admin@validation.local',
-    crypt(current_setting('app.validation_password_super_admin'), gen_salt('bf')),
+    crypt('ValidationTest1!', gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Test Super Admin"}',
@@ -75,7 +55,7 @@ values
     'authenticated',
     'authenticated',
     'test-site-admin@validation.local',
-    crypt(current_setting('app.validation_password_site_admin'), gen_salt('bf')),
+    crypt('ValidationTest2!', gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Test Site Admin"}',
@@ -92,7 +72,7 @@ values
     'authenticated',
     'authenticated',
     'test-technician@validation.local',
-    crypt(current_setting('app.validation_password_technician'), gen_salt('bf')),
+    crypt('ValidationTest3!', gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Test Technician"}',
@@ -109,7 +89,7 @@ values
     'authenticated',
     'authenticated',
     'test-viewer@validation.local',
-    crypt(current_setting('app.validation_password_viewer'), gen_salt('bf')),
+    crypt('ValidationTest4!', gen_salt('bf')),
     now(),
     '{"provider":"email","providers":["email"]}',
     '{"full_name":"Test Viewer"}',
@@ -160,10 +140,7 @@ values
 on conflict (id) do update set
   role = excluded.role,
   full_name = excluded.full_name,
-  email = excluded.email,
-  is_active = true,
-  approval_status = 'approved',
-  updated_at = now();
+  email = excluded.email;
 
 -- Site access for non-super users (MOEHE HQ)
 insert into public.user_site_access (user_id, site_id, role, can_read, can_write, can_manage_meters)
@@ -179,9 +156,8 @@ on conflict (user_id, site_id) do update set
 
 commit;
 
--- Passwords are intentionally not stored in source.
--- Required session settings:
---   app.validation_password_super_admin
---   app.validation_password_site_admin
---   app.validation_password_technician
---   app.validation_password_viewer
+-- Test passwords (local/staging only — rotate or delete after validation):
+-- test-super-admin@validation.local  → ValidationTest1!
+-- test-site-admin@validation.local   → ValidationTest2!
+-- test-technician@validation.local → ValidationTest3!
+-- test-viewer@validation.local     → ValidationTest4!

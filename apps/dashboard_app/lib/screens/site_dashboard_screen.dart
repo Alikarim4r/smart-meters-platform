@@ -45,7 +45,7 @@ class SiteDashboardScreen extends ConsumerWidget {
     final rawSection = ref.watch(siteDashboardSectionProvider);
     final conservationVisible =
         ref.watch(conservationSectionVisibleProvider(siteId)).valueOrNull ??
-        false;
+            false;
     final section = normalizeSiteDashboardSection(
       rawSection,
       conservationVisible: conservationVisible,
@@ -77,78 +77,56 @@ class SiteDashboardScreen extends ConsumerWidget {
       ref.read(siteDashboardSectionProvider.notifier).state = value;
     }
 
-    void updateDateSelection(DashboardDateSelection value) {
-      ref.read(siteDateSelectionProvider(siteId).notifier).state = value;
-
-      // The global date picker is outside the analytics widget. Synchronize
-      // recognized chart presets here as well, otherwise selecting five years
-      // can leave the chart silently querying its previous seven-day window.
-      final utility = section.utilityKey;
-      if (utility == null) return;
-      final periodKey = utilityChartPeriodKey(
-        siteId: siteId,
-        categoryCode: utility.categoryCode,
-      );
-      final current = ref.read(utilityChartPeriodProvider(periodKey));
-      final next = utilityChartPeriodAfterDateSelection(
-        current: current,
-        selection: value,
-      );
-      if (next != current) {
-        ref.read(utilityChartPeriodProvider(periodKey).notifier).state = next;
-      }
-    }
-
     Widget buildSectionContent(
       SiteDashboardSummary summary, {
       required bool meterLayoutWide,
     }) {
       return switch (section) {
         SiteDashboardSection.overview => SiteOverviewPanel(
-          siteId: siteId,
-          summary: summary,
-          useDesktop: meterLayoutWide,
-          onOpenAlerts: () => openSection(SiteDashboardSection.alerts),
-          onOpenSystem: openSection,
-        ),
+            siteId: siteId,
+            summary: summary,
+            useDesktop: meterLayoutWide,
+            onOpenAlerts: () => openSection(SiteDashboardSection.alerts),
+            onOpenSystem: openSection,
+          ),
         SiteDashboardSection.water => UtilitySystemPanel(
-          siteId: siteId,
-          system: UtilitySystemKey.water,
-          useDesktop: meterLayoutWide,
-        ),
+            siteId: siteId,
+            system: UtilitySystemKey.water,
+            useDesktop: meterLayoutWide,
+          ),
         SiteDashboardSection.electricity => UtilitySystemPanel(
-          siteId: siteId,
-          system: UtilitySystemKey.electricity,
-          useDesktop: meterLayoutWide,
-        ),
+            siteId: siteId,
+            system: UtilitySystemKey.electricity,
+            useDesktop: meterLayoutWide,
+          ),
         SiteDashboardSection.btuCooling => UtilitySystemPanel(
-          siteId: siteId,
-          system: UtilitySystemKey.btu,
-          useDesktop: meterLayoutWide,
-          showCopSection: true,
-        ),
+            siteId: siteId,
+            system: UtilitySystemKey.btu,
+            useDesktop: meterLayoutWide,
+            showCopSection: true,
+          ),
         SiteDashboardSection.fuel => UtilitySystemPanel(
-          siteId: siteId,
-          system: UtilitySystemKey.fuel,
-          useDesktop: meterLayoutWide,
-        ),
+            siteId: siteId,
+            system: UtilitySystemKey.fuel,
+            useDesktop: meterLayoutWide,
+          ),
         SiteDashboardSection.network => UtilitySystemPanel(
-          siteId: siteId,
-          system: UtilitySystemKey.water,
-          useDesktop: meterLayoutWide,
-        ),
+            siteId: siteId,
+            system: UtilitySystemKey.water,
+            useDesktop: meterLayoutWide,
+          ),
         SiteDashboardSection.alerts => SiteAlertsPanel(
-          siteId: siteId,
-          useDesktop: meterLayoutWide,
-        ),
+            siteId: siteId,
+            useDesktop: meterLayoutWide,
+          ),
         SiteDashboardSection.reports => SiteReportsPanel(
-          siteId: siteId,
-          useDesktop: meterLayoutWide,
-        ),
+            siteId: siteId,
+            useDesktop: meterLayoutWide,
+          ),
         SiteDashboardSection.conservation => SiteConservationPanel(
-          siteId: siteId,
-          useDesktop: meterLayoutWide,
-        ),
+            siteId: siteId,
+            useDesktop: meterLayoutWide,
+          ),
       };
     }
 
@@ -169,7 +147,9 @@ class SiteDashboardScreen extends ConsumerWidget {
                 exportType: reportTypeForSiteSection(section),
                 exportCategoryId: exportCategoryId,
                 dateSelection: dateSelection,
-                onDateSelectionChanged: updateDateSelection,
+                onDateSelectionChanged: (value) => ref
+                    .read(siteDateSelectionProvider(siteId).notifier)
+                    .state = value,
                 onRefresh: refreshSite,
                 onViewAlerts: () => openSection(SiteDashboardSection.alerts),
                 onBack: embedded
@@ -186,7 +166,9 @@ class SiteDashboardScreen extends ConsumerWidget {
                 sections: siteDashboardSectionsForFlags(
                   conservationVisible: conservationVisible,
                 ),
-                onDateChanged: updateDateSelection,
+                onDateChanged: (value) => ref
+                    .read(siteDateSelectionProvider(siteId).notifier)
+                    .state = value,
                 onSectionChanged: openSection,
               ),
             Expanded(
@@ -248,7 +230,10 @@ class SiteDashboardScreen extends ConsumerWidget {
                 ),
               ],
             ),
-      body: SafeArea(top: false, child: body),
+      body: SafeArea(
+        top: false,
+        child: body,
+      ),
     );
   }
 

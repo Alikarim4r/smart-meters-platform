@@ -22,14 +22,10 @@ class PeriodComparisonService {
     required DateTime currentEnd,
   }) {
     return switch (type) {
-      PeriodComparisonType.previousPeriod => previousPeriodOfEqualLength(
-        currentStart,
-        currentEnd,
-      ),
-      PeriodComparisonType.samePeriodLastYear => samePeriodLastYear(
-        currentStart,
-        currentEnd,
-      ),
+      PeriodComparisonType.previousPeriod =>
+        previousPeriodOfEqualLength(currentStart, currentEnd),
+      PeriodComparisonType.samePeriodLastYear =>
+        samePeriodLastYear(currentStart, currentEnd),
     };
   }
 
@@ -96,8 +92,7 @@ class PeriodComparisonService {
         currentEnd: cEnd,
         comparisonStart: comparisonRange.start,
         comparisonEnd: comparisonRange.end,
-        reason:
-            'Incompatible units in comparison scope '
+        reason: 'Incompatible units in comparison scope '
             '(expected $unitCode).',
         calculatedAt: calculatedAt ?? DateTime.now().toUtc(),
       );
@@ -156,12 +151,11 @@ class PeriodComparisonService {
       if (meter.expectedIntervalDays != null &&
           meter.expectedIntervalDays! > 0) {
         final days = inclusiveDayCount(periodStart, periodEnd);
-        final slots = (days / meter.expectedIntervalDays!).ceil().clamp(
-          1,
-          days,
-        );
+        final slots =
+            (days / meter.expectedIntervalDays!).ceil().clamp(1, days) as int;
         expectedSlots += slots;
-        observedSlots += endpoints.readingCountInPeriod.clamp(0, slots);
+        observedSlots +=
+            endpoints.readingCountInPeriod.clamp(0, slots) as int;
       }
 
       if (!endpoints.hasValidConsumptionEndpoints) {
@@ -180,10 +174,11 @@ class PeriodComparisonService {
     final completeness = expectedSlots > 0
         ? (observedSlots / expectedSlots).clamp(0.0, 1.0)
         : (meters.isEmpty
-              ? 0.0
-              : (anyValid
-                    ? (metersWithEndpoints / meters.length).clamp(0.0, 1.0)
-                    : 0.0));
+            ? 0.0
+            : (anyValid
+                ? (metersWithEndpoints / meters.length).clamp(0.0, 1.0)
+                : 0.0));
+
 
     final confidence = _periodConfidence(
       hasValidEndpoints: anyValid,
@@ -245,8 +240,8 @@ class PeriodComparisonService {
   }) {
     final comparisonConfidence =
         current.confidenceScore < comparison.confidenceScore
-        ? current.confidenceScore
-        : comparison.confidenceScore;
+            ? current.confidenceScore
+            : comparison.confidenceScore;
 
     final meta = CalculationMeta(
       calculationMethod: calculationMethod,
@@ -397,7 +392,7 @@ class PeriodComparisonService {
   }
 
   ({double? value, String display, bool forceInsufficient, String? reason})
-  _percentageDifference({
+      _percentageDifference({
     required double currentValue,
     required double comparisonValue,
     required double currentCompleteness,
@@ -421,8 +416,7 @@ class PeriodComparisonService {
     }
 
     if (currentValue == 0 && comparisonValue > 0) {
-      final weakCurrent =
-          currentCompleteness < 0.99 ||
+      final weakCurrent = currentCompleteness < 0.99 ||
           currentConfidence < kPeriodComparisonMinConfidence;
       if (weakCurrent) {
         return (
@@ -489,9 +483,12 @@ class PeriodMeterReadingSeries {
   final List<DateTime> correctionDates;
 
   List<PeriodReadingPoint> get normalizedPoints => [
-    for (final r in readings)
-      PeriodReadingPoint(date: r.date, value: r.value * meterMultiplier),
-  ];
+        for (final r in readings)
+          PeriodReadingPoint(
+            date: r.date,
+            value: r.value * meterMultiplier,
+          ),
+      ];
 
   int correctionCountInPeriod({
     required DateTime periodStart,

@@ -16,7 +16,7 @@ publish_to: 'none' # Remove this line if you wish to publish to pub.dev
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
 # In Windows, build-name is used as the major, minor, and patch parts
 # of the product and file versions while build-number is used as the build suffix.
-version: 1.0.1+2
+version: 1.0.0+1
 
 environment:
   sdk: ^3.12.2
@@ -42,7 +42,6 @@ dependencies:
   flutter_local_notifications: ^19.0.0
   home_widget: ^0.7.0
 
-  supabase_flutter: ^2.9.1
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -60,7 +59,7 @@ flutter_launcher_icons:
   ios: true
   remove_alpha_ios: true
   image_path: assets/branding/app_icon_simple.png
-  adaptive_icon_background: "#6B2D3C"
+  adaptive_icon_background: "#6B7280"
   adaptive_icon_foreground: assets/branding/app_icon_simple.png
   adaptive_icon_foreground_inset: 8
   macos:
@@ -69,8 +68,8 @@ flutter_launcher_icons:
   web:
     generate: true
     image_path: assets/branding/app_icon_simple.png
-    background_color: "#6B2D3C"
-    theme_color: "#6B2D3C"
+    background_color: "#6B7280"
+    theme_color: "#6B7280"
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

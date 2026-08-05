@@ -8,17 +8,6 @@ class PolicyValidationResult {
 }
 
 PolicyValidationResult validatePolicySettings(PolicySettings settings) {
-  final cutoff = settings.dailyReadingCutoffTime?.trim();
-  if (cutoff != null &&
-      cutoff.isNotEmpty &&
-      !RegExp(
-        r'^([01][0-9]|2[0-3]):[0-5][0-9](:[0-5][0-9])?$',
-      ).hasMatch(cutoff)) {
-    return const PolicyValidationResult(
-      isValid: false,
-      blockingMessage: 'Daily cutoff must use a valid 24-hour time.',
-    );
-  }
   if (settings.highConsumptionMultiplier <= 0) {
     return const PolicyValidationResult(
       isValid: false,

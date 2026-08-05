@@ -14,8 +14,7 @@ if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_ANON_KEY" ]]; then
   exit 1
 fi
 
-GITHUB_REPOSITORY_SLUG="${GITHUB_REPOSITORY:-}"
-REPO_NAME="${GITHUB_REPOSITORY_NAME:-${GITHUB_REPOSITORY_SLUG##*/}}"
+REPO_NAME="${GITHUB_REPOSITORY_NAME:-${GITHUB_REPOSITORY##*/}}"
 REPO_NAME="${REPO_NAME:-smart-meters-platform}"
 PAGES_BASE="${GITHUB_PAGES_BASE:-https://${GITHUB_REPOSITORY_OWNER:-example}.github.io}"
 
@@ -35,7 +34,6 @@ DART_DEFINES=(
 
 rm -rf "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR"
-cp -R "$ROOT/web_portal/." "$DEPLOY_DIR/"
 
 build_app() {
   local folder="$1"
@@ -55,6 +53,36 @@ build_app() {
 build_app dashboard_app dashboard "Smart Meters Dashboard"
 build_app entry_app entry "Smart Meters Entry"
 build_app admin_app admin "Smart Meters Admin"
+
+cat >"$DEPLOY_DIR/index.html" <<EOF
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart Meters Platform</title>
+  <style>
+    :root { color-scheme: light dark; font-family: system-ui, sans-serif; }
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #0f1419; color: #e8edf5; }
+    main { width: min(720px, 92vw); padding: 2rem; }
+    h1 { margin: 0 0 0.5rem; font-size: 1.75rem; }
+    p { opacity: 0.85; line-height: 1.6; }
+    .grid { display: grid; gap: 1rem; margin-top: 1.5rem; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>منصة العدادات الذكية</h1>
+    <p>اختر التطبيق للمتابعة. جميع الصفحات متصلة بـ Supabase staging وتدعم الانتقال بين العرض والإدخال والإدارة.</p>
+    <div class="grid">
+      <a href="./dashboard/">لوحة العرض (Dashboard)</a>
+      <a href="./entry/">إدخال القراءات (Entry)</a>
+      <a href="./admin/">الإدارة (Admin)</a>
+    </div>
+  </main>
+</body>
+</html>
+EOF
 
 echo "Web bundle ready at: $DEPLOY_DIR"
 echo "Dashboard: $WEB_DASHBOARD_URL"

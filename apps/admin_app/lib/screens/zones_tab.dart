@@ -227,9 +227,9 @@ class _ZonesTabState extends ConsumerState<ZonesTab> {
                                           await _toggleActive(zone);
                                         case 'delete':
                                           final confirmed = canForceDelete
-                                              ? await confirmArchive(
+                                              ? await confirmForceDelete(
                                                   context: context,
-                                                  title: s.archiveZoneTitle,
+                                                  title: s.deleteZoneTitle,
                                                   entityName: zone.nameEn,
                                                 )
                                               : await showDialog<bool>(
@@ -268,7 +268,9 @@ class _ZonesTabState extends ConsumerState<ZonesTab> {
                                               zoneRepositoryProvider,
                                             );
                                             if (canForceDelete) {
-                                              await repo.archiveZone(zone.id);
+                                              await repo.forceDeleteZone(
+                                                zone.id,
+                                              );
                                             } else {
                                               await repo.deleteZone(zone.id);
                                             }
@@ -279,9 +281,7 @@ class _ZonesTabState extends ConsumerState<ZonesTab> {
                                             ).showSnackBar(
                                               SnackBar(
                                                 content: Text(
-                                                  canForceDelete
-                                                      ? '${zone.nameEn} archived'
-                                                      : '${zone.nameEn} deleted',
+                                                  '${zone.nameEn} deleted',
                                                 ),
                                               ),
                                             );
@@ -311,11 +311,7 @@ class _ZonesTabState extends ConsumerState<ZonesTab> {
                                       if (canDelete)
                                         PopupMenuItem(
                                           value: 'delete',
-                                          child: Text(
-                                            canForceDelete
-                                                ? s.archive
-                                                : s.delete,
-                                          ),
+                                          child: Text(s.delete),
                                         ),
                                     ],
                                   ),

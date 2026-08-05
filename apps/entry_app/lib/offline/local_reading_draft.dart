@@ -35,8 +35,6 @@ enum LocalReadingStatus {
 
 class LocalReadingDraft {
   const LocalReadingDraft({
-    required this.ownerUserId,
-    required this.environment,
     required this.localId,
     required this.siteId,
     required this.meterId,
@@ -60,12 +58,6 @@ class LocalReadingDraft {
     this.photoErrorMessage,
   });
 
-  /// Supabase profile that created this local record.
-  ///
-  /// This remains nullable only so pre-isolation records can still be decoded
-  /// and quarantined without deleting them or assigning them to the wrong user.
-  final String? ownerUserId;
-  final String? environment;
   final String localId;
   final String siteId;
   final String meterId;
@@ -87,17 +79,6 @@ class LocalReadingDraft {
   final String? remotePhotoPath;
   final String? remotePhotoUrl;
   final String? photoErrorMessage;
-
-  bool get isLegacyUnscoped =>
-      ownerUserId == null ||
-      ownerUserId!.trim().isEmpty ||
-      environment == null ||
-      environment!.trim().isEmpty;
-
-  bool belongsTo({required String userId, required String appEnvironment}) =>
-      !isLegacyUnscoped &&
-      ownerUserId == userId &&
-      environment == appEnvironment;
 
   bool get hasLocalPhoto =>
       watermarkedPhotoPath != null && watermarkedPhotoPath!.isNotEmpty;
@@ -145,8 +126,6 @@ class LocalReadingDraft {
     bool clearPhotoErrorMessage = false,
   }) {
     return LocalReadingDraft(
-      ownerUserId: ownerUserId,
-      environment: environment,
       localId: localId ?? this.localId,
       siteId: siteId ?? this.siteId,
       meterId: meterId ?? this.meterId,
@@ -170,9 +149,8 @@ class LocalReadingDraft {
       photoCapturedAt: clearPhotoCapturedAt
           ? null
           : (photoCapturedAt ?? this.photoCapturedAt),
-      remotePhotoPath: clearRemotePhotoPath
-          ? null
-          : (remotePhotoPath ?? this.remotePhotoPath),
+      remotePhotoPath:
+          clearRemotePhotoPath ? null : (remotePhotoPath ?? this.remotePhotoPath),
       remotePhotoUrl:
           clearRemotePhotoUrl ? null : (remotePhotoUrl ?? this.remotePhotoUrl),
       photoErrorMessage: clearPhotoErrorMessage
@@ -183,9 +161,6 @@ class LocalReadingDraft {
 
   Map<String, dynamic> toMap() {
     return {
-      'schemaVersion': 3,
-      'ownerUserId': ownerUserId,
-      'environment': environment,
       'localId': localId,
       'siteId': siteId,
       'meterId': meterId,
@@ -212,8 +187,6 @@ class LocalReadingDraft {
 
   factory LocalReadingDraft.fromMap(Map<dynamic, dynamic> map) {
     return LocalReadingDraft(
-      ownerUserId: map['ownerUserId'] as String?,
-      environment: map['environment'] as String?,
       localId: map['localId'] as String,
       siteId: map['siteId'] as String,
       meterId: map['meterId'] as String,

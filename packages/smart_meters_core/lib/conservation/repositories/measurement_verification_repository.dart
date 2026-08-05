@@ -46,30 +46,31 @@ class MeasurementVerificationRepository {
         .insert({
           'site_id': siteId,
           'opportunity_id': opportunityId,
-          'action_id': ?actionId,
+          if (actionId != null) 'action_id': actionId,
           'baseline_id': baselineId,
-          'target_id': ?targetId,
-          'meter_id': ?meterId,
-          'balance_group_id': ?balanceGroupId,
+          if (targetId != null) 'target_id': targetId,
+          if (meterId != null) 'meter_id': meterId,
+          if (balanceGroupId != null) 'balance_group_id': balanceGroupId,
           'utility_type': utilityType,
           'verification_method': verificationMethod.dbValue,
           'calculation_version': calculationVersion,
-          'supersedes_id': ?supersedesId,
+          if (supersedesId != null) 'supersedes_id': supersedesId,
           'pre_period_start': _isoDate(prePeriodStart),
           'pre_period_end': _isoDate(prePeriodEnd),
           'post_period_start': _isoDate(postPeriodStart),
           'post_period_end': _isoDate(postPeriodEnd),
           'baseline_value': baselineValue,
-          'actual_post_value': ?actualPostValue,
-          'adjusted_baseline_value': ?adjustedBaselineValue,
+          if (actualPostValue != null) 'actual_post_value': actualPostValue,
+          if (adjustedBaselineValue != null)
+            'adjusted_baseline_value': adjustedBaselineValue,
           'unit_code': unitCode,
-          'data_completeness': ?dataCompleteness,
+          if (dataCompleteness != null) 'data_completeness': dataCompleteness,
           'confidence_score': confidenceScore,
           'status': MvStatus.draft.dbValue,
           'calculation_meta': calculationMeta,
           'evidence_ids': evidenceIds,
-          'notes': ?notes,
-          'created_by': ?createdBy,
+          if (notes != null) 'notes': notes,
+          if (createdBy != null) 'created_by': createdBy,
         })
         .select()
         .single();
@@ -183,7 +184,9 @@ class MeasurementVerificationRepository {
         .eq('id', record.id)
         .select()
         .single();
-    return MeasurementVerification.fromJson(Map<String, dynamic>.from(updated));
+    return MeasurementVerification.fromJson(
+      Map<String, dynamic>.from(updated),
+    );
   }
 
   /// Persist supersede + insert next draft from [RecalculationVersioning].

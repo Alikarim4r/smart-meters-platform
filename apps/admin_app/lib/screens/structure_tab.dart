@@ -47,14 +47,12 @@ class StructureTab extends ConsumerWidget {
               tree.organizations.any((o) => o.id == organizationId),
             StructureSiteTypesSelection(:final organizationId) =>
               tree.organizations.any((o) => o.id == organizationId),
-            StructureZoneSelection(:final zoneId) =>
-              tree.zonesByOrg.values
-                  .expand((z) => z)
-                  .any((z) => z.id == zoneId),
-            StructureSiteSelection(:final siteId) =>
-              tree.sitesByOrg.values
-                  .expand((s) => s)
-                  .any((site) => site.id == siteId),
+            StructureZoneSelection(:final zoneId) => tree.zonesByOrg.values
+                .expand((z) => z)
+                .any((z) => z.id == zoneId),
+            StructureSiteSelection(:final siteId) => tree.sitesByOrg.values
+                .expand((s) => s)
+                .any((site) => site.id == siteId),
           };
           if (!stillValid) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -616,28 +614,27 @@ class _OrgDetail extends ConsumerWidget {
   final Organization org;
   final AdminStrings strings;
   final bool canManage;
-
   /// Platform owner only — assign super_admins at organization level.
   final bool canManageOrgControl;
   final bool canForceDelete;
   final VoidCallback onRefresh;
   final VoidCallback onDeleted;
 
-  Future<void> _archive(BuildContext context, WidgetRef ref) async {
-    final confirmed = await confirmArchive(
+  Future<void> _forceDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await confirmForceDelete(
       context: context,
-      title: strings.archiveOrganizationTitle,
+      title: strings.deleteOrganizationTitle,
       entityName: org.nameEn,
     );
     if (confirmed != true) return;
     try {
-      await ref.read(siteRepositoryProvider).archiveOrganization(org.id);
+      await ref.read(siteRepositoryProvider).forceDeleteOrganization(org.id);
       onRefresh();
       onDeleted();
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('${org.nameEn} archived')));
+      ).showSnackBar(SnackBar(content: Text('${org.nameEn} deleted')));
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -758,11 +755,11 @@ class _OrgDetail extends ConsumerWidget {
           ),
         if (canForceDelete)
           _ActionTile(
-            icon: Icons.archive_outlined,
-            label: strings.archive,
+            icon: Icons.delete_forever_outlined,
+            label: strings.forceDelete,
             enabled: true,
-            destructive: false,
-            onTap: () => _archive(context, ref),
+            destructive: true,
+            onTap: () => _forceDelete(context, ref),
           ),
       ],
     );
@@ -916,21 +913,21 @@ class _ZoneDetail extends ConsumerWidget {
   final VoidCallback onRefresh;
   final VoidCallback onDeleted;
 
-  Future<void> _archive(BuildContext context, WidgetRef ref) async {
-    final confirmed = await confirmArchive(
+  Future<void> _forceDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await confirmForceDelete(
       context: context,
-      title: strings.archiveZoneTitle,
+      title: strings.deleteZoneTitle,
       entityName: zone.nameEn,
     );
     if (confirmed != true) return;
     try {
-      await ref.read(zoneRepositoryProvider).archiveZone(zone.id);
+      await ref.read(zoneRepositoryProvider).forceDeleteZone(zone.id);
       onRefresh();
       onDeleted();
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('${zone.nameEn} archived')));
+      ).showSnackBar(SnackBar(content: Text('${zone.nameEn} deleted')));
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -977,9 +974,7 @@ class _ZoneDetail extends ConsumerWidget {
                 canEdit: true,
                 onPathChanged: (path) async {
                   try {
-                    await ref
-                        .read(zoneRepositoryProvider)
-                        .updateZoneReportLogo(
+                    await ref.read(zoneRepositoryProvider).updateZoneReportLogo(
                           zoneId: zone.id,
                           reportLogoPath: path,
                         );
@@ -990,19 +985,19 @@ class _ZoneDetail extends ConsumerWidget {
                         content: Text(
                           path == null
                               ? (strings.isAr
-                                    ? 'تم مسح الشعار'
-                                    : 'Logo cleared')
+                                  ? 'تم مسح الشعار'
+                                  : 'Logo cleared')
                               : (strings.isAr
-                                    ? 'تم حفظ شعار المنطقة'
-                                    : 'Zone logo saved'),
+                                  ? 'تم حفظ شعار المنطقة'
+                                  : 'Zone logo saved'),
                         ),
                       ),
                     );
                   } catch (error) {
                     if (!context.mounted) return;
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text('$error')));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('$error')),
+                    );
                   }
                 },
               ),
@@ -1074,11 +1069,11 @@ class _ZoneDetail extends ConsumerWidget {
         ),
         if (canForceDelete)
           _ActionTile(
-            icon: Icons.archive_outlined,
-            label: strings.archive,
+            icon: Icons.delete_forever_outlined,
+            label: strings.forceDelete,
             enabled: true,
-            destructive: false,
-            onTap: () => _archive(context, ref),
+            destructive: true,
+            onTap: () => _forceDelete(context, ref),
           ),
       ],
     );
@@ -1104,21 +1099,21 @@ class _SiteDetailActions extends ConsumerWidget {
   final VoidCallback onRefresh;
   final VoidCallback onDeleted;
 
-  Future<void> _archive(BuildContext context, WidgetRef ref) async {
-    final confirmed = await confirmArchive(
+  Future<void> _forceDelete(BuildContext context, WidgetRef ref) async {
+    final confirmed = await confirmForceDelete(
       context: context,
-      title: strings.archiveSiteTitle,
+      title: strings.deleteSiteTitle,
       entityName: site.nameEn,
     );
     if (confirmed != true) return;
     try {
-      await ref.read(siteRepositoryProvider).archiveSite(site.id);
+      await ref.read(siteRepositoryProvider).forceDeleteSite(site.id);
       onRefresh();
       onDeleted();
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('${site.nameEn} archived')));
+      ).showSnackBar(SnackBar(content: Text('${site.nameEn} deleted')));
     } catch (error) {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
@@ -1197,11 +1192,11 @@ class _SiteDetailActions extends ConsumerWidget {
         ),
         if (canForceDelete)
           _ActionTile(
-            icon: Icons.archive_outlined,
-            label: strings.archive,
+            icon: Icons.delete_forever_outlined,
+            label: strings.forceDelete,
             enabled: true,
-            destructive: false,
-            onTap: () => _archive(context, ref),
+            destructive: true,
+            onTap: () => _forceDelete(context, ref),
           ),
       ],
     );

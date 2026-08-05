@@ -18,7 +18,8 @@ class EntryNotificationBridge extends ConsumerStatefulWidget {
 }
 
 class _EntryNotificationBridgeState
-    extends ConsumerState<EntryNotificationBridge> with WidgetsBindingObserver {
+    extends ConsumerState<EntryNotificationBridge>
+    with WidgetsBindingObserver {
   String? _startedOrgId;
   int _lastNotifiedPending = -1;
 
@@ -61,13 +62,9 @@ class _EntryNotificationBridgeState
   }
 
   Future<void> _syncWidgets() async {
-    final ownerUserId = ref.read(authProvider).profile?.id;
-    if (ownerUserId == null) {
-      return;
-    }
     final storage = OfflineStorageService.instance;
-    final pending = storage.getPendingSyncDrafts(ownerUserId: ownerUserId);
-    final last = storage.getLastSyncTime(ownerUserId: ownerUserId);
+    final pending = storage.getPendingSyncDrafts();
+    final last = storage.lastSyncTime;
     final lastLabel = last == null
         ? 'لم تتم مزامنة بعد'
         : 'آخر مزامنة: ${last.toLocal().toString().substring(0, 16)}';
