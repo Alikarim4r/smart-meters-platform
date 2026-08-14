@@ -14,11 +14,31 @@ if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_ANON_KEY" ]]; then
   exit 1
 fi
 
-REPO_NAME="${GITHUB_REPOSITORY_NAME:-${GITHUB_REPOSITORY##*/}}"
+# GITHUB_* are only set inside Actions; default them so the script also runs
+# locally under `set -u`.
+REPO_NAME="${GITHUB_REPOSITORY_NAME:-${GITHUB_REPOSITORY:-smart-meters-platform}}"
+REPO_NAME="${REPO_NAME##*/}"
 REPO_NAME="${REPO_NAME:-smart-meters-platform}"
 PAGES_BASE="${GITHUB_PAGES_BASE:-https://${GITHUB_REPOSITORY_OWNER:-example}.github.io}"
 
-BASE_HREF="/${REPO_NAME}"
+# Base path the apps are served under.
+#
+# On a custom domain the site is the origin root, so the prefix must be empty
+# and each app resolves at /dashboard/, /entry/, /admin/. On the project Pages
+# URL the site lives under /<repo>/, which is the default kept here so an
+# unconfigured build still behaves exactly as before.
+#
+# Set WEB_BASE_HREF="" (or "/") for a root-served custom domain.
+if [[ -n "${WEB_BASE_HREF+x}" ]]; then
+  BASE_HREF="${WEB_BASE_HREF%/}"        # tolerate a trailing slash
+else
+  BASE_HREF="/${REPO_NAME}"
+fi
+
+# Written into the published output so GitHub Pages keeps the custom domain.
+# peaceiris/actions-gh-pages force-pushes the publish directory, so a CNAME
+# created from the repository settings alone would be wiped on the next deploy.
+PAGES_CNAME="${PAGES_CNAME:-}"
 WEB_DASHBOARD_URL="${WEB_DASHBOARD_URL:-${PAGES_BASE}${BASE_HREF}/dashboard/}"
 WEB_ENTRY_URL="${WEB_ENTRY_URL:-${PAGES_BASE}${BASE_HREF}/entry/}"
 WEB_ADMIN_URL="${WEB_ADMIN_URL:-${PAGES_BASE}${BASE_HREF}/admin/}"
@@ -34,6 +54,11 @@ DART_DEFINES=(
 
 rm -rf "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR"
+
+if [[ -n "$PAGES_CNAME" ]]; then
+  printf '%s\n' "$PAGES_CNAME" >"$DEPLOY_DIR/CNAME"
+  echo "CNAME: $PAGES_CNAME"
+fi
 
 build_app() {
   local folder="$1"

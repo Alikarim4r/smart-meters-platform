@@ -28,7 +28,10 @@ jobs:
           APP_ENV: production
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-          GITHUB_PAGES_BASE: https://${{ github.repository_owner }}.github.io
+          # Custom domain: served from the origin root, so no repo-name prefix.
+          WEB_BASE_HREF: ""
+          GITHUB_PAGES_BASE: https://meters.alielhassan.com
+          PAGES_CNAME: meters.alielhassan.com
         run: |
           chmod +x scripts/build_web_apps.sh scripts/generate_app_icons.sh
           ./scripts/generate_app_icons.sh
@@ -40,3 +43,7 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./web_deploy
           publish_branch: gh-pages
+          # This action force-pushes publish_dir, so without cname the CNAME
+          # file GitHub writes from the repository settings is deleted on the
+          # next deploy and the custom domain drops.
+          cname: meters.alielhassan.com
