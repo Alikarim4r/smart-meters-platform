@@ -118,7 +118,7 @@ create policy "zones_delete"
 grant select, insert, update, delete on public.zones to authenticated;
 
 -- -----------------------------------------------------------------------------
--- 6. Seed sample zones (MOEHE organization)
+-- 6. Seed sample zones (Demo Org organization)
 -- -----------------------------------------------------------------------------
 
 insert into public.zones (
@@ -173,7 +173,7 @@ set
   is_active = excluded.is_active,
   sort_order = excluded.sort_order;
 
--- MOEHE HQ remains without a zone (zone_id null by design).
+-- Government HQ Demo remains without a zone (zone_id null by design).
 
 -- Assign Test School A to North Zone when present (safe optional backfill).
 update public.sites

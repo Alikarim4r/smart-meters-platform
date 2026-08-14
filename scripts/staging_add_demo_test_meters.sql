@@ -1,11 +1,11 @@
 -- =============================================================================
--- Staging-only: additional MOEHE HQ test meters for entry_app all-meters workflow
+-- Staging-only: additional Government HQ Demo test meters for entry_app all-meters workflow
 -- Environment: hosted staging (iqcxgtpcfhoapnklxdyl) — NOT production
 -- Safe to re-run: idempotent on (site_id, meter_code)
 -- Does NOT insert readings — new meters appear as Pending in entry_app
 -- =============================================================================
 
--- MOEHE HQ site: 22222222-2222-4222-8222-222222222222
+-- Government HQ Demo site: 22222222-2222-4222-8222-222222222222
 
 insert into public.meters (
   id,
@@ -28,7 +28,7 @@ insert into public.meters (
   include_in_dashboard
 )
 values
-  -- Water (sub meters under main Kahramaa water 1219053)
+  -- Water (sub meters under main Kahramaa water WM-001)
   (
     '33333333-3333-4333-8333-333333333311',
     '22222222-2222-4222-8222-222222222222',

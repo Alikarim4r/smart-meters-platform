@@ -25,9 +25,9 @@ Legacy Firebase apps remain **frozen** — not modified.
 ### Backend (staging)
 - Migrations 001–010 applied (schema, RLS, configurable categories, policy settings)
 - Migration `011` (reading indexes): authored — **apply via SQL Editor if not yet present**
-- MOEHE HQ **limited** dataset: **49 meters**, **~4,853 readings** (Jan–Jul 2026)
-  - Full historical import was pruned for staging stability (`scripts/prune_staging_moehe_limited.py`)
-- Idempotent import script: `scripts/import_moehe_hq_reports.py`
+- Government HQ Demo **limited** dataset: **49 meters**, **~4,853 readings** (Jan–Jul 2026)
+  - Full historical import was pruned for staging stability (`scripts/prune_staging_demo_limited.py`)
+- Idempotent import script: `scripts/import_demo_site_reports.py`
 - Session-only auth (anon key); no `service_role` in Flutter
 - Closeout checklist: `docs/STAGING_CLOSEOUT.md`
 
@@ -56,7 +56,7 @@ Legacy Firebase apps remain **frozen** — not modified.
 
 | Field | Value |
 |-------|-------|
-| Site | MOEHE HQ |
+| Site | Government HQ Demo |
 | site_id | `22222222-2222-4222-8222-222222222222` |
 | Meters | 49 (water 28, electricity 13, btu 5, fuel 3) |
 | Imported readings | ~4,853 (Jan–Jul 2026, limited staging set) |

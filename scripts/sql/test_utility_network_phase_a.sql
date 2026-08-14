@@ -95,7 +95,7 @@ begin
   where usa.can_read and not usa.can_manage_meters
   order by usa.created_at limit 1;
   select id into v_water from public.meter_categories where code = 'water' limit 1;
-  select id into v_site from public.sites where name_en ilike '%MOEHE%' limit 1;
+  select id into v_site from public.sites where name_en ilike '%Demo Org%' limit 1;
   if v_site is null then
     select id into v_site from public.sites where is_active order by created_at limit 1;
   end if;
@@ -174,7 +174,7 @@ begin
   -- 5/6 site admin / other admin
   if v_site_admin is not null then
     perform util_net_test.set_user(v_site_admin);
-    -- may or may not manage MOEHE depending on assignment
+    -- may or may not manage Demo Org depending on assignment
     v_results := v_results || jsonb_build_array(jsonb_build_object(
       't',5,'ok',true,
       'can_manage', public.can_manage_utility_network(v_network_id)

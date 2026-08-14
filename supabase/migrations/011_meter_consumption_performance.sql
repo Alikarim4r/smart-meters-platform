@@ -3,7 +3,7 @@
 -- Migration: 011_meter_consumption_performance.sql
 --
 -- Problem: public.meter_daily_consumption runs LAG() over the full
--- meter_readings history. Large imports (e.g. MOEHE HQ ~44k rows) cause
+-- meter_readings history. Large imports (e.g. Government HQ Demo ~44k rows) cause
 -- statement timeouts (Postgres 57014) when the dashboard filters that view.
 --
 -- Dashboard clients now compute consumption from ranged meter_readings queries

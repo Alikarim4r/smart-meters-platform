@@ -1,6 +1,6 @@
 # Legacy Firebase → Supabase Migration Plan
 
-**Source:** Frozen Firebase prototype (MOEHE HQ)  
+**Source:** Frozen Firebase prototype (Government HQ Demo)  
 **Target:** smart-meters-platform (Supabase)  
 **Status:** Planning  
 **Last updated:** 2026-07-03
@@ -17,25 +17,25 @@
 | Meter storage | SharedPreferences (`metersDefinitions_v1`) |
 | Reading storage | Firestore date-keyed docs |
 | Image storage | Firebase Storage `meter_images/{type}/{meterCode}/{date}.jpg` |
-| Site model | Single site (MOEHE HQ), hardcoded seed |
+| Site model | Single site (Government HQ Demo), hardcoded seed |
 | BTU/COP | Not implemented (BTU type exists, no data) |
 
 **Legacy apps (frozen — do not modify):**
-- `/Users/ali-laptop/Downloads/water_readings_app`
-- `/Users/ali-laptop/Downloads/electricity_readings_app`
-- `/Users/ali-laptop/Downloads/meters_dashboard_app`
-- `/Users/ali-laptop/Downloads/meters_admin_app`
+- `<local-workspace>/water_readings_app`
+- `<local-workspace>/electricity_readings_app`
+- `<local-workspace>/meters_dashboard_app`
+- `<local-workspace>/meters_admin_app`
 
-**Reference doc:** `/Users/ali-laptop/Downloads/meters-legacy-stack/STATUS.md`
+**Reference doc:** `<local-workspace>/meters-legacy-stack/STATUS.md`
 
 ---
 
 ## 2. Migration Goals
 
-1. Preserve all historical readings and images from MOEHE HQ
+1. Preserve all historical readings and images from Government HQ Demo
 2. Reconstruct full meter hierarchy in Supabase `meters` table
 3. Map legacy meter codes to new UUID-based meters
-4. Enable multi-site expansion without re-migrating MOEHE data
+4. Enable multi-site expansion without re-migrating Demo Org data
 5. Leave legacy Firebase stack untouched as read-only archive
 
 ---
@@ -46,10 +46,10 @@
 
 | Legacy | Supabase |
 |--------|----------|
-| (implicit single tenant) | `organizations`: MOEHE |
-| MOEHE HQ campus | `sites`: MOEHE HQ, type `headquarters` |
+| (implicit single tenant) | `organizations`: Demo Org |
+| Government HQ Demo campus | `sites`: Government HQ Demo, type `headquarters` |
 
-Seed UUIDs defined in `supabase/seed/001_seed_moehe_hq.sql`.
+Seed UUIDs defined in `supabase/seed/001_seed_demo_site.sql`.
 
 ### 3.2 Meters
 
@@ -75,13 +75,13 @@ Legacy meters live in SharedPreferences, not Firestore. Export source:
 | `isTankNode` | — | Display-only; omit from readings |
 | `omitFromTree` | `include_in_dashboard` | Invert logic |
 
-**Legacy meter inventory (MOEHE HQ):**
+**Legacy meter inventory (Government HQ Demo):**
 
 *Electricity:*
 - LVP-MAIN (group node), LVP-1, LVP-2A, LVP-3A, LVP-4, LVP-5, LVP-6, LVP-7A, LVP-8A
 
 *Water — Kahramaa:*
-- 1219053 (main), KP-8530916, KF-18540109, GR-01, GR-02, B1–B5
+- WM-001 (main), KP-8530916, KF-18540109, GR-01, GR-02, B1–B5
 
 *Water — Ashghal:*
 - 19ACI 005333 (main), K22223190003505907, KF-18540133, 15215002323, STORM-ULTRASONIC
@@ -90,7 +90,7 @@ Legacy meters live in SharedPreferences, not Firestore. Export source:
 - TANK-IRR, TANK-MAKEUP, TANK-FIRE
 
 *Virtual:*
-- WF (Water Features) — **migrate as virtual meter** with `meter_kind = virtual`, `calculation_type = parent_minus_children`, `parent_meter_id = 1219053`
+- WF (Water Features) — **migrate as virtual meter** with `meter_kind = virtual`, `calculation_type = parent_minus_children`, `parent_meter_id = WM-001`
 
 ### 3.3 Readings
 
@@ -132,12 +132,12 @@ New: Create real users post-migration; no user data to migrate.
 
 ### Phase A — Schema ready (blocked on approval)
 - Execute `001_schema.sql`, `002_rls_policies.sql`, `003_storage.sql`
-- Run seed for MOEHE org + site + sample meters
+- Run seed for Demo Org org + site + sample meters
 - Create super_admin user
 
 ### Phase B — Full meter import
 1. Parse canonical `seed_meters.dart` or export SharedPreferences from device
-2. Insert all MOEHE HQ meters with code → UUID mapping table
+2. Insert all Government HQ Demo meters with code → UUID mapping table
 3. Second pass: resolve `parent_meter_id` from codes
 4. Validate hierarchy (no cycles, sub → main only)
 5. Reconcile admin vs entry seed differences (15215002323 parent)
@@ -243,4 +243,4 @@ Drop or archive after validation.
 - [ ] Consumption values match legacy calculator within rounding tolerance
 - [ ] Images accessible for migrated readings
 - [ ] No modifications to legacy Firebase apps or data
-- [ ] MOEHE HQ operational on new entry_app and dashboard_app
+- [ ] Government HQ Demo operational on new entry_app and dashboard_app

@@ -1,0 +1,381 @@
+{
+  "connections": [
+    {
+      "connection_kind": "supply",
+      "from_node_id": "dbe2669a-5821-4dff-b4a7-fca59e883bd0",
+      "from_port_id": "394d340d-6951-43a9-9c2b-df8a872acc79",
+      "id": "d6543fd8-859d-4d3b-9fa5-920bcc626d2b",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "to_node_id": "822fb760-9f33-4bc2-8d8e-0e760a9fb727",
+      "to_port_id": "335a9550-31fa-4792-84af-b0daca0f54af"
+    },
+    {
+      "connection_kind": "supply",
+      "from_node_id": "822fb760-9f33-4bc2-8d8e-0e760a9fb727",
+      "from_port_id": "2daf45a2-5cbc-41f9-985d-fcd930c42ddf",
+      "id": "68184fa3-38fe-45bd-8162-cbb8e0732ec2",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "to_node_id": "96940f33-1892-4a6f-82ba-6c93985dcce3",
+      "to_port_id": "c7689299-da73-4895-aaba-dd411d309734"
+    },
+    {
+      "connection_kind": "supply",
+      "from_node_id": "ba7af495-29dd-4273-a7e7-2257c86e9857",
+      "from_port_id": "29375296-3a6c-4fb7-b1c4-176d41e7a81f",
+      "id": "a0e2fb0f-215f-48c2-901a-b0b39bad00e5",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "to_node_id": "86a22722-f751-45a6-ae2c-daed077e6cbe",
+      "to_port_id": "30ad6b9b-fcea-4562-bab9-6a561a914337"
+    },
+    {
+      "connection_kind": "supply",
+      "from_node_id": "86a22722-f751-45a6-ae2c-daed077e6cbe",
+      "from_port_id": "80504c36-0a13-4d69-b037-71f589a5f81c",
+      "id": "b61cd010-b71b-4c91-ac9c-3416d8036396",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "to_node_id": "477356bd-c189-4485-9b3b-23b3c6d0670d",
+      "to_port_id": "997ce8bb-1937-460b-8fdd-cbf35ab31837"
+    },
+    {
+      "connection_kind": "supply",
+      "from_node_id": "a5ae55e3-beba-4a6c-9277-2f190466b5e2",
+      "from_port_id": "e41839c3-08ee-4090-9784-1fd8024a3f31",
+      "id": "804d79c4-75b3-4454-8e56-7c254cb19d77",
+      "is_consumptive": true,
+      "legacy_sync_status": "synced",
+      "operating_mode": "normal",
+      "properties": {},
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "to_node_id": "96940f33-1892-4a6f-82ba-6c93985dcce3",
+      "to_port_id": "c7689299-da73-4895-aaba-dd411d309734"
+    }
+  ],
+  "members": [
+    {
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    }
+  ],
+  "network": {
+    "category_id": "ae827f2e-7e1d-4463-89ac-adb2e03d7b69",
+    "code": "demo-campus-overview",
+    "draft_revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+    "id": "e5872676-753e-4ac3-bdf0-1bc1d4aece26",
+    "name_ar": "شبكة المرافق التجريبية",
+    "name_en": "Demo Utility Network",
+    "published_revision_id": null
+  },
+  "nodes": [
+    {
+      "asset_id": "c05ca405-ed23-41ba-a406-71282237e9cd",
+      "asset_type": "meter",
+      "code": "WM-001",
+      "facility_area_id": null,
+      "meter_role": "main",
+      "name_ar": "عداد المياه الرئيسي",
+      "name_en": "Main Potable Water Meter",
+      "node_id": "dbe2669a-5821-4dff-b4a7-fca59e883bd0",
+      "ports": [
+        {
+          "direction": "in",
+          "id": "f92de933-6248-48a2-848b-30ae04e54861",
+          "node_id": "dbe2669a-5821-4dff-b4a7-fca59e883bd0",
+          "port_index": 0
+        },
+        {
+          "direction": "out",
+          "id": "394d340d-6951-43a9-9c2b-df8a872acc79",
+          "node_id": "dbe2669a-5821-4dff-b4a7-fca59e883bd0",
+          "port_index": 1
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": "c05ca405-ed23-41ba-a406-71282237e9cd",
+      "ref_tank_id": null,
+      "service_type": "water",
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    },
+    {
+      "asset_id": "c94cc429-ef45-4323-83ed-498e8c0f828a",
+      "asset_type": "meter",
+      "code": "WM-002",
+      "facility_area_id": null,
+      "meter_role": "sub",
+      "name_ar": "عداد مياه الري",
+      "name_en": "Irrigation Water Meter",
+      "node_id": "ba7af495-29dd-4273-a7e7-2257c86e9857",
+      "ports": [
+        {
+          "direction": "in",
+          "id": "ddee16a6-0860-4163-8d6f-fa9776909c46",
+          "node_id": "ba7af495-29dd-4273-a7e7-2257c86e9857",
+          "port_index": 0
+        },
+        {
+          "direction": "out",
+          "id": "29375296-3a6c-4fb7-b1c4-176d41e7a81f",
+          "node_id": "ba7af495-29dd-4273-a7e7-2257c86e9857",
+          "port_index": 1
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": "c94cc429-ef45-4323-83ed-498e8c0f828a",
+      "ref_tank_id": null,
+      "service_type": "water",
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    },
+    {
+      "asset_id": "39373a48-126e-4b23-9c4f-981a2afe8a1b",
+      "asset_type": "tank",
+      "code": "TANK-01",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "خزان سطح المبنى أ",
+      "name_en": "Building A Rooftop Tank",
+      "node_id": "822fb760-9f33-4bc2-8d8e-0e760a9fb727",
+      "ports": [
+        {
+          "direction": "in",
+          "id": "335a9550-31fa-4792-84af-b0daca0f54af",
+          "node_id": "822fb760-9f33-4bc2-8d8e-0e760a9fb727",
+          "port_index": 0
+        },
+        {
+          "direction": "out",
+          "id": "2daf45a2-5cbc-41f9-985d-fcd930c42ddf",
+          "node_id": "822fb760-9f33-4bc2-8d8e-0e760a9fb727",
+          "port_index": 1
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": "39373a48-126e-4b23-9c4f-981a2afe8a1b",
+      "service_type": "water",
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    },
+    {
+      "asset_id": "ff78d8ca-0612-49fd-a8d5-0d675fa8d41e",
+      "asset_type": "tank",
+      "code": "TANK-02",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "خزان سطح المبنى ب",
+      "name_en": "Building B Rooftop Tank",
+      "node_id": "86a22722-f751-45a6-ae2c-daed077e6cbe",
+      "ports": [
+        {
+          "direction": "in",
+          "id": "30ad6b9b-fcea-4562-bab9-6a561a914337",
+          "node_id": "86a22722-f751-45a6-ae2c-daed077e6cbe",
+          "port_index": 0
+        },
+        {
+          "direction": "out",
+          "id": "80504c36-0a13-4d69-b037-71f589a5f81c",
+          "node_id": "86a22722-f751-45a6-ae2c-daed077e6cbe",
+          "port_index": 1
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": "ff78d8ca-0612-49fd-a8d5-0d675fa8d41e",
+      "service_type": "water",
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    },
+    {
+      "asset_id": "8c0038ba-030f-4a42-a2ed-685d580fd283",
+      "asset_type": "asset",
+      "code": "AHU-01",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "وحدة مناولة الهواء ١",
+      "name_en": "Air Handling Unit 01",
+      "node_id": "96940f33-1892-4a6f-82ba-6c93985dcce3",
+      "ports": [
+        {
+          "direction": "in",
+          "id": "c7689299-da73-4895-aaba-dd411d309734",
+          "node_id": "96940f33-1892-4a6f-82ba-6c93985dcce3",
+          "port_index": 0
+        },
+        {
+          "direction": "out",
+          "id": "76ef2cff-5397-4fef-be72-7844eee24c95",
+          "node_id": "96940f33-1892-4a6f-82ba-6c93985dcce3",
+          "port_index": 1
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": null,
+      "service_type": "cooling",
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    },
+    {
+      "asset_id": "595b7bc7-f69e-48f8-bf3a-75465ae1696e",
+      "asset_type": "asset",
+      "code": "AHU-02",
+      "facility_area_id": null,
+      "meter_role": null,
+      "name_ar": "وحدة مناولة الهواء ٢",
+      "name_en": "Air Handling Unit 02",
+      "node_id": "477356bd-c189-4485-9b3b-23b3c6d0670d",
+      "ports": [
+        {
+          "direction": "in",
+          "id": "997ce8bb-1937-460b-8fdd-cbf35ab31837",
+          "node_id": "477356bd-c189-4485-9b3b-23b3c6d0670d",
+          "port_index": 0
+        },
+        {
+          "direction": "out",
+          "id": "ce6e9662-9b68-4c7b-84db-c2cf20c18967",
+          "node_id": "477356bd-c189-4485-9b3b-23b3c6d0670d",
+          "port_index": 1
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": null,
+      "ref_tank_id": null,
+      "service_type": "cooling",
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    },
+    {
+      "asset_id": "3d6896e5-d52a-4041-946f-478d910c1012",
+      "asset_type": "meter",
+      "code": "BTU-001",
+      "facility_area_id": null,
+      "meter_role": "main",
+      "name_ar": "عداد حرارة المياه المبردة",
+      "name_en": "Chilled Water Plant BTU",
+      "node_id": "a5ae55e3-beba-4a6c-9277-2f190466b5e2",
+      "ports": [
+        {
+          "direction": "in",
+          "id": "01ba1774-f147-4935-89e8-98abd05b9070",
+          "node_id": "a5ae55e3-beba-4a6c-9277-2f190466b5e2",
+          "port_index": 0
+        },
+        {
+          "direction": "out",
+          "id": "e41839c3-08ee-4090-9784-1fd8024a3f31",
+          "node_id": "a5ae55e3-beba-4a6c-9277-2f190466b5e2",
+          "port_index": 1
+        }
+      ],
+      "properties": {},
+      "ref_meter_id": "3d6896e5-d52a-4041-946f-478d910c1012",
+      "ref_tank_id": null,
+      "service_type": "cooling",
+      "site_id": "08942d57-a333-4164-9985-11bf7fe15804"
+    }
+  ],
+  "placements": [
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "dbe2669a-5821-4dff-b4a7-fca59e883bd0",
+      "pos_x": 60.0,
+      "pos_y": 80.0,
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "view_id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "ba7af495-29dd-4273-a7e7-2257c86e9857",
+      "pos_x": 280.0,
+      "pos_y": 80.0,
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "view_id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "822fb760-9f33-4bc2-8d8e-0e760a9fb727",
+      "pos_x": 500.0,
+      "pos_y": 80.0,
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "view_id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "86a22722-f751-45a6-ae2c-daed077e6cbe",
+      "pos_x": 720.0,
+      "pos_y": 80.0,
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "view_id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "96940f33-1892-4a6f-82ba-6c93985dcce3",
+      "pos_x": 60.0,
+      "pos_y": 280.0,
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "view_id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "477356bd-c189-4485-9b3b-23b3c6d0670d",
+      "pos_x": 280.0,
+      "pos_y": 280.0,
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "view_id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "width": null
+    },
+    {
+      "collapsed": false,
+      "height": null,
+      "node_id": "a5ae55e3-beba-4a6c-9277-2f190466b5e2",
+      "pos_x": 500.0,
+      "pos_y": 280.0,
+      "revision_id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+      "view_id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "width": null
+    }
+  ],
+  "revision": {
+    "based_on_revision_id": null,
+    "id": "1718ab12-fa8a-49a0-b1a5-f817e60d7212",
+    "lock_version": 1,
+    "network_id": "e5872676-753e-4ac3-bdf0-1bc1d4aece26",
+    "published_at": null,
+    "status": "draft"
+  },
+  "status": "ok",
+  "views": [
+    {
+      "code": "campus_overview",
+      "facility_area_id": null,
+      "id": "8147c21b-7e66-4242-8124-9011714200b0",
+      "is_default": true,
+      "name_ar": "نظرة عامة على المجمع",
+      "name_en": "Campus overview",
+      "network_id": "e5872676-753e-4ac3-bdf0-1bc1d4aece26",
+      "view_kind": "campus_overview"
+    }
+  ]
+}

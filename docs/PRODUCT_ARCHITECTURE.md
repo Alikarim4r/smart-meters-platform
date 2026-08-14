@@ -11,7 +11,7 @@
 
 Build a production-oriented, multi-site smart meters platform for ministry facilities: schools, buildings, headquarters, offices, kindergartens, training centers, warehouses, and other sites.
 
-The platform replaces the frozen Firebase prototype (single-site MOEHE HQ) with a scalable Supabase-backed system supporting organizations, sites, role-based access, and optional BTU/COP features.
+The platform replaces the frozen Firebase prototype (single-site Government HQ Demo) with a scalable Supabase-backed system supporting organizations, sites, role-based access, and optional BTU/COP features.
 
 ---
 
@@ -113,7 +113,7 @@ profiles (auth.users)
 
 ### 4.1 Organizations
 
-Top-level tenant boundary. Example: Ministry of Education and Higher Education (MOEHE).
+Top-level tenant boundary. Example: Government HQ Demo (Demo Org).
 
 ### 4.2 Sites
 
@@ -491,7 +491,7 @@ Migration plan: [LEGACY_FIREBASE_MIGRATION_PLAN.md](./LEGACY_FIREBASE_MIGRATION_
 | 1E | User approval migration + admin pending-users UI | **Planned** (draft `004_user_approval.sql`) |
 | 2 | dashboard_app read views | Planned |
 | 3 | admin_app CRUD + user approval screens | Planned |
-| 4 | MOEHE HQ data migration from Firebase | Planned |
+| 4 | Government HQ Demo data migration from Firebase | Planned |
 | 5 | Production hardening | Planned |
 
 ---
@@ -506,4 +506,4 @@ Migration plan: [LEGACY_FIREBASE_MIGRATION_PLAN.md](./LEGACY_FIREBASE_MIGRATION_
 | `supabase/migrations/001_schema.sql` | Table and enum definitions |
 | `supabase/migrations/002_rls_policies.sql` | Row Level Security |
 | `supabase/migrations/003_storage.sql` | Storage bucket and policies |
-| `supabase/seed/001_seed_moehe_hq.sql` | Sample MOEHE HQ data |
+| `supabase/seed/001_seed_demo_site.sql` | Sample Government HQ Demo data |

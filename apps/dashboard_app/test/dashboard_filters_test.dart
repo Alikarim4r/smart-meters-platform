@@ -31,23 +31,23 @@ void main() {
 
   test('searchDashboardSites matches name and location', () {
     final sites = [
-      overviewOf(id: '1', name: 'MOEHE HQ', zoneId: null),
+      overviewOf(id: '1', name: 'Government HQ Demo', zoneId: null),
       overviewOf(id: '2', name: 'Test School A', zoneId: 'zone-north'),
     ];
 
     expect(searchDashboardSites(sites, 'school'), hasLength(1));
-    expect(searchDashboardSites(sites, 'moehe'), hasLength(1));
+    expect(searchDashboardSites(sites, 'demo'), hasLength(1));
   });
 
   test('filterDashboardSitesByZone supports No Zone', () {
     final sites = [
-      overviewOf(id: '1', name: 'MOEHE HQ'),
+      overviewOf(id: '1', name: 'Government HQ Demo'),
       overviewOf(id: '2', name: 'Test School A', zoneId: 'zone-north'),
     ];
 
     final noZone = filterDashboardSitesByZone(sites, kNoZoneFilterValue);
     expect(noZone, hasLength(1));
-    expect(noZone.first.site.nameEn, 'MOEHE HQ');
+    expect(noZone.first.site.nameEn, 'Government HQ Demo');
   });
 
   test('readingDateRangeForFilter returns today only for today filter', () {

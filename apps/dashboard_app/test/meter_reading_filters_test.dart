@@ -7,7 +7,7 @@ void main() {
   group('meter card filters', () {
     const cardWater = MeterReadingCardData(
       meterId: '1',
-      meterCode: '1219053',
+      meterCode: 'WM-001',
       meterName: 'Water Main',
       categoryName: 'Water',
       sourceName: 'Kahramaa',
@@ -23,7 +23,7 @@ void main() {
 
     const cardElectric = MeterReadingCardData(
       meterId: '2',
-      meterCode: '1256358',
+      meterCode: 'EM-001',
       meterName: 'Electric Main',
       categoryName: 'Electricity',
       sourceName: 'Kahramaa',
@@ -44,7 +44,7 @@ void main() {
         layer: NetworkMapLayer.water,
       );
       expect(filtered, hasLength(1));
-      expect(filtered.first.meterCode, '1219053');
+      expect(filtered.first.meterCode, 'WM-001');
       expect(filtered.first.unitLabel, 'm³');
     });
 
@@ -111,10 +111,10 @@ void main() {
         sort: MeterCardSort.highestConsumption,
       );
 
-      expect(input.first.meterCode, '1256358');
-      expect(input.last.meterCode, '1219053');
-      expect(sorted.first.meterCode, '1219053');
-      expect(sorted.last.meterCode, '1256358');
+      expect(input.first.meterCode, 'EM-001');
+      expect(input.last.meterCode, 'WM-001');
+      expect(sorted.first.meterCode, 'WM-001');
+      expect(sorted.last.meterCode, 'EM-001');
     });
 
     test('applyMeterCardClientFilters works with all sort modes on unmodifiable list', () {

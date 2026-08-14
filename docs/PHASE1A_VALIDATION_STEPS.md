@@ -26,7 +26,7 @@
 3. From project root:
 
 ```bash
-cd /Users/ali-laptop/Downloads/smart-meters-platform
+cd <repo-root>
 npx supabase start
 ```
 
@@ -42,7 +42,7 @@ DB="postgresql://postgres:postgres@127.0.0.1:54322/postgres"
 psql "$DB" -f supabase/migrations/001_schema.sql
 psql "$DB" -f supabase/migrations/002_rls_policies.sql
 psql "$DB" -f supabase/migrations/003_storage.sql
-psql "$DB" -f supabase/seed/001_seed_moehe_hq.sql
+psql "$DB" -f supabase/seed/001_seed_demo_site.sql
 psql "$DB" -f scripts/phase1a_validation.sql
 ```
 
@@ -76,7 +76,7 @@ Run each file **in full**, one at a time. Wait for success before the next.
 | 1 | `supabase/migrations/001_schema.sql` | ~860 lines; creates schema |
 | 2 | `supabase/migrations/002_rls_policies.sql` | RLS + admin RPCs |
 | 3 | `supabase/migrations/003_storage.sql` | Storage bucket + policies |
-| 4 | `supabase/seed/001_seed_moehe_hq.sql` | MOEHE HQ sample data |
+| 4 | `supabase/seed/001_seed_demo_site.sql` | Government HQ Demo sample data |
 | 5 | `scripts/phase1a_setup_test_users.sql` | Test users for RLS (staging only) |
 | 6 | `scripts/phase1a_validation.sql` | Automated checks + test inserts |
 
@@ -87,9 +87,9 @@ If `phase1a_setup_test_users.sql` fails on hosted (auth schema restrictions), cr
 | Email | Password | Profile role | Site access |
 |-------|----------|--------------|-------------|
 | `test-super-admin@validation.local` | (staging only) | `super_admin` | — |
-| `test-site-admin@validation.local` | (staging only) | `site_admin` | MOEHE HQ, all manage flags |
-| `test-technician@validation.local` | (staging only) | `technician` | MOEHE HQ, can_read + can_write |
-| `test-viewer@validation.local` | (staging only) | `viewer` | MOEHE HQ, can_read only |
+| `test-site-admin@validation.local` | (staging only) | `site_admin` | Government HQ Demo, all manage flags |
+| `test-technician@validation.local` | (staging only) | `technician` | Government HQ Demo, can_read + can_write |
+| `test-viewer@validation.local` | (staging only) | `viewer` | Government HQ Demo, can_read only |
 
 Then update profiles and run the site access inserts from `phase1a_setup_test_users.sql`.
 
@@ -126,7 +126,7 @@ Reply with one of:
 | `supabase/migrations/001_schema.sql` | Schema, triggers, audit, view |
 | `supabase/migrations/002_rls_policies.sql` | RLS policies, admin RPCs |
 | `supabase/migrations/003_storage.sql` | `meter-images` bucket |
-| `supabase/seed/001_seed_moehe_hq.sql` | Sample org/site/meters/COP |
+| `supabase/seed/001_seed_demo_site.sql` | Sample org/site/meters/COP |
 | `scripts/phase1a_setup_test_users.sql` | Test users for RLS |
 | `scripts/phase1a_validation.sql` | Validation test suite |
 

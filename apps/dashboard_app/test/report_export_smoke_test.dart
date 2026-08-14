@@ -17,7 +17,7 @@ void main() {
         id: '22222222-2222-4222-8222-222222222222',
         organizationId: '11111111-1111-4111-8111-111111111111',
         zoneId: 'zone-1',
-        nameEn: 'MOEHE HQ — مكتب',
+        nameEn: 'Government HQ Demo — مكتب',
         nameAr: 'مكتب',
         siteType: SiteType.office,
         location: 'Doha',
@@ -57,7 +57,7 @@ void main() {
           zoneName: 'Central',
           siteType: site.siteType.label,
           location: site.location,
-          organizationDisplayName: 'MOEHE — Ministry',
+          organizationDisplayName: 'Demo Org — Ministry',
           reportFooterText: 'Confidential — internal use only',
         ),
         summary: SiteDashboardSummary(
@@ -220,7 +220,7 @@ void main() {
 
     test('builds safe filename for unicode site name', () {
       final filename = buildReportFilename(
-        siteName: 'MOEHE HQ — مكتب',
+        siteName: 'Government HQ Demo — مكتب',
         type: ReportType.siteSummary,
         format: ReportFormat.pdf,
         period: ChartPeriod.weekly,

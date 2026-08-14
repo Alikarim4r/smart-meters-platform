@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
-"""One-time idempotent import of MOEHE HQ meters and readings from consolidated CSVs.
+"""One-time idempotent import of Government HQ Demo meters and readings from consolidated CSVs.
 
 Staging/admin use only — never embed service_role or import credentials in Flutter apps.
 
 Usage:
-  python3 scripts/import_moehe_hq_reports.py --dry-run
-  python3 scripts/import_moehe_hq_reports.py --apply
-  python3 scripts/import_moehe_hq_reports.py --apply \\
-    --readings-csv imports/moehe_hq_reports/moehe_hq_readings_feb2020_may2026.csv \\
+  python3 scripts/import_demo_site_reports.py --dry-run
+  python3 scripts/import_demo_site_reports.py --apply
+  python3 scripts/import_demo_site_reports.py --apply \\
+    --readings-csv imports/demo_site_reports/demo_site_readings_feb2020_may2026.csv \\
     --date-from 2020-02-01 --date-to 2026-05-31
 
 Environment:
@@ -33,11 +33,11 @@ from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-IMPORT_DIR = ROOT / "imports" / "moehe_hq_reports"
-METERS_CSV = IMPORT_DIR / "moehe_hq_meters_from_reports.csv"
-READINGS_CSV = IMPORT_DIR / "moehe_hq_readings_mar_apr_may_2026.csv"
+IMPORT_DIR = ROOT / "imports" / "demo_site_reports"
+METERS_CSV = IMPORT_DIR / "demo_site_meters_from_reports.csv"
+READINGS_CSV = IMPORT_DIR / "demo_site_readings_mar_apr_may_2026.csv"
 
-SITE_NAME_HINTS = ("moehe hq", "permanent hq", "permanent headquarters")
+SITE_NAME_HINTS = ("demo hq", "demo hq", "permanent headquarters")
 PREFERRED_SITE_ID = "22222222-2222-4222-8222-222222222222"
 
 # Extra water sources needed for Energy & Flow meters (stored under water category).
@@ -233,7 +233,7 @@ def resolve_target_site(client: SupabaseClient) -> dict[str, Any]:
             matches.append(site)
 
     if not matches:
-        raise RuntimeError("No MOEHE HQ / Permanent HQ site found")
+        raise RuntimeError("No Government HQ Demo site found")
 
     preferred = [s for s in matches if s["id"] == PREFERRED_SITE_ID]
     if preferred:
@@ -244,7 +244,7 @@ def resolve_target_site(client: SupabaseClient) -> dict[str, Any]:
 
     choices = "\n".join(f"- {s['id']}: {s['name_en']}" for s in matches)
     raise RuntimeError(
-        "Multiple possible MOEHE HQ sites found; resolve manually:\n" + choices
+        "Multiple possible Government HQ Demo sites found; resolve manually:\n" + choices
     )
 
 
@@ -593,7 +593,7 @@ def print_report(
     validation: dict[str, Any] | None = None,
 ) -> None:
     print("\n" + "=" * 72)
-    print(f"MOEHE HQ IMPORT — {mode}")
+    print(f"Government HQ Demo IMPORT — {mode}")
     print("=" * 72)
     print(f"Target site: {site['name_en']} ({site['id']})")
     print(f"Flow fallback decision: CHW-LOOP-* → btu/gj; other flow → water")

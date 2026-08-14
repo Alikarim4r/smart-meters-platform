@@ -2,7 +2,7 @@
 -- Migration: 033_site_utility_network_v2_schema.sql
 -- Water utility network v2: Asset → Port → Connection + revisions + views.
 -- Replaces 031 node/edge model as source of truth (031 kept deprecated, no dual-write).
--- Next migration number after 031. MOEHE HQ v1 = one member site; members support N sites.
+-- Next migration number after 031. Government HQ Demo v1 = one member site; members support N sites.
 -- =============================================================================
 
 comment on table public.site_network_nodes is

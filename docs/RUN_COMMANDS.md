@@ -70,7 +70,7 @@ cd apps/entry_app && flutter analyze && flutter test
 
 ---
 
-## MOEHE HQ import (admin CLI)
+## Government HQ Demo import (admin CLI)
 
 ```bash
 export SUPABASE_URL=https://YOUR_PROJECT.supabase.co
@@ -78,8 +78,8 @@ export SUPABASE_ANON_KEY=<anon-key>
 export IMPORT_ADMIN_EMAIL=<admin-email>
 export IMPORT_ADMIN_PASSWORD=<admin-password>
 
-python3 scripts/import_moehe_hq_reports.py --dry-run
-python3 scripts/import_moehe_hq_reports.py --apply
+python3 scripts/import_demo_site_reports.py --dry-run
+python3 scripts/import_demo_site_reports.py --apply
 ```
 
 ---

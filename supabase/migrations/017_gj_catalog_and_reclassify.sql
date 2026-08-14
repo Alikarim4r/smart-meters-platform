@@ -2,7 +2,7 @@
 -- Migration: 017_gj_catalog_and_reclassify.sql
 -- GJ catalog unit, sync/protect updates, and admin_reclassify_meter RPC.
 -- Requires 016 (enum label `gj` committed).
--- COP wiring for MOEHE HQ CHW loops is applied via staging script.
+-- COP wiring for Government HQ Demo CHW loops is applied via staging script.
 -- =============================================================================
 
 -- -----------------------------------------------------------------------------

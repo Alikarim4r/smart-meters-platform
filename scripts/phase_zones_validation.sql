@@ -16,8 +16,8 @@
 -- site_admin:   aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2
 -- technician:   aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3
 -- viewer:       aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4
--- MOEHE HQ:     22222222-2222-4222-8222-222222222222
--- MOEHE org:    11111111-1111-4111-8111-111111111111
+-- Government HQ Demo:     22222222-2222-4222-8222-222222222222
+-- Demo Org org:    11111111-1111-4111-8111-111111111111
 -- north_zone:   d1111111-1111-4111-8111-111111111101
 
 -- =============================================================================
@@ -94,9 +94,9 @@ begin
   from public.sites
   where id = '22222222-2222-4222-8222-222222222222';
   if v_zone_id is not null then
-    raise exception 'MOEHE HQ should have zone_id null, got %', v_zone_id;
+    raise exception 'Government HQ Demo should have zone_id null, got %', v_zone_id;
   end if;
-  raise notice 'OK MOEHE HQ zone_id is null';
+  raise notice 'OK Government HQ Demo zone_id is null';
 
   select z.code into v_zone_code
   from public.sites s
@@ -172,7 +172,7 @@ begin
 
   select count(*) into v_count from public.zones;
   if v_count = 0 then
-    raise notice 'OK technician sees 0 zones when assigned site has no zone (MOEHE HQ)';
+    raise notice 'OK technician sees 0 zones when assigned site has no zone (Government HQ Demo)';
   else
     raise notice 'OK technician sees % zone(s) linked to assigned sites', v_count;
   end if;
@@ -238,9 +238,9 @@ begin
   where site_id = '22222222-2222-4222-8222-222222222222'
     and is_active = true;
   if v_count = 0 then
-    raise exception 'MOEHE HQ should still have active meters';
+    raise exception 'Government HQ Demo should still have active meters';
   end if;
-  raise notice 'OK MOEHE HQ meters: %', v_count;
+  raise notice 'OK Government HQ Demo meters: %', v_count;
 
   perform set_config('request.jwt.claim.sub', 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3', true);
   set local role authenticated;
@@ -249,7 +249,7 @@ begin
   from public.meters
   where site_id = '22222222-2222-4222-8222-222222222222';
   if v_count = 0 then
-    raise exception 'technician should still read MOEHE HQ meters';
+    raise exception 'technician should still read Government HQ Demo meters';
   end if;
   raise notice 'OK entry technician meter access preserved';
   reset role;

@@ -6,7 +6,7 @@
 
 ## Done locally (no user credentials required)
 
-- Staging closeout on limited MOEHE data — [STAGING_CLOSEOUT.md](STAGING_CLOSEOUT.md)
+- Staging closeout on limited Demo Org data — [STAGING_CLOSEOUT.md](STAGING_CLOSEOUT.md)
 - App env cleanup: `APP_ENV`, no staging login hints in production, no baked Supabase keys in run scripts
 - Chart fetch: monthly/yearly use per-bucket latest readings (not full daily pull)
 - CI: `.github/workflows/ci.yml` (analyze + test)

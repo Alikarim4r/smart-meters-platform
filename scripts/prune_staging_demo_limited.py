@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Prune MOEHE HQ staging readings to a limited real-data window.
+"""Prune Government HQ Demo staging readings to a limited real-data window.
 
 Keeps readings with reading_date >= KEEP_FROM (default 2026-01-01) for the
-MOEHE HQ site. Deletes older rows in monthly batches via the authenticated
+Government HQ Demo site. Deletes older rows in monthly batches via the authenticated
 super_admin session (RLS meter_readings_delete_admin).
 
 Usage:
@@ -10,7 +10,7 @@ Usage:
   export SUPABASE_ANON_KEY=<anon>
   export STAGING_SUPER_EMAIL=<admin-email>
   export STAGING_SUPER_PASSWORD=<admin-password>
-  python3 scripts/prune_staging_moehe_limited.py [--dry-run] [--keep-from YYYY-MM-DD]
+  python3 scripts/prune_staging_demo_limited.py [--dry-run] [--keep-from YYYY-MM-DD]
 """
 
 from __future__ import annotations
@@ -24,7 +24,7 @@ import urllib.error
 import urllib.request
 from datetime import date
 
-MOEHE_SITE_ID = "22222222-2222-4222-8222-222222222222"
+DEMO_SITE_ID = "22222222-2222-4222-8222-222222222222"
 DEFAULT_KEEP_FROM = date(2026, 1, 1)
 HISTORY_START = date(2020, 1, 1)
 
@@ -120,23 +120,23 @@ def main() -> int:
     )
     token = tok["access_token"]
 
-    before_all = count_readings(url, key, token, MOEHE_SITE_ID, "order=id")
+    before_all = count_readings(url, key, token, DEMO_SITE_ID, "order=id")
     before_keep = count_readings(
         url,
         key,
         token,
-        MOEHE_SITE_ID,
+        DEMO_SITE_ID,
         f"reading_date=gte.{keep_from.isoformat()}",
     )
     before_drop = count_readings(
         url,
         key,
         token,
-        MOEHE_SITE_ID,
+        DEMO_SITE_ID,
         f"reading_date=lt.{keep_from.isoformat()}",
     )
     print(
-        f"MOEHE site {MOEHE_SITE_ID}\n"
+        f"Demo Org site {DEMO_SITE_ID}\n"
         f"  total={before_all} keep>={keep_from}={before_keep} "
         f"drop<{keep_from}={before_drop}"
     )
@@ -150,7 +150,7 @@ def main() -> int:
     deleted = 0
     for gte, lt in iter_month_bounds(HISTORY_START, keep_from):
         path = (
-            f"/rest/v1/meter_readings?site_id=eq.{MOEHE_SITE_ID}"
+            f"/rest/v1/meter_readings?site_id=eq.{DEMO_SITE_ID}"
             f"&reading_date=gte.{gte}&reading_date=lt.{lt}"
         )
         try:
@@ -177,12 +177,12 @@ def main() -> int:
         else:
             print(f"  empty {gte}..{lt} ({elapsed:.1f}s)")
 
-    after_all = count_readings(url, key, token, MOEHE_SITE_ID, "order=id")
+    after_all = count_readings(url, key, token, DEMO_SITE_ID, "order=id")
     after_drop = count_readings(
         url,
         key,
         token,
-        MOEHE_SITE_ID,
+        DEMO_SITE_ID,
         f"reading_date=lt.{keep_from.isoformat()}",
     )
     print(

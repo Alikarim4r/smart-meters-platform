@@ -41,3 +41,7 @@ web_deploy_root/
 **/Pods/
 **/DerivedData/
 .venv-import/
+__pycache__/
+
+# Flutter build output
+build/

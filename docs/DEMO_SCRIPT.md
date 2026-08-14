@@ -1,6 +1,6 @@
 # Demo Script
 
-**Audience:** MOEHE stakeholders  
+**Audience:** Demo Org stakeholders  
 **Duration:** ~20 minutes  
 **Platform:** macOS desktop (presenter) or Android (field demo)  
 **Staging:** `iqcxgtpcfhoapnklxdyl`
@@ -24,14 +24,14 @@
 
 - Point out unified **navy/gold** branding across apps
 - Show **alerts summary** at top (critical/warning/info)
-- Search **MOEHE HQ** — note **Demo** badge on showcase site
+- Search **Government HQ Demo** — note **Demo** badge on showcase site
 - Mention: single Supabase backend, role-based access, legacy Firebase untouched
 
 ---
 
-## Act 2 — MOEHE HQ deep dive (8 min)
+## Act 2 — Government HQ Demo deep dive (8 min)
 
-**Open MOEHE HQ → Overview**
+**Open Government HQ Demo → Overview**
 
 - **49 meters** across water, electricity, fuel, BTU
 - Set **Chart month** → **March 2026** (imported historical data)
@@ -46,7 +46,7 @@
 
 **Meters tab**
 
-- Search sample codes: `1219053`, `CHW-LOOP-1`, `CAP-3000`
+- Search sample codes: `WM-001`, `CHW-LOOP-1`, `CAP-3000`
 - Latest readings and status badges
 
 **Readings tab**
@@ -77,7 +77,7 @@ Confirm: no errors, file bytes > 0, no `display_name` query failures
 
 **Admin app** (`./scripts/run_admin_macos.sh`)
 
-- Sites → MOEHE HQ → **Meters** (49 listed, categories correct)
+- Sites → Government HQ Demo → **Meters** (49 listed, categories correct)
 - **Corrections** — audit trail for reading fixes
 - **Settings** — policy (photos, alerts, report footer)
 

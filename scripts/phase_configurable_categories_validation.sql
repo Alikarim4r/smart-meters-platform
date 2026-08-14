@@ -16,7 +16,7 @@
 -- site_admin:   aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2
 -- technician:   aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3
 -- viewer:       aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4
--- MOEHE HQ:    22222222-2222-4222-8222-222222222222
+-- Government HQ Demo:    22222222-2222-4222-8222-222222222222
 
 -- Seeded category IDs (006)
 -- water:       c1111111-1111-4111-8111-111111111101
@@ -184,7 +184,7 @@ begin
     and category = 'water'
     and is_active = true;
   if v_count = 0 then
-    raise warning 'No active water meters at MOEHE HQ — skip count check';
+    raise warning 'No active water meters at Government HQ Demo — skip count check';
   else
     raise notice 'OK legacy category=water query returns % meters', v_count;
   end if;
@@ -222,9 +222,9 @@ begin
   where site_id = '22222222-2222-4222-8222-222222222222'
     and is_active = true;
   if v_count = 0 then
-    raise exception 'Technician cannot read MOEHE HQ meters';
+    raise exception 'Technician cannot read Government HQ Demo meters';
   end if;
-  raise notice 'OK technician reads % meters at MOEHE HQ', v_count;
+  raise notice 'OK technician reads % meters at Government HQ Demo', v_count;
 
   select count(*) into v_count from public.meter_categories where is_active = true;
   if v_count < 4 then

@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Extract MOEHE HQ historical readings from the Feb 2020–May 2026 XLSX.
+"""Extract Government HQ Demo historical readings from the Feb 2020–May 2026 XLSX.
 
 Supports two sheet layouts:
   - legacy (Feb–Oct 2020): dates as rows, meters as columns
   - modern (Nov 2020–May 2026): meters as rows, dates as columns
 
 Usage:
-  .venv-import/bin/python scripts/extract_moehe_hq_historical_xlsx.py
+  .venv-import/bin/python scripts/extract_demo_site_historical_xlsx.py
 """
 
 from __future__ import annotations
@@ -23,13 +23,13 @@ from typing import Any
 from openpyxl import load_workbook
 
 ROOT = Path(__file__).resolve().parents[1]
-IMPORT_DIR = ROOT / "imports" / "moehe_hq_reports"
+IMPORT_DIR = ROOT / "imports" / "demo_site_reports"
 DEFAULT_XLSX = IMPORT_DIR / "utility_readings_feb2020_may2026.xlsx"
-DEFAULT_METERS = IMPORT_DIR / "moehe_hq_meters_from_reports.csv"
-DEFAULT_OUT = IMPORT_DIR / "moehe_hq_readings_feb2020_may2026.csv"
-DEFAULT_SUMMARY = IMPORT_DIR / "moehe_hq_historical_extract_summary.json"
+DEFAULT_METERS = IMPORT_DIR / "demo_site_meters_from_reports.csv"
+DEFAULT_OUT = IMPORT_DIR / "demo_site_readings_feb2020_may2026.csv"
+DEFAULT_SUMMARY = IMPORT_DIR / "demo_site_historical_extract_summary.json"
 
-SITE_NAME = "MOEHE HQ / Permanent HQ"
+SITE_NAME = "Government HQ Demo"
 SOURCE_FILE = "utility_readings_feb2020_may2026.xlsx"
 EXCEL_EPOCH = date(1899, 12, 30)
 
@@ -155,12 +155,12 @@ def load_meter_catalog(path: Path) -> tuple[list[dict[str, str]], dict[str, dict
             if key:
                 aliases[key] = row
 
-        # Prefix match helpers for labels like "1219053 (Beside Entrance..."
+        # Prefix match helpers for labels like "WM-001 (Beside Entrance..."
         aliases[slug_key(code)] = row
 
     # Explicit legacy aliases.
     extra = {
-        "lvp1": "1256358",
+        "lvp1": "EM-001",
         "lvp2a": "1256359",
         "lvp3a": "1256360",
         "lvp4": "1256361",
