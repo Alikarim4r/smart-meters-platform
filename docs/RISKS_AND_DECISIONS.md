@@ -452,5 +452,5 @@ Before executing SQL:
 Revisit this document:
 - Before SQL execution
 - Before Flutter app development
-- Before MOEHE HQ data migration
+- Before Government HQ Demo data migration
 - Before production deployment

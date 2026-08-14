@@ -5,7 +5,7 @@
 
 ## Locked decisions (v1)
 
-1. Campus site is the single member for the first network (e.g. MOEHE HQ resolved at runtime — **no hard-coded site/building IDs in migrations**).
+1. Campus site is the single member for the first network (e.g. Government HQ Demo resolved at runtime — **no hard-coded site/building IDs in migrations**).
 2. Buildings are physical areas via `site_facility_areas`, not separate `sites`.
 3. `site_facility_areas.area_type`: `campus | building | floor | zone | plant_room | outdoor | common`.
 4. `site_utility_network_members` supports 1..N sites later; first network has one member.

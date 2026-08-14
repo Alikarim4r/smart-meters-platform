@@ -585,7 +585,7 @@ class _OrganizationFormScreenState
                     controller: _nameEnController,
                     decoration: catalogFieldDecoration(
                       labelText: '${s.englishName} *',
-                      hintText: 'e.g. Ministry of Education',
+                      hintText: 'e.g. Example Authority',
                     ),
                     enabled: canManage,
                     validator: (v) => validateRequiredText(v, 'English name'),
@@ -594,7 +594,7 @@ class _OrganizationFormScreenState
                     controller: _nameArController,
                     decoration: catalogFieldDecoration(
                       labelText: '${s.arabicName} *',
-                      hintText: 'مثال: وزارة التعليم والتعليم العالي',
+                      hintText: 'مثال: جهة حكومية',
                     ),
                     enabled: canManage,
                     validator: (v) => validateRequiredText(v, 'Arabic name'),

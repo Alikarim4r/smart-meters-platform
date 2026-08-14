@@ -22,7 +22,7 @@ Planning artifacts for the smart-meters-platform project.
 | [../supabase/migrations/005_user_approval.sql](../supabase/migrations/005_user_approval.sql) | User approval workflow, RLS gate, admin RPCs |
 | [../supabase/migrations/006_configurable_meter_categories.sql](../supabase/migrations/006_configurable_meter_categories.sql) | Configurable meter categories (applied staging 2026-07-04) |
 | [../scripts/phase_configurable_categories_validation.sql](../scripts/phase_configurable_categories_validation.sql) | Post-006 validation (draft) |
-| [../supabase/seed/001_seed_moehe_hq.sql](../supabase/seed/001_seed_moehe_hq.sql) | MOEHE HQ sample data |
+| [../supabase/seed/001_seed_demo_site.sql](../supabase/seed/001_seed_demo_site.sql) | Government HQ Demo sample data |
 
 ## Status
 
@@ -32,7 +32,7 @@ Planning artifacts for the smart-meters-platform project.
 
 The frozen Firebase prototype is documented at:
 
-`/Users/ali-laptop/Downloads/meters-legacy-stack/STATUS.md`
+`<local-workspace>/meters-legacy-stack/STATUS.md`
 
 Do not modify legacy apps:
 - water_readings_app

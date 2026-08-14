@@ -580,7 +580,7 @@ Port integration test patterns from legacy `README-INTEGRATION-TESTS.md`.
 4. Build `entry_app` first (simplest, validates readings flow)
 5. Build `dashboard_app` (read-only, validates COP)
 6. Build `admin_app` (full CRUD)
-7. Migrate MOEHE HQ data from Firebase
+7. Migrate Government HQ Demo data from Firebase
 
 ---
 

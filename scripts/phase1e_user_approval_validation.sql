@@ -21,7 +21,7 @@
 -- technician:   aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3
 -- viewer:       aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4
 
--- MOEHE HQ (assigned):     22222222-2222-4222-8222-222222222222
+-- Government HQ Demo (assigned):     22222222-2222-4222-8222-222222222222
 -- Validation other site:   66666666-6666-4666-8666-666666666601
 
 -- =============================================================================

@@ -62,7 +62,7 @@ void main() {
     test('does not nest by deprecated parent_meter_id (flat v2-era list)', () {
       final main = _card(
         id: 'main',
-        code: '1219053',
+        code: 'WM-001',
         sourceCode: 'kahramaa',
         sourceName: 'Kahramaa',
         isMain: true,
@@ -77,7 +77,7 @@ void main() {
       final groups = buildMeterRelationshipGroups([main, sub]);
       expect(groups, hasLength(2));
       expect(groups.every((g) => g.children.isEmpty), isTrue);
-      expect(groups.map((g) => g.parent.meterCode), containsAll(['1219053', '1219054']));
+      expect(groups.map((g) => g.parent.meterCode), containsAll(['WM-001', '1219054']));
     });
 
     test('orphan meters still render as roots', () {

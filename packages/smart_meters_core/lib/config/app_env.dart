@@ -25,6 +25,6 @@ enum AppEnv {
   /// When true, login screens may show validation-account hints.
   static bool get showStagingHints => current.isStaging;
 
-  /// When true, MOEHE demo presets / import banners are allowed.
+  /// When true, Demo Org demo presets / import banners are allowed.
   static bool get showDemoSiteUx => current.isStaging;
 }

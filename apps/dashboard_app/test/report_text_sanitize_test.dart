@@ -4,7 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 void main() {
   group('report text sanitize', () {
     test('replaces em dash and superscript for PDF', () {
-      expect(sanitizePdfText('MOEHE — HQ'), 'MOEHE - HQ');
+      expect(sanitizePdfText('Demo Org — HQ'), 'Demo Org - HQ');
       expect(sanitizePdfText('12 m³'), '12 m3');
       expect(sanitizePdfText(null), '-');
       expect(sanitizePdfText(''), '-');

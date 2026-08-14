@@ -11,7 +11,7 @@ begin;
 -- technician:   aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa3
 -- viewer:       aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa4
 
--- MOEHE HQ site from seed
+-- Government HQ Demo site from seed
 -- 22222222-2222-4222-8222-222222222222
 
 insert into auth.users (
@@ -142,7 +142,7 @@ on conflict (id) do update set
   full_name = excluded.full_name,
   email = excluded.email;
 
--- Site access for non-super users (MOEHE HQ)
+-- Site access for non-super users (Government HQ Demo)
 insert into public.user_site_access (user_id, site_id, role, can_read, can_write, can_manage_meters)
 values
   ('aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaa2', '22222222-2222-4222-8222-222222222222', 'site_admin', true, true, true),

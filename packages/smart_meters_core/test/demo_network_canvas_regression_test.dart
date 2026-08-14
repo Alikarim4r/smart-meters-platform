@@ -1,32 +1,31 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import 'support/demo_snapshot.dart';
+
 void main() {
-  late UtilityNetworkSnapshot moehe;
+  late UtilityNetworkSnapshot demo;
 
   setUpAll(() {
-    final file = File(
-      '/Users/ali-laptop/Downloads/smart-meters-platform/docs/phase_c/moehe_draft_snapshot.json',
-    );
-    moehe = UtilityNetworkSnapshot.fromJson(
+    final file = demoSnapshotFile();
+    demo = UtilityNetworkSnapshot.fromJson(
       Map<String, dynamic>.from(jsonDecode(file.readAsStringSync()) as Map),
     );
   });
 
-  test('MOEHE snapshot parse never throws TypeError', () {
-    expect(moehe.nodes, isNotEmpty);
-    expect(moehe.placements, isNotEmpty);
-    expect(moehe.revision.isDraft, isTrue);
-    for (final n in moehe.nodes) {
+  test('demo snapshot parse never throws TypeError', () {
+    expect(demo.nodes, isNotEmpty);
+    expect(demo.placements, isNotEmpty);
+    expect(demo.revision.isDraft, isTrue);
+    for (final n in demo.nodes) {
       expect(n.asset, isNotNull);
     }
   });
 
-  testWidgets('MOEHE canvas paints without FlutterError / TypeError', (
+  testWidgets('demo canvas paints without FlutterError / TypeError', (
     tester,
   ) async {
     final errors = <Object>[];
@@ -37,8 +36,8 @@ void main() {
     };
     addTearDown(() => FlutterError.onError = old);
 
-    final viewId = moehe.views.where((v) => v.isDefault).firstOrNull?.id ??
-        moehe.views.first.id;
+    final viewId = demo.views.where((v) => v.isDefault).firstOrNull?.id ??
+        demo.views.first.id;
 
     await tester.pumpWidget(
       MaterialApp(
@@ -47,7 +46,7 @@ void main() {
             width: 900,
             height: 700,
             child: UtilityNetworkCanvas(
-              snapshot: moehe,
+              snapshot: demo,
               viewId: viewId,
               isArabic: true,
               editMode: false,
@@ -66,21 +65,21 @@ void main() {
   testWidgets('missing placement does not throw null-check TypeError', (
     tester,
   ) async {
-    final viewId = moehe.views.first.id;
+    final viewId = demo.views.first.id;
     final orphan = UtilityRevisionNode(
       id: 'orphan-node',
-      revisionId: moehe.revision.id,
+      revisionId: demo.revision.id,
       assetId: 'orphan-asset',
       asset: UtilityAsset(
         id: 'orphan-asset',
-        siteId: moehe.network.members.first.siteId,
+        siteId: demo.network.members.first.siteId,
         assetType: UtilityAssetType.meter,
         code: 'ORPHAN',
         nameEn: 'Orphan',
         nameAr: 'يتيم',
       ),
     );
-    final snap = moehe.copyWith(nodes: [...moehe.nodes, orphan]);
+    final snap = demo.copyWith(nodes: [...demo.nodes, orphan]);
 
     final errors = <Object>[];
     final old = FlutterError.onError;

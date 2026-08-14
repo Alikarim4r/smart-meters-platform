@@ -1544,7 +1544,7 @@ profiles:entered_by(full_name, email)
   /// Builds daily consumption for [from]–[to] from `meter_readings` only.
   ///
   /// Does **not** use `meter_daily_consumption` — that view runs LAG over the
-  /// full reading history and times out on large imported sites (e.g. MOEHE HQ).
+  /// full reading history and times out on large imported sites (e.g. Government HQ Demo).
   ///
   /// Monthly/yearly buckets fetch only the latest reading per meter per period
   /// (not every daily row). Large daily ranges use per-meter indexed pages.

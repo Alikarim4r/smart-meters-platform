@@ -103,17 +103,17 @@ begin
   select count(*) into v_count from public.organizations
   where id = '11111111-1111-4111-8111-111111111111';
   if v_count = 0 then raise exception 'MISSING seed organization'; end if;
-  raise notice 'OK organization: MOEHE';
+  raise notice 'OK organization: Demo Org';
 
   select count(*) into v_count from public.sites
   where id = '22222222-2222-4222-8222-222222222222';
-  if v_count = 0 then raise exception 'MISSING seed site MOEHE HQ'; end if;
-  raise notice 'OK site: MOEHE HQ';
+  if v_count = 0 then raise exception 'MISSING seed site Government HQ Demo'; end if;
+  raise notice 'OK site: Government HQ Demo';
 
   select count(*) into v_count from public.meters
   where id = '33333333-3333-4333-8333-333333333301' and category = 'water';
   if v_count = 0 then raise exception 'MISSING seed water meter'; end if;
-  raise notice 'OK meter: water (1219053)';
+  raise notice 'OK meter: water (WM-001)';
 
   select count(*) into v_count from public.meters
   where id = '33333333-3333-4333-8333-333333333302' and category = 'electricity';

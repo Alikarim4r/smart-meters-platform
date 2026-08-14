@@ -1,7 +1,7 @@
 -- =============================================================================
 -- Staging-only: reclassify CHW-LOOP-1/2/3 to BTU/GJ and wire Chiller Plant COP
 -- Prerequisites: migrations 016 (gj enum) + 017 (catalog + admin_reclassify_meter) applied
--- Site: MOEHE HQ 22222222-2222-4222-8222-222222222222
+-- Site: Government HQ Demo 22222222-2222-4222-8222-222222222222
 -- Safe to re-run (idempotent clears + re-links COP members)
 -- =============================================================================
 

@@ -1,11 +1,12 @@
 -- =============================================================================
 -- Smart Meters Platform — Seed Data Draft
--- Seed: 001_seed_moehe_hq.sql
+-- Seed: 001_seed_demo_site.sql
 -- Status: DRAFT — DO NOT EXECUTE without approval
 -- Depends on: 001_schema.sql, 002_rls_policies.sql
 -- =============================================================================
 --
--- Sample data for Ministry of Education and Higher Education HQ.
+-- Synthetic demo data for a fictional government headquarters site.
+-- No real client, facility, meter or reading appears in this file.
 -- Uses fixed UUIDs for cross-reference in docs and migration scripts.
 --
 -- NOTE: Profiles require auth.users rows. This seed inserts org/site/meters/COP
@@ -14,11 +15,11 @@
 
 -- Fixed UUIDs for reproducibility
 -- Organization
---   11111111-1111-4111-8111-111111111111  MOEHE
+--   11111111-1111-4111-8111-111111111111  Demo organisation
 -- Site
---   22222222-2222-4222-8222-222222222222  MOEHE HQ
+--   22222222-2222-4222-8222-222222222222  Demo HQ site
 -- Meters
---   33333333-3333-4333-8333-333333333301  Main Kahramaa water (physical)
+--   33333333-3333-4333-8333-333333333301  Main potable water (physical)
 --   33333333-3333-4333-8333-333333333302  Main electricity (physical)
 --   33333333-3333-4333-8333-333333333303  Main chilled water BTU (physical)
 --   33333333-3333-4333-8333-333333333304  Water Features WF (virtual, future — commented)
@@ -34,8 +35,8 @@ begin;
 insert into public.organizations (id, name_en, name_ar, is_active)
 values (
   '11111111-1111-4111-8111-111111111111',
-  'Ministry of Education and Higher Education',
-  'وزارة التعليم والتعليم العالي',
+  'Government HQ Demo',
+  'مقر حكومي تجريبي',
   true
 )
 on conflict (id) do nothing;
@@ -56,8 +57,8 @@ insert into public.sites (
 values (
   '22222222-2222-4222-8222-222222222222',
   '11111111-1111-4111-8111-111111111111',
-  'MOEHE HQ',
-  'مقر وزارة التعليم والتعليم العالي',
+  'Government HQ Demo',
+  'مقر حكومي تجريبي',
   'headquarters',
   'Doha, Qatar',
   true
@@ -68,7 +69,7 @@ on conflict (id) do nothing;
 -- Meters
 -- -----------------------------------------------------------------------------
 
--- Water: Main Kahramaa meter (legacy code 1219053)
+-- Water: Main Utility meter (legacy code WM-001)
 insert into public.meters (
   id,
   site_id,
@@ -92,8 +93,8 @@ insert into public.meters (
 values (
   '33333333-3333-4333-8333-333333333301',
   '22222222-2222-4222-8222-222222222222',
-  '1219053',
-  'Main Kahramaa Water Meter',
+  'WM-001',
+  'Main Utility Water Meter',
   'عداد المياه الرئيسي - كهرماء',
   'water',
   'kahramaa',
@@ -274,7 +275,7 @@ commit;
 --
 -- 1. Create user in Supabase Auth dashboard or via Admin API
 -- 2. Update profile role:
---    update public.profiles set role = 'super_admin' where email = 'admin@moehe.gov.qa';
+--    update public.profiles set role = 'super_admin' where email = 'admin@example.org';
 -- 3. Optionally assign site access for non-super users:
 --    insert into public.user_site_access (user_id, site_id, role, can_read, can_write, can_manage_meters)
 --    values ('<user-uuid>', '22222222-2222-4222-8222-222222222222', 'technician', true, true, false);

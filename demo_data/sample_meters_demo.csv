@@ -1,0 +1,11 @@
+site_name,meter_code,name_en,location,category_code,unit_code,level,include_in_dashboard,is_active,notes
+Government HQ Demo,EM-001,Main Incomer LV Panel 1,Building A,electricity,kwh,main,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,EM-002,Chiller Plant Feeder,Building A,electricity,kwh,sub,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,EM-003,Building B Distribution,Building B,electricity,kwh,sub,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,WM-001,Main Potable Water,Building A,water,m3,main,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,WM-002,Irrigation Supply,Site Wide,water,m3,sub,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,WM-003,Building B Water,Building B,water,m3,sub,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,BTU-001,Chilled Water Plant BTU,Building A,cooling,gj,main,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,BTU-002,AHU-01 Cooling Energy,Building A,cooling,gj,sub,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,BTU-003,AHU-02 Cooling Energy,Building B,cooling,gj,sub,true,true,Synthetic demo meter - not a real asset
+Government HQ Demo,GM-001,Standby Generator Fuel,Building A,fuel,litre,main,true,true,Synthetic demo meter - not a real asset
