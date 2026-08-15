@@ -28,7 +28,9 @@ jobs:
           APP_ENV: production
           GITHUB_REPOSITORY: ${{ github.repository }}
           GITHUB_REPOSITORY_OWNER: ${{ github.repository_owner }}
-          GITHUB_PAGES_BASE: https://${{ github.repository_owner }}.github.io
+          WEB_BASE_HREF: ""
+          GITHUB_PAGES_BASE: https://meters.alielhassan.com
+          PAGES_CNAME: meters.alielhassan.com
         run: |
           chmod +x scripts/build_web_apps.sh scripts/generate_app_icons.sh
           ./scripts/generate_app_icons.sh
@@ -40,3 +42,4 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ./web_deploy
           publish_branch: gh-pages
+          cname: meters.alielhassan.com

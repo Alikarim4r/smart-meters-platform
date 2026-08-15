@@ -14,11 +14,18 @@ if [[ -z "$SUPABASE_URL" || -z "$SUPABASE_ANON_KEY" ]]; then
   exit 1
 fi
 
-REPO_NAME="${GITHUB_REPOSITORY_NAME:-${GITHUB_REPOSITORY##*/}}"
+REPO_NAME="${GITHUB_REPOSITORY_NAME:-${GITHUB_REPOSITORY:-smart-meters-platform}}"
+REPO_NAME="${REPO_NAME##*/}"
 REPO_NAME="${REPO_NAME:-smart-meters-platform}"
 PAGES_BASE="${GITHUB_PAGES_BASE:-https://${GITHUB_REPOSITORY_OWNER:-example}.github.io}"
 
-BASE_HREF="/${REPO_NAME}"
+if [[ -n "${WEB_BASE_HREF+x}" ]]; then
+  BASE_HREF="${WEB_BASE_HREF%/}"
+else
+  BASE_HREF="/${REPO_NAME}"
+fi
+
+PAGES_CNAME="${PAGES_CNAME:-}"
 WEB_DASHBOARD_URL="${WEB_DASHBOARD_URL:-${PAGES_BASE}${BASE_HREF}/dashboard/}"
 WEB_ENTRY_URL="${WEB_ENTRY_URL:-${PAGES_BASE}${BASE_HREF}/entry/}"
 WEB_ADMIN_URL="${WEB_ADMIN_URL:-${PAGES_BASE}${BASE_HREF}/admin/}"
@@ -34,6 +41,11 @@ DART_DEFINES=(
 
 rm -rf "$DEPLOY_DIR"
 mkdir -p "$DEPLOY_DIR"
+
+if [[ -n "$PAGES_CNAME" ]]; then
+  printf '%s\n' "$PAGES_CNAME" >"$DEPLOY_DIR/CNAME"
+  echo "CNAME: $PAGES_CNAME"
+fi
 
 build_app() {
   local folder="$1"
