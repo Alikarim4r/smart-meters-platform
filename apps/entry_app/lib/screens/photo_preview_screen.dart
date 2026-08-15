@@ -1,9 +1,8 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../photos/reading_photo_models.dart';
+import '../widgets/local_photo_image.dart';
 
 class PhotoPreviewScreen extends StatelessWidget {
   const PhotoPreviewScreen({
@@ -42,7 +41,11 @@ class PhotoPreviewScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             if (meterName != null)
-              _MetaRow(label: 'Meter', value: '$meterName${meterCode != null ? ' ($meterCode)' : ''}'),
+              _MetaRow(
+                label: 'Meter',
+                value:
+                    '$meterName${meterCode != null ? ' ($meterCode)' : ''}',
+              ),
             if (photoSource != null)
               _MetaRow(label: 'Source', value: photoSource!.label),
             if (capturedAt != null)
@@ -59,8 +62,8 @@ class PhotoPreviewScreen extends StatelessWidget {
   }
 
   Widget _buildImage() {
-    if (localPath != null && File(localPath!).existsSync()) {
-      return Image.file(File(localPath!), fit: BoxFit.contain);
+    if (localPath != null && localPath!.isNotEmpty) {
+      return LocalPhotoImage(path: localPath, fit: BoxFit.contain);
     }
     if (remoteUrl != null) {
       return Image.network(remoteUrl!, fit: BoxFit.contain);
@@ -86,10 +89,13 @@ class _MetaRow extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           SizedBox(
-            width: 100,
+            width: 110,
             child: Text(
               label,
-              style: TextStyle(color: Colors.grey.shade700, fontSize: 13),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).hintColor,
+              ),
             ),
           ),
           Expanded(child: Text(value)),

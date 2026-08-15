@@ -5,20 +5,18 @@ import 'package:hive_flutter/hive_flutter.dart';
 
 import 'package:entry_app/offline/local_reading_draft.dart';
 import 'package:entry_app/offline/offline_storage_service.dart';
+import 'package:entry_app/photos/meter_photo_watermark.dart';
 
 LocalReadingDraft _draft({
   required String localId,
-  required String? ownerUserId,
+  String meterId = 'meter-1',
+  String readingDate = '2026-08-04',
 }) {
   return LocalReadingDraft(
-    ownerUserId: ownerUserId,
-    environment: ownerUserId == null
-        ? null
-        : OfflineStorageService.instance.currentEnvironment,
     localId: localId,
     siteId: 'site-1',
-    meterId: 'meter-1',
-    readingDate: '2026-08-04',
+    meterId: meterId,
+    readingDate: readingDate,
     rawValue: 42,
     status: LocalReadingStatus.savedLocally,
     createdAt: DateTime(2026, 8, 4),
@@ -40,6 +38,7 @@ void main() {
       'cached_meters',
       'cached_sites',
       'offline_meta',
+      readingPhotoBytesBoxName,
     ]) {
       await Hive.openBox<dynamic>(name);
     }
@@ -51,6 +50,7 @@ void main() {
       'cached_meters',
       'cached_sites',
       'offline_meta',
+      readingPhotoBytesBoxName,
     ]) {
       await Hive.box<dynamic>(name).clear();
     }
@@ -61,56 +61,52 @@ void main() {
     await hiveDirectory.delete(recursive: true);
   });
 
-  test('draft queries and deletion are isolated by owner', () async {
-    await storage.saveDraft(_draft(localId: 'a', ownerUserId: 'user-a'));
-    await storage.saveDraft(_draft(localId: 'b', ownerUserId: 'user-b'));
+  test('saves and lists drafts for sync', () async {
+    await storage.saveDraft(_draft(localId: 'a'));
+    await storage.saveDraft(_draft(localId: 'b', meterId: 'meter-2'));
 
-    expect(storage.getAllDrafts(ownerUserId: 'user-a'), hasLength(1));
-    expect(storage.getPendingSyncDrafts(ownerUserId: 'user-b'), hasLength(1));
-    expect(
-      await storage.deleteDraft(localId: 'a', ownerUserId: 'user-b'),
-      isFalse,
-    );
-    expect(storage.getAllDrafts(ownerUserId: 'user-a'), hasLength(1));
-    expect(
-      await storage.deleteDraft(localId: 'a', ownerUserId: 'user-a'),
-      isTrue,
-    );
-    expect(storage.getAllDrafts(ownerUserId: 'user-a'), isEmpty);
+    expect(storage.getAllDrafts(), hasLength(2));
+    expect(storage.getPendingSyncDrafts(), hasLength(2));
+    await storage.deleteDraft('a');
+    expect(storage.getAllDrafts(), hasLength(1));
+    expect(storage.getAllDrafts().single.localId, 'b');
   });
 
-  test(
-    'legacy unowned drafts are retained and never enter a user queue',
-    () async {
-      final legacy = _draft(localId: 'legacy', ownerUserId: null).toMap()
-        ..remove('ownerUserId');
-      await Hive.box<dynamic>('reading_drafts').put('legacy', legacy);
-
-      expect(storage.getAllDrafts(ownerUserId: 'user-a'), isEmpty);
-      expect(storage.getQuarantinedLegacyDrafts(), hasLength(1));
-      expect(
-        () => storage.saveDraft(_draft(localId: 'new', ownerUserId: null)),
-        throwsStateError,
-      );
-    },
-  );
-
-  test('drafts from another environment cannot be persisted', () async {
-    final draft = _draft(localId: 'foreign', ownerUserId: 'user-a');
-    final foreign = LocalReadingDraft.fromMap(
-      draft.toMap()..['environment'] = 'different-environment',
+  test('finds draft for meter and date', () async {
+    await storage.saveDraft(_draft(localId: 'd1'));
+    final found = storage.getDraftForMeterAndDate(
+      meterId: 'meter-1',
+      readingDate: '2026-08-04',
     );
-
-    expect(() => storage.saveDraft(foreign), throwsStateError);
+    expect(found?.localId, 'd1');
+    expect(
+      storage.getDraftForMeterAndDate(
+        meterId: 'missing',
+        readingDate: '2026-08-04',
+      ),
+      isNull,
+    );
   });
 
-  test('last sync metadata is isolated by owner', () async {
-    final first = DateTime(2026, 8, 4, 10);
-    final second = DateTime(2026, 8, 4, 11);
-    await storage.setLastSyncTime(ownerUserId: 'user-a', time: first);
-    await storage.setLastSyncTime(ownerUserId: 'user-b', time: second);
+  test('caches site policy and categories for offline reuse', () async {
+    await storage.cacheSitePolicy(
+      siteId: 'site-1',
+      policy: {'organization_id': 'org-1', 'photo_required': true},
+    );
+    expect(storage.getCachedSitePolicy('site-1')?['photo_required'], isTrue);
 
-    expect(storage.getLastSyncTime(ownerUserId: 'user-a'), first);
-    expect(storage.getLastSyncTime(ownerUserId: 'user-b'), second);
+    await storage.cacheCategories(
+      siteId: 'site-1',
+      categories: [
+        {'id': 'c1', 'code': 'electric', 'name_en': 'Electric'},
+      ],
+    );
+    expect(storage.getCachedCategories('site-1'), hasLength(1));
+  });
+
+  test('last sync metadata is persisted', () async {
+    final time = DateTime(2026, 8, 4, 10);
+    await storage.setLastSyncTime(time);
+    expect(storage.lastSyncTime, time);
   });
 }

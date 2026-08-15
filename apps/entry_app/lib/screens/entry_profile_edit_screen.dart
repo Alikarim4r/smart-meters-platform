@@ -8,6 +8,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../l10n/entry_strings.dart';
 import '../providers/preferences_providers.dart';
 import '../theme/entry_chrome.dart';
+import '../utils/platform_image_picker.dart';
 
 /// Full-screen profile editor opened from the settings header.
 class EntryProfileEditScreen extends ConsumerStatefulWidget {
@@ -54,8 +55,7 @@ class _EntryProfileEditScreenState
   }
 
   Future<void> _pickAvatar() async {
-    final picker = ImagePicker();
-    final file = await picker.pickImage(
+    final file = await pickPlatformImage(
       source: ImageSource.gallery,
       maxWidth: 1024,
       maxHeight: 1024,

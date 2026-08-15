@@ -16,7 +16,8 @@ void main() {
     }
   });
 
-  test('mobile and web keep the platform image picker', () {
+  test('mobile keeps image picker; web is not classified as desktop selector',
+      () {
     expect(
       usesDesktopImageFileSelector(
         platform: TargetPlatform.android,
@@ -28,6 +29,7 @@ void main() {
       usesDesktopImageFileSelector(platform: TargetPlatform.iOS, isWeb: false),
       isFalse,
     );
+    // Web uses file_selector via kIsWeb branch, not the desktop helper.
     expect(
       usesDesktopImageFileSelector(platform: TargetPlatform.macOS, isWeb: true),
       isFalse,

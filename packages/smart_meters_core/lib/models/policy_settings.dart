@@ -154,6 +154,18 @@ class PolicySettings {
     );
   }
 
+  Map<String, dynamic> toCacheJson() {
+    return {
+      'id': id,
+      'organization_id': organizationId,
+      'scope': scope,
+      'site_id': siteId,
+      ...toUpdateJson(),
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
+    };
+  }
+
   Map<String, dynamic> toUpdateJson() {
     return {
       'photo_required': photoRequired,

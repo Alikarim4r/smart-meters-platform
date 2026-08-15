@@ -46,6 +46,8 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
   String? _globalUnitId;
   bool _isSaving = false;
   bool? _hasReadings;
+  String? _expandedUnitsForCategoryId;
+  bool _expandingUnits = false;
 
   bool get _catalogLocked => _hasReadings == true;
 
@@ -104,6 +106,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
       _meterTypeId = null;
       _measurementTypeId = null;
       _globalUnitId = null;
+      _expandedUnitsForCategoryId = null;
     });
     if (categoryId == null) return;
     final catalog = ref.read(meterCatalogRepositoryProvider);
@@ -116,6 +119,81 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
       _meterTypeId = meterTypeId;
       _measurementTypeId = primary?.id;
     });
+  }
+
+  /// If Staging still has the seed 4-unit list, expand it via API (super admin).
+  Future<void> _maybeExpandUnits(
+    List<MeterCategoryConfig> categories,
+    List<MeterUnitConfig> units,
+  ) async {
+    final categoryId = _categoryId;
+    if (categoryId == null || _expandingUnits) return;
+    if (_expandedUnitsForCategoryId == categoryId) return;
+    if (!(ref.read(canManageCatalogProvider))) {
+      _expandedUnitsForCategoryId = categoryId;
+      return;
+    }
+
+    final activeCount = units.where((u) => u.isActive).length;
+    if (activeCount >= 10) {
+      _expandedUnitsForCategoryId = categoryId;
+      return;
+    }
+
+    MeterCategoryConfig? category;
+    for (final item in categories) {
+      if (item.id == categoryId) {
+        category = item;
+        break;
+      }
+    }
+    if (category == null) return;
+    if (ExpandedUnitCatalog.forCategoryCode(category.code).isEmpty) {
+      _expandedUnitsForCategoryId = categoryId;
+      return;
+    }
+
+    _expandingUnits = true;
+    try {
+      final created = await ref
+          .read(meterCatalogRepositoryProvider)
+          .ensureExpandedUnitsForCategory(
+            categoryId: categoryId,
+            categoryCode: category.code,
+          );
+      _expandedUnitsForCategoryId = categoryId;
+      ref.invalidate(catalogUnitsProvider(categoryId));
+      if (!mounted) return;
+      if (created > 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Expanded unit catalog (+$created). Unit * should show ≥10.',
+            ),
+          ),
+        );
+      } else if (activeCount < 10) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Could not expand units (need Super Admin). Run 118c SQL in Supabase.',
+            ),
+          ),
+        );
+      }
+    } catch (_) {
+      _expandedUnitsForCategoryId = categoryId;
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not expand units. Run 118c_units_by_category_code.sql in Supabase.',
+          ),
+        ),
+      );
+    } finally {
+      _expandingUnits = false;
+    }
   }
 
   Future<void> _save() async {
@@ -153,23 +231,23 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
         if (!mounted) return;
         Navigator.pop(context, updated);
       } else {
-        // Prefer measurement→global unit path when available.
+        // Unit dropdown is always meter_units (conversion source of truth).
         var legacyUnitId = _unitId;
-        if (_measurementTypeId != null &&
-            _globalUnitId != null &&
+        String? globalUnitId = _globalUnitId;
+        if (legacyUnitId != null &&
+            _measurementTypeId != null &&
             _categoryId != null) {
           final catalog = ref.read(meterCatalogRepositoryProvider);
-          final units = await catalog.getUnitsForMeasurement(
-            _measurementTypeId!,
+          final legacyUnits = await catalog.getUnitsForCategory(
+            _categoryId!,
+            activeOnly: true,
           );
-          final global = units.where((u) => u.id == _globalUnitId).toList();
-          if (global.isNotEmpty) {
-            legacyUnitId =
-                await catalog.resolveLegacyUnitId(
-                  categoryId: _categoryId!,
-                  globalUnitCode: global.first.code,
-                ) ??
-                _unitId;
+          final selected = legacyUnits.where((u) => u.id == legacyUnitId);
+          if (selected.isNotEmpty) {
+            final matched = await catalog.findGlobalUnitIdByCode(
+              selected.first.code,
+            );
+            globalUnitId = matched ?? globalUnitId;
           }
         }
         // Schema-safe defaults only; meter hierarchy is owned by utility network v2.
@@ -183,7 +261,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
           unitId: legacyUnitId!,
           meterTypeId: _meterTypeId,
           measurementTypeId: _measurementTypeId,
-          globalUnitId: _globalUnitId,
+          globalUnitId: globalUnitId,
           level: MeterLevel.main,
           parentMeterId: null,
           poursIntoTank: false,
@@ -311,7 +389,12 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                     data: (categories) {
                       // Primary utilities only: water, electricity, energy (BTU).
                       // Keep the meter's current category visible when editing.
-                      const primaryCodes = {'water', 'electricity', 'btu'};
+                      const primaryCodes = {
+                        'water',
+                        'electricity',
+                        'btu',
+                        'fuel',
+                      };
                       final activeCategories = categories
                           .where(
                             (c) =>
@@ -366,9 +449,10 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                           initialValue: _measurementTypeId,
                           isExpanded: true,
                           decoration: catalogFieldDecoration(
-                            labelText: 'Measurement type *',
-                            helperText:
-                                'Units are filtered by this measurement',
+                            labelText: 'Measurement type',
+                            helperText: s.isAr
+                                ? 'اختياري للتسجيلات — قائمة الوحدات من كتالوج الفئة'
+                                : 'Optional for registers — unit list comes from category catalog',
                           ),
                           items: [
                             for (final m in measurements)
@@ -391,153 +475,99 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                         );
                       },
                     ),
-                  if (_measurementTypeId != null)
-                    FutureBuilder<List<GlobalUnitConfig>>(
-                      future: ref
-                          .read(meterCatalogRepositoryProvider)
-                          .getUnitsForMeasurement(_measurementTypeId!),
-                      builder: (context, snap) {
-                        final units = snap.data ?? const [];
-                        if (units.isEmpty) {
-                          return unitsAsync.when(
-                            loading: () => const LinearProgressIndicator(),
-                            error: (error, _) =>
-                                Text(friendlyMeterError(error)),
-                            data: (legacyUnits) {
-                              // Fall back to legacy category units.
-                              final active = legacyUnits
-                                  .where((u) => u.isActive)
-                                  .toList();
-                              return DropdownButtonFormField<String>(
-                                initialValue: _unitId,
-                                isExpanded: true,
-                                decoration: catalogFieldDecoration(
-                                  labelText: '${s.unit} *',
-                                ),
-                                items: [
-                                  for (final u in active)
-                                    DropdownMenuItem(
-                                      value: u.id,
-                                      child: Text('${u.nameEn} (${u.code})'),
-                                    ),
-                                ],
-                                onChanged: canManage && !_catalogLocked
-                                    ? (v) => setState(() => _unitId = v)
-                                    : null,
-                                validator: (v) =>
-                                    v == null ? 'Unit is required' : null,
-                              );
-                            },
-                          );
-                        }
-                        _globalUnitId ??= units.first.id;
+                  // Always use category meter_units (expanded catalog ≥10 each).
+                  // Phase-2 measurement units were a short subset and hid the full list.
+                  unitsAsync.when(
+                    loading: () => const LinearProgressIndicator(),
+                    error: (error, _) => Text(friendlyMeterError(error)),
+                    data: (units) {
+                      if (_categoryId == null) {
                         return DropdownButtonFormField<String>(
-                          key: ValueKey(
-                            'gunit_$_measurementTypeId$_globalUnitId',
-                          ),
-                          initialValue: _globalUnitId,
+                          initialValue: null,
                           isExpanded: true,
                           decoration: catalogFieldDecoration(
                             labelText: '${s.unit} *',
-                            helperText:
-                                'Only units allowed for this measurement',
+                            helperText: 'Select a category first',
                           ),
-                          items: [
-                            for (final u in units)
-                              DropdownMenuItem(
-                                value: u.id,
-                                child: Text(
-                                  '${u.nameEn} (${u.code})',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
-                          onChanged: canManage && !_catalogLocked
-                              ? (value) => setState(() => _globalUnitId = value)
-                              : null,
-                          validator: (value) =>
-                              value == null ? 'Unit is required' : null,
+                          items: const [],
+                          onChanged: null,
+                          validator: (_) => 'Select a category first',
                         );
-                      },
-                    )
-                  else
-                    unitsAsync.when(
-                      loading: () => const LinearProgressIndicator(),
-                      error: (error, _) => Text(friendlyMeterError(error)),
-                      data: (units) {
-                        if (_categoryId == null) {
-                          return DropdownButtonFormField<String>(
-                            initialValue: null,
-                            isExpanded: true,
-                            decoration: catalogFieldDecoration(
-                              labelText: '${s.unit} *',
-                              helperText: 'Select a category first',
-                            ),
-                            items: const [],
-                            onChanged: null,
-                            validator: (_) => 'Select a category first',
-                          );
-                        }
-                        final activeUnits = units
-                            .where((u) => u.isActive)
-                            .toList();
-                        if (activeUnits.isEmpty) {
-                          return InputDecorator(
-                            decoration: catalogFieldDecoration(
-                              labelText: '${s.unit} *',
-                              helperText:
-                                  'No units for this category — add them under Units',
-                            ),
-                            child: Text(
-                              'No units available',
-                              style: TextStyle(color: Colors.red.shade700),
-                            ),
-                          );
-                        }
-                        String? unitValue = _unitId;
-                        if (unitValue != null &&
-                            !activeUnits.any((u) => u.id == unitValue)) {
-                          unitValue = null;
-                        }
-                        if (unitValue == null) {
-                          final base = activeUnits.where((u) => u.isBase);
-                          unitValue = base.isNotEmpty
-                              ? base.first.id
-                              : activeUnits.first.id;
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted && _unitId != unitValue) {
-                              setState(() => _unitId = unitValue);
-                            }
-                          });
-                        }
-                        return DropdownButtonFormField<String>(
-                          initialValue: unitValue,
-                          isExpanded: true,
+                      }
+                      categoriesAsync.whenData((categories) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (!mounted) return;
+                          _maybeExpandUnits(categories, units);
+                        });
+                      });
+                      final activeUnits = units
+                          .where((u) => u.isActive)
+                          .toList();
+                      if (activeUnits.isEmpty) {
+                        return InputDecorator(
                           decoration: catalogFieldDecoration(
                             labelText: '${s.unit} *',
                             helperText:
-                                'Choose from catalog units for this category',
+                                'No units for this category — add them under Units',
                           ),
-                          items: [
-                            for (final unit in activeUnits)
-                              DropdownMenuItem(
-                                value: unit.id,
-                                child: Text(
-                                  '${unit.nameEn} (${unit.code})',
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                          ],
-                          onChanged: canManage && !_catalogLocked
-                              ? (value) => setState(() => _unitId = value)
-                              : null,
-                          validator: (value) =>
-                              value == null ? 'Unit is required' : null,
+                          child: Text(
+                            'No units available',
+                            style: TextStyle(color: Colors.red.shade700),
+                          ),
                         );
-                      },
-                    ),
+                      }
+                      String? unitValue = _unitId;
+                      if (unitValue != null &&
+                          !activeUnits.any((u) => u.id == unitValue)) {
+                        unitValue = null;
+                      }
+                      if (unitValue == null) {
+                        final base = activeUnits.where((u) => u.isBase);
+                        unitValue = base.isNotEmpty
+                            ? base.first.id
+                            : activeUnits.first.id;
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          if (mounted && _unitId != unitValue) {
+                            setState(() => _unitId = unitValue);
+                          }
+                        });
+                      }
+                      return DropdownButtonFormField<String>(
+                        key: ValueKey(
+                          'unit_$_categoryId-${activeUnits.length}-$unitValue',
+                        ),
+                        initialValue: unitValue,
+                        isExpanded: true,
+                        // Tall menu so 12+ units are visible while scrolling.
+                        menuMaxHeight: 420,
+                        decoration: catalogFieldDecoration(
+                          labelText: '${s.unit} * (${activeUnits.length})',
+                          helperText: s.isAr
+                              ? '${activeUnits.length} وحدة — مرّر القائمة لرؤية الكل'
+                              : '${activeUnits.length} units — scroll the menu to see all',
+                        ),
+                        items: [
+                          for (final unit in activeUnits)
+                            DropdownMenuItem(
+                              value: unit.id,
+                              child: Text(
+                                '${unit.nameEn} (${unit.code})',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                        ],
+                        onChanged: canManage && !_catalogLocked
+                            ? (value) => setState(() {
+                                  _unitId = value;
+                                  _globalUnitId = null;
+                                })
+                            : null,
+                        validator: (value) =>
+                            value == null ? 'Unit is required' : null,
+                      );
+                    },
+                  ),
                   sourcesAsync.when(
                     loading: () => const LinearProgressIndicator(),
                     error: (error, _) => Text(friendlyMeterError(error)),

@@ -1,8 +1,8 @@
-import 'dart:io';
-
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../l10n/entry_strings.dart';
@@ -13,7 +13,9 @@ import '../providers/entry_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../screens/photo_preview_screen.dart';
 import '../theme/entry_chrome.dart';
+import '../utils/platform_image_picker.dart';
 import '../utils/reading_validation.dart';
+import 'local_photo_image.dart';
 import 'meter_card_chrome.dart';
 
 /// Quiet, dense institutional meter reading card.
@@ -102,21 +104,86 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
     return negative ? '-$formatted' : formatted;
   }
 
-  Future<void> _pickPhoto(ReadingPhotoSource source) async {
-    final ok = await ref.read(readingEntryProvider(_query).notifier).attachPhoto(
-          site: widget.site,
-          meter: widget.status.meter,
-          source: source,
-        );
+  Future<bool> _pickPhoto(
+    ReadingPhotoSource source, {
+    XFile? prePicked,
+  }) async {
+    final ok =
+        await ref.read(readingEntryProvider(_query).notifier).attachPhoto(
+              site: widget.site,
+              meter: widget.status.meter,
+              source: source,
+              prePicked: prePicked,
+            );
     if (ok) {
       setState(() {});
       widget.onChanged?.call();
+    }
+    return ok;
+  }
+
+  /// Opens the OS/browser picker as the immediate result of a tap.
+  Future<void> _pickPhotoFromGesture(ReadingPhotoSource source) async {
+    final imageSource = source == ReadingPhotoSource.camera
+        ? ImageSource.camera
+        : ImageSource.gallery;
+    try {
+      final picked = await pickPlatformImage(source: imageSource);
+      if (picked == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              EntryStrings(ref.read(entryLocaleProvider)).photoPickCancelled,
+            ),
+          ),
+        );
+        return;
+      }
+      final ok = await _pickPhoto(source, prePicked: picked);
+      if (!ok && mounted) {
+        final msg = ref.read(readingEntryProvider(_query)).errorMessage;
+        if (msg != null && msg.isNotEmpty) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(msg)),
+          );
+        }
+      }
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      final denied = error.code.contains('permission') ||
+          error.code.contains('access_denied');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            denied
+                ? 'فعّل صلاحية الكاميرا/الصور من إعدادات التطبيق ثم أعد المحاولة.'
+                : 'تعذّر فتح الكاميرا/المعرض: ${error.message ?? error.code}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذّر اختيار الصورة: $error')),
+      );
     }
   }
 
   Future<void> _showPhotoSourceSheet(EntryStrings s) async {
     final entryState = ref.read(readingEntryProvider(_query));
     if (entryState.isReadOnly || entryState.isAttachingPhoto) return;
+
+    // Web + desktop: go straight to the OS file picker. A sheet then picker
+    // often fails to present NSOpenPanel / browser file dialogs.
+    if (kIsWeb ||
+        usesDesktopImageFileSelector(
+          platform: defaultTargetPlatform,
+          isWeb: kIsWeb,
+        )) {
+      await _pickPhotoFromGesture(ReadingPhotoSource.gallery);
+      return;
+    }
 
     final source = await showModalBottomSheet<ReadingPhotoSource>(
       context: context,
@@ -138,8 +205,12 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
         ),
       ),
     );
-    if (source == null) return;
-    await _pickPhoto(source);
+    if (source == null || !mounted) return;
+    // Let the sheet finish dismissing before launching camera/gallery —
+    // otherwise some Samsung/Android builds drop the Activity result.
+    await Future<void>.delayed(const Duration(milliseconds: 350));
+    if (!mounted) return;
+    await _pickPhotoFromGesture(source);
   }
 
   Future<void> _clearEntry(EntryStrings s) async {
@@ -249,6 +320,16 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
         return;
       }
       if (hasPhoto) {
+        final isDesktop = usesDesktopImageFileSelector(
+          platform: defaultTargetPlatform,
+          isWeb: kIsWeb,
+        );
+        if (kIsWeb || isDesktop) {
+          // Replace: open file picker immediately (sheet+picker fails on
+          // web/macOS NSOpenPanel after a modal sheet).
+          await _pickPhotoFromGesture(ReadingPhotoSource.gallery);
+          return;
+        }
         final action = await showModalBottomSheet<String>(
           context: context,
           builder: (context) => SafeArea(
@@ -291,9 +372,13 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
               storagePath: remotePath,
             );
           case 'camera':
-            await _pickPhoto(ReadingPhotoSource.camera);
+            await Future<void>.delayed(const Duration(milliseconds: 350));
+            if (!mounted) return;
+            await _pickPhotoFromGesture(ReadingPhotoSource.camera);
           case 'gallery':
-            await _pickPhoto(ReadingPhotoSource.gallery);
+            await Future<void>.delayed(const Duration(milliseconds: 350));
+            if (!mounted) return;
+            await _pickPhotoFromGesture(ReadingPhotoSource.gallery);
           case 'remove':
             ref.read(readingEntryProvider(_query).notifier).removePhoto();
             setState(() {});
@@ -701,9 +786,11 @@ class _PhotoThumb extends StatelessWidget {
                     ? Stack(
                         fit: StackFit.expand,
                         children: [
-                          if (previewPath != null &&
-                              File(previewPath!).existsSync())
-                            Image.file(File(previewPath!), fit: BoxFit.cover)
+                          if (previewPath != null && previewPath!.isNotEmpty)
+                            LocalPhotoImage(
+                              path: previewPath,
+                              fit: BoxFit.cover,
+                            )
                           else if (remoteUrl != null)
                             Image.network(remoteUrl!, fit: BoxFit.cover)
                           else

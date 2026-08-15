@@ -1,10 +1,9 @@
-import 'dart:io';
-
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
-final connectivityStatusProvider = StreamProvider<List<ConnectivityResult>>((ref) {
+final connectivityStatusProvider =
+    StreamProvider<List<ConnectivityResult>>((ref) {
   return Connectivity().onConnectivityChanged;
 });
 
@@ -20,16 +19,24 @@ final isOnlineProvider = Provider<bool>((ref) {
 });
 
 bool isNetworkError(Object error) {
-  if (error is SocketException) {
+  final typeName = error.runtimeType.toString();
+  if (typeName == 'SocketException') {
     return true;
   }
   if (error is PostgrestException) {
     final message = error.message.toLowerCase();
     return message.contains('network') ||
         message.contains('connection') ||
-        message.contains('host lookup');
+        message.contains('host lookup') ||
+        message.contains('failed host lookup') ||
+        message.contains('clientexception');
   }
-  return false;
+  final message = error.toString().toLowerCase();
+  return message.contains('socketexception') ||
+      message.contains('failed host lookup') ||
+      message.contains('network is unreachable') ||
+      message.contains('connection closed') ||
+      message.contains('clientexception');
 }
 
 String readablePostgrestError(PostgrestException error) {

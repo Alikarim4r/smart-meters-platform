@@ -1,10 +1,10 @@
-import 'dart:io';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../offline/local_reading_draft.dart';
 import '../photos/reading_photo_models.dart';
 import '../screens/photo_preview_screen.dart';
+import 'local_photo_image.dart';
 
 class ReadingPhotoSection extends StatelessWidget {
   const ReadingPhotoSection({
@@ -194,7 +194,7 @@ class _PhotoStatusChip extends StatelessWidget {
   }
 }
 
-class _PhotoPreviewTile extends StatelessWidget {
+class _PhotoPreviewTile extends ConsumerWidget {
   const _PhotoPreviewTile({
     required this.localPath,
     required this.remoteUrl,
@@ -208,7 +208,7 @@ class _PhotoPreviewTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(10),
@@ -216,27 +216,23 @@ class _PhotoPreviewTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(10),
         child: AspectRatio(
           aspectRatio: 16 / 9,
-          child: _buildImage(),
+          child: localPath != null && localPath!.isNotEmpty
+              ? LocalPhotoImage(path: localPath, fit: BoxFit.cover)
+              : remoteUrl != null
+                  ? Image.network(remoteUrl!, fit: BoxFit.cover)
+                  : Container(
+                      color: Colors.grey.shade200,
+                      child: const Center(
+                        child: Icon(Icons.broken_image_outlined),
+                      ),
+                    ),
         ),
       ),
     );
   }
-
-  Widget _buildImage() {
-    if (localPath != null && File(localPath!).existsSync()) {
-      return Image.file(File(localPath!), fit: BoxFit.cover);
-    }
-    if (remoteUrl != null) {
-      return Image.network(remoteUrl!, fit: BoxFit.cover);
-    }
-    return Container(
-      color: Colors.grey.shade200,
-      child: const Center(child: Icon(Icons.broken_image_outlined)),
-    );
-  }
 }
 
-class ReadingPhotoThumbnail extends StatelessWidget {
+class ReadingPhotoThumbnail extends ConsumerWidget {
   const ReadingPhotoThumbnail({
     super.key,
     this.localPath,
@@ -249,9 +245,9 @@ class ReadingPhotoThumbnail extends StatelessWidget {
   final VoidCallback? onTap;
 
   @override
-  Widget build(BuildContext context) {
-    if ((localPath == null || !File(localPath!).existsSync()) &&
-        remoteUrl == null) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasLocal = localPath != null && localPath!.isNotEmpty;
+    if (!hasLocal && remoteUrl == null) {
       return const SizedBox.shrink();
     }
 
@@ -262,8 +258,8 @@ class ReadingPhotoThumbnail extends StatelessWidget {
         child: SizedBox(
           width: 56,
           height: 56,
-          child: localPath != null && File(localPath!).existsSync()
-              ? Image.file(File(localPath!), fit: BoxFit.cover)
+          child: hasLocal
+              ? LocalPhotoImage(path: localPath, fit: BoxFit.cover)
               : Image.network(remoteUrl!, fit: BoxFit.cover),
         ),
       ),

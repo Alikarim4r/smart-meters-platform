@@ -6,6 +6,7 @@ export 'navigation/partner_link_listener.dart';
 export 'navigation/partner_web_config.dart';
 export 'navigation/partner_web_links.dart';
 export 'catalog/catalog_helpers.dart';
+export 'catalog/expanded_unit_catalog.dart';
 export 'bootstrap/app_bootstrap.dart';
 export 'config/app_env.dart';
 export 'config/supabase_config.dart';

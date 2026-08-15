@@ -6,9 +6,11 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../providers/chart_providers.dart';
 import '../providers/dashboard_providers.dart';
+import '../utils/dashboard_breakpoints.dart';
 import '../utils/dashboard_date_range.dart';
 import '../utils/dashboard_filters.dart';
 import 'excel_report_service.dart';
+import 'pdf_report_preview_screen.dart';
 import 'pdf_report_service.dart';
 import 'report_data_service.dart';
 import 'report_export_dialog.dart';
@@ -245,7 +247,15 @@ class ReportExportController {
       dismissLoading();
 
       if (navigator.mounted) {
-        await _showSuccessDialog(navigator.context, generated, fileService);
+        final pdfBytes = format == ReportFormat.pdf
+            ? (bytes is Uint8List ? bytes : Uint8List.fromList(bytes))
+            : null;
+        await _showExportResult(
+          navigator.context,
+          generated,
+          fileService,
+          pdfBytes: pdfBytes,
+        );
       } else {
         // Still open the file so export is not a silent success.
         await fileService.openReport(generated);
@@ -298,6 +308,35 @@ class ReportExportController {
     );
   }
 
+  Future<void> _showExportResult(
+    BuildContext context,
+    GeneratedReportFile file,
+    ReportFileService fileService, {
+    Uint8List? pdfBytes,
+  }) async {
+    // Phone / narrow screens: preview A4 sheet scaled to fit the viewport.
+    final useA4PhonePreview = pdfBytes != null &&
+        !file.path.startsWith('download://') &&
+        (DashboardBreakpoints.isMobile(context) ||
+            MediaQuery.sizeOf(context).shortestSide < 700);
+
+    if (useA4PhonePreview) {
+      await Navigator.of(context, rootNavigator: true).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => PdfReportPreviewScreen(
+            bytes: pdfBytes,
+            filename: file.filename,
+            savedFile: file,
+            fileService: fileService,
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _showSuccessDialog(context, file, fileService);
+  }
+
   Future<void> _showSuccessDialog(
     BuildContext context,
     GeneratedReportFile file,
@@ -318,6 +357,16 @@ class ReportExportController {
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Close'),
           ),
+          if (!file.path.startsWith('download://') &&
+              file.format == ReportFormat.pdf)
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                // Desktop/tablet: optional open in system viewer.
+                await fileService.openReport(file);
+              },
+              child: const Text('Open'),
+            ),
           if (!file.path.startsWith('download://'))
             TextButton(
               onPressed: () async {
@@ -333,7 +382,8 @@ class ReportExportController {
               },
               child: const Text('Share'),
             ),
-          if (!file.path.startsWith('download://'))
+          if (!file.path.startsWith('download://') &&
+              file.format != ReportFormat.pdf)
             FilledButton(
               onPressed: () async {
                 final result = await fileService.openReport(file);

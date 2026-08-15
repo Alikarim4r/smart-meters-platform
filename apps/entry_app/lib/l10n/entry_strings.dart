@@ -128,6 +128,10 @@ class EntryStrings {
       );
   String get clear => _t('Clear', 'مسح');
   String get camera => _t('Camera', 'الكاميرا');
+  String get photoPickCancelled => _t(
+        'No photo selected. Try Camera or Gallery again.',
+        'لم يتم اختيار صورة. جرّب الكاميرا أو المعرض مرة أخرى.',
+      );
   String get gallery => _t('Gallery', 'الاستوديو');
   String get viewPhoto => _t('View photo', 'عرض الصورة');
   String get replaceCamera => _t('Replace (camera)', 'استبدال (كاميرا)');

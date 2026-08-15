@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
@@ -31,9 +32,28 @@ final businessDateProvider = StateProvider<DateTime>((ref) {
 
 final sitePolicyProvider =
     FutureProvider.autoDispose.family<PolicySettings, String>((ref, siteId) async {
-  return ref
-      .read(policySettingsRepositoryProvider)
-      .getEffectivePolicyForSite(siteId);
+  final storage = ref.read(offlineStorageProvider);
+  final isOnline = ref.watch(isOnlineProvider);
+  if (isOnline) {
+    try {
+      final policy = await ref
+          .read(policySettingsRepositoryProvider)
+          .getEffectivePolicyForSite(siteId);
+      await storage.cacheSitePolicy(
+        siteId: siteId,
+        policy: policy.toCacheJson(),
+      );
+      return policy;
+    } catch (_) {
+      // Fall through to cache.
+    }
+  }
+  final cached = storage.getCachedSitePolicy(siteId);
+  if (cached != null) {
+    return PolicySettings.fromJson(cached);
+  }
+  // Absolute last resort — must not silently disable photo required if known.
+  return PolicySettings.defaults('unknown');
 });
 
 final accessibleSitesProvider = FutureProvider<List<Site>>((ref) async {
@@ -71,8 +91,27 @@ final meterListFilterProvider =
     StateProvider<MeterListFilter>((ref) => MeterListFilter.all);
 
 final availableCategoriesProvider =
-    FutureProvider.family<List<MeterCategoryConfig>, String>((ref, siteId) {
-  return ref.read(meterCatalogRepositoryProvider).getCategoriesForSite(siteId);
+    FutureProvider.family<List<MeterCategoryConfig>, String>((ref, siteId) async {
+  final storage = ref.read(offlineStorageProvider);
+  final isOnline = ref.watch(isOnlineProvider);
+  if (isOnline) {
+    try {
+      final categories = await ref
+          .read(meterCatalogRepositoryProvider)
+          .getCategoriesForSite(siteId);
+      await storage.cacheCategories(
+        siteId: siteId,
+        categories: categories.map((c) => c.toJson()).toList(),
+      );
+      return categories;
+    } catch (_) {
+      // Fall through to cache.
+    }
+  }
+  return storage
+      .getCachedCategories(siteId)
+      .map(MeterCategoryConfig.fromJson)
+      .toList();
 });
 
 class EntryMeterQuery {
@@ -497,6 +536,7 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
     required Site site,
     required Meter meter,
     required ReadingPhotoSource source,
+    XFile? prePicked,
   }) async {
     if (state.isReadOnly || state.isAttachingPhoto) {
       return false;
@@ -508,10 +548,18 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
       return false;
     }
 
+    final photoService = _ref.read(readingPhotoServiceProvider);
+    final localId = state.localDraft?.localId ?? _newLocalId();
+
+    // CRITICAL (web): picking must happen before any state write that rebuilds
+    // UI, otherwise the browser silently blocks the file dialog.
+    final picked = prePicked ?? await photoService.pickImage(source);
+    if (picked == null) {
+      return false;
+    }
+
     state = state.copyWith(isAttachingPhoto: true, clearError: true);
     try {
-      final photoService = _ref.read(readingPhotoServiceProvider);
-      final localId = state.localDraft?.localId ?? _newLocalId();
       final context = await photoService.buildContext(
         site: site,
         meter: meter,
@@ -520,15 +568,12 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
         profile: profile,
         source: source,
       );
-      final result = await photoService.captureAndWatermark(
-        source: source,
+      final result = await photoService.processPickedImage(
+        picked: picked,
         localId: localId,
         context: context,
+        source: source,
       );
-      if (result == null) {
-        state = state.copyWith(isAttachingPhoto: false);
-        return false;
-      }
 
       final now = DateTime.now();
       final existingDraft = state.localDraft;
@@ -563,17 +608,20 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
         isAttachingPhoto: false,
         localDraft: draft,
       );
+      // Persist immediately so photos survive app kill before Save.
+      await _storage.saveDraft(draft);
       return true;
     } catch (error) {
       state = state.copyWith(
         isAttachingPhoto: false,
-        errorMessage: 'Could not process photo. Try again.',
+        errorMessage:
+            'تعذّر تجهيز الصورة: ${error.toString()}. جرّب صورة JPG/PNG.',
       );
       return false;
     }
   }
 
-  void removePhoto() {
+  Future<void> removePhoto() async {
     if (state.isReadOnly) {
       return;
     }
@@ -581,19 +629,19 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
     if (draft == null) {
       return;
     }
-    state = state.copyWith(
-      localDraft: draft.copyWith(
-        clearLocalPhotoPath: true,
-        clearWatermarkedPhotoPath: true,
-        clearPhotoSource: true,
-        clearPhotoCapturedAt: true,
-        photoUploadStatus: PhotoUploadStatus.none,
-        clearRemotePhotoPath: true,
-        clearRemotePhotoUrl: true,
-        clearPhotoErrorMessage: true,
-        updatedAt: DateTime.now(),
-      ),
+    final updated = draft.copyWith(
+      clearLocalPhotoPath: true,
+      clearWatermarkedPhotoPath: true,
+      clearPhotoSource: true,
+      clearPhotoCapturedAt: true,
+      photoUploadStatus: PhotoUploadStatus.none,
+      clearRemotePhotoPath: true,
+      clearRemotePhotoUrl: true,
+      clearPhotoErrorMessage: true,
+      updatedAt: DateTime.now(),
     );
+    state = state.copyWith(localDraft: updated);
+    await _storage.saveDraft(updated);
   }
 
   /// Clears local draft + photo for this meter (technician "delete" on a card).
@@ -669,9 +717,28 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
           : draft.photoUploadStatus,
     );
 
-    final policy = await _ref
-        .read(policySettingsRepositoryProvider)
-        .getEffectivePolicyForSite(_query.siteId);
+    PolicySettings policy;
+    try {
+      if (isOnline) {
+        policy = await _ref
+            .read(policySettingsRepositoryProvider)
+            .getEffectivePolicyForSite(_query.siteId);
+        await _storage.cacheSitePolicy(
+          siteId: _query.siteId,
+          policy: policy.toCacheJson(),
+        );
+      } else {
+        final cached = _storage.getCachedSitePolicy(_query.siteId);
+        policy = cached != null
+            ? PolicySettings.fromJson(cached)
+            : PolicySettings.defaults(_query.organizationId);
+      }
+    } catch (_) {
+      final cached = _storage.getCachedSitePolicy(_query.siteId);
+      policy = cached != null
+          ? PolicySettings.fromJson(cached)
+          : PolicySettings.defaults(_query.organizationId);
+    }
     final hasPhoto = localDraft.hasLocalPhoto ||
         (localDraft.remotePhotoPath != null &&
             localDraft.remotePhotoPath!.trim().isNotEmpty) ||

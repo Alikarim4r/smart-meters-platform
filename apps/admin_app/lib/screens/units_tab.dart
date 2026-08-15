@@ -193,6 +193,58 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                     ),
                   ),
                 ),
+                if (canManage)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: Align(
+                      alignment: AlignmentDirectional.centerStart,
+                      child: OutlinedButton.icon(
+                        onPressed: () async {
+                          final specs = ExpandedUnitCatalog.forCategoryCode(
+                            selectedCategory.code,
+                          );
+                          if (specs.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'No standard catalog for this category code.',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
+                          try {
+                            final created = await ref
+                                .read(meterCatalogRepositoryProvider)
+                                .ensureExpandedUnitsForCategory(
+                                  categoryId: categoryId,
+                                  categoryCode: selectedCategory.code,
+                                );
+                            ref.invalidate(catalogUnitsProvider(categoryId));
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  created > 0
+                                      ? 'Expanded units (+$created). Refresh the list.'
+                                      : 'Catalog already complete or insert blocked (Super Admin required).',
+                                ),
+                              ),
+                            );
+                          } catch (error) {
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(friendlyCatalogError(error)),
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.playlist_add_check),
+                        label: const Text('Expand standard units (≥12)'),
+                      ),
+                    ),
+                  ),
                 Expanded(
                   child: unitsAsync.when(
                     loading: () =>

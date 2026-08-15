@@ -71,6 +71,26 @@ class Profile {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'full_name': fullName,
+        'email': email,
+        'role': role.dbValue,
+        'is_active': isActive,
+        'approval_status': approvalStatus.dbValue,
+        'approval_note': approvalNote,
+        'approved_at': approvedAt?.toIso8601String(),
+        'approved_by': approvedBy,
+        'rejected_at': rejectedAt?.toIso8601String(),
+        'rejected_by': rejectedBy,
+        'allow_backdated_readings': allowBackdatedReadings,
+        'phone': phone,
+        'company_name': companyName,
+        'avatar_path': avatarPath,
+        'created_at': createdAt.toIso8601String(),
+        'updated_at': updatedAt.toIso8601String(),
+      };
+
   static DateTime? _parseOptionalDateTime(dynamic value) {
     if (value == null) {
       return null;

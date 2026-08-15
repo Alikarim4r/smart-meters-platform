@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../utils/platform_image_picker.dart';
 import 'meter_photo_watermark.dart';
 import 'reading_photo_models.dart';
 
@@ -31,22 +32,38 @@ class ReadingPhotoService {
   final ReadingPhotoFileStore _fileStore;
   final SiteRepository _siteRepository;
 
+  /// Must be called first from a user tap — do not await network before this.
+  Future<XFile?> pickImage(ReadingPhotoSource source) {
+    final imageSource = source == ReadingPhotoSource.camera
+        ? ImageSource.camera
+        : ImageSource.gallery;
+    return pickPlatformImage(
+      source: imageSource,
+      picker: _picker,
+      imageQuality: 92,
+      maxWidth: 2400,
+    );
+  }
+
   Future<({
     String localPhotoPath,
     String watermarkedPhotoPath,
     ReadingPhotoSource source,
-  })?> captureAndWatermark({
-    required ReadingPhotoSource source,
+  })> processPickedImage({
+    required XFile picked,
     required String localId,
     required ReadingPhotoContext context,
+    required ReadingPhotoSource source,
   }) async {
-    final picked = await _pickImage(source);
-    if (picked == null) {
-      return null;
+    final originalBytes = await picked.readAsBytes();
+    if (originalBytes.isEmpty) {
+      throw const FormatException('Selected image is empty.');
     }
 
-    final originalBytes = await picked.readAsBytes();
-    final extension = picked.path.split('.').last;
+    final nameHint = picked.name.isNotEmpty ? picked.name : picked.path;
+    final extension = nameHint.contains('.')
+        ? nameHint.split('.').last
+        : (picked.mimeType?.split('/').last ?? 'jpg');
     final localPhotoPath = await _fileStore.saveOriginalPhoto(
       localId: localId,
       bytes: originalBytes,
@@ -69,14 +86,22 @@ class ReadingPhotoService {
     );
   }
 
-  Future<XFile?> _pickImage(ReadingPhotoSource source) {
-    final imageSource = source == ReadingPhotoSource.camera
-        ? ImageSource.camera
-        : ImageSource.gallery;
-    return _picker.pickImage(
-      source: imageSource,
-      imageQuality: 92,
-      maxWidth: 2400,
+  Future<({
+    String localPhotoPath,
+    String watermarkedPhotoPath,
+    ReadingPhotoSource source,
+  })?> captureAndWatermark({
+    required ReadingPhotoSource source,
+    required String localId,
+    required ReadingPhotoContext context,
+  }) async {
+    final picked = await pickImage(source);
+    if (picked == null) return null;
+    return processPickedImage(
+      picked: picked,
+      localId: localId,
+      context: context,
+      source: source,
     );
   }
 
@@ -91,7 +116,9 @@ class ReadingPhotoService {
   }) async {
     String? organizationName;
     try {
-      final orgs = await _siteRepository.getOrganizationsForAdmin();
+      final orgs = await _siteRepository
+          .getOrganizationsForAdmin()
+          .timeout(const Duration(seconds: 3));
       final match = orgs
           .where((org) => org.id == site.organizationId)
           .toList();
@@ -99,7 +126,7 @@ class ReadingPhotoService {
         organizationName = match.first.nameEn;
       }
     } catch (_) {
-      // Organization name is optional for watermark.
+      // Organization name is optional for watermark — never block photo attach.
     }
 
     final technicianLabel = profile.fullName.trim().isNotEmpty

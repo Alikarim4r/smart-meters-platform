@@ -1,21 +1,24 @@
-import 'dart:io';
 import 'dart:typed_data';
 
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:image/image.dart' as img;
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 
+import 'photo_decode.dart';
+import 'photo_disk.dart';
 import 'reading_photo_models.dart';
 
 const _maxImageWidth = 1920;
 const _jpegQuality = 85;
+const readingPhotoBytesBoxName = 'reading_photo_bytes';
 
 class MeterPhotoWatermarkService {
   Future<Uint8List> applyWatermark({
     required Uint8List imageBytes,
     required ReadingPhotoContext context,
   }) async {
-    final decoded = img.decodeImage(imageBytes);
+    // HEIC from macOS Photos is common; convert before decode when needed.
+    final bytes = await ensureDecodableImageBytes(imageBytes);
+    final decoded = img.decodeImage(bytes);
     if (decoded == null) {
       throw const FormatException('Could not decode image for watermarking.');
     }
@@ -58,46 +61,73 @@ class MeterPhotoWatermarkService {
   }
 }
 
+/// Stores meter photos in Hive (works on web + desktop + mobile) and mirrors
+/// to disk on platforms that support `dart:io`.
 class ReadingPhotoFileStore {
+  Future<Box<dynamic>> _box() async {
+    if (Hive.isBoxOpen(readingPhotoBytesBoxName)) {
+      return Hive.box<dynamic>(readingPhotoBytesBoxName);
+    }
+    return Hive.openBox<dynamic>(readingPhotoBytesBoxName);
+  }
+
   Future<String> saveWatermarkedPhoto({
     required String localId,
     required Uint8List bytes,
-  }) async {
-    final dir = await _photosDir();
-    final file = File(p.join(dir.path, '$localId-watermarked.jpg'));
-    await file.writeAsBytes(bytes, flush: true);
-    return file.path;
+  }) {
+    return _save(
+      logicalKey: '$localId-watermarked.jpg',
+      fileName: '$localId-watermarked.jpg',
+      bytes: bytes,
+    );
   }
 
   Future<String> saveOriginalPhoto({
     required String localId,
     required Uint8List bytes,
     required String extension,
+  }) {
+    final safeExt = extension.replaceAll('.', '').toLowerCase();
+    final name = '$localId-original.${safeExt.isEmpty ? 'jpg' : safeExt}';
+    return _save(logicalKey: name, fileName: name, bytes: bytes);
+  }
+
+  Future<String> _save({
+    required String logicalKey,
+    required String fileName,
+    required Uint8List bytes,
   }) async {
-    final dir = await _photosDir();
-    final safeExt = extension.replaceAll('.', '');
-    final file = File(p.join(dir.path, '$localId-original.$safeExt'));
-    await file.writeAsBytes(bytes, flush: true);
-    return file.path;
+    final box = await _box();
+    await box.put(logicalKey, bytes);
+
+    final diskPath = await resolvePhotoDocumentsPath(fileName);
+    if (diskPath != null) {
+      try {
+        await writePhotoBytesToDisk(absolutePath: diskPath, bytes: bytes);
+        // Prefer absolute disk path for legacy readers / share sheets.
+        await box.put(diskPath, bytes);
+        return diskPath;
+      } catch (_) {
+        // Fall through — Hive key still works.
+      }
+    }
+    return logicalKey;
   }
 
   Future<Uint8List?> readBytes(String? path) async {
-    if (path == null || path.isEmpty) {
-      return null;
+    if (path == null || path.isEmpty) return null;
+    final box = await _box();
+    final cached = box.get(path);
+    if (cached is Uint8List) return cached;
+    if (cached is List) {
+      return Uint8List.fromList(cached.cast<int>());
     }
-    final file = File(path);
-    if (!await file.exists()) {
-      return null;
-    }
-    return file.readAsBytes();
-  }
 
-  Future<Directory> _photosDir() async {
-    final base = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(base.path, 'reading_photos'));
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
+    final fromDisk = await readPhotoBytesFromDisk(path);
+    if (fromDisk != null) {
+      await box.put(path, fromDisk);
+      return fromDisk;
     }
-    return dir;
+    return null;
   }
 }

@@ -54,7 +54,16 @@ build_app dashboard_app dashboard "Smart Meters Dashboard"
 build_app entry_app entry "Smart Meters Entry"
 build_app admin_app admin "Smart Meters Admin"
 
-cat >"$DEPLOY_DIR/index.html" <<EOF
+# Polished portal (intro + apps gateway + downloads).
+PORTAL_DIR="$ROOT/web_portal"
+if [[ -d "$PORTAL_DIR" ]]; then
+  # Copy portal shell without clobbering Flutter app folders.
+  # Exclude binary downloads/ (APKs/zips) — they exceed GitHub Pages soft
+  # limits. Android APKs are published via GitHub Releases instead.
+  rsync -a --exclude 'dashboard' --exclude 'entry' --exclude 'admin' \
+    --exclude 'downloads' "$PORTAL_DIR/" "$DEPLOY_DIR/"
+else
+  cat >"$DEPLOY_DIR/index.html" <<EOF
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -83,6 +92,7 @@ cat >"$DEPLOY_DIR/index.html" <<EOF
 </body>
 </html>
 EOF
+fi
 
 echo "Web bundle ready at: $DEPLOY_DIR"
 echo "Dashboard: $WEB_DASHBOARD_URL"

@@ -46,5 +46,11 @@
 		<string>smartmeters-dashboard</string>
 		<string>smartmeters-admin</string>
 	</array>
+	<key>NSCameraUsageDescription</key>
+	<string>Capture meter reading photos for audit records.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Select meter photos from your library for reading records.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Save processed meter photos for offline entry sync.</string>
 </dict>
 </plist>
