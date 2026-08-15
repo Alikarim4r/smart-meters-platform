@@ -29,20 +29,38 @@ class ExcelReportService {
   }) async {
     reportExportLog('H', 'buildSiteExcel start ($type)');
     final excel = Excel.createExcel();
-    _writeSummarySheet(
-      _ensureSheet(excel, 'Summary'),
-      bundle.meta,
-      _summaryRows(bundle),
-    );
-    _writeCategoriesSheet(_ensureSheet(excel, 'Categories'), bundle);
-    _writeMetersSheet(_ensureSheet(excel, 'Meters'), bundle);
-    _writeReadingsSheet(_ensureSheet(excel, 'Readings'), bundle);
-    _writeConsumptionTrendSheet(_ensureSheet(excel, 'Consumption Trend'), bundle);
-    _writeRankingSheet(_ensureSheet(excel, 'Meter Ranking'), bundle);
-    if (bundle.copResults.isNotEmpty) {
-      _writeCopSheet(_ensureSheet(excel, 'COP'), bundle);
+    if (type == ReportType.conservation) {
+      _writeSummarySheet(
+        _ensureSheet(excel, 'Summary'),
+        bundle.meta,
+        _conservationSummaryRows(bundle),
+      );
+      _writeConservationSheet(_ensureSheet(excel, 'Conservation M&V'), bundle);
+    } else {
+      _writeSummarySheet(
+        _ensureSheet(excel, 'Summary'),
+        bundle.meta,
+        _summaryRows(bundle),
+      );
+      _writeCategoriesSheet(_ensureSheet(excel, 'Categories'), bundle);
+      _writeMetersSheet(_ensureSheet(excel, 'Meters'), bundle);
+      _writeReadingsSheet(_ensureSheet(excel, 'Readings'), bundle);
+      _writeConsumptionTrendSheet(
+        _ensureSheet(excel, 'Consumption Trend'),
+        bundle,
+      );
+      _writeRankingSheet(_ensureSheet(excel, 'Meter Ranking'), bundle);
+      if (bundle.copResults.isNotEmpty) {
+        _writeCopSheet(_ensureSheet(excel, 'COP'), bundle);
+      }
+      if (bundle.conservation != null) {
+        _writeConservationSheet(
+          _ensureSheet(excel, 'Conservation M&V'),
+          bundle,
+        );
+      }
+      _writeAlertsSheet(_ensureSheet(excel, 'Alerts'), bundle.alerts);
     }
-    _writeAlertsSheet(_ensureSheet(excel, 'Alerts'), bundle.alerts);
     _removeDefaultSheetIfUnused(excel);
     final bytes = _encodeExcel(excel);
     reportExportLog('H', 'buildSiteExcel ok (${bytes.length} bytes)');
@@ -315,6 +333,93 @@ class ExcelReportService {
           cop.maxCop?.toStringAsFixed(2) ?? '',
         ]);
       }
+    }
+  }
+
+  List<List<String>> _conservationSummaryRows(SiteReportBundle bundle) {
+    final cons = bundle.conservation;
+    if (cons == null) {
+      return const [
+        ['Conservation M&V', 'No data'],
+      ];
+    }
+    return [
+      [
+        ConservationSavingLabels.estimatedSaving,
+        cons.estimatedSavingTotal.toStringAsFixed(2),
+      ],
+      [
+        ConservationSavingLabels.verifiedSaving,
+        cons.verifiedSavingTotal.toStringAsFixed(2),
+      ],
+      [
+        'Cost Avoided',
+        cons.costAvoidedTotal == null
+            ? ConservationSavingLabels.costAvoidedNa
+            : cons.costAvoidedTotal!.toStringAsFixed(2),
+      ],
+      ['Verification Pending', '${cons.verificationPendingCount}'],
+      [
+        'Note',
+        'Potential Excess ≠ Estimated Saving ≠ Verified Saving; '
+            'verified totals use status=verified only',
+      ],
+    ];
+  }
+
+  void _writeConservationSheet(Sheet sheet, SiteReportBundle bundle) {
+    final cons = bundle.conservation;
+    _setRow(
+      sheet,
+      0,
+      [
+        'Utility',
+        'Status',
+        ConservationSavingLabels.estimatedSaving,
+        ConservationSavingLabels.verifiedSaving,
+        'Cost Avoided',
+        'Currency',
+        'Confidence',
+        'Baseline Id',
+        'Version',
+      ],
+      bold: true,
+    );
+    if (cons == null || cons.records.isEmpty) {
+      _setRow(sheet, 1, [
+        'No M&V records',
+        '',
+        '',
+        '',
+        ConservationSavingLabels.costAvoidedNa,
+        '',
+        '',
+        '',
+        '',
+      ]);
+      return;
+    }
+    var row = 1;
+    for (final item in cons.records) {
+      if (item.status == MvStatus.superseded ||
+          item.status == MvStatus.archived) {
+        continue;
+      }
+      _setRow(sheet, row++, [
+        item.utilityType,
+        item.status.dbValue,
+        item.estimatedSavingQuantity?.toStringAsFixed(2) ?? '',
+        item.status == MvStatus.verified
+            ? (item.verifiedSavingQuantity?.toStringAsFixed(2) ?? '')
+            : '',
+        item.costAvoided == null
+            ? ConservationSavingLabels.costAvoidedNa
+            : item.costAvoided!.toStringAsFixed(2),
+        item.costCurrency ?? '',
+        '${item.confidenceScore}',
+        item.baselineId,
+        '${item.calculationVersion}',
+      ]);
     }
   }
 

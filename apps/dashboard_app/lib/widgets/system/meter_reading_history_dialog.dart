@@ -22,7 +22,7 @@ Future<void> showMeterReadingHistoryDialog({
       context: context,
       builder: (_) => Dialog(
         child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 900, maxHeight: 640),
+          constraints: const BoxConstraints(maxWidth: 960, maxHeight: 720),
           child: MeterReadingHistoryContent(
             siteId: siteId,
             meter: meter,
@@ -81,16 +81,20 @@ class _MeterReadingHistoryContentState
   Future<void> _loadReadings() async {
     setState(() => _readings = const AsyncValue.loading());
     try {
-      final rows = await ref.read(dashboardRepositoryProvider).getRecentSiteReadings(
-            siteId: widget.siteId,
-            filters: DashboardReadingFilters(
-              fromDate: widget.dateSelection.startDate,
-              toDate: widget.dateSelection.endDate,
-              meterId: widget.meter.meterId,
-              hasPhoto: _photoFilter,
-              limit: 2000,
-            ),
-          );
+      final from = normalizeDashboardDate(widget.dateSelection.startDate);
+      final to = normalizeDashboardDate(widget.dateSelection.endDate);
+      final rows =
+          await ref.read(dashboardRepositoryProvider).getRecentSiteReadings(
+                siteId: widget.siteId,
+                filters: DashboardReadingFilters(
+                  fromDate: from,
+                  toDate: to,
+                  meterId: widget.meter.meterId,
+                  hasPhoto: _photoFilter,
+                  // Full selected period (daily meters ≈ 31–366 rows).
+                  limit: 5000,
+                ),
+              );
       if (mounted) {
         setState(() => _readings = AsyncValue.data(rows));
       }
@@ -103,13 +107,14 @@ class _MeterReadingHistoryContentState
 
   @override
   Widget build(BuildContext context) {
+    final s = AppStrings.of(context);
     return Padding(
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(
-            AppStrings.of(context).meterReadingHistory,
+            s.meterReadingHistory,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.w800,
                   color: DashboardPalette.navy,
@@ -117,7 +122,7 @@ class _MeterReadingHistoryContentState
           ),
           const SizedBox(height: 4),
           Text(
-            '${widget.meter.meterCode} · ${widget.meter.meterName}',
+            '${widget.meter.meterName} · ${widget.meter.meterCode}',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: DashboardPalette.textMuted,
                 ),
@@ -135,28 +140,20 @@ class _MeterReadingHistoryContentState
             initialValue: _photoFilter,
             decoration: premiumFilterDecoration(
               context: context,
-              labelText: AppStrings.of(context).isAr
-                  ? 'فلتر الصورة'
-                  : 'Photo filter',
+              labelText: s.isAr ? 'فلتر الصورة' : 'Photo filter',
             ),
             items: [
               DropdownMenuItem(
                 value: null,
-                child: Text(
-                  AppStrings.of(context).isAr
-                      ? 'كل القراءات'
-                      : 'All readings',
-                ),
+                child: Text(s.isAr ? 'كل القراءات' : 'All readings'),
               ),
               DropdownMenuItem(
                 value: true,
-                child: Text(
-                  AppStrings.of(context).isAr ? 'به صورة' : 'Has photo',
-                ),
+                child: Text(s.isAr ? 'به صورة' : 'Has photo'),
               ),
               DropdownMenuItem(
                 value: false,
-                child: Text(AppStrings.of(context).noPhoto),
+                child: Text(s.noPhoto),
               ),
             ],
             onChanged: (value) {
@@ -164,57 +161,88 @@ class _MeterReadingHistoryContentState
               _loadReadings();
             },
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
+          _readings.maybeWhen(
+            data: (rows) => Text(
+              s.isAr
+                  ? '${rows.length} قراءة في الفترة المحددة'
+                  : '${rows.length} readings in selected period',
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: DashboardPalette.textMuted,
+                    fontWeight: FontWeight.w600,
+                  ),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+          const SizedBox(height: 8),
           Expanded(
             child: _readings.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(
                 child: Text(
-                  'Could not load readings',
+                  s.isAr
+                      ? 'تعذّر تحميل القراءات. يُرجى المحاولة مرة أخرى.'
+                      : 'Could not load readings. Please try again.',
                   style: TextStyle(color: DashboardPalette.textMuted),
+                  textAlign: TextAlign.center,
                 ),
               ),
               data: (rows) {
                 if (rows.isEmpty) {
                   return Center(
                     child: Text(
-                      AppStrings.of(context).isAr
+                      s.isAr
                           ? 'لا توجد قراءات لنطاق التاريخ المحدد.'
                           : 'No readings for the selected date range.',
                     ),
                   );
                 }
 
-                final s = AppStrings.of(context);
-                return SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: [
-                      DataColumn(label: Text(s.date)),
-                      DataColumn(label: Text(s.reading)),
-                      DataColumn(label: Text(s.consumption)),
-                      DataColumn(label: Text(s.note)),
-                      DataColumn(label: Text(s.photo)),
-                      DataColumn(
-                        label: Text(
-                          s.isAr ? 'أُدخل بواسطة' : 'Submitted by',
+                // Vertical scroll for all period rows + horizontal for wide table.
+                return Scrollbar(
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                          minWidth: MediaQuery.sizeOf(context).width > 900
+                              ? 860
+                              : MediaQuery.sizeOf(context).width - 80,
+                        ),
+                        child: DataTable(
+                          headingRowHeight: 44,
+                          dataRowMinHeight: 48,
+                          dataRowMaxHeight: 64,
+                          columns: [
+                            DataColumn(label: Text(s.date)),
+                            DataColumn(label: Text(s.reading)),
+                            DataColumn(label: Text(s.consumption)),
+                            DataColumn(label: Text(s.photo)),
+                            DataColumn(label: Text(s.note)),
+                            DataColumn(
+                              label: Text(
+                                s.isAr ? 'أُدخل بواسطة' : 'Submitted by',
+                              ),
+                            ),
+                          ],
+                          rows: [
+                            for (var i = 0; i < rows.length; i++)
+                              _buildRow(rows, i, s),
+                          ],
                         ),
                       ),
-                    ],
-                    rows: [
-                      for (var i = 0; i < rows.length; i++)
-                        _buildRow(rows, i),
-                    ],
+                    ),
                   ),
                 );
               },
             ),
           ),
           Align(
-            alignment: Alignment.centerRight,
+            alignment: AlignmentDirectional.centerEnd,
             child: TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text(AppStrings.of(context).close),
+              child: Text(s.close),
             ),
           ),
         ],
@@ -222,7 +250,11 @@ class _MeterReadingHistoryContentState
     );
   }
 
-  DataRow _buildRow(List<DashboardReadingRow> rows, int index) {
+  DataRow _buildRow(
+    List<DashboardReadingRow> rows,
+    int index,
+    AppStrings s,
+  ) {
     final row = rows[index];
     final reading = row.reading;
     double? consumption;
@@ -231,6 +263,9 @@ class _MeterReadingHistoryContentState
       consumption = reading.rawValue - prev;
     }
 
+    final hasPhoto = reading.hasPhoto;
+    final photoPath = reading.imageStoragePath?.trim();
+
     return DataRow(
       cells: [
         DataCell(Text(formatDashboardDate(reading.readingDate))),
@@ -238,15 +273,29 @@ class _MeterReadingHistoryContentState
         DataCell(Text(
           consumption != null ? consumption.toStringAsFixed(2) : '—',
         )),
-        DataCell(Text(row.reading.note ?? '—')),
         DataCell(
-          reading.hasPhoto
-              ? IconButton(
-                  tooltip: AppStrings.of(context).photo,
-                  icon: const Icon(Icons.photo_outlined),
-                  onPressed: () => _openPhoto(reading.imageStoragePath!),
+          hasPhoto && photoPath != null && photoPath.isNotEmpty
+              ? TextButton.icon(
+                  onPressed: () => _openPhoto(photoPath),
+                  icon: const Icon(Icons.photo_outlined, size: 18),
+                  label: Text(s.isAr ? 'عرض' : 'View'),
                 )
-              : Text(AppStrings.of(context).no),
+              : Text(
+                  s.isAr ? 'لا صورة' : s.no,
+                  style: TextStyle(color: DashboardPalette.textMuted),
+                ),
+        ),
+        DataCell(
+          SizedBox(
+            width: 220,
+            child: Text(
+              row.reading.note?.trim().isNotEmpty == true
+                  ? row.reading.note!
+                  : '—',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
         ),
         DataCell(Text(row.enteredByName ?? '—')),
       ],
@@ -254,6 +303,7 @@ class _MeterReadingHistoryContentState
   }
 
   Future<void> _openPhoto(String storagePath) async {
+    final s = AppStrings.of(context);
     try {
       final url = await ref
           .read(meterImageStorageRepositoryProvider)
@@ -266,11 +316,21 @@ class _MeterReadingHistoryContentState
             constraints: const BoxConstraints(maxWidth: 720, maxHeight: 560),
             child: Column(
               children: [
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: IconButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    icon: const Icon(Icons.close),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 8, 0),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          s.isAr ? 'صورة القراءة' : 'Reading photo',
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
                   ),
                 ),
                 Expanded(
@@ -278,8 +338,15 @@ class _MeterReadingHistoryContentState
                     child: Image.network(
                       url,
                       fit: BoxFit.contain,
-                      errorBuilder: (_, _, _) =>
-                          const Center(child: Icon(Icons.broken_image)),
+                      loadingBuilder: (context, child, progress) {
+                        if (progress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                      errorBuilder: (_, _, _) => Center(
+                        child: Text(
+                          s.isAr ? 'تعذّر تحميل الصورة' : 'Could not load photo',
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -293,9 +360,7 @@ class _MeterReadingHistoryContentState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            AppStrings.of(context).isAr
-                ? 'تعذّر فتح الصورة'
-                : 'Could not open photo',
+            s.isAr ? 'تعذّر فتح الصورة' : 'Could not open photo',
           ),
         ),
       );

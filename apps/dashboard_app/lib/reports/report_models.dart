@@ -8,6 +8,7 @@ enum ReportType {
   consumption,
   categoryConsumption,
   cop,
+  conservation,
 }
 
 enum ReportFormat {
@@ -23,6 +24,7 @@ extension ReportTypeLabel on ReportType {
         ReportType.consumption => 'Site Consumption',
         ReportType.categoryConsumption => 'Category Consumption',
         ReportType.cop => 'COP Report',
+        ReportType.conservation => 'Conservation Report',
       };
 }
 
@@ -145,6 +147,7 @@ class SiteReportBundle {
     this.copResults = const [],
     this.categoryFilterName,
     this.alerts = const [],
+    this.conservation,
   });
 
   final ReportMeta meta;
@@ -158,6 +161,7 @@ class SiteReportBundle {
   final List<CopTrendResult> copResults;
   final String? categoryFilterName;
   final List<DashboardAlert> alerts;
+  final ConservationReportSummary? conservation;
 
   SiteReportBundle copyWith({ReportMeta? meta}) {
     return SiteReportBundle(
@@ -172,8 +176,35 @@ class SiteReportBundle {
       copResults: copResults,
       categoryFilterName: categoryFilterName,
       alerts: alerts,
+      conservation: conservation,
     );
   }
+}
+
+/// Flag-gated conservation M&V summary for reports.
+///
+/// Potential Excess is never mixed into Estimated/Verified Saving.
+/// Verified totals use status=verified only. Missing tariff → Cost Avoided N/A.
+class ConservationReportSummary {
+  const ConservationReportSummary({
+    required this.records,
+    required this.estimatedSavingTotal,
+    required this.verifiedSavingTotal,
+    required this.costAvoidedTotal,
+    required this.verificationPendingCount,
+    required this.flagEnabled,
+  });
+
+  final List<MeasurementVerification> records;
+  final double estimatedSavingTotal;
+
+  /// ONLY from status=verified rows.
+  final double verifiedSavingTotal;
+
+  /// Null when no verified row has cost_avoided (N/A — never invent 0).
+  final double? costAvoidedTotal;
+  final int verificationPendingCount;
+  final bool flagEnabled;
 }
 
 class AllSitesReportBundle {
@@ -214,4 +245,5 @@ String reportTypeSlug(ReportType type) => switch (type) {
       ReportType.consumption => 'consumption',
       ReportType.categoryConsumption => 'category_consumption',
       ReportType.cop => 'cop',
+      ReportType.conservation => 'conservation',
     };

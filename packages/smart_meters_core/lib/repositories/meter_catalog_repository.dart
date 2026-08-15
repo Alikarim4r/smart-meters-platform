@@ -1,3 +1,4 @@
+import '../catalog/expanded_unit_catalog.dart';
 import '../models/meter_category_config.dart';
 import '../models/meter_source_config.dart';
 import '../models/meter_type_config.dart';
@@ -118,21 +119,122 @@ class MeterCatalogRepository {
     String categoryId, {
     bool activeOnly = false,
   }) async {
-    var query = _client
-        .from('meter_units')
-        .select()
-        .eq('category_id', categoryId);
-    if (activeOnly) {
-      query = query.eq('is_active', true);
+    List<MeterUnitConfig> parseRows(dynamic rows) {
+      final out = <MeterUnitConfig>[];
+      for (final row in (rows as List)) {
+        try {
+          final map = Map<String, dynamic>.from(row as Map);
+          map.remove('meter_categories');
+          out.add(MeterUnitConfig.fromJson(map));
+        } catch (_) {}
+      }
+      return out;
     }
-    final rows = await query.order('sort_order').order('name_en');
 
-    return (rows as List)
-        .map(
-          (row) =>
-              MeterUnitConfig.fromJson(Map<String, dynamic>.from(row as Map)),
-        )
-        .toList();
+    Future<List<MeterUnitConfig>> fetchForIds(List<String> ids) async {
+      if (ids.isEmpty) return const [];
+      var query = _client.from('meter_units').select().inFilter('category_id', ids);
+      if (activeOnly) {
+        query = query.eq('is_active', true);
+      }
+      return parseRows(
+        await query.order('sort_order').order('name_en').limit(200),
+      );
+    }
+
+    var units = await fetchForIds([categoryId]);
+
+    // Staging sometimes has expanded rows under a sibling category id with the
+    // same code. Prefer the fullest active catalog for that code.
+    if (units.length < 10) {
+      try {
+        final catRows = await _client
+            .from('meter_categories')
+            .select('code')
+            .eq('id', categoryId)
+            .limit(1);
+        if ((catRows as List).isNotEmpty) {
+          final code = (catRows.first as Map)['code']?.toString();
+          if (code != null && code.isNotEmpty) {
+            final sameCode = await _client
+                .from('meter_categories')
+                .select('id')
+                .eq('code', code);
+            final ids = (sameCode as List)
+                .map((r) => (r as Map)['id']?.toString())
+                .whereType<String>()
+                .toList();
+            final byCode = await fetchForIds(ids);
+            if (byCode.length > units.length) {
+              units = byCode;
+            }
+          }
+        }
+      } catch (_) {
+        // Keep category_id-only result.
+      }
+    }
+
+    if (activeOnly) {
+      units = units.where((u) => u.isActive).toList();
+    }
+    return units;
+  }
+
+  /// Inserts missing standard units (≥12) for a known category code.
+  /// Requires super-admin insert rights. Returns how many rows were created.
+  Future<int> ensureExpandedUnitsForCategory({
+    required String categoryId,
+    required String categoryCode,
+  }) async {
+    final specs = ExpandedUnitCatalog.forCategoryCode(categoryCode);
+    if (specs.isEmpty) return 0;
+
+    final existing = await getUnitsForCategory(categoryId);
+    final byCode = {
+      for (final u in existing) u.code.toLowerCase(): u,
+    };
+
+    var created = 0;
+    for (final spec in specs) {
+      final key = spec.code.toLowerCase();
+      final current = byCode[key];
+      if (current != null) {
+        // Re-activate / refresh labels if still present but inactive/stale.
+        if (!current.isActive ||
+            current.nameEn != spec.nameEn ||
+            current.sortOrder != spec.sortOrder) {
+          try {
+            await updateUnit(
+              current.id,
+              nameEn: spec.nameEn,
+              nameAr: spec.nameAr,
+              unitToBaseFactor: spec.unitToBaseFactor,
+              isBase: spec.isBase,
+              isActive: true,
+              sortOrder: spec.sortOrder,
+            );
+          } catch (_) {}
+        }
+        continue;
+      }
+      try {
+        await createUnit(
+          categoryId: categoryId,
+          code: spec.code,
+          nameEn: spec.nameEn,
+          nameAr: spec.nameAr,
+          unitToBaseFactor: spec.unitToBaseFactor,
+          isBase: spec.isBase,
+          isActive: true,
+          sortOrder: spec.sortOrder,
+        );
+        created++;
+      } catch (_) {
+        // RLS / unique race — continue remaining units.
+      }
+    }
+    return created;
   }
 
   Future<MeterUnitConfig> createUnit({
@@ -374,24 +476,94 @@ class MeterCatalogRepository {
     required String categoryId,
     required String globalUnitCode,
   }) async {
-    final rows = await _client
-        .from('meter_units')
-        .select('id')
-        .eq('category_id', categoryId)
-        .ilike('code', globalUnitCode)
-        .limit(1);
-    if ((rows as List).isEmpty) {
-      // Fallback: any unit in category with same base preference
-      final fallback = await _client
+    final candidates = _unitCodeCandidates(globalUnitCode);
+    for (final code in candidates) {
+      final rows = await _client
           .from('meter_units')
           .select('id')
           .eq('category_id', categoryId)
-          .eq('is_active', true)
-          .order('sort_order')
+          .ilike('code', code)
           .limit(1);
-      if ((fallback as List).isEmpty) return null;
-      return (fallback.first as Map)['id'] as String?;
+      if ((rows as List).isNotEmpty) {
+        return (rows.first as Map)['id'] as String?;
+      }
     }
-    return (rows.first as Map)['id'] as String?;
+
+    // Fallback: any unit in category with same base preference
+    final fallback = await _client
+        .from('meter_units')
+        .select('id')
+        .eq('category_id', categoryId)
+        .eq('is_active', true)
+        .order('sort_order')
+        .limit(1);
+    if ((fallback as List).isEmpty) return null;
+    return (fallback.first as Map)['id'] as String?;
+  }
+
+  /// Looks up a Phase-2 global unit id for register creation (optional).
+  Future<String?> findGlobalUnitIdByCode(String code) async {
+    final candidates = _unitCodeCandidates(code);
+    for (final candidate in candidates) {
+      final rows = await _client
+          .from('units')
+          .select('id')
+          .ilike('code', candidate)
+          .limit(1);
+      if ((rows as List).isNotEmpty) {
+        return (rows.first as Map)['id'] as String?;
+      }
+    }
+    return null;
+  }
+
+  /// Global unit codes → legacy meter_units codes (Phase-2 ↔ catalog).
+  static List<String> _unitCodeCandidates(String globalUnitCode) {
+    final raw = globalUnitCode.trim();
+    final lower = raw.toLowerCase();
+    const aliases = <String, List<String>>{
+      'l': ['liter', 'L', 'l'],
+      'litre': ['liter'],
+      'liter': ['liter', 'L'],
+      'gal_us': ['gallon', 'gal_us'],
+      'us_gal': ['gallon'],
+      'gallon': ['gallon', 'gal_us'],
+      'ml': ['ml', 'mL'],
+      'mL': ['ml', 'mL'],
+      'dm³': ['dm3'],
+      'm³': ['m3'],
+      'ft³': ['ft3'],
+      'yd³': ['yd3'],
+      'cm³': ['cm3'],
+      'kwh': ['kwh', 'kWh', 'kwh_thermal'],
+      'kWh': ['kwh', 'kWh', 'kwh_thermal'],
+      'mwh': ['mwh', 'MWh'],
+      'MWh': ['mwh', 'MWh'],
+      'gwh': ['gwh', 'GWh'],
+      'GWh': ['gwh', 'GWh'],
+      'wh': ['wh', 'Wh', 'wh_thermal'],
+      'Wh': ['wh', 'Wh', 'wh_thermal'],
+      'kwh_thermal': ['kwh_thermal', 'kwh', 'kWh'],
+      'wh_thermal': ['wh_thermal', 'wh', 'Wh'],
+      'gj': ['gj', 'GJ'],
+      'GJ': ['gj', 'GJ'],
+      'mj': ['mj', 'MJ'],
+      'MJ': ['mj', 'MJ'],
+      'kj': ['kj', 'kJ'],
+      'kJ': ['kj', 'kJ'],
+      'j': ['j', 'J'],
+      'J': ['j', 'J'],
+      'btu': ['btu', 'BTU'],
+      'BTU': ['btu', 'BTU'],
+      'kbtu': ['kbtu', 'kBTU'],
+      'kBTU': ['kbtu', 'kBTU'],
+      'mmbtu': ['mmbtu', 'MMBtu'],
+      'MMBtu': ['mmbtu', 'MMBtu'],
+    };
+
+    final out = <String>{raw, lower};
+    final mapped = aliases[raw] ?? aliases[lower];
+    if (mapped != null) out.addAll(mapped);
+    return out.toList();
   }
 }

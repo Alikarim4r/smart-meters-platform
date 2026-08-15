@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../models/profile.dart';
+import '../security/profile_offline_cache.dart';
 import 'session_security_provider.dart';
 import 'supabase_provider.dart';
 
@@ -167,6 +168,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     await _ref.read(authRepositoryProvider).signOut();
     try {
+      await ProfileOfflineCache.clear();
+    } catch (_) {}
+    try {
       await _ref.read(sessionSecurityProvider.notifier).onSignOut();
     } catch (_) {}
     state = const AuthState();
@@ -212,6 +216,9 @@ class AuthNotifier extends StateNotifier<AuthState> {
           clearAvatarPath: clearAvatarPath,
         );
     state = state.copyWith(profile: updated, clearError: true);
+    try {
+      await ProfileOfflineCache.save(updated);
+    } catch (_) {}
     return updated;
   }
 
@@ -227,9 +234,23 @@ class AuthNotifier extends StateNotifier<AuthState> {
         clearError: true,
         clearInfo: true,
       );
+      try {
+        await ProfileOfflineCache.save(profile);
+      } catch (_) {}
     } catch (error) {
+      // Offline / flaky network: keep serving last known profile so Entry
+      // remains usable after the first successful login.
+      final cached = await ProfileOfflineCache.loadMatching(userId);
+      if (cached != null) {
+        state = state.copyWith(
+          profile: cached,
+          isLoadingProfile: false,
+          clearError: true,
+          clearInfo: true,
+        );
+        return;
+      }
       // Keep the session so the user can retry / wait for approval screens.
-      // Signing out here made new registrations look completely broken.
       state = state.copyWith(
         isLoadingProfile: false,
         errorMessage: error.toString().contains('Timeout')

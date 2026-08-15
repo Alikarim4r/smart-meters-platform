@@ -17,6 +17,9 @@ parent_meter:parent_meter_id(name_en, meter_code),
 destination_tank:destination_tank_id(name_en, name_ar)
 ''';
 
+  /// Shared admin select for virtual-meter repository (same joins).
+  static const adminSelectPublic = _adminSelect;
+
   /// Prefer [getMetersForSiteAndCategoryId] with [MeterCategoryConfig].
   @Deprecated('Use getMetersForSiteAndCategoryId with category_id')
   Future<List<Meter>> getMetersForSiteAndCategory(

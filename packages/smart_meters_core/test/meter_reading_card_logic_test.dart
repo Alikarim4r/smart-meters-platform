@@ -163,4 +163,136 @@ void main() {
       expect(matchesMeterReadingStatusFilter(card, 'missing_photo'), isTrue);
     });
   });
+
+  group('buildVirtualMeterReadingCardData', () {
+    Meter virtualMeter() => Meter(
+          id: 'vm1',
+          siteId: 's1',
+          meterCode: 'VM-SUM',
+          nameEn: 'Sum',
+          nameAr: 'مجموع',
+          categoryId: 'c1',
+          sourceId: 'src1',
+          unitId: 'u1',
+          category: MeterCategory.electricity,
+          source: MeterSource.kahramaa,
+          unit: MeterUnit.kwh,
+          level: MeterLevel.main,
+          unitToBaseFactor: 1,
+          baseUnit: 'kwh',
+          meterMultiplier: 1,
+          meterKind: MeterKind.virtual,
+          calculationType: CalculationType.sumChildren,
+          isActive: true,
+          includeInDashboard: true,
+          sortOrder: 0,
+        );
+
+    MeterReading reading({
+      required String id,
+      required String meterId,
+      required DateTime date,
+      required double value,
+    }) =>
+        MeterReading(
+          id: id,
+          siteId: 's1',
+          meterId: meterId,
+          readingDate: date,
+          rawValue: value,
+          normalizedValue: value,
+          enteredAt: date,
+        );
+
+    test('sums member latest/previous and consumption', () {
+      final card = buildVirtualMeterReadingCardData(
+        meter: virtualMeter(),
+        memberIds: const ['a', 'b'],
+        latestByMeter: {
+          'a': reading(
+            id: 'la',
+            meterId: 'a',
+            date: DateTime(2026, 4, 30),
+            value: 100,
+          ),
+          'b': reading(
+            id: 'lb',
+            meterId: 'b',
+            date: DateTime(2026, 4, 30),
+            value: 50,
+          ),
+        },
+        previousByMeter: {
+          'a': reading(
+            id: 'pa',
+            meterId: 'a',
+            date: DateTime(2026, 3, 31),
+            value: 80,
+          ),
+          'b': reading(
+            id: 'pb',
+            meterId: 'b',
+            date: DateTime(2026, 3, 31),
+            value: 40,
+          ),
+        },
+      );
+
+      expect(card.isVirtual, isTrue);
+      expect(card.latestValue, 150);
+      expect(card.previousValue, 120);
+      expect(card.consumptionValue, 30);
+      expect(card.status, MeterReadingCardStatus.submittedOnDate);
+    });
+
+    test('pending when any member latest is missing', () {
+      final card = buildVirtualMeterReadingCardData(
+        meter: virtualMeter(),
+        memberIds: const ['a', 'b'],
+        latestByMeter: {
+          'a': reading(
+            id: 'la',
+            meterId: 'a',
+            date: DateTime(2026, 4, 30),
+            value: 100,
+          ),
+        },
+        previousByMeter: const {},
+      );
+
+      expect(card.latestValue, isNull);
+      expect(card.status, MeterReadingCardStatus.pendingOnDate);
+    });
+
+    test('compareMeterReadingCards pins virtual first', () {
+      const physical = MeterReadingCardData(
+        meterId: 'p1',
+        meterCode: 'AAA',
+        meterName: 'A',
+        categoryName: 'Electricity',
+        sourceName: 'S',
+        sourceCode: 's',
+        unitLabel: 'kWh',
+        status: MeterReadingCardStatus.submittedOnDate,
+        isActive: true,
+        isMain: true,
+        isVirtual: false,
+      );
+      const virtual = MeterReadingCardData(
+        meterId: 'v1',
+        meterCode: 'ZZZ',
+        meterName: 'Z',
+        categoryName: 'Electricity',
+        sourceName: 'S',
+        sourceCode: 's',
+        unitLabel: 'kWh',
+        status: MeterReadingCardStatus.submittedOnDate,
+        isActive: true,
+        isMain: true,
+        isVirtual: true,
+      );
+      expect(compareMeterReadingCards(virtual, physical, 'meter_code'), -1);
+      expect(compareMeterReadingCards(physical, virtual, 'meter_code'), 1);
+    });
+  });
 }

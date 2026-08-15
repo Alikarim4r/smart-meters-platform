@@ -48,7 +48,10 @@ final siteDashboardSummaryProvider =
 final siteCategoriesSummaryProvider =
     FutureProvider.autoDispose.family<List<SiteCategorySummary>, String>(
   (ref, siteId) async {
-    return ref.read(dashboardRepositoryProvider).getSiteCategoriesSummary(
+    // Overview/nav does not display per-category daily consumption — skip the
+    // expensive consumption rebuild (regression felt after conservation added
+    // concurrent network load on every site open).
+    return ref.read(dashboardRepositoryProvider).getSiteCategoriesSummaryForReport(
           siteId: siteId,
           businessDate: ref.watch(businessDateProvider),
         );

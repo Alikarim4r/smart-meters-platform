@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../l10n/entry_strings.dart';
 import '../models/meter_entry_status.dart';
@@ -8,6 +11,7 @@ import '../offline/local_reading_draft.dart';
 import '../photos/reading_photo_models.dart';
 import '../providers/entry_providers.dart';
 import '../providers/preferences_providers.dart';
+import '../utils/platform_image_picker.dart';
 import '../utils/reading_validation.dart';
 import '../widgets/cumulative_reading_input.dart';
 import '../widgets/optional_note_field.dart';
@@ -261,25 +265,62 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
   }
 
   Future<void> _attachPhoto(ReadingPhotoSource source) async {
-    final success = await ref
-        .read(readingEntryProvider(_query).notifier)
-        .attachPhoto(
-          site: widget.site,
-          meter: widget.meter,
-          source: source,
+    final s = EntryStrings(ref.read(entryLocaleProvider));
+    try {
+      // Pick before notifier state updates so the browser keeps the tap gesture.
+      final picked = await pickPlatformImage(
+        source: source == ReadingPhotoSource.camera
+            ? ImageSource.camera
+            : ImageSource.gallery,
+      );
+      if (picked == null) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(s.photoPickCancelled)),
         );
-    if (!mounted || success) {
-      return;
-    }
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          EntryStrings(ref.read(entryLocaleProvider)).isAr
-              ? 'لم تتم إضافة الصورة.'
-              : 'Photo was not added.',
+        return;
+      }
+
+      final success = await ref
+          .read(readingEntryProvider(_query).notifier)
+          .attachPhoto(
+            site: widget.site,
+            meter: widget.meter,
+            source: source,
+            prePicked: picked,
+          );
+      if (!mounted || success) {
+        return;
+      }
+      final err = ref.read(readingEntryProvider(_query)).errorMessage;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            (err != null && err.isNotEmpty)
+                ? err
+                : (s.isAr ? 'لم تتم إضافة الصورة.' : 'Photo was not added.'),
+          ),
         ),
-      ),
-    );
+      );
+    } on PlatformException catch (error) {
+      if (!mounted) return;
+      final denied = error.code.contains('permission') ||
+          error.code.contains('access_denied');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            denied
+                ? 'فعّل صلاحية الكاميرا/الصور من إعدادات التطبيق ثم أعد المحاولة.'
+                : 'تعذّر فتح الكاميرا/المعرض: ${error.message ?? error.code}',
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('تعذّر اختيار الصورة: $error')),
+      );
+    }
   }
 
   @override
@@ -317,6 +358,33 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                       businessDate: widget.businessDate,
                       lastReading: entryState.lastReading,
                       location: widget.site.location,
+                    ),
+                    FutureBuilder<bool>(
+                      future: PlatformFeatureFlagRepository(
+                        Supabase.instance.client,
+                      ).isEnabled(
+                        organizationId: widget.site.organizationId,
+                        flagKey: PlatformFeatureFlags.unifiedIngestion,
+                        siteId: widget.site.id,
+                      ),
+                      builder: (context, snap) {
+                        if (snap.data != true) {
+                          return const SizedBox.shrink();
+                        }
+                        final source = entryState.todayReading
+                                ?.effectiveReadingSource ??
+                            'manual';
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Align(
+                            alignment: AlignmentDirectional.centerStart,
+                            child: Chip(
+                              visualDensity: VisualDensity.compact,
+                              label: Text(s.readingSourceLabel(source)),
+                            ),
+                          ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     if (isReadOnly && displayReading != null)

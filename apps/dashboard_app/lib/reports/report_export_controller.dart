@@ -1,13 +1,16 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
-import 'dart:typed_data';
 
 import '../providers/chart_providers.dart';
 import '../providers/dashboard_providers.dart';
+import '../utils/dashboard_breakpoints.dart';
 import '../utils/dashboard_date_range.dart';
 import '../utils/dashboard_filters.dart';
 import 'excel_report_service.dart';
+import 'pdf_report_preview_screen.dart';
 import 'pdf_report_service.dart';
 import 'report_data_service.dart';
 import 'report_export_dialog.dart';
@@ -21,6 +24,7 @@ final reportDataServiceProvider = Provider<ReportDataService>((ref) {
     ref.read(dashboardRepositoryProvider),
     ref.read(alertRepositoryProvider),
     ref.read(policySettingsRepositoryProvider),
+    ref.read(supabaseClientProvider),
   );
 });
 
@@ -52,8 +56,15 @@ class ReportExportController {
   }) async {
     if (_isExporting) return;
 
+    // Capture container + navigator before any dialog/async — WidgetRef may die.
+    final container = ProviderScope.containerOf(context, listen: false);
+    final navigator = Navigator.of(context, rootNavigator: true);
+    final messenger = ScaffoldMessenger.maybeOf(context);
+
     final resolvedDateSelection = defaultDateSelection ??
-        (siteId != null ? ref.read(siteDateSelectionProvider(siteId)) : null);
+        (siteId != null
+            ? container.read(siteDateSelectionProvider(siteId))
+            : null);
 
     final options = await showReportExportDialog(
       context: context,
@@ -62,22 +73,34 @@ class ReportExportController {
       defaultPeriod: defaultPeriod,
       defaultDateSelection: resolvedDateSelection,
     );
-    if (options == null || !context.mounted) return;
+    if (options == null) return;
 
-    await _runExport(context: context, options: options, siteId: siteId);
+    await _runExport(
+      navigator: navigator,
+      messenger: messenger,
+      container: container,
+      options: options,
+      siteId: siteId,
+    );
   }
 
   Future<void> _runExport({
-    required BuildContext context,
+    required NavigatorState navigator,
+    required ScaffoldMessengerState? messenger,
+    required ProviderContainer container,
     required ReportExportOptions options,
     String? siteId,
   }) async {
     if (_isExporting) return;
     _isExporting = true;
+    reportExportLogReset();
+    reportExportLog('export', 'begin type=${options.type} period=${options.period} charts=${options.includeCharts} format=${options.format}');
 
+    var loadingVisible = true;
     showDialog<void>(
-      context: context,
+      context: navigator.context,
       barrierDismissible: false,
+      useRootNavigator: true,
       builder: (_) => const AlertDialog(
         content: Row(
           children: [
@@ -89,16 +112,36 @@ class ReportExportController {
       ),
     );
 
-    try {
-      final profile = ref.read(authProvider).profile!;
-      final DateTime businessDate = resolveBusinessDate(
-        override: options.dataAnchorDate,
-        fallback: ref.read(businessDateProvider),
-      );
-      final dataService = ref.read(reportDataServiceProvider);
-      final fileService = ref.read(reportFileServiceProvider);
-      final generatedAt = DateTime.now();
+    void dismissLoading() {
+      if (!loadingVisible) return;
+      loadingVisible = false;
+      if (navigator.canPop()) {
+        navigator.pop();
+      }
+    }
 
+    final profile = container.read(authProvider).profile;
+    if (profile == null) {
+      dismissLoading();
+      messenger?.showSnackBar(
+        const SnackBar(content: Text('Export failed: not signed in')),
+      );
+      _isExporting = false;
+      return;
+    }
+
+    final DateTime businessDate = resolveBusinessDate(
+      override: options.dataAnchorDate,
+      fallback: container.read(businessDateProvider),
+    );
+    final dataService = container.read(reportDataServiceProvider);
+    final fileService = container.read(reportFileServiceProvider);
+    final pdfService = container.read(pdfReportServiceProvider);
+    final excelService = container.read(excelReportServiceProvider);
+    final client = container.read(supabaseClientProvider);
+    final generatedAt = DateTime.now();
+
+    try {
       late final List<int> bytes;
       late final String filename;
       late final ReportFormat format;
@@ -118,12 +161,18 @@ class ReportExportController {
         format = options.format;
         if (options.format == ReportFormat.pdf) {
           reportExportLog('G', 'generate all-sites PDF start');
-          bytes = await ref.read(pdfReportServiceProvider).buildAllSitesPdf(bundle);
-          reportExportLog('G', 'generate all-sites PDF ok (${bytes.length} bytes)');
+          bytes = await pdfService.buildAllSitesPdf(bundle);
+          reportExportLog(
+            'G',
+            'generate all-sites PDF ok (${bytes.length} bytes)',
+          );
         } else {
           reportExportLog('H', 'generate all-sites Excel start');
-          bytes = await ref.read(excelReportServiceProvider).buildAllSitesExcel(bundle);
-          reportExportLog('H', 'generate all-sites Excel ok (${bytes.length} bytes)');
+          bytes = await excelService.buildAllSitesExcel(bundle);
+          reportExportLog(
+            'H',
+            'generate all-sites Excel ok (${bytes.length} bytes)',
+          );
         }
       } else {
         if (siteId == null) {
@@ -136,10 +185,12 @@ class ReportExportController {
           businessDate: businessDate,
           categoryId: options.categoryId,
           type: options.type,
+          format: options.format,
+          includeCharts: options.includeCharts,
           rangeStart: options.rangeStart,
           rangeEnd: options.rangeEnd,
         );
-        final enriched = await _attachReportLogos(bundle);
+        final enriched = await _attachReportLogos(bundle, client);
         filename = buildReportFilename(
           siteName: enriched.meta.siteName,
           type: options.type,
@@ -150,24 +201,33 @@ class ReportExportController {
         format = options.format;
         if (options.format == ReportFormat.pdf) {
           reportExportLog('G', 'generate site PDF start');
-          bytes = await ref.read(pdfReportServiceProvider).buildSitePdf(
-                bundle: enriched,
-                type: options.type,
-                includePhotos: options.includePhotos,
-                includeCharts: options.includeCharts,
-              );
-          reportExportLog('G', 'generate site PDF ok (${bytes.length} bytes)');
+          bytes = await pdfService.buildSitePdf(
+            bundle: enriched,
+            type: options.type,
+            includePhotos: options.includePhotos,
+            includeCharts: options.includeCharts,
+          );
+          reportExportLog(
+            'G',
+            'generate site PDF ok (${bytes.length} bytes)',
+          );
         } else if (options.type == ReportType.readings) {
           reportExportLog('H', 'generate readings Excel start');
-          bytes = await ref.read(excelReportServiceProvider).buildReadingsExcel(bundle);
-          reportExportLog('H', 'generate readings Excel ok (${bytes.length} bytes)');
+          bytes = await excelService.buildReadingsExcel(enriched);
+          reportExportLog(
+            'H',
+            'generate readings Excel ok (${bytes.length} bytes)',
+          );
         } else {
           reportExportLog('H', 'generate site Excel start');
-          bytes = await ref.read(excelReportServiceProvider).buildSiteExcel(
-                bundle: bundle,
-                type: options.type,
-              );
-          reportExportLog('H', 'generate site Excel ok (${bytes.length} bytes)');
+          bytes = await excelService.buildSiteExcel(
+            bundle: enriched,
+            type: options.type,
+          );
+          reportExportLog(
+            'H',
+            'generate site Excel ok (${bytes.length} bytes)',
+          );
         }
       }
 
@@ -175,31 +235,46 @@ class ReportExportController {
         throw StateError('Generated report is empty');
       }
 
-      final path = await fileService.saveReportBytes(bytes: bytes, filename: filename);
+      final path =
+          await fileService.saveReportBytes(bytes: bytes, filename: filename);
       final generated = GeneratedReportFile(
         path: path,
         filename: filename,
         format: format,
       );
+      reportExportLog('export', 'success ($path)');
 
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        await _showSuccessDialog(context, generated, fileService);
+      dismissLoading();
+
+      if (navigator.mounted) {
+        final pdfBytes = format == ReportFormat.pdf
+            ? (bytes is Uint8List ? bytes : Uint8List.fromList(bytes))
+            : null;
+        await _showExportResult(
+          navigator.context,
+          generated,
+          fileService,
+          pdfBytes: pdfBytes,
+        );
+      } else {
+        // Still open the file so export is not a silent success.
+        await fileService.openReport(generated);
       }
     } catch (error, stack) {
       reportExportLog('export', 'failed', error: error, stack: stack);
-      if (context.mounted) {
-        Navigator.of(context, rootNavigator: true).pop();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Export failed: $error')),
-        );
-      }
+      dismissLoading();
+      messenger?.showSnackBar(
+        SnackBar(content: Text('Export failed: $error')),
+      );
     } finally {
       _isExporting = false;
     }
   }
 
-  Future<SiteReportBundle> _attachReportLogos(SiteReportBundle bundle) async {
+  Future<SiteReportBundle> _attachReportLogos(
+    SiteReportBundle bundle,
+    dynamic client,
+  ) async {
     final primaryPath = bundle.meta.reportLogoPrimaryPath;
     final secondaryPath = bundle.meta.reportLogoSecondaryPath;
     if ((primaryPath == null || primaryPath.isEmpty) &&
@@ -207,21 +282,59 @@ class ReportExportController {
       return bundle;
     }
 
-    final client = ref.read(supabaseClientProvider);
     Future<Uint8List?> load(String? path) async {
       if (path == null || path.trim().isEmpty) return null;
       try {
-        return await client.storage.from('report-logos').download(path);
+        final bytes = await client.storage
+            .from('report-logos')
+            .download(path)
+            .timeout(const Duration(seconds: 3));
+        if (bytes is Uint8List) return bytes;
+        if (bytes is List<int>) return Uint8List.fromList(bytes);
+        return null;
       } catch (_) {
         return null;
       }
     }
 
-    final primary = await load(primaryPath);
-    final secondary = await load(secondaryPath);
+    final primary = load(primaryPath);
+    final secondary = load(secondaryPath);
+    final loaded = await Future.wait<Uint8List?>([primary, secondary]);
     return bundle.copyWith(
-      meta: bundle.meta.withLogoBytes(primary: primary, secondary: secondary),
+      meta: bundle.meta.withLogoBytes(
+        primary: loaded[0],
+        secondary: loaded[1],
+      ),
     );
+  }
+
+  Future<void> _showExportResult(
+    BuildContext context,
+    GeneratedReportFile file,
+    ReportFileService fileService, {
+    Uint8List? pdfBytes,
+  }) async {
+    // Phone / narrow screens: preview A4 sheet scaled to fit the viewport.
+    final useA4PhonePreview = pdfBytes != null &&
+        !file.path.startsWith('download://') &&
+        (DashboardBreakpoints.isMobile(context) ||
+            MediaQuery.sizeOf(context).shortestSide < 700);
+
+    if (useA4PhonePreview) {
+      await Navigator.of(context, rootNavigator: true).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => PdfReportPreviewScreen(
+            bytes: pdfBytes,
+            filename: file.filename,
+            savedFile: file,
+            fileService: fileService,
+          ),
+        ),
+      );
+      return;
+    }
+
+    await _showSuccessDialog(context, file, fileService);
   }
 
   Future<void> _showSuccessDialog(
@@ -231,6 +344,7 @@ class ReportExportController {
   ) async {
     await showDialog<void>(
       context: context,
+      useRootNavigator: true,
       builder: (dialogContext) => AlertDialog(
         title: const Text('Report ready'),
         content: Text(
@@ -243,6 +357,16 @@ class ReportExportController {
             onPressed: () => Navigator.of(dialogContext).pop(),
             child: const Text('Close'),
           ),
+          if (!file.path.startsWith('download://') &&
+              file.format == ReportFormat.pdf)
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                // Desktop/tablet: optional open in system viewer.
+                await fileService.openReport(file);
+              },
+              child: const Text('Open'),
+            ),
           if (!file.path.startsWith('download://'))
             TextButton(
               onPressed: () async {
@@ -258,7 +382,8 @@ class ReportExportController {
               },
               child: const Text('Share'),
             ),
-          if (!file.path.startsWith('download://'))
+          if (!file.path.startsWith('download://') &&
+              file.format != ReportFormat.pdf)
             FilledButton(
               onPressed: () async {
                 final result = await fileService.openReport(file);

@@ -12,6 +12,221 @@ import 'meter_detail_screen.dart';
 import 'meter_form_screen.dart';
 import 'site_cop_groups_screen.dart';
 import 'sites_tab.dart';
+import 'targets_admin_screen.dart';
+import 'baselines_admin_screen.dart';
+import 'virtual_meters_admin_screen.dart';
+import 'balance_groups_admin_screen.dart';
+import 'site_conservation_profile_admin_screen.dart';
+import 'opportunities_admin_screen.dart';
+import 'actions_admin_screen.dart';
+import 'mv_admin_screen.dart';
+import 'tariffs_admin_screen.dart';
+import 'portfolio_conservation_screen.dart';
+
+final _siteConservationTargetsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.targets,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationBaselinesUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.baseline,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationVirtualMetersUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.virtualMeters,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationBalanceGroupsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  final water = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.waterBalance,
+    siteId: siteId,
+  );
+  if (water) return true;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.energyBalance,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationProfileUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  final benchmarking = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.benchmarking,
+    siteId: siteId,
+  );
+  if (benchmarking) return true;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.intensity,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationOpportunitiesUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.opportunities,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationActionsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final opportunitiesOn =
+      await ref.watch(_siteConservationOpportunitiesUiProvider(siteId).future);
+  if (!opportunitiesOn) return false;
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.actions,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationMvUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  final estimation = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.savingsEstimation,
+    siteId: siteId,
+  );
+  if (estimation) return true;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.savingsVerification,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationTariffsUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.costRoi,
+    siteId: siteId,
+  );
+});
+
+final _siteConservationPortfolioUiProvider =
+    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
+  final site = await ref.watch(adminSiteProvider(siteId).future);
+  final flags = ConservationFeatureFlagRepository(
+    ref.read(supabaseClientProvider),
+  );
+  final module = await flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.conservationModule,
+    siteId: siteId,
+  );
+  if (!module) return false;
+  return flags.isEnabled(
+    organizationId: site.organizationId,
+    flagKey: ConservationFeatureFlags.portfolioOptimization,
+    siteId: siteId,
+  );
+});
 
 class SiteDetailScreen extends ConsumerWidget {
   const SiteDetailScreen({super.key, required this.siteId});
@@ -76,6 +291,209 @@ class SiteDetailScreen extends ConsumerWidget {
                   icon: const Icon(Icons.speed_outlined),
                   label: Text(s.copEerGroups),
                 ),
+              // Conservation targets: link only when module + targets flags ON.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationTargetsUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => TargetsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.track_changes_outlined),
+                  label: Text(s.conservationTargets),
+                ),
+              ],
+              // Conservation baselines: link only when module + baseline flags ON.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationBaselinesUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => BaselinesAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.insights_outlined),
+                  label: Text(s.conservationBaselines),
+                ),
+              ],
+              // Virtual meters: link only when module + virtual_meters flags ON.
+              if (canManageMeters &&
+                  (ref
+                          .watch(
+                            _siteConservationVirtualMetersUiProvider(siteId),
+                          )
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            VirtualMetersAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.account_tree_outlined),
+                  label: Text(s.virtualMeters),
+                ),
+              ],
+              // Balance groups: module + water_balance OR energy_balance.
+              if (canManageMeters &&
+                  (ref
+                          .watch(
+                            _siteConservationBalanceGroupsUiProvider(siteId),
+                          )
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            BalanceGroupsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.account_balance_outlined),
+                  label: Text(s.balanceGroups),
+                ),
+              ],
+              // Site conservation profile: module + benchmarking OR intensity.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationProfileUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => SiteConservationProfileAdminScreen(
+                          siteId: site.id,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.apartment_outlined),
+                  label: Text(s.siteConservationProfile),
+                ),
+              ],
+              // Opportunities: module + opportunities.
+              if (canManageMeters &&
+                  (ref
+                          .watch(
+                            _siteConservationOpportunitiesUiProvider(siteId),
+                          )
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) =>
+                            OpportunitiesAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.lightbulb_outline),
+                  label: Text(s.conservationOpportunities),
+                ),
+              ],
+              // Actions: module + opportunities + actions.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationActionsUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => ActionsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.task_alt_outlined),
+                  label: Text(s.conservationActions),
+                ),
+              ],
+              // M&V: module + savings_estimation OR savings_verification.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationMvUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => MvAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.verified_outlined),
+                  label: Text(s.measurementVerification),
+                ),
+              ],
+              // Tariffs: module + cost_roi.
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationTariffsUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => TariffsAdminScreen(siteId: site.id),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.payments_outlined),
+                  label: Text(s.utilityTariffs),
+                ),
+              ],
+              // Portfolio: module + portfolio_optimization (org-level screen).
+              if (canManageMeters &&
+                  (ref
+                          .watch(_siteConservationPortfolioUiProvider(siteId))
+                          .valueOrNull ??
+                      false)) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => PortfolioConservationScreen(
+                          organizationId: site.organizationId,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.account_tree_outlined),
+                  label: Text(s.conservationPortfolio),
+                ),
+              ],
               if (ref.watch(canEditReportLogoSecondaryProvider)) ...[
                 const SizedBox(height: 16),
                 Card(

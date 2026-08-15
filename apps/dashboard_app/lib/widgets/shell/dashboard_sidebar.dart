@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../../l10n/app_strings.dart';
+import '../../providers/conservation_providers.dart';
 import '../../providers/dashboard_providers.dart';
 import '../../providers/locale_provider.dart';
 import '../../providers/shell_providers.dart';
@@ -38,6 +39,12 @@ class DashboardSidebar extends ConsumerWidget {
     final profile = ref.watch(authProvider).profile;
     final selectedSiteId = ref.watch(selectedSiteIdProvider);
     final siteSection = ref.watch(siteDashboardSectionProvider);
+    final conservationVisible = selectedSiteId == null
+        ? false
+        : (ref
+                .watch(conservationSectionVisibleProvider(selectedSiteId))
+                .valueOrNull ??
+            false);
     final shellSection = ref.watch(dashboardShellSectionProvider);
     final s = AppStrings(ref.watch(localeProvider));
     final siteSummary = selectedSiteId == null
@@ -286,6 +293,21 @@ class DashboardSidebar extends ConsumerWidget {
                               enabled: true,
                               onTap: () => openSiteSection(item.section),
                             ),
+                          if (conservationVisible) ...[
+                            if (!collapsed)
+                              _SidebarGroupLabel(label: s.conservation),
+                            _SidebarItem(
+                              icon: Icons.eco_rounded,
+                              label: s.conservation,
+                              collapsed: collapsed,
+                              selected: siteSection ==
+                                  SiteDashboardSection.conservation,
+                              enabled: true,
+                              onTap: () => openSiteSection(
+                                SiteDashboardSection.conservation,
+                              ),
+                            ),
+                          ],
                         ],
                         if (!collapsed) _SidebarGroupLabel(label: s.reports),
                         _SidebarItem(

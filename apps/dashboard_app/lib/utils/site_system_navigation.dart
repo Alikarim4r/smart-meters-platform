@@ -13,6 +13,8 @@ enum SiteDashboardSection {
   network,
   alerts,
   reports,
+  /// Gated Conservation (P1B+). Hidden unless feature flags allow.
+  conservation,
 }
 
 extension SiteDashboardSectionMeta on SiteDashboardSection {
@@ -25,6 +27,7 @@ extension SiteDashboardSectionMeta on SiteDashboardSection {
         SiteDashboardSection.network => 'Network',
         SiteDashboardSection.alerts => 'Alerts',
         SiteDashboardSection.reports => 'Reports',
+        SiteDashboardSection.conservation => 'Conservation',
       };
 
   IconData get icon => switch (this) {
@@ -36,6 +39,7 @@ extension SiteDashboardSectionMeta on SiteDashboardSection {
         SiteDashboardSection.network => Icons.hub_outlined,
         SiteDashboardSection.alerts => Icons.notifications_outlined,
         SiteDashboardSection.reports => Icons.summarize_outlined,
+        SiteDashboardSection.conservation => Icons.eco_outlined,
       };
 
   UtilitySystemKey? get utilityKey => switch (this) {
@@ -60,19 +64,38 @@ const mainSiteDashboardSections = [
   SiteDashboardSection.reports,
 ];
 
-/// Desktop sidebar / rail sections.
+/// Desktop sidebar / rail sections (default — no Conservation).
 const desktopSiteDashboardSections = mainSiteDashboardSections;
 
-/// Mobile horizontal utility chips.
+/// Mobile horizontal utility chips (default — no Conservation).
 const mobileSiteDashboardSections = mainSiteDashboardSections;
+
+/// Visible sections given Conservation gate (module + any P1/P2 child flag).
+/// Default lists are unchanged when [conservationVisible] is false.
+List<SiteDashboardSection> siteDashboardSectionsForFlags({
+  required bool conservationVisible,
+}) {
+  if (!conservationVisible) return mainSiteDashboardSections;
+  return [
+    ...mainSiteDashboardSections.where((s) => s != SiteDashboardSection.reports),
+    SiteDashboardSection.conservation,
+    SiteDashboardSection.reports,
+  ];
+}
 
 /// Network is retained in the enum for legacy code but hidden from navigation.
 bool isNetworkSectionVisible(SiteDashboardSection section) =>
     section != SiteDashboardSection.network;
 
-SiteDashboardSection normalizeSiteDashboardSection(SiteDashboardSection section) {
+SiteDashboardSection normalizeSiteDashboardSection(
+  SiteDashboardSection section, {
+  bool conservationVisible = false,
+}) {
   if (section == SiteDashboardSection.network) {
     return SiteDashboardSection.water;
+  }
+  if (section == SiteDashboardSection.conservation && !conservationVisible) {
+    return SiteDashboardSection.overview;
   }
   return section;
 }

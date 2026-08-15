@@ -8,7 +8,6 @@ import '../../providers/dashboard_providers.dart';
 import '../../providers/meter_reading_card_providers.dart';
 import '../../theme/design_system/dashboard_design_system.dart';
 import '../../utils/chart_period_selection.dart';
-import '../../utils/dashboard_date_range.dart';
 import '../../utils/meter_reading_filters.dart';
 import '../../utils/site_system_navigation.dart';
 import '../../widgets/chart/chart_type_selector.dart';
@@ -90,10 +89,10 @@ class UtilitySystemPanel extends ConsumerWidget {
       );
       ref.invalidate(meterReadingCardsRawProvider(meterQuery.dataQuery));
       if (categorySummary != null) {
-        final periodState = chartPeriodStateForDateSelection(dateSelection) ??
-            const UtilityChartPeriodState(
-              kind: UtilityChartPeriodKind.last30Days,
-            );
+        const periodState = UtilityChartPeriodState(
+          kind: UtilityChartPeriodKind.last7Days,
+          preferChipOverCustomRange: true,
+        );
         ref.invalidate(
           categoryChartBundleProvider(
             CategoryChartQuery(
@@ -101,11 +100,10 @@ class UtilitySystemPanel extends ConsumerWidget {
               categoryId: categorySummary.category.id,
               periodState: periodState,
               businessDate: dateSelection.chartBusinessDate,
-              rangeOverride: chartRangeForDateSelection(dateSelection) ??
-                  resolveUtilityChartPeriodRange(
-                    state: periodState,
-                    anchorDate: dateSelection.chartBusinessDate,
-                  ),
+              rangeOverride: resolveUtilityChartPeriodRange(
+                state: periodState,
+                anchorDate: dateSelection.chartBusinessDate,
+              ),
             ),
           ),
         );
@@ -222,16 +220,8 @@ class UtilitySystemPanel extends ConsumerWidget {
                   onDateSelectionChanged: (value) {
                     ref.read(siteDateSelectionProvider(siteId).notifier).state =
                         value;
-                    final matched = chartPeriodStateForDateSelection(value);
-                    if (matched != null) {
-                      final periodKey = utilityChartPeriodKey(
-                        siteId: siteId,
-                        categoryCode: system.categoryCode,
-                      );
-                      ref
-                          .read(utilityChartPeriodProvider(periodKey).notifier)
-                          .state = matched;
-                    }
+                    // Charts keep their own period chips (default last 7 days).
+                    // Do not sync long meter date ranges into the chart query.
                   },
                   useDesktop: useDesktop,
                 ),

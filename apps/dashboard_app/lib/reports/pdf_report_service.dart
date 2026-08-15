@@ -80,106 +80,118 @@ class PdfReportService {
         build: (context) => [
           _header(bundle.meta),
           pw.SizedBox(height: 12),
-          _summaryCards(bundle),
-          pw.SizedBox(height: 16),
-          if (includeCharts) ...[
-            if (bundle.consumptionTrend.hasData) ...[
-              _sectionTitle('Consumption charts'),
-              for (final series in bundle.consumptionTrend.series)
-                if (series.hasData) ...[
-                  pw.Text(
-                    sanitizePdfText(series.categoryName),
-                    style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
+          if (type == ReportType.conservation) ...[
+            _conservationSection(bundle),
+          ] else ...[
+            _summaryCards(bundle),
+            pw.SizedBox(height: 16),
+            if (includeCharts) ...[
+              if (bundle.consumptionTrend.hasData) ...[
+                _sectionTitle('Consumption charts'),
+                for (final series in bundle.consumptionTrend.series)
+                  if (series.hasData) ...[
+                    pw.Text(
+                      sanitizePdfText(series.categoryName),
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  _barChart(
-                    points: [
-                      for (final p in series.points)
-                        (formatBusinessDate(p.date), p.value),
-                    ],
-                    color: PdfColors.blue700,
-                  ),
-                  pw.SizedBox(height: 12),
-                ],
-            ],
-            if (bundle.copResults.isNotEmpty) ...[
-              _sectionTitle('COP / EER charts'),
-              for (final result in bundle.copResults)
-                if (result.hasData) ...[
-                  pw.Text(
-                    sanitizePdfText(result.copGroupName),
-                    style: pw.TextStyle(
-                      fontSize: 10,
-                      fontWeight: pw.FontWeight.bold,
+                    pw.SizedBox(height: 4),
+                    _barChart(
+                      points: [
+                        for (final p in series.points)
+                          (formatBusinessDate(p.date), p.value),
+                      ],
+                      color: PdfColors.blue700,
                     ),
-                  ),
-                  pw.SizedBox(height: 4),
-                  _barChart(
-                    points: [
-                      for (final p in result.points)
-                        if (p.cop != null) (formatBusinessDate(p.date), p.cop!),
-                    ],
-                    color: PdfColors.purple700,
-                    label: 'COP',
-                  ),
-                  pw.SizedBox(height: 8),
-                  _barChart(
-                    points: [
-                      for (final p in result.points)
-                        if ((p.eer ?? (p.cop == null ? null : p.cop! * 3.412)) !=
-                            null)
-                          (
-                            formatBusinessDate(p.date),
-                            p.eer ?? p.cop! * 3.412,
-                          ),
-                    ],
-                    color: PdfColors.teal700,
-                    label: 'EER',
-                  ),
-                  pw.SizedBox(height: 12),
-                ],
+                    pw.SizedBox(height: 12),
+                  ],
+              ],
+              if (bundle.copResults.isNotEmpty) ...[
+                _sectionTitle('COP / EER charts'),
+                for (final result in bundle.copResults)
+                  if (result.hasData) ...[
+                    pw.Text(
+                      sanitizePdfText(result.copGroupName),
+                      style: pw.TextStyle(
+                        fontSize: 10,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    pw.SizedBox(height: 4),
+                    _barChart(
+                      points: [
+                        for (final p in result.points)
+                          if (p.cop != null) (formatBusinessDate(p.date), p.cop!),
+                      ],
+                      color: PdfColors.purple700,
+                      label: 'COP',
+                    ),
+                    pw.SizedBox(height: 8),
+                    _barChart(
+                      points: [
+                        for (final p in result.points)
+                          if ((p.eer ?? (p.cop == null ? null : p.cop! * 3.412)) !=
+                              null)
+                            (
+                              formatBusinessDate(p.date),
+                              p.eer ?? p.cop! * 3.412,
+                            ),
+                      ],
+                      color: PdfColors.teal700,
+                      label: 'EER',
+                    ),
+                    pw.SizedBox(height: 12),
+                  ],
+              ],
+              pw.SizedBox(height: 8),
             ],
-            pw.SizedBox(height: 8),
-          ],
-          if (type == ReportType.siteSummary ||
-              type == ReportType.consumption ||
-              type == ReportType.categoryConsumption) ...[
-            _sectionTitle('Category Summary'),
-            _categoryTable(bundle),
-            pw.SizedBox(height: 16),
-          ],
-          if (type == ReportType.siteSummary ||
-              type == ReportType.consumption ||
-              type == ReportType.readings) ...[
-            _sectionTitle('Meter Summary'),
-            _meterTable(bundle),
-            pw.SizedBox(height: 16),
-          ],
-          if (type == ReportType.consumption ||
-              type == ReportType.categoryConsumption ||
-              type == ReportType.siteSummary) ...[
-            _sectionTitle('Consumption by Category'),
-            _consumptionTable(bundle),
-            pw.SizedBox(height: 16),
-            _sectionTitle('Top Meters by Consumption'),
-            _rankingTable(bundle),
-            pw.SizedBox(height: 16),
-          ],
-          if (type == ReportType.readings || type == ReportType.siteSummary) ...[
-            _sectionTitle('Recent Readings'),
-            _readingsTable(bundle, includePhotos: includePhotos),
-            pw.SizedBox(height: 16),
-          ],
-          if (type == ReportType.cop || type == ReportType.siteSummary) ...[
-            _sectionTitle('COP Groups'),
-            _copSection(bundle),
-          ],
-          if (bundle.meta.includeAlertsSection) ...[
-            _sectionTitle('Active Alerts'),
-            _alertsSection(bundle.alerts),
+            if (type == ReportType.siteSummary ||
+                type == ReportType.consumption ||
+                type == ReportType.categoryConsumption) ...[
+              _sectionTitle('Category Summary'),
+              _categoryTable(bundle),
+              pw.SizedBox(height: 16),
+            ],
+            if (type == ReportType.siteSummary ||
+                type == ReportType.consumption ||
+                type == ReportType.readings) ...[
+              _sectionTitle('Meter Summary'),
+              _meterTable(bundle),
+              pw.SizedBox(height: 16),
+            ],
+            if (type == ReportType.consumption ||
+                type == ReportType.categoryConsumption ||
+                (type == ReportType.siteSummary && includeCharts)) ...[
+              _sectionTitle('Consumption by Category'),
+              _consumptionTable(bundle),
+              pw.SizedBox(height: 16),
+              _sectionTitle('Top Meters by Consumption'),
+              _rankingTable(bundle),
+              pw.SizedBox(height: 16),
+            ],
+            if (type == ReportType.readings ||
+                (type == ReportType.siteSummary &&
+                    bundle.readings.isNotEmpty)) ...[
+              _sectionTitle('Recent Readings'),
+              _readingsTable(bundle, includePhotos: includePhotos),
+              pw.SizedBox(height: 16),
+            ],
+            if (type == ReportType.cop ||
+                (type == ReportType.siteSummary &&
+                    bundle.copResults.isNotEmpty)) ...[
+              _sectionTitle('COP Groups'),
+              _copSection(bundle),
+            ],
+            if (bundle.conservation != null) ...[
+              pw.SizedBox(height: 16),
+              _conservationSection(bundle),
+            ],
+            if (bundle.meta.includeAlertsSection) ...[
+              _sectionTitle('Active Alerts'),
+              _alertsSection(bundle.alerts),
+            ],
           ],
         ],
       ),
@@ -516,6 +528,84 @@ class PdfReportService {
             if (includePhotos) row.hasPhoto ? 'Yes' : 'No',
             row.reading.note ?? '',
           ],
+      ],
+    );
+  }
+
+  pw.Widget _conservationSection(SiteReportBundle bundle) {
+    final cons = bundle.conservation;
+    return pw.Column(
+      crossAxisAlignment: pw.CrossAxisAlignment.start,
+      children: [
+        _sectionTitle('Conservation — Measurement & Verification'),
+        pw.Text(
+          sanitizePdfText(
+            'Potential Excess ≠ Estimated Saving ≠ Verified Saving. '
+            'Verified totals include status=verified only.',
+          ),
+          style: const pw.TextStyle(fontSize: 8, color: PdfColors.grey700),
+        ),
+        pw.SizedBox(height: 8),
+        if (cons == null)
+          _emptyNote('No conservation M&V data for this export.')
+        else ...[
+          _table(
+            headers: const ['Metric', 'Value'],
+            rows: [
+              [
+                ConservationSavingLabels.estimatedSaving,
+                cons.estimatedSavingTotal.toStringAsFixed(2),
+              ],
+              [
+                ConservationSavingLabels.verifiedSaving,
+                cons.verifiedSavingTotal.toStringAsFixed(2),
+              ],
+              [
+                'Cost Avoided',
+                cons.costAvoidedTotal == null
+                    ? ConservationSavingLabels.costAvoidedNa
+                    : cons.costAvoidedTotal!.toStringAsFixed(2),
+              ],
+              [
+                'Verification Pending',
+                '${cons.verificationPendingCount}',
+              ],
+            ],
+          ),
+          pw.SizedBox(height: 12),
+          if (cons.records.isEmpty)
+            _emptyNote('No M&V records.')
+          else
+            _table(
+              headers: const [
+                'Utility',
+                'Status',
+                'Estimated',
+                'Verified',
+                'Cost Avoided',
+                'Confidence',
+              ],
+              rows: [
+                for (final row in cons.records.take(80))
+                  if (row.status != MvStatus.superseded &&
+                      row.status != MvStatus.archived)
+                    [
+                      row.utilityType,
+                      row.status.dbValue,
+                      row.estimatedSavingQuantity?.toStringAsFixed(2) ?? '—',
+                      row.status == MvStatus.verified
+                          ? (row.verifiedSavingQuantity?.toStringAsFixed(2) ??
+                              '—')
+                          : '—',
+                      row.costAvoided == null
+                          ? ConservationSavingLabels.costAvoidedNa
+                          : '${row.costAvoided!.toStringAsFixed(2)} '
+                              '${row.costCurrency ?? 'QAR'}',
+                      '${row.confidenceScore}',
+                    ],
+              ],
+            ),
+        ],
       ],
     );
   }

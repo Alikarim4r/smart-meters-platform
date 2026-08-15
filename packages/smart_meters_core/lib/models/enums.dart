@@ -271,24 +271,61 @@ enum MeterUnit {
   liter('liter'),
   dm3('dm3'),
   gallon('gallon'),
+  ml('ml'),
+  cm3('cm3'),
+  galImp('gal_imp'),
+  ft3('ft3'),
+  yd3('yd3'),
+  bbl('bbl'),
+  acreFt('acre_ft'),
+  megalitre('megalitre'),
   kwh('kwh'),
   mwh('mwh'),
   wh('wh'),
   kvah('kvah'),
+  gwh('gwh'),
+  joule('j'),
+  kj('kj'),
+  mj('mj'),
+  kcal('kcal'),
+  mvah('mvah'),
+  therm('therm'),
   kwhThermal('kwh_thermal'),
   btu('btu'),
   tonHour('ton_hour'),
   rtHour('rt_hour'),
-  gj('gj');
+  gj('gj'),
+  kbtu('kbtu'),
+  mmbtu('mmbtu'),
+  whThermal('wh_thermal'),
+  usPint('us_pint'),
+  usQuart('us_quart'),
+  hectolitre('hectolitre'),
+  imperialPint('imperial_pint');
 
   const MeterUnit(this.dbValue);
 
   final String dbValue;
 
   static MeterUnit fromDb(String value) {
+    final normalized = value.trim().toLowerCase();
     return MeterUnit.values.firstWhere(
-      (unit) => unit.dbValue == value,
-      orElse: () => throw ArgumentError('Unknown meter_unit: $value'),
+      (unit) => unit.dbValue == normalized,
+      orElse: () {
+        // Unknown catalog unit: keep meter readable; UI prefers unitConfig label.
+        switch (normalized) {
+          case 'l':
+          case 'litre':
+            return MeterUnit.liter;
+          case 'gal_us':
+          case 'us_gal':
+            return MeterUnit.gallon;
+          case 'ml_fuel':
+            return MeterUnit.ml;
+          default:
+            return MeterUnit.m3;
+        }
+      },
     );
   }
 
@@ -299,9 +336,25 @@ enum MeterUnit {
       case MeterUnit.liter:
         return 'L';
       case MeterUnit.dm3:
-        return 'Dm3';
+        return 'dm³';
       case MeterUnit.gallon:
-        return 'gal';
+        return 'gal (US)';
+      case MeterUnit.ml:
+        return 'mL';
+      case MeterUnit.cm3:
+        return 'cm³';
+      case MeterUnit.galImp:
+        return 'gal (imp)';
+      case MeterUnit.ft3:
+        return 'ft³';
+      case MeterUnit.yd3:
+        return 'yd³';
+      case MeterUnit.bbl:
+        return 'bbl';
+      case MeterUnit.acreFt:
+        return 'acre-ft';
+      case MeterUnit.megalitre:
+        return 'ML';
       case MeterUnit.kwh:
         return 'kWh';
       case MeterUnit.mwh:
@@ -310,6 +363,20 @@ enum MeterUnit {
         return 'Wh';
       case MeterUnit.kvah:
         return 'kVAh';
+      case MeterUnit.gwh:
+        return 'GWh';
+      case MeterUnit.joule:
+        return 'J';
+      case MeterUnit.kj:
+        return 'kJ';
+      case MeterUnit.mj:
+        return 'MJ';
+      case MeterUnit.kcal:
+        return 'kcal';
+      case MeterUnit.mvah:
+        return 'MVAh';
+      case MeterUnit.therm:
+        return 'therm';
       case MeterUnit.kwhThermal:
         return 'kWh (thermal)';
       case MeterUnit.btu:
@@ -320,6 +387,20 @@ enum MeterUnit {
         return 'RT-hr';
       case MeterUnit.gj:
         return 'GJ';
+      case MeterUnit.kbtu:
+        return 'kBTU';
+      case MeterUnit.mmbtu:
+        return 'MMBtu';
+      case MeterUnit.whThermal:
+        return 'Wh (thermal)';
+      case MeterUnit.usPint:
+        return 'pt (US)';
+      case MeterUnit.usQuart:
+        return 'qt (US)';
+      case MeterUnit.hectolitre:
+        return 'hL';
+      case MeterUnit.imperialPint:
+        return 'pt (imp)';
     }
   }
 }

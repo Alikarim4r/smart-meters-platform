@@ -47,6 +47,28 @@ class EntryStrings {
   String get saving => _t('Saving…', 'جارٍ الحفظ…');
   String get retry => _t('Retry', 'إعادة المحاولة');
 
+  // Phase 6 — reading source badge (shown only when unified_ingestion is ON)
+  String get source => _t('Source', 'المصدر');
+  String readingSourceLabel(String sourceKey) {
+    final key = sourceKey.trim().toLowerCase();
+    final label = switch (key) {
+      'manual' => _t('Manual', 'يدوي'),
+      'manual_photo' => _t('Manual + Photo', 'يدوي مع صورة'),
+      'csv_import' => _t('CSV Import', 'استيراد CSV'),
+      'excel_import' => _t('Excel Import', 'استيراد Excel'),
+      'api' => _t('API', 'واجهة برمجة'),
+      'smart_meter' => _t('Smart Meter', 'عداد ذكي'),
+      'bms' => _t('BMS', 'نظام إدارة المباني'),
+      'iot' => _t('IoT', 'إنترنت الأشياء'),
+      'virtual' => _t('Virtual', 'افتراضي'),
+      'legacy' => _t('Legacy', 'قديم'),
+      'ocr_photo' =>
+          _t('OCR (suggested)', 'تعرّف ضوئي على الحروف (مقترح)'),
+      _ => sourceKey,
+    };
+    return _t('Source: $label', 'المصدر: $label');
+  }
+
   // Shell / navigation ---------------------------------------------------------
   String get entryHeaderTitle =>
       _t('Meter Reading Entry', 'إدخال قراءات العدادات');
@@ -106,6 +128,10 @@ class EntryStrings {
       );
   String get clear => _t('Clear', 'مسح');
   String get camera => _t('Camera', 'الكاميرا');
+  String get photoPickCancelled => _t(
+        'No photo selected. Try Camera or Gallery again.',
+        'لم يتم اختيار صورة. جرّب الكاميرا أو المعرض مرة أخرى.',
+      );
   String get gallery => _t('Gallery', 'الاستوديو');
   String get viewPhoto => _t('View photo', 'عرض الصورة');
   String get replaceCamera => _t('Replace (camera)', 'استبدال (كاميرا)');

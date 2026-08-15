@@ -1,5 +1,6 @@
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../photos/meter_photo_watermark.dart';
 import 'cached_meter.dart';
 import 'local_reading_draft.dart';
 
@@ -19,6 +20,7 @@ class OfflineStorageService {
     await _openBox(_metersBoxName);
     await _openBox(_sitesBoxName);
     await _openBox(_metaBoxName);
+    await _openBox(readingPhotoBytesBoxName);
   }
 
   /// Reuse an already-open box (hot restart) and retry once on lock contention
@@ -134,5 +136,47 @@ class OfflineStorageService {
 
   Future<void> setLastSyncTime(DateTime time) async {
     await _metaBox.put('lastSyncTime', time.toIso8601String());
+  }
+
+  Future<void> cacheCategories({
+    required String siteId,
+    required List<Map<String, dynamic>> categories,
+  }) async {
+    await _metaBox.put('categories::$siteId', categories);
+  }
+
+  List<Map<String, dynamic>> getCachedCategories(String siteId) {
+    final raw = _metaBox.get('categories::$siteId');
+    if (raw is! List) return const [];
+    return raw
+        .map((item) => Map<String, dynamic>.from(item as Map))
+        .toList();
+  }
+
+  Future<void> cacheSitePolicy({
+    required String siteId,
+    required Map<String, dynamic> policy,
+  }) async {
+    await _metaBox.put('policy::$siteId', policy);
+  }
+
+  Map<String, dynamic>? getCachedSitePolicy(String siteId) {
+    final raw = _metaBox.get('policy::$siteId');
+    if (raw is! Map) return null;
+    return Map<String, dynamic>.from(raw);
+  }
+
+  Future<void> cacheProfile(Map<String, dynamic> profile) async {
+    await _metaBox.put('profile', profile);
+  }
+
+  Map<String, dynamic>? getCachedProfile() {
+    final raw = _metaBox.get('profile');
+    if (raw is! Map) return null;
+    return Map<String, dynamic>.from(raw);
+  }
+
+  Future<void> clearCachedProfile() async {
+    await _metaBox.delete('profile');
   }
 }

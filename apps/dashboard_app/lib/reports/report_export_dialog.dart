@@ -13,9 +13,9 @@ Future<ReportExportOptions?> showReportExportDialog({
 }) async {
   var type = defaultType;
   var format = ReportFormat.pdf;
-  var period = defaultPeriod ?? ChartPeriod.last30Days;
+  var period = defaultPeriod ?? ChartPeriod.weekly;
   var includePhotos = false;
-  var includeCharts = true;
+  var includeCharts = false;
   var useDashboardRange = defaultDateSelection != null;
   var dateSelection = defaultDateSelection ??
       DashboardDateSelection.forPreset(
@@ -150,7 +150,7 @@ Future<ReportExportOptions?> showReportExportDialog({
                       contentPadding: EdgeInsets.zero,
                       title: const Text('Include charts'),
                       subtitle: const Text(
-                        'Bar charts for the selected date range in the PDF',
+                        'Slower — loads full-period consumption for chart/ranking sections',
                       ),
                       value: includeCharts,
                       onChanged: (value) =>
@@ -202,6 +202,7 @@ List<ReportFormat> _formatsForType(ReportType type) {
     ReportType.consumption => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.categoryConsumption => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.cop => [ReportFormat.excel, ReportFormat.pdf],
+    ReportType.conservation => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.allSitesSummary => [ReportFormat.excel, ReportFormat.pdf],
     ReportType.siteSummary => [ReportFormat.pdf, ReportFormat.excel],
   };

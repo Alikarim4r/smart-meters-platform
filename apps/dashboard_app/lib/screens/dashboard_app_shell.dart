@@ -16,6 +16,7 @@ import '../utils/dashboard_date_range.dart';
 import '../utils/site_system_navigation.dart';
 import '../widgets/premium/dashboard_background.dart';
 import '../providers/shell_providers.dart';
+import '../services/dashboard_notification_bridge.dart';
 import '../widgets/shell/dashboard_alert_bell.dart';
 import '../widgets/shell/dashboard_keyboard_shortcuts.dart';
 import '../widgets/shell/dashboard_sidebar.dart';
@@ -32,7 +33,9 @@ class DashboardAppShell extends ConsumerWidget {
       return PartnerLinkListener(
         expectedScheme: PartnerAppLinks.dashboardScheme,
         onLink: (intent) => applyDashboardPartnerLink(ref, intent),
-        child: const _MobileDashboardShell(),
+        child: const DashboardNotificationBridge(
+          child: _MobileDashboardShell(),
+        ),
       );
     }
 
@@ -65,7 +68,7 @@ class DashboardAppShell extends ConsumerWidget {
         onSiteSelected: (siteId) {
           ref.read(selectedSiteIdProvider.notifier).state = siteId;
           ref.read(siteDashboardSectionProvider.notifier).state =
-              SiteDashboardSection.water;
+              SiteDashboardSection.overview;
           ref.read(siteDateSelectionProvider(siteId).notifier).state =
               defaultDateSelectionForSite(
             siteId,
@@ -78,7 +81,8 @@ class DashboardAppShell extends ConsumerWidget {
     return PartnerLinkListener(
       expectedScheme: PartnerAppLinks.dashboardScheme,
       onLink: (intent) => applyDashboardPartnerLink(ref, intent),
-      child: DashboardKeyboardShortcuts(
+      child: DashboardNotificationBridge(
+        child: DashboardKeyboardShortcuts(
         onRefresh: refreshCurrent,
         onFocusSearch: () =>
             ref.read(meterSearchFocusNodeProvider).requestFocus(),
@@ -119,6 +123,7 @@ class DashboardAppShell extends ConsumerWidget {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -157,7 +162,7 @@ class _MobileDashboardShell extends ConsumerWidget {
     void openSite(String siteId) {
       ref.read(selectedSiteIdProvider.notifier).state = siteId;
       ref.read(siteDashboardSectionProvider.notifier).state =
-          SiteDashboardSection.water;
+          SiteDashboardSection.overview;
       ref.read(siteDateSelectionProvider(siteId).notifier).state =
           defaultDateSelectionForSite(
         siteId,

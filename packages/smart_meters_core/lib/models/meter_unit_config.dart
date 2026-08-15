@@ -25,15 +25,22 @@ class MeterUnitConfig {
 
   factory MeterUnitConfig.fromJson(Map<String, dynamic> json) {
     return MeterUnitConfig(
-      id: json['id'] as String,
-      categoryId: json['category_id'] as String,
-      code: json['code'] as String,
-      nameEn: json['name_en'] as String,
-      nameAr: json['name_ar'] as String?,
-      unitToBaseFactor: (json['unit_to_base_factor'] as num).toDouble(),
+      id: json['id']?.toString() ?? '',
+      categoryId: json['category_id']?.toString() ?? '',
+      code: json['code']?.toString() ?? '',
+      nameEn: json['name_en']?.toString() ?? '',
+      nameAr: json['name_ar']?.toString(),
+      unitToBaseFactor: _toDouble(json['unit_to_base_factor']),
       isBase: json['is_base'] as bool? ?? false,
       isActive: json['is_active'] as bool? ?? true,
-      sortOrder: json['sort_order'] as int? ?? 0,
+      // PostgREST may decode ints as num.
+      sortOrder: (json['sort_order'] as num?)?.toInt() ?? 0,
     );
+  }
+
+  static double _toDouble(dynamic value) {
+    if (value is num) return value.toDouble();
+    if (value is String) return double.tryParse(value) ?? 1;
+    return 1;
   }
 }

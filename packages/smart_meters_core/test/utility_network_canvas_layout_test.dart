@@ -101,10 +101,14 @@ void main() {
       placements: [_place('a', 100, 200), _place('b', 400, 500)],
     );
     final bounds = utilityNetworkFitBounds(snapshot, 'campus', padding: 20);
+    // Meters render as circles sized by kUtilityNetworkMeterSize (112).
+    // right  = max(posX)+size+padding = 400+112+20 = 532
+    // bottom = max(posY)+size+padding = 500+112+20 = 632
+    // (Older expectations 590/606 assumed the legacy 170×86 card size.)
     expect(bounds.left, 80);
     expect(bounds.top, 180);
-    expect(bounds.right, 590);
-    expect(bounds.bottom, 606);
+    expect(bounds.right, 532);
+    expect(bounds.bottom, 632);
   });
 
   test('fit matrix keeps readable min scale', () {

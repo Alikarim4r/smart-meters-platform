@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../../l10n/app_strings.dart';
+import '../../providers/conservation_providers.dart';
 import '../../providers/dashboard_providers.dart';
 import '../../reports/report_export_controller.dart';
 import '../../reports/report_models.dart';
@@ -23,8 +25,13 @@ class SiteReportsPanel extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final s = AppStrings.of(context);
     final padding = DashboardBreakpoints.contentPadding(context);
     final categoriesAsync = ref.watch(siteCategoriesSummaryProvider(siteId));
+    final conservationReportsOn = ref
+            .watch(conservationReportsEnabledProvider(siteId))
+            .valueOrNull ??
+        false;
 
     return categoriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
@@ -33,14 +40,13 @@ class SiteReportsPanel extends ConsumerWidget {
         return ListView(
           padding: EdgeInsets.all(padding),
           children: [
-            const PremiumSectionHeader(
-              title: 'Reports',
-              subtitle:
-                  'Export site overview or utility-specific reports. Full report uses clearly separated sections.',
+            PremiumSectionHeader(
+              title: s.reportsPanelTitle,
+              subtitle: s.reportsPanelSubtitle,
             ),
             _ReportTile(
-              title: 'Site overview',
-              subtitle: 'Operational summary PDF/Excel',
+              title: s.reportSiteOverview,
+              subtitle: s.reportSiteOverviewSubtitle,
               icon: Icons.dashboard_outlined,
               onTap: () => _export(
                 context,
@@ -51,8 +57,8 @@ class SiteReportsPanel extends ConsumerWidget {
             for (final system in UtilitySystemKey.values) ...[
               if (categorySummaryForUtility(categories, system) != null)
                 _ReportTile(
-                  title: '${system.label} report',
-                  subtitle: 'Consumption in ${system.defaultUnit} only',
+                  title: s.reportUtilityTitle(system),
+                  subtitle: s.reportUtilitySubtitle(system),
                   icon: system == UtilitySystemKey.water
                       ? Icons.water_drop_outlined
                       : system == UtilitySystemKey.electricity
@@ -72,20 +78,28 @@ class SiteReportsPanel extends ConsumerWidget {
                 ),
             ],
             _ReportTile(
-              title: 'BTU / COP report',
-              subtitle: 'Cooling performance',
+              title: s.reportBtuCop,
+              subtitle: s.reportBtuCopSubtitle,
               icon: Icons.show_chart_outlined,
               onTap: () => _export(context, ref, type: ReportType.cop),
             ),
+            if (conservationReportsOn)
+              _ReportTile(
+                title: s.reportConservation,
+                subtitle: s.reportConservationSubtitle,
+                icon: Icons.eco_outlined,
+                onTap: () =>
+                    _export(context, ref, type: ReportType.conservation),
+              ),
             _ReportTile(
-              title: 'Readings export',
-              subtitle: 'Excel readings for selected period',
+              title: s.reportReadingsExport,
+              subtitle: s.reportReadingsExportSubtitle,
               icon: Icons.table_rows_outlined,
               onTap: () => _export(context, ref, type: ReportType.readings),
             ),
             _ReportTile(
-              title: 'Full site report',
-              subtitle: 'All utilities in separate sections',
+              title: s.reportFullSite,
+              subtitle: s.reportFullSiteSubtitle,
               icon: Icons.folder_open_outlined,
               onTap: () => _export(context, ref, type: ReportType.consumption),
             ),

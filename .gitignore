@@ -2,6 +2,7 @@
 .env
 .env.local
 .env.*.local
+docs/dashboard_full_showcase.config.local.js
 
 # Flutter / Dart
 .dart_tool/
@@ -44,4 +45,15 @@ web_deploy_root/
 __pycache__/
 
 # Flutter build output
-build/
+*.pyc
+
+# Local Staging backups (never commit)
+backups/
+.deploy_cache/
+
+# Agent / cache directories
+.claude/
+
+# Regression snapshots may contain operational counts (ok to commit latest)
+# backups only
+web_portal/downloads/

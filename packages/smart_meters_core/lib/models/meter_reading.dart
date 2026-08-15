@@ -9,6 +9,10 @@ class MeterReading {
     this.note,
     this.imageStoragePath,
     required this.enteredAt,
+    this.readingSource,
+    this.sourceSystem,
+    this.externalReadingId,
+    this.isCanonical = true,
   });
 
   final String id;
@@ -23,8 +27,20 @@ class MeterReading {
   final String? imageStoragePath;
   final DateTime enteredAt;
 
+  /// Null on historical rows → treat as legacy/manual (Phase 6 policy).
+  final String? readingSource;
+  final String? sourceSystem;
+  final String? externalReadingId;
+  final bool isCanonical;
+
   bool get hasPhoto =>
       imageStoragePath != null && imageStoragePath!.trim().isNotEmpty;
+
+  /// Effective source for UI badges when provenance column is absent.
+  String get effectiveReadingSource =>
+      (readingSource == null || readingSource!.trim().isEmpty)
+          ? 'legacy'
+          : readingSource!;
 
   factory MeterReading.fromJson(Map<String, dynamic> json) {
     return MeterReading(
@@ -37,6 +53,10 @@ class MeterReading {
       note: json['note'] as String?,
       imageStoragePath: json['image_url'] as String?,
       enteredAt: DateTime.parse(json['entered_at'] as String),
+      readingSource: json['reading_source'] as String?,
+      sourceSystem: json['source_system'] as String?,
+      externalReadingId: json['external_reading_id'] as String?,
+      isCanonical: json['is_canonical'] as bool? ?? true,
     );
   }
 

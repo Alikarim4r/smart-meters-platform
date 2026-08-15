@@ -4,6 +4,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../navigation/admin_partner_navigation.dart';
 import '../screens/admin_home_screen.dart';
+import '../services/admin_notification_bridge.dart';
 
 /// Admin shell with incoming partner deep-link handling.
 class AdminHomeWithLinks extends ConsumerWidget {
@@ -14,7 +15,9 @@ class AdminHomeWithLinks extends ConsumerWidget {
     return PartnerLinkListener(
       expectedScheme: PartnerAppLinks.adminScheme,
       onLink: (intent) => queueAdminPartnerLink(ref, intent),
-      child: const AdminHomeScreen(),
+      child: const AdminNotificationBridge(
+        child: AdminHomeScreen(),
+      ),
     );
   }
 }

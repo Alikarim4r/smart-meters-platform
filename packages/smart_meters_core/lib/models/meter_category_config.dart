@@ -50,6 +50,22 @@ class MeterCategoryConfig {
     );
   }
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'code': code,
+        'name_en': nameEn,
+        'name_ar': nameAr,
+        'base_unit_code': baseUnitCode,
+        'icon': icon,
+        'color': color,
+        'is_system': isSystem,
+        'is_active': isActive,
+        'sort_order': sortOrder,
+        'supports_cop_output': supportsCopOutput,
+        'supports_electric_input': supportsElectricInput,
+        'is_consumption_category': isConsumptionCategory,
+      };
+
   @override
   bool operator ==(Object other) {
     return other is MeterCategoryConfig && other.id == id;

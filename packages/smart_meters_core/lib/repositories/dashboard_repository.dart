@@ -465,6 +465,323 @@ profiles:entered_by(full_name, email)
     ];
   }
 
+  /// Report fast-path categories: no `_fetchConsumptionRows` (was the main stall).
+  Future<List<SiteCategorySummary>> getSiteCategoriesSummaryForReport({
+    required String siteId,
+    required DateTime businessDate,
+  }) async {
+    final meters = await _fetchMetersForSite(siteId);
+    final todayIso = formatBusinessDate(businessDate);
+
+    final todayReadings = await _client
+        .from('meter_readings')
+        .select('meter_id, entered_at, meters(category_id)')
+        .eq('site_id', siteId)
+        .eq('reading_date', todayIso);
+
+    final latestAtByCategory = <String, DateTime>{};
+    final submittedByCategory = <String, int>{};
+    for (final row in todayReadings as List) {
+      final map = Map<String, dynamic>.from(row as Map);
+      final meterJson = map['meters'];
+      if (meterJson is! Map) continue;
+      final categoryId = meterJson['category_id'] as String?;
+      if (categoryId == null) continue;
+      submittedByCategory[categoryId] =
+          (submittedByCategory[categoryId] ?? 0) + 1;
+      final enteredAt = map['entered_at'] as String?;
+      if (enteredAt == null) continue;
+      final at = DateTime.parse(enteredAt);
+      final prev = latestAtByCategory[categoryId];
+      if (prev == null || at.isAfter(prev)) {
+        latestAtByCategory[categoryId] = at;
+      }
+    }
+
+    final grouped = <String, List<Meter>>{};
+    final categories = <String, MeterCategoryConfig>{};
+    for (final meter in meters.where((m) => m.isEntryEligible)) {
+      grouped.putIfAbsent(meter.categoryId, () => []).add(meter);
+      if (meter.categoryConfig != null) {
+        categories[meter.categoryId] = meter.categoryConfig!;
+      }
+    }
+
+    final summaries = <SiteCategorySummary>[];
+    for (final entry in grouped.entries) {
+      final category = categories[entry.key];
+      if (category == null) continue;
+      summaries.add(
+        SiteCategorySummary(
+          category: category,
+          meterCount: entry.value.length,
+          readingsSubmittedToday: submittedByCategory[entry.key] ?? 0,
+          latestReadingAt: latestAtByCategory[entry.key],
+          totalDailyConsumption: null,
+        ),
+      );
+    }
+
+    summaries.sort((a, b) {
+      final order = a.category.sortOrder.compareTo(b.category.sortOrder);
+      return order != 0
+          ? order
+          : a.category.nameEn.compareTo(b.category.nameEn);
+    });
+    return summaries;
+  }
+
+  /// Report fast-path meters: today flags only — no 180-day latest scan.
+  Future<List<DashboardMeterRow>> getSiteMetersForReport({
+    required String siteId,
+    required DateTime businessDate,
+  }) async {
+    final lite = await getSiteReportLiteMetadata(
+      siteId: siteId,
+      businessDate: businessDate,
+    );
+    return lite.meters;
+  }
+
+  /// Single round-trip bundle for overview PDF (no charts):
+  /// site + meters + today flags + categories + completion.
+  Future<SiteReportLiteMetadata> getSiteReportLiteMetadata({
+    required String siteId,
+    required DateTime businessDate,
+  }) async {
+    final todayIso = formatBusinessDate(businessDate);
+
+    final siteFuture = _client
+        .from('sites')
+        .select(_siteSelect)
+        .eq('id', siteId)
+        .single();
+    final metersFuture = _fetchMetersForSite(siteId);
+    final todayFuture = _client
+        .from('meter_readings')
+        .select('meter_id, entered_at, meters(category_id)')
+        .eq('site_id', siteId)
+        .eq('reading_date', todayIso);
+    final copFuture =
+        _client.from('cop_groups').select('id').eq('site_id', siteId);
+
+    final site = Site.fromJson(
+      Map<String, dynamic>.from(await siteFuture),
+    );
+    final meters = await metersFuture;
+    final todayRows = await todayFuture as List;
+    final copCount = (await copFuture as List).length;
+
+    final todayMeterIds = <String>{};
+    final latestAtByCategory = <String, DateTime>{};
+    final submittedByCategory = <String, int>{};
+    for (final row in todayRows) {
+      final map = Map<String, dynamic>.from(row as Map);
+      final meterId = map['meter_id'] as String?;
+      if (meterId != null) todayMeterIds.add(meterId);
+
+      final meterJson = map['meters'];
+      if (meterJson is! Map) continue;
+      final categoryId = meterJson['category_id'] as String?;
+      if (categoryId == null) continue;
+      submittedByCategory[categoryId] =
+          (submittedByCategory[categoryId] ?? 0) + 1;
+      final enteredAt = map['entered_at'] as String?;
+      if (enteredAt == null) continue;
+      final at = DateTime.parse(enteredAt);
+      final prev = latestAtByCategory[categoryId];
+      if (prev == null || at.isAfter(prev)) {
+        latestAtByCategory[categoryId] = at;
+      }
+    }
+
+    final entryEligible = meters.where((m) => m.isEntryEligible).length;
+    final submittedToday = todayMeterIds.length;
+    final categoryIds = meters
+        .map((m) => m.categoryId)
+        .where((id) => id.isNotEmpty)
+        .toSet();
+
+    final summary = SiteDashboardSummary(
+      site: site,
+      totalMeters: meters.length,
+      activeMeters: meters.where((m) => m.isActive).length,
+      readingsSubmittedToday: submittedToday,
+      pendingReadingsToday:
+          (entryEligible - submittedToday).clamp(0, entryEligible),
+      categoriesCount: categoryIds.length,
+      copGroupsCount: copCount,
+      lastReadingDate: submittedToday > 0 ? businessDate : null,
+    );
+
+    final grouped = <String, List<Meter>>{};
+    final categoriesById = <String, MeterCategoryConfig>{};
+    for (final meter in meters.where((m) => m.isEntryEligible)) {
+      grouped.putIfAbsent(meter.categoryId, () => []).add(meter);
+      if (meter.categoryConfig != null) {
+        categoriesById[meter.categoryId] = meter.categoryConfig!;
+      }
+    }
+
+    final categories = <SiteCategorySummary>[];
+    for (final entry in grouped.entries) {
+      final category = categoriesById[entry.key];
+      if (category == null) continue;
+      categories.add(
+        SiteCategorySummary(
+          category: category,
+          meterCount: entry.value.length,
+          readingsSubmittedToday: submittedByCategory[entry.key] ?? 0,
+          latestReadingAt: latestAtByCategory[entry.key],
+          totalDailyConsumption: null,
+        ),
+      );
+    }
+    categories.sort((a, b) {
+      final order = a.category.sortOrder.compareTo(b.category.sortOrder);
+      return order != 0
+          ? order
+          : a.category.nameEn.compareTo(b.category.nameEn);
+    });
+
+    final meterRows = [
+      for (final meter in meters)
+        DashboardMeterRow(
+          meterId: meter.id,
+          meterCode: meter.meterCode,
+          nameEn: meter.nameEn,
+          categoryName: meter.categoryConfig?.nameEn ?? meter.category.label,
+          categoryId: meter.categoryId,
+          sourceName: meter.sourceDisplayName,
+          unitLabel: meter.unitDisplayLabel,
+          level: meter.level,
+          isActive: meter.isActive,
+          includeInDashboard: meter.includeInDashboard,
+          parentMeterName: meter.parentMeterNameEn,
+          parentMeterCode: meter.parentMeterCode,
+          latestRawValue: null,
+          latestReadingDate: null,
+          hasSubmittedToday: todayMeterIds.contains(meter.id),
+        ),
+    ];
+
+    final completion = TodayReadingProgress(
+      submitted: submittedToday,
+      total: entryEligible,
+      pending: (entryEligible - submittedToday).clamp(0, entryEligible),
+    );
+
+    return SiteReportLiteMetadata(
+      summary: summary,
+      categories: categories,
+      meters: meterRows,
+      completion: completion,
+    );
+  }
+
+  /// Slim export readings for overview PDF — narrow select, no consumption rebuild.
+  Future<List<DashboardExportReadingRow>> getExportReadingsSlim({
+    required String siteId,
+    required DateTime fromDate,
+    required DateTime toDate,
+    String? categoryId,
+    int limit = 100,
+  }) async {
+    assert(() {
+      // ignore: avoid_print
+      print('[ReportExport][D] getExportReadingsSlim start site=$siteId');
+      return true;
+    }());
+    final siteRow = await _client
+        .from('sites')
+        .select('name_en, zones(name_en)')
+        .eq('id', siteId)
+        .single();
+    final siteName = siteRow['name_en'] as String? ?? 'Site';
+    final zoneJson = siteRow['zones'];
+    final zoneName = zoneJson is Map
+        ? zoneJson['name_en'] as String? ?? 'No Zone'
+        : 'No Zone';
+
+    final metersSelect = categoryId == null
+        ? '''
+meters(
+  name_en,
+  meter_code,
+  category_id,
+  meter_categories(code, name_en),
+  meter_units(code, name_en)
+)'''
+        : '''
+meters!inner(
+  name_en,
+  meter_code,
+  category_id,
+  meter_categories(code, name_en),
+  meter_units(code, name_en)
+)''';
+
+    var query = _client
+        .from('meter_readings')
+        .select('''
+id, meter_id, site_id, reading_date, raw_value, normalized_value,
+entered_at, image_url, note,
+$metersSelect
+''')
+        .eq('site_id', siteId)
+        .gte('reading_date', formatBusinessDate(fromDate))
+        .lte('reading_date', formatBusinessDate(toDate));
+    if (categoryId != null) {
+      query = query.eq('meters.category_id', categoryId);
+    }
+    final detailedRows = await query
+        .order('reading_date', ascending: false)
+        .order('entered_at', ascending: false)
+        .limit(limit);
+
+    final results = <DashboardExportReadingRow>[];
+    for (final row in detailedRows as List) {
+      final map = Map<String, dynamic>.from(row as Map);
+      final reading = MeterReading.fromJson(map);
+      final meterJson = map['meters'];
+      if (meterJson is! Map<String, dynamic>) continue;
+      final rowCategoryId = meterJson['category_id'] as String?;
+      if (categoryId != null && rowCategoryId != categoryId) continue;
+
+      final categoryJson = meterJson['meter_categories'];
+      final unitJson = meterJson['meter_units'];
+      results.add(
+        DashboardExportReadingRow(
+          reading: reading,
+          siteName: siteName,
+          zoneName: zoneName,
+          meterName: meterJson['name_en'] as String? ?? 'Unknown',
+          meterCode: meterJson['meter_code'] as String? ?? '',
+          categoryName: joinedCatalogDisplayName(
+            categoryJson is Map
+                ? Map<String, dynamic>.from(categoryJson)
+                : null,
+            legacyFallback: '',
+          ),
+          unitLabel: joinedCatalogDisplayName(
+            unitJson is Map ? Map<String, dynamic>.from(unitJson) : null,
+            legacyFallback: '',
+          ),
+          sourceName: '',
+          enteredByName: null,
+          enteredByEmail: null,
+          dailyConsumption: null,
+        ),
+      );
+    }
+    assert(() {
+      // ignore: avoid_print
+      print('[ReportExport][D] getExportReadingsSlim ok rows=${results.length}');
+      return true;
+    }());
+    return results;
+  }
+
   Future<List<MeterReadingCardData>> getMeterReadingCardsForSite({
     required String siteId,
     required String utilityKey,
@@ -511,7 +828,41 @@ profiles:entered_by(full_name, email)
       return [];
     }
 
-    final meterIds = meters.map((meter) => meter.id).toList();
+    final virtualMeters =
+        meters.where((m) => m.meterKind == MeterKind.virtual).toList();
+    final physicalMeters =
+        meters.where((m) => m.meterKind != MeterKind.virtual).toList();
+
+    // Member readings power virtual sum/residual cards.
+    final memberIdsByVirtual = <String, List<String>>{};
+    if (virtualMeters.isNotEmpty) {
+      final virtualIds = virtualMeters.map((m) => m.id).toList();
+      final memberRows = await _client
+          .from('conservation_virtual_meter_members')
+          .select('virtual_meter_id, member_meter_id')
+          .inFilter('virtual_meter_id', virtualIds);
+      for (final row in memberRows as List) {
+        final map = Map<String, dynamic>.from(row as Map);
+        memberIdsByVirtual
+            .putIfAbsent(map['virtual_meter_id'] as String, () => [])
+            .add(map['member_meter_id'] as String);
+      }
+    }
+
+    final readingMeterIds = <String>{
+      for (final m in physicalMeters) m.id,
+      for (final ids in memberIdsByVirtual.values) ...ids,
+      for (final m in virtualMeters)
+        if (m.calculationType == CalculationType.parentMinusChildren &&
+            m.parentMeterId != null)
+          m.parentMeterId!,
+    }.toList();
+
+    if (readingMeterIds.isEmpty && virtualMeters.isEmpty) {
+      return [];
+    }
+
+    final meterIds = readingMeterIds;
     final dateIso = formatBusinessDate(businessDate);
     final useRange =
         rangeStart != null && formatBusinessDate(rangeStart) != dateIso;
@@ -520,98 +871,89 @@ profiles:entered_by(full_name, email)
     final latestByMeter = <String, MeterReading>{};
     final previousByMeter = <String, MeterReading>{};
 
-    if (!useRange) {
-      final latestRows = await _client
-          .from('meter_readings')
-          .select(
-            'id, site_id, meter_id, reading_date, raw_value, normalized_value, entered_at, image_url, note',
-          )
-          .eq('site_id', siteId)
-          .eq('reading_date', dateIso)
-          .inFilter('meter_id', meterIds);
-
-      for (final row in latestRows as List) {
-        final reading = MeterReading.fromJson(
-          Map<String, dynamic>.from(row as Map),
-        );
-        latestByMeter[reading.meterId] = reading;
-      }
-
-      final previousIso = previousBusinessDate != null
-          ? formatBusinessDate(previousBusinessDate)
-          : null;
-
-      if (previousIso != null) {
-        final previousRows = await _client
+    if (meterIds.isNotEmpty) {
+      if (!useRange) {
+        final latestRows = await _client
             .from('meter_readings')
             .select(
               'id, site_id, meter_id, reading_date, raw_value, normalized_value, entered_at, image_url, note',
             )
             .eq('site_id', siteId)
-            .eq('reading_date', previousIso)
+            .eq('reading_date', dateIso)
             .inFilter('meter_id', meterIds);
 
-        for (final row in previousRows as List) {
+        for (final row in latestRows as List) {
           final reading = MeterReading.fromJson(
             Map<String, dynamic>.from(row as Map),
           );
-          previousByMeter[reading.meterId] = reading;
+          latestByMeter[reading.meterId] = reading;
+        }
+
+        final previousIso = previousBusinessDate != null
+            ? formatBusinessDate(previousBusinessDate)
+            : null;
+
+        if (previousIso != null) {
+          final previousRows = await _client
+              .from('meter_readings')
+              .select(
+                'id, site_id, meter_id, reading_date, raw_value, normalized_value, entered_at, image_url, note',
+              )
+              .eq('site_id', siteId)
+              .eq('reading_date', previousIso)
+              .inFilter('meter_id', meterIds);
+
+          for (final row in previousRows as List) {
+            final reading = MeterReading.fromJson(
+              Map<String, dynamic>.from(row as Map),
+            );
+            previousByMeter[reading.meterId] = reading;
+          }
+        } else {
+          final previousRows = await _batchPreviousReadings(
+            siteId: siteId,
+            meterIds: meterIds,
+            beforeIso: dateIso,
+          );
+          previousByMeter.addAll(previousRows);
         }
       } else {
-        final previousRows = await _batchPreviousReadings(
+        // Edge-latest in range + previous before start in parallel — avoid
+        // waiting on previous until the whole latest scan finishes.
+        final latestFuture = _batchLatestReadingsInRange(
           siteId: siteId,
           meterIds: meterIds,
-          beforeIso: dateIso,
+          fromIso: startIso,
+          toIso: dateIso,
         );
-        previousByMeter.addAll(previousRows);
-      }
-    } else {
-      // Paginated range fetch (newest first) — never scan unbounded history.
-      const pageSize = 1000;
-      const readingCols =
-          'id, site_id, meter_id, reading_date, raw_value, normalized_value, '
-          'entered_at, image_url, note';
-      var offset = 0;
-      while (true) {
-        final page = await _client
-            .from('meter_readings')
-            .select(readingCols)
-            .eq('site_id', siteId)
-            .inFilter('meter_id', meterIds)
-            .gte('reading_date', startIso)
-            .lte('reading_date', dateIso)
-            .order('reading_date', ascending: false)
-            .range(offset, offset + pageSize - 1);
-        final rows = (page as List)
-            .map((row) => Map<String, dynamic>.from(row as Map))
-            .toList();
-        for (final row in rows) {
-          final reading = MeterReading.fromJson(row);
-          latestByMeter.putIfAbsent(reading.meterId, () => reading);
-        }
-        if (rows.length < pageSize) break;
-        offset += pageSize;
-        // Once every meter has a latest, stop paging.
-        if (latestByMeter.length >= meterIds.length) break;
-      }
-
-      // Previous = last reading strictly before range start (batched).
-      final previousRows = await _batchPreviousReadings(
-        siteId: siteId,
-        meterIds: meterIds,
-        beforeIso: startIso,
-      );
-      for (final entry in previousRows.entries) {
-        final latest = latestByMeter[entry.key];
-        if (latest == null || entry.value.id == latest.id) continue;
-        if (!entry.value.readingDate.isAfter(latest.readingDate)) {
-          previousByMeter[entry.key] = entry.value;
+        final previousFuture = _batchPreviousReadings(
+          siteId: siteId,
+          meterIds: meterIds,
+          beforeIso: startIso,
+        );
+        final latestRows = await latestFuture;
+        final previousRows = await previousFuture;
+        latestByMeter.addAll(latestRows);
+        for (final entry in previousRows.entries) {
+          final latest = latestByMeter[entry.key];
+          if (latest == null || entry.value.id == latest.id) continue;
+          if (!entry.value.readingDate.isAfter(latest.readingDate)) {
+            previousByMeter[entry.key] = entry.value;
+          }
         }
       }
     }
 
+    // Virtual sum cards first (pinned), then physical meters.
     final cards = <MeterReadingCardData>[
-      for (final meter in meters)
+      for (final meter in virtualMeters)
+        buildVirtualMeterReadingCardData(
+          meter: meter,
+          memberIds: memberIdsByVirtual[meter.id] ?? const [],
+          latestByMeter: latestByMeter,
+          previousByMeter: previousByMeter,
+        ),
+      for (final meter in physicalMeters)
         buildMeterReadingCardData(
           meter: meter,
           businessDate: businessDate,
@@ -1003,12 +1345,29 @@ profiles:entered_by(full_name, email)
     );
   }
 
+  /// Public wrapper for report export — one shared scan per site/period.
+  Future<List<Map<String, dynamic>>> fetchConsumptionRowsForReport({
+    required String siteId,
+    required DateTime from,
+    required DateTime to,
+    String? categoryId,
+    ChartBucket? bucket,
+  }) =>
+      _fetchConsumptionRows(
+        siteId: siteId,
+        from: from,
+        to: to,
+        categoryId: categoryId,
+        bucket: bucket,
+      );
+
   Future<List<DashboardExportReadingRow>> getExportReadings({
     required String siteId,
     required DateTime fromDate,
     required DateTime toDate,
     String? categoryId,
     int limit = 5000,
+    List<Map<String, dynamic>>? prefetchedConsumptionRows,
   }) async {
     assert(() {
       // ignore: avoid_print
@@ -1026,12 +1385,13 @@ profiles:entered_by(full_name, email)
         ? zoneJson['name_en'] as String? ?? 'No Zone'
         : 'No Zone';
 
-    final consumptionRows = await _fetchConsumptionRows(
-      siteId: siteId,
-      from: fromDate,
-      to: toDate,
-      categoryId: categoryId,
-    );
+    final consumptionRows = prefetchedConsumptionRows ??
+        await _fetchConsumptionRows(
+          siteId: siteId,
+          from: fromDate,
+          to: toDate,
+          categoryId: categoryId,
+        );
     final consumptionByKey = <String, double>{};
     for (final row in consumptionRows) {
       final meterId = row['meter_id'] as String;
@@ -1039,10 +1399,9 @@ profiles:entered_by(full_name, email)
       consumptionByKey['$meterId|$date'] = _toDouble(row['daily_consumption']);
     }
 
-    final detailedRows = await _client
-        .from('meter_readings')
-        .select('''
-*,
+    // Prefer inner join when filtering by category so PostgREST can push down.
+    final metersSelect = categoryId == null
+        ? '''
 meters(
   name_en,
   meter_code,
@@ -1053,16 +1412,37 @@ meters(
   meter_categories(code, name_en),
   meter_sources(code, name_en),
   meter_units(code, name_en)
-),
+)'''
+        : '''
+meters!inner(
+  name_en,
+  meter_code,
+  category_id,
+  category,
+  source,
+  unit,
+  meter_categories(code, name_en),
+  meter_sources(code, name_en),
+  meter_units(code, name_en)
+)''';
+
+    var query = _client
+        .from('meter_readings')
+        .select('''
+*,
+$metersSelect,
 profiles:entered_by(full_name, email)
 ''')
         .eq('site_id', siteId)
         .gte('reading_date', formatBusinessDate(fromDate))
-        .lte('reading_date', formatBusinessDate(toDate))
+        .lte('reading_date', formatBusinessDate(toDate));
+    if (categoryId != null) {
+      query = query.eq('meters.category_id', categoryId);
+    }
+    final detailedRows = await query
         .order('reading_date', ascending: false)
         .order('entered_at', ascending: false)
         .limit(limit);
-
     final results = <DashboardExportReadingRow>[];
     for (final row in detailedRows as List) {
       final map = Map<String, dynamic>.from(row as Map);
@@ -1396,6 +1776,43 @@ profiles:entered_by(full_name, email)
     return found;
   }
 
+  /// Newest full reading in [fromIso, toIso] for each meter — few pages.
+  Future<Map<String, MeterReading>> _batchLatestReadingsInRange({
+    required String siteId,
+    required List<String> meterIds,
+    required String fromIso,
+    required String toIso,
+  }) async {
+    if (meterIds.isEmpty) return {};
+    final latestByMeter = <String, MeterReading>{};
+    const pageSize = 1000;
+    const readingCols =
+        'id, site_id, meter_id, reading_date, raw_value, normalized_value, '
+        'entered_at, image_url, note';
+    var offset = 0;
+    while (latestByMeter.length < meterIds.length) {
+      final page = await _client
+          .from('meter_readings')
+          .select(readingCols)
+          .eq('site_id', siteId)
+          .inFilter('meter_id', meterIds)
+          .gte('reading_date', fromIso)
+          .lte('reading_date', toIso)
+          .order('reading_date', ascending: false)
+          .range(offset, offset + pageSize - 1);
+      final rows = page as List;
+      for (final row in rows) {
+        final reading = MeterReading.fromJson(
+          Map<String, dynamic>.from(row as Map),
+        );
+        latestByMeter.putIfAbsent(reading.meterId, () => reading);
+      }
+      if (rows.length < pageSize) break;
+      offset += pageSize;
+    }
+    return latestByMeter;
+  }
+
   /// Newest full reading before [beforeIso] for each meter — few paginated calls.
   Future<Map<String, MeterReading>> _batchPreviousReadings({
     required String siteId,
@@ -1617,4 +2034,19 @@ class TodayReadingProgress {
   final int submitted;
   final int total;
   final int pending;
+}
+
+/// One-shot metadata for fast overview PDF exports (no charts).
+class SiteReportLiteMetadata {
+  const SiteReportLiteMetadata({
+    required this.summary,
+    required this.categories,
+    required this.meters,
+    required this.completion,
+  });
+
+  final SiteDashboardSummary summary;
+  final List<SiteCategorySummary> categories;
+  final List<DashboardMeterRow> meters;
+  final TodayReadingProgress completion;
 }

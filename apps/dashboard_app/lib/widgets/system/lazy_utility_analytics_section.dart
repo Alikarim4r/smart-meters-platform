@@ -5,8 +5,12 @@ import '../../utils/dashboard_date_range.dart';
 import '../../utils/site_system_navigation.dart';
 import 'utility_analytics_section.dart';
 
-/// Defers chart mount by one frame so meter cards stay responsive.
-class LazyUtilityAnalyticsSection extends ConsumerStatefulWidget {
+/// Utility consumption charts — always visible on water / electricity / BTU / fuel.
+///
+/// Chart period chips stay independent of the meter-card date range (default:
+/// last 7 days) so opening a historical meter period does not force a heavy
+/// month-long chart scan.
+class LazyUtilityAnalyticsSection extends ConsumerWidget {
   const LazyUtilityAnalyticsSection({
     super.key,
     required this.siteId,
@@ -29,41 +33,17 @@ class LazyUtilityAnalyticsSection extends ConsumerStatefulWidget {
   final bool embedded;
 
   @override
-  ConsumerState<LazyUtilityAnalyticsSection> createState() =>
-      _LazyUtilityAnalyticsSectionState();
-}
-
-class _LazyUtilityAnalyticsSectionState
-    extends ConsumerState<LazyUtilityAnalyticsSection> {
-  bool _ready = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) setState(() => _ready = true);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    if (!_ready) {
-      return const SizedBox(
-        height: 48,
-        child: Center(child: LinearProgressIndicator()),
-      );
-    }
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return RepaintBoundary(
       child: UtilityAnalyticsSection(
-        siteId: widget.siteId,
-        system: widget.system,
-        categoryId: widget.categoryId,
-        unitCode: widget.unitCode,
-        dateSelection: widget.dateSelection,
-        onDateSelectionChanged: widget.onDateSelectionChanged,
-        useDesktop: widget.useDesktop,
-        compactHeader: widget.embedded,
+        siteId: siteId,
+        system: system,
+        categoryId: categoryId,
+        unitCode: unitCode,
+        dateSelection: dateSelection,
+        onDateSelectionChanged: onDateSelectionChanged,
+        useDesktop: useDesktop,
+        compactHeader: embedded,
       ),
     );
   }

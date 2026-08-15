@@ -56,6 +56,8 @@ class BiometricAuthService {
   }) async {
     if (!isSupportedPlatform) return false;
     try {
+      final canAuth = await canUseBiometrics();
+      if (!canAuth) return false;
       return await _auth.authenticate(
         localizedReason: localizedReason,
         options: const AuthenticationOptions(
@@ -64,7 +66,8 @@ class BiometricAuthService {
           useErrorDialogs: true,
         ),
       );
-    } catch (_) {
+    } catch (e, st) {
+      debugPrint('BiometricAuthService.authenticate failed: $e\n$st');
       return false;
     }
   }

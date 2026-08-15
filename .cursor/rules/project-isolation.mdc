@@ -1,0 +1,25 @@
+---
+description: Never merge other products into smart-meters-platform
+alwaysApply: true
+---
+
+# Project isolation — smart meters only
+
+This repository is **Smart Meters Platform only**.
+
+## Forbidden
+
+- Do **not** add schemas, migrations, apps, packages, env keys, storage buckets, or docs from other products here (especially Daily Checklists / قوائم الفحص).
+- Do **not** share this project's Supabase (`iqcxgtpcfhoapnklxdyl` or any meters project) with another product.
+- Do **not** seed other-product organizations/sites into this database.
+- Do **not** copy or symlink code from `daily-checklists-flutter` (or any sibling project) into this repo.
+
+## Other products
+
+Work on Daily Checklists and similar apps only in their own repos (e.g. `~/Downloads/daily-checklists-flutter`) with their own Supabase project.
+
+## If contamination is found
+
+1. Remove foreign files from this repo.
+2. Drop foreign DB objects/buckets from meters Staging/Production.
+3. Point the other product at its own backend — never reverse-share meters credentials.
