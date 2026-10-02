@@ -1,4 +1,4 @@
-import 'package:test/test.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:smart_meters_core/conservation/domain/double_count_rules.dart';
 import 'package:smart_meters_core/conservation/domain/mv_lifecycle.dart';
 
