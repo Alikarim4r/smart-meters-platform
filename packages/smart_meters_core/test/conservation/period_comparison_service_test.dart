@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_meters_core/conservation/conservation.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
 
 PeriodReadingPoint p(DateTime d, double v) => PeriodReadingPoint(date: d, value: v);
 
@@ -102,6 +102,20 @@ void main() {
     });
 
     test('valid rollover uses consistently normalized capacity', () {
+      final productionMeter = Meter.fromJson({
+        'id': 'm1',
+        'site_id': 's1',
+        'meter_code': 'M1',
+        'name_en': 'Meter 1',
+        'name_ar': 'Meter 1',
+        'category': 'electricity',
+        'unit': 'kwh',
+        'unit_to_base_factor': 10,
+        'base_unit': 'kWh',
+        'meter_multiplier': 2,
+        'is_active': true,
+        'rollover_capacity': 1000,
+      });
       final result = service.compareMeters(
         type: PeriodComparisonType.previousPeriod,
         currentStart: DateTime(2026, 7, 1),
@@ -109,10 +123,9 @@ void main() {
         unitCode: 'kWh',
         calculatedAt: fixedNow,
         meters: [
-          meter(
-            multiplier: 2,
-            unitToBaseFactor: 10,
-            rolloverCapacity: 1000,
+          PeriodMeterReadingSeries.fromMeter(
+            meter: productionMeter,
+            unitCode: 'kWh',
             readings: [
               p(DateTime(2026, 6, 20), 900),
               p(DateTime(2026, 6, 30), 990),
@@ -123,6 +136,7 @@ void main() {
         ],
       );
 
+      expect(productionMeter.rolloverCapacity, 1000);
       expect(result.status, PeriodComparisonStatus.ok);
       expect(result.currentValue, 600); // raw rollover consumption 30 × 20
       expect(result.comparisonValue, 1800); // raw consumption 90 × 20

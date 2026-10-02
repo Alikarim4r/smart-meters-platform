@@ -39,15 +39,17 @@ final _siteMvListProvider = FutureProvider.autoDispose
   ).listForSite(siteId, limit: 100);
 });
 
-/// Whether the current Data Quality snapshots still contain a critical finding.
+/// Whether current Data Quality snapshots contain a finding that makes
+/// cumulative consumption unverifiable for savings.
 ///
 /// Data Quality findings are evaluated live and do not have a separate
-/// persisted resolution state. A critical finding is therefore unresolved
-/// while it remains present in either M&V period snapshot.
-bool hasPendingCriticalMvDataQuality(Iterable<DataQualityResult> results) {
+/// persisted resolution state. Critical findings and live cumulative
+/// drop/reset/correction findings remain unresolved while present in either
+/// M&V period snapshot.
+bool hasBlockingMvDataQuality(Iterable<DataQualityResult> results) {
   return results.any(
     (result) => result.findings.any(
-      (finding) => finding.severity == DataQualitySeverity.critical,
+      (finding) => finding.blocksSavingsVerification,
     ),
   );
 }
@@ -662,7 +664,7 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
       );
 
       final dataQualityResults = await _evaluateDataQuality();
-      final hasPendingCriticalDq = hasPendingCriticalMvDataQuality(
+      final hasPendingCriticalDq = hasBlockingMvDataQuality(
         dataQualityResults,
       );
 
@@ -826,7 +828,11 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
                   meterCode: meter.meterCode,
                   isActive: meter.isActive,
                   includeInDashboard: meter.includeInDashboard,
-                  meterMaxValue: meter.rolloverCapacity,
+                  meterMaxValue: normalizedRolloverCapacity(
+                    rawCapacity: meter.rolloverCapacity,
+                    unitToBaseFactor: meter.unitToBaseFactor,
+                    meterMultiplier: meter.meterMultiplier,
+                  ),
                   correctionCountInPeriod: _correctionCount(
                     auditRows,
                     meterId: meter.id,

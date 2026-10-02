@@ -470,6 +470,7 @@ class _OpportunitiesAdminScreenState
         final meters = await ref
             .read(meterRepositoryProvider)
             .getMetersForSite(widget.siteId);
+        final metersById = {for (final meter in meters) meter.id: meter};
         final byMeter = await _loadReadings(
           widget.siteId,
           meters.map((m) => m.id).toList(),
@@ -486,8 +487,8 @@ class _OpportunitiesAdminScreenState
           final children = calculator.contributorsFromSeries(
             leaves: [
               for (final id in g.memberMeterIds)
-                PeriodMeterReadingSeries(
-                  meterId: id,
+                PeriodMeterReadingSeries.fromMeter(
+                  meter: metersById[id]!,
                   unitCode: g.unitCode,
                   readings: byMeter[id] ?? const [],
                 ),
@@ -498,8 +499,8 @@ class _OpportunitiesAdminScreenState
           final main = calculator
               .contributorsFromSeries(
                 leaves: [
-                  PeriodMeterReadingSeries(
-                    meterId: g.mainMeterId,
+                  PeriodMeterReadingSeries.fromMeter(
+                    meter: metersById[g.mainMeterId]!,
                     unitCode: g.unitCode,
                     readings: byMeter[g.mainMeterId] ?? const [],
                   ),
@@ -547,8 +548,8 @@ class _OpportunitiesAdminScreenState
           if (t.scopeType != ConservationTargetScopeType.site) continue;
           final series = [
             for (final m in active)
-              PeriodMeterReadingSeries(
-                meterId: m.id,
+              PeriodMeterReadingSeries.fromMeter(
+                meter: m,
                 unitCode: t.unitCode,
                 readings: byMeter[m.id] ?? const [],
               ),
@@ -590,8 +591,8 @@ class _OpportunitiesAdminScreenState
           if (b.scopeType != ConservationBaselineScopeType.site) continue;
           final series = [
             for (final m in active)
-              PeriodMeterReadingSeries(
-                meterId: m.id,
+              PeriodMeterReadingSeries.fromMeter(
+                meter: m,
                 unitCode: b.unitCode,
                 readings: byMeter[m.id] ?? const [],
               ),
@@ -662,7 +663,7 @@ class _OpportunitiesAdminScreenState
         '${d.day.toString().padLeft(2, '0')}';
     final rows = await client
         .from('meter_readings')
-        .select('meter_id, reading_date, normalized_value')
+        .select('meter_id, reading_date, raw_value')
         .eq('site_id', siteId)
         .inFilter('meter_id', meterIds)
         .gte('reading_date', iso(from))
@@ -676,7 +677,7 @@ class _OpportunitiesAdminScreenState
           .add(
             PeriodReadingPoint(
               date: DateTime.parse(map['reading_date'] as String),
-              value: (map['normalized_value'] as num).toDouble(),
+              value: (map['raw_value'] as num).toDouble(),
             ),
           );
     }

@@ -36,7 +36,7 @@ class SavingsVerificationGates {
   /// Opportunity must be monitoring or resolved.
   final bool requireOpportunityMonitoringOrResolved;
 
-  /// Block when unresolved critical Data Quality findings exist.
+  /// Block when unresolved Data Quality findings make savings unverifiable.
   final bool forbidPendingCriticalDq;
 
   /// Verified Saving requires a human verifier identity.
@@ -151,7 +151,7 @@ class SavingsVerificationGateEvaluator {
     }
 
     if (gates.forbidPendingCriticalDq && hasPendingCriticalDq) {
-      reasons.add('Unresolved critical Data Quality findings');
+      reasons.add('Unresolved blocking Data Quality findings');
     }
 
     if (gates.requireHumanVerifier) {

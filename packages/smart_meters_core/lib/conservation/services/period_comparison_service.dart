@@ -1,4 +1,5 @@
 import '../../domain/cumulative_consumption.dart';
+import '../../models/meter.dart';
 import '../domain/period_windows.dart';
 import '../models/calculation_meta.dart';
 import '../models/period_comparison_result.dart';
@@ -480,6 +481,27 @@ class PeriodMeterReadingSeries {
     this.expectedIntervalDays,
     this.correctionDates = const [],
   });
+
+  /// Builds a cumulative series from raw register readings and the production
+  /// meter configuration used to normalize both readings and rollover capacity.
+  factory PeriodMeterReadingSeries.fromMeter({
+    required Meter meter,
+    required String unitCode,
+    required List<PeriodReadingPoint> readings,
+    int? expectedIntervalDays,
+    List<DateTime> correctionDates = const [],
+  }) {
+    return PeriodMeterReadingSeries(
+      meterId: meter.id,
+      unitCode: unitCode,
+      meterMultiplier: meter.meterMultiplier,
+      unitToBaseFactor: meter.unitToBaseFactor,
+      rolloverCapacity: meter.rolloverCapacity,
+      readings: readings,
+      expectedIntervalDays: expectedIntervalDays,
+      correctionDates: correctionDates,
+    );
+  }
 
   final String meterId;
   final String unitCode;
