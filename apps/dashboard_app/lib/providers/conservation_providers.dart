@@ -569,7 +569,7 @@ final conservationPeriodComparisonsProvider = FutureProvider.autoDispose
 
   final rows = await client
       .from('meter_readings')
-      .select('meter_id, reading_date, normalized_value')
+      .select('meter_id, reading_date, raw_value')
       .eq('site_id', siteId)
       .inFilter('meter_id', meterIds)
       .gte('reading_date', fromIso)
@@ -581,7 +581,7 @@ final conservationPeriodComparisonsProvider = FutureProvider.autoDispose
     final map = Map<String, dynamic>.from(row as Map);
     final id = map['meter_id'] as String;
     final date = DateTime.parse(map['reading_date'] as String);
-    final value = (map['normalized_value'] as num).toDouble();
+    final value = (map['raw_value'] as num).toDouble();
     byMeter.putIfAbsent(id, () => []).add(
           PeriodReadingPoint(date: date, value: value),
         );
@@ -605,11 +605,9 @@ final conservationPeriodComparisonsProvider = FutureProvider.autoDispose
     final unitCode = system.defaultUnit;
     final series = [
       for (final m in unitMeters)
-        PeriodMeterReadingSeries(
-          meterId: m.id,
+        PeriodMeterReadingSeries.fromMeter(
+          meter: m,
           unitCode: unitCode,
-          // Values already normalized from DB.
-          meterMultiplier: 1,
           readings: byMeter[m.id] ?? const [],
         ),
     ];
@@ -684,7 +682,7 @@ final conservationActualVsTargetProvider = FutureProvider.autoDispose
     final rows = await ref
         .read(supabaseClientProvider)
         .from('meter_readings')
-        .select('meter_id, reading_date, normalized_value')
+        .select('meter_id, reading_date, raw_value')
         .eq('site_id', siteId)
         .inFilter('meter_id', meterIds)
         .gte('reading_date', fromIso)
@@ -696,7 +694,7 @@ final conservationActualVsTargetProvider = FutureProvider.autoDispose
       byMeter.putIfAbsent(id, () => []).add(
             PeriodReadingPoint(
               date: DateTime.parse(map['reading_date'] as String),
-              value: (map['normalized_value'] as num).toDouble(),
+              value: (map['raw_value'] as num).toDouble(),
             ),
           );
     }
@@ -725,8 +723,8 @@ final conservationActualVsTargetProvider = FutureProvider.autoDispose
 
     final series = [
       for (final m in matchingMeters)
-        PeriodMeterReadingSeries(
-          meterId: m.id,
+        PeriodMeterReadingSeries.fromMeter(
+          meter: m,
           unitCode: t.unitCode,
           readings: byMeter[m.id] ?? const [],
         ),
@@ -777,7 +775,7 @@ final conservationActualVsBaselineProvider = FutureProvider.autoDispose
     final rows = await ref
         .read(supabaseClientProvider)
         .from('meter_readings')
-        .select('meter_id, reading_date, normalized_value')
+        .select('meter_id, reading_date, raw_value')
         .eq('site_id', siteId)
         .inFilter('meter_id', meterIds)
         .gte('reading_date', fromIso)
@@ -789,7 +787,7 @@ final conservationActualVsBaselineProvider = FutureProvider.autoDispose
       byMeter.putIfAbsent(id, () => []).add(
             PeriodReadingPoint(
               date: DateTime.parse(map['reading_date'] as String),
-              value: (map['normalized_value'] as num).toDouble(),
+              value: (map['raw_value'] as num).toDouble(),
             ),
           );
     }
@@ -816,8 +814,8 @@ final conservationActualVsBaselineProvider = FutureProvider.autoDispose
     }).toList();
     final series = [
       for (final m in matchingMeters)
-        PeriodMeterReadingSeries(
-          meterId: m.id,
+        PeriodMeterReadingSeries.fromMeter(
+          meter: m,
           unitCode: b.unitCode,
           readings: byMeter[m.id] ?? const [],
         ),
@@ -877,7 +875,7 @@ final conservationVirtualMeterPreviewsProvider = FutureProvider.autoDispose
     final rows = await ref
         .read(supabaseClientProvider)
         .from('meter_readings')
-        .select('meter_id, reading_date, normalized_value')
+        .select('meter_id, reading_date, raw_value')
         .eq('site_id', siteId)
         .inFilter('meter_id', allLeafIds.toList())
         .gte('reading_date', fromIso)
@@ -889,7 +887,7 @@ final conservationVirtualMeterPreviewsProvider = FutureProvider.autoDispose
       byMeter.putIfAbsent(id, () => []).add(
             PeriodReadingPoint(
               date: DateTime.parse(map['reading_date'] as String),
-              value: (map['normalized_value'] as num).toDouble(),
+              value: (map['raw_value'] as num).toDouble(),
             ),
           );
     }
@@ -920,10 +918,9 @@ final conservationVirtualMeterPreviewsProvider = FutureProvider.autoDispose
     }
     final leafSeries = [
       for (final id in expansion.leafMeterIds)
-        PeriodMeterReadingSeries(
-          meterId: id,
+        PeriodMeterReadingSeries.fromMeter(
+          meter: byId[id]!,
           unitCode: unit,
-          meterMultiplier: 1,
           readings: byMeter[id] ?? const [],
         ),
     ];
@@ -938,10 +935,9 @@ final conservationVirtualMeterPreviewsProvider = FutureProvider.autoDispose
       parent = calculator
           .contributorsFromSeries(
             leaves: [
-              PeriodMeterReadingSeries(
-                meterId: v.parentMeterId!,
+              PeriodMeterReadingSeries.fromMeter(
+                meter: byId[v.parentMeterId!]!,
                 unitCode: unit,
-                meterMultiplier: 1,
                 readings: byMeter[v.parentMeterId!] ?? const [],
               ),
             ],
@@ -1117,7 +1113,7 @@ final conservationBalanceResultsProvider = FutureProvider.autoDispose
     final rows = await ref
         .read(supabaseClientProvider)
         .from('meter_readings')
-        .select('meter_id, reading_date, normalized_value')
+        .select('meter_id, reading_date, raw_value')
         .eq('site_id', siteId)
         .inFilter('meter_id', meterIds.toList())
         .gte('reading_date', _isoDate(fetchFrom))
@@ -1129,7 +1125,7 @@ final conservationBalanceResultsProvider = FutureProvider.autoDispose
       byMeter.putIfAbsent(id, () => []).add(
             PeriodReadingPoint(
               date: DateTime.parse(map['reading_date'] as String),
-              value: (map['normalized_value'] as num).toDouble(),
+              value: (map['raw_value'] as num).toDouble(),
             ),
           );
     }
@@ -1138,15 +1134,15 @@ final conservationBalanceResultsProvider = FutureProvider.autoDispose
   const calculator = VirtualMeterCalculator();
   const balance = BalanceService();
   final results = <ConservationBalanceBundle>[];
+  final metersById = {for (final meter in meters) meter.id: meter};
 
   for (final g in active) {
     final unit = g.unitCode;
     final childrenSeries = [
       for (final id in g.memberMeterIds)
-        PeriodMeterReadingSeries(
-          meterId: id,
+        PeriodMeterReadingSeries.fromMeter(
+          meter: metersById[id]!,
           unitCode: unit,
-          meterMultiplier: 1,
           readings: byMeter[id] ?? const [],
         ),
     ];
@@ -1158,10 +1154,9 @@ final conservationBalanceResultsProvider = FutureProvider.autoDispose
     final main = calculator
         .contributorsFromSeries(
           leaves: [
-            PeriodMeterReadingSeries(
-              meterId: g.mainMeterId,
+            PeriodMeterReadingSeries.fromMeter(
+              meter: metersById[g.mainMeterId]!,
               unitCode: unit,
-              meterMultiplier: 1,
               readings: byMeter[g.mainMeterId] ?? const [],
             ),
           ],
@@ -1218,7 +1213,7 @@ final conservationBenchmarkProvider = FutureProvider.autoDispose
   final rows = await ref
       .read(supabaseClientProvider)
       .from('meter_readings')
-      .select('meter_id, reading_date, normalized_value')
+      .select('meter_id, reading_date, raw_value')
       .eq('site_id', siteId)
       .inFilter('meter_id', meterIds)
       .gte('reading_date', _isoDate(fetchFrom))
@@ -1230,7 +1225,7 @@ final conservationBenchmarkProvider = FutureProvider.autoDispose
     byMeter.putIfAbsent(id, () => []).add(
           PeriodReadingPoint(
             date: DateTime.parse(map['reading_date'] as String),
-            value: (map['normalized_value'] as num).toDouble(),
+            value: (map['raw_value'] as num).toDouble(),
           ),
         );
   }
@@ -1252,10 +1247,9 @@ final conservationBenchmarkProvider = FutureProvider.autoDispose
     final unitCode = system.defaultUnit;
     final series = [
       for (final m in unitMeters)
-        PeriodMeterReadingSeries(
-          meterId: m.id,
+        PeriodMeterReadingSeries.fromMeter(
+          meter: m,
           unitCode: unitCode,
-          meterMultiplier: 1,
           readings: byMeter[m.id] ?? const [],
         ),
     ];
@@ -1381,7 +1375,7 @@ final conservationAnomaliesProvider = FutureProvider.autoDispose
       final rows = await ref
           .read(supabaseClientProvider)
           .from('meter_readings')
-          .select('meter_id, reading_date, normalized_value')
+          .select('meter_id, reading_date, raw_value')
           .eq('site_id', siteId)
           .inFilter('meter_id', meterIds)
           .gte('reading_date', _isoDate(historyStart))
@@ -1393,7 +1387,7 @@ final conservationAnomaliesProvider = FutureProvider.autoDispose
         byMeter.putIfAbsent(id, () => []).add(
               PeriodReadingPoint(
                 date: DateTime.parse(map['reading_date'] as String),
-                value: (map['normalized_value'] as num).toDouble(),
+                value: (map['raw_value'] as num).toDouble(),
               ),
             );
       }
@@ -1441,10 +1435,9 @@ final conservationAnomaliesProvider = FutureProvider.autoDispose
       final unitCode = system.defaultUnit;
       final series = [
         for (final m in unitMeters)
-          PeriodMeterReadingSeries(
-            meterId: m.id,
+          PeriodMeterReadingSeries.fromMeter(
+            meter: m,
             unitCode: unitCode,
-            meterMultiplier: 1,
             readings: byMeter[m.id] ?? const [],
           ),
       ];

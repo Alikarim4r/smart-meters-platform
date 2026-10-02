@@ -39,6 +39,21 @@ final _siteMvListProvider = FutureProvider.autoDispose
   ).listForSite(siteId, limit: 100);
 });
 
+/// Whether current Data Quality snapshots contain a finding that makes
+/// cumulative consumption unverifiable for savings.
+///
+/// Data Quality findings are evaluated live and do not have a separate
+/// persisted resolution state. Critical findings and live cumulative
+/// drop/reset/correction findings remain unresolved while present in either
+/// M&V period snapshot.
+bool hasBlockingMvDataQuality(Iterable<DataQualityResult> results) {
+  return results.any(
+    (result) => result.findings.any(
+      (finding) => finding.blocksSavingsVerification,
+    ),
+  );
+}
+
 /// Admin M&V workflow — site_admin oriented (technician cannot verify).
 class MvAdminScreen extends ConsumerWidget {
   const MvAdminScreen({super.key, required this.siteId});
@@ -648,11 +663,29 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
         unitCode: _record.unitCode,
       );
 
+      final dataQualityResults = await _evaluateDataQuality();
+      final hasPendingCriticalDq = hasBlockingMvDataQuality(
+        dataQualityResults,
+      );
+
+      // All verified rows on the site (not just the same scope) plus real
+      // topology, so parent/child and balance-group overlaps are detected.
       final existing = await MeasurementVerificationRepository(client)
-          .listVerifiedOverlappingScope(
-        siteId: widget.siteId,
-        meterId: _record.meterId,
-        balanceGroupId: _record.balanceGroupId,
+          .listVerifiedOverlappingScope(siteId: widget.siteId);
+      final siteMeters = await MeterRepository(client).getMetersForSite(
+        widget.siteId,
+      );
+      final groups = await BalanceGroupRepository(client).listForSite(
+        widget.siteId,
+      );
+      final topology = DoubleCountTopology.fromSite(
+        parentMeterIdByMeterId: {
+          for (final m in siteMeters) m.id: m.parentMeterId,
+        },
+        mainMeterIdByGroupId: {for (final g in groups) g.id: g.mainMeterId},
+        memberMeterIdsByGroupId: {
+          for (final g in groups) g.id: g.memberMeterIds,
+        },
       );
 
       final outcome = svc.verify(
@@ -662,7 +695,7 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
         baselineStatus: baselineStatus,
         actionStatus: actionStatus,
         opportunityStatus: opportunityStatus,
-        hasPendingCriticalDq: false,
+        hasPendingCriticalDq: hasPendingCriticalDq,
         tariff: tariff,
         existingVerified: [
           for (final e in existing)
@@ -676,6 +709,7 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
                 balanceGroupId: e.balanceGroupId,
               ),
         ],
+        topology: topology,
       );
 
       if (!outcome.success || outcome.record == null) {
@@ -700,6 +734,155 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
     } finally {
       if (mounted) setState(() => _busy = false);
     }
+  }
+
+  Future<List<DataQualityResult>> _evaluateDataQuality() async {
+    final client = ref.read(supabaseClientProvider);
+    final siteMeters = await MeterRepository(
+      client,
+    ).getMetersForSite(widget.siteId);
+
+    final meterIds = <String>{};
+    if (_record.meterId != null) {
+      meterIds.add(_record.meterId!);
+    } else if (_record.balanceGroupId != null) {
+      final groups = await BalanceGroupRepository(
+        client,
+      ).listForSite(widget.siteId);
+      final matches = groups.where((g) => g.id == _record.balanceGroupId);
+      if (matches.isEmpty) {
+        throw StateError('M&V balance group is no longer available');
+      }
+      final group = matches.first;
+      meterIds
+        ..add(group.mainMeterId)
+        ..addAll(group.memberMeterIds);
+    } else {
+      meterIds.addAll(siteMeters.map((meter) => meter.id));
+    }
+
+    final meters = siteMeters
+        .where((meter) => meterIds.contains(meter.id))
+        .toList();
+    if (meters.length != meterIds.length) {
+      throw StateError('M&V meter scope is no longer available');
+    }
+
+    final earliestStart =
+        _record.prePeriodStart.isBefore(_record.postPeriodStart)
+        ? _record.prePeriodStart
+        : _record.postPeriodStart;
+    final latestEnd = _record.prePeriodEnd.isAfter(_record.postPeriodEnd)
+        ? _record.prePeriodEnd
+        : _record.postPeriodEnd;
+
+    final readingRows = meterIds.isEmpty
+        ? const <dynamic>[]
+        : await client
+              .from('meter_readings')
+              .select()
+              .eq('site_id', widget.siteId)
+              .inFilter('meter_id', meterIds.toList())
+              .gte(
+                'reading_date',
+                formatBusinessDate(
+                  earliestStart.subtract(const Duration(days: 90)),
+                ),
+              )
+              .lte('reading_date', formatBusinessDate(latestEnd))
+              .order('reading_date');
+    final readings = [
+      for (final row in readingRows)
+        MeterReading.fromJson(Map<String, dynamic>.from(row as Map)),
+    ];
+
+    final auditRows = meterIds.isEmpty
+        ? const <dynamic>[]
+        : await client
+              .from('reading_audit_logs')
+              .select('meter_id, action, old_reading_date, new_reading_date')
+              .eq('site_id', widget.siteId)
+              .eq('action', 'update')
+              .inFilter('meter_id', meterIds.toList());
+    final policy = await PolicySettingsRepository(
+      client,
+    ).getEffectivePolicyForSite(widget.siteId);
+
+    const service = DataQualityService();
+    return [
+      for (final period in [
+        (start: _record.prePeriodStart, end: _record.prePeriodEnd),
+        (start: _record.postPeriodStart, end: _record.postPeriodEnd),
+      ])
+        service.evaluate(
+          DataQualityRuleContext(
+            siteId: widget.siteId,
+            periodStart: period.start,
+            periodEnd: period.end,
+            photoRequired: policy.photoRequired,
+            highConsumptionMultiplier: policy.highConsumptionMultiplier,
+            meters: [
+              for (final meter in meters)
+                QualityMeterInput(
+                  meterId: meter.id,
+                  meterCode: meter.meterCode,
+                  isActive: meter.isActive,
+                  includeInDashboard: meter.includeInDashboard,
+                  meterMaxValue: normalizedRolloverCapacity(
+                    rawCapacity: meter.rolloverCapacity,
+                    unitToBaseFactor: meter.unitToBaseFactor,
+                    meterMultiplier: meter.meterMultiplier,
+                  ),
+                  correctionCountInPeriod: _correctionCount(
+                    auditRows,
+                    meterId: meter.id,
+                    periodStart: period.start,
+                    periodEnd: period.end,
+                  ),
+                  readings: [
+                    for (final reading in readings)
+                      if (reading.meterId == meter.id)
+                        QualityReadingInput(
+                          readingId: reading.id,
+                          meterId: reading.meterId,
+                          readingDate: reading.readingDate,
+                          rawValue: reading.rawValue,
+                          normalizedValue: reading.normalizedValue,
+                          imageStoragePath: reading.imageStoragePath,
+                        ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+    ];
+  }
+
+  int _correctionCount(
+    List<dynamic> rows, {
+    required String meterId,
+    required DateTime periodStart,
+    required DateTime periodEnd,
+  }) {
+    bool isInPeriod(Object? value) {
+      final date = DateTime.tryParse(value?.toString() ?? '');
+      if (date == null) return false;
+      final day = DateTime(date.year, date.month, date.day);
+      final start = DateTime(
+        periodStart.year,
+        periodStart.month,
+        periodStart.day,
+      );
+      final end = DateTime(periodEnd.year, periodEnd.month, periodEnd.day);
+      return !day.isBefore(start) && !day.isAfter(end);
+    }
+
+    return rows.where((row) {
+      final map = Map<String, dynamic>.from(row as Map);
+      return map['meter_id'] == meterId &&
+          (isInPeriod(map['old_reading_date']) ||
+              isInPeriod(map['new_reading_date']));
+    }).length;
   }
 
   Future<void> _reject(SavingsVerificationService svc) async {

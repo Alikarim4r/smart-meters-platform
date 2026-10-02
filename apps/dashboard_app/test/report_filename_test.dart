@@ -6,7 +6,7 @@ import 'package:dashboard_app/reports/report_models.dart';
 
 void main() {
   test('sanitizeReportFilenamePart removes unsafe characters', () {
-    expect(sanitizeReportFilenamePart('Government HQ Demo!'), 'GOVERNMENT_HQ_DEMO');
+    expect(sanitizeReportFilenamePart('Government HQ Demo!'), 'Government_HQ_Demo');
     expect(sanitizeReportFilenamePart('Test/School A'), 'TestSchool_A');
   });
 
@@ -18,6 +18,6 @@ void main() {
       period: ChartPeriod.weekly,
       generatedAt: DateTime(2026, 7, 4),
     );
-    expect(name, 'GOVERNMENT_HQ_DEMO_consumption_weekly_2026-07-04.xlsx');
+    expect(name, 'Government_HQ_Demo_consumption_weekly_2026-07-04.xlsx');
   });
 }

@@ -34,6 +34,18 @@ class DataQualityFinding {
   final String? readingId;
   final DateTime? readingDate;
   final Map<String, Object?> metadata;
+
+  /// Findings that make cumulative consumption unverifiable for M&V until
+  /// the live condition is resolved or the source readings are corrected.
+  bool get blocksSavingsVerification {
+    if (severity == DataQualitySeverity.critical) return true;
+    return switch (code) {
+      DataQualityFindingCode.readingRequiresReview ||
+      DataQualityFindingCode.possibleRolloverOrReset ||
+      DataQualityFindingCode.correctionInAnalysisPeriod => true,
+      _ => false,
+    };
+  }
 }
 
 /// One explainable confidence adjustment step.

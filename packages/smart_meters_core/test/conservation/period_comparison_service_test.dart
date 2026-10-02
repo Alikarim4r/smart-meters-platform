@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:smart_meters_core/conservation/conservation.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
 
 PeriodReadingPoint p(DateTime d, double v) => PeriodReadingPoint(date: d, value: v);
 
@@ -7,6 +7,8 @@ PeriodMeterReadingSeries meter({
   required List<PeriodReadingPoint> readings,
   String unit = 'kWh',
   double multiplier = 1,
+  double unitToBaseFactor = 1,
+  double? rolloverCapacity,
   int? expectedIntervalDays,
   List<DateTime> corrections = const [],
 }) {
@@ -15,6 +17,8 @@ PeriodMeterReadingSeries meter({
     unitCode: unit,
     readings: readings,
     meterMultiplier: multiplier,
+    unitToBaseFactor: unitToBaseFactor,
+    rolloverCapacity: rolloverCapacity,
     expectedIntervalDays: expectedIntervalDays,
     correctionDates: corrections,
   );
@@ -71,6 +75,73 @@ void main() {
   });
 
   group('PeriodComparisonService', () {
+    test('replacement in current AFTER period is missing, never zero', () {
+      final result = service.compareMeters(
+        type: PeriodComparisonType.previousPeriod,
+        currentStart: DateTime(2026, 7, 1),
+        currentEnd: DateTime(2026, 7, 10),
+        unitCode: 'kWh',
+        calculatedAt: fixedNow,
+        meters: [
+          meter(
+            readings: [
+              p(DateTime(2026, 6, 20), 900),
+              p(DateTime(2026, 6, 30), 990),
+              p(DateTime(2026, 7, 5), 5),
+              p(DateTime(2026, 7, 10), 20),
+            ],
+          ),
+        ],
+      );
+
+      expect(result.isInsufficient, isTrue);
+      expect(result.currentValue, isNull);
+      expect(result.currentCompleteness, lessThan(1));
+      expect(result.currentPeriodConfidence, lessThan(100));
+      expect(result.percentageDisplay, 'N/A');
+    });
+
+    test('valid rollover uses consistently normalized capacity', () {
+      final productionMeter = Meter.fromJson({
+        'id': 'm1',
+        'site_id': 's1',
+        'meter_code': 'M1',
+        'name_en': 'Meter 1',
+        'name_ar': 'Meter 1',
+        'category': 'electricity',
+        'unit': 'kwh',
+        'unit_to_base_factor': 10,
+        'base_unit': 'kWh',
+        'meter_multiplier': 2,
+        'is_active': true,
+        'rollover_capacity': 1000,
+      });
+      final result = service.compareMeters(
+        type: PeriodComparisonType.previousPeriod,
+        currentStart: DateTime(2026, 7, 1),
+        currentEnd: DateTime(2026, 7, 10),
+        unitCode: 'kWh',
+        calculatedAt: fixedNow,
+        meters: [
+          PeriodMeterReadingSeries.fromMeter(
+            meter: productionMeter,
+            unitCode: 'kWh',
+            readings: [
+              p(DateTime(2026, 6, 20), 900),
+              p(DateTime(2026, 6, 30), 990),
+              p(DateTime(2026, 7, 5), 5),
+              p(DateTime(2026, 7, 10), 20),
+            ],
+          ),
+        ],
+      );
+
+      expect(productionMeter.rolloverCapacity, 1000);
+      expect(result.status, PeriodComparisonStatus.ok);
+      expect(result.currentValue, 600); // raw rollover consumption 30 × 20
+      expect(result.comparisonValue, 1800); // raw consumption 90 × 20
+    });
+
     test('Example A: current > previous', () {
       // Current Jul 1–10: 200→300 = 100
       // Previous Jun 21–30: 100→150 = 50

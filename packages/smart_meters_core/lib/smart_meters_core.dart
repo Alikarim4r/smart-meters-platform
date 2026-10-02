@@ -26,6 +26,8 @@ export 'repositories/alert_repository.dart';
 export 'domain/efficiency_bands.dart';
 export 'domain/chart_period.dart';
 export 'domain/chart_aggregation.dart';
+export 'domain/cumulative_consumption.dart';
+export 'domain/unit_conversion.dart';
 export 'domain/chart_meter_selection.dart';
 export 'domain/meter_reading_card_logic.dart';
 export 'models/chart_models.dart';

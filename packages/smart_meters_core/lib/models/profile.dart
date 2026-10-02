@@ -1,5 +1,4 @@
 import 'enums.dart';
-import '../security/platform_owner.dart';
 
 class Profile {
   const Profile({
@@ -20,6 +19,7 @@ class Profile {
     this.phone,
     this.companyName,
     this.avatarPath,
+    this.isPlatformOwner = false,
   });
 
   final String id;
@@ -46,6 +46,13 @@ class Profile {
   /// Storage path in `profile-avatars` bucket.
   final String? avatarPath;
 
+  /// Platform owner (super-super-admin), decided **by the server** only.
+  ///
+  /// Mirrors `profiles.is_platform_owner`, which the DB maintains from
+  /// `public.is_platform_owner_user()` (migration 120) — the same check every
+  /// RLS policy / RPC uses. Missing → false (fail closed).
+  final bool isPlatformOwner;
+
   factory Profile.fromJson(Map<String, dynamic> json) {
     return Profile(
       id: json['id'] as String,
@@ -66,6 +73,7 @@ class Profile {
       phone: json['phone'] as String?,
       companyName: json['company_name'] as String?,
       avatarPath: json['avatar_path'] as String?,
+      isPlatformOwner: json['is_platform_owner'] == true,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
     );
@@ -87,6 +95,7 @@ class Profile {
         'phone': phone,
         'company_name': companyName,
         'avatar_path': avatarPath,
+        'is_platform_owner': isPlatformOwner,
         'created_at': createdAt.toIso8601String(),
         'updated_at': updatedAt.toIso8601String(),
       };
@@ -107,9 +116,6 @@ class Profile {
   bool get isViewer => role == UserRole.viewer;
 
   bool get isTechnicianRequest => role == UserRole.technicianRequest;
-
-  /// Hard-coded platform owner (email allowlist) — full delete/role powers.
-  bool get isPlatformOwner => isPlatformOwnerEmail(email);
 
   /// Approved and active — required before role/site gates and data access.
   bool get isApprovedForAccess =>
@@ -140,6 +146,7 @@ class Profile {
       phone: clearPhone ? null : (phone ?? this.phone),
       companyName: clearCompanyName ? null : (companyName ?? this.companyName),
       avatarPath: clearAvatarPath ? null : (avatarPath ?? this.avatarPath),
+      isPlatformOwner: isPlatformOwner,
       createdAt: createdAt,
       updatedAt: updatedAt,
     );

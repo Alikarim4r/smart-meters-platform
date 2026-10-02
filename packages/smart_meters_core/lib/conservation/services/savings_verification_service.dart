@@ -176,6 +176,7 @@ class SavingsVerificationService {
     required bool hasPendingCriticalDq,
     UtilityTariff? tariff,
     List<DoubleCountCandidate> existingVerified = const [],
+    DoubleCountTopology topology = const DoubleCountTopology(),
     DateTime? verifiedAt,
   }) {
     ConservationAuthorityPolicy.assertCanVerify(actorRole);
@@ -207,6 +208,8 @@ class SavingsVerificationService {
     final overlaps = DoubleCountRules.detectAgainstExisting(
       candidate: candidate,
       existing: existingVerified,
+      parentByMeterId: topology.parentByMeterId,
+      balanceGroupMembers: topology.balanceGroupMembers,
     );
     if (overlaps.isNotEmpty) {
       return VerificationOutcome.blocked(

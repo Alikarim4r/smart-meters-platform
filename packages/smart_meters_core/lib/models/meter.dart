@@ -38,6 +38,7 @@ class Meter {
     this.siteNameEn,
     this.parentMeterNameEn,
     this.parentMeterCode,
+    this.rolloverCapacity,
   });
 
   final String id;
@@ -79,6 +80,10 @@ class Meter {
   final String? siteNameEn;
   final String? parentMeterNameEn;
   final String? parentMeterCode;
+
+  /// Raw register capacity at which the meter rolls over to 0
+  /// (`meters.rollover_capacity`, migration 119). `null` = not configured.
+  final double? rolloverCapacity;
 
   String get unitDisplayLabel => unitConfig?.displayName ?? unit.label;
 
@@ -201,6 +206,7 @@ class Meter {
       siteNameEn: siteNameEn,
       parentMeterNameEn: parentMeterNameEn,
       parentMeterCode: parentMeterCode,
+      rolloverCapacity: _parseOptionalDouble(json['rollover_capacity']),
     );
   }
 
@@ -208,6 +214,13 @@ class Meter {
       isActive &&
       meterKind == MeterKind.physical &&
       calculationType == CalculationType.directReading;
+}
+
+/// PostgREST returns `numeric` as num or string depending on precision.
+double? _parseOptionalDouble(Object? value) {
+  if (value is num) return value.toDouble();
+  if (value is String) return double.tryParse(value);
+  return null;
 }
 
 String? _nullableTrim(String? value) {

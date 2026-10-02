@@ -6,6 +6,7 @@ import '../catalog/catalog_helpers.dart';
 import '../domain/business_date.dart';
 import '../domain/chart_aggregation.dart';
 import '../domain/chart_meter_selection.dart';
+import '../domain/cumulative_consumption.dart';
 import '../domain/meter_reading_card_logic.dart';
 import '../domain/chart_period.dart';
 import '../models/chart_models.dart';
@@ -1396,7 +1397,10 @@ $metersSelect
     for (final row in consumptionRows) {
       final meterId = row['meter_id'] as String;
       final date = row['reading_date'] as String;
-      consumptionByKey['$meterId|$date'] = _toDouble(row['daily_consumption']);
+      final daily = row['daily_consumption'];
+      // Unverifiable drops stay blank in exports instead of showing 0.
+      if (daily == null) continue;
+      consumptionByKey['$meterId|$date'] = _toDouble(daily);
     }
 
     // Prefer inner join when filtering by category so PostgREST can push down.
@@ -1572,6 +1576,9 @@ profiles:entered_by(full_name, email)
     final meterMetaById = {
       for (final meter in targetMeters) meter.id: _meterEmbedMap(meter),
     };
+    final capacityById = {
+      for (final meter in targetMeters) meter.id: _normalizedCapacity(meter),
+    };
     final ids = targetMeters.map((m) => m.id).toList();
     final fromIso = formatBusinessDate(from);
     final toIso = formatBusinessDate(to);
@@ -1584,6 +1591,7 @@ profiles:entered_by(full_name, email)
         siteId: siteId,
         meterIds: ids,
         meterMetaById: meterMetaById,
+        capacityById: capacityById,
         from: from,
         to: to,
         bucket: bucket!,
@@ -1638,15 +1646,20 @@ profiles:entered_by(full_name, email)
       double? prev = prevByMeter[meterId];
       for (final row in sorted) {
         final value = _toDouble(row['normalized_value']);
-        final daily = prev == null
-            ? 0.0
-            : (value - prev < 0 ? 0.0 : value - prev);
+        // Same semantics as meter_daily_consumption: plausible rollover is
+        // counted, any other drop is null (unverifiable), never invented.
+        final delta = classifyCumulativeDelta(
+          previous: prev,
+          current: value,
+          normalizedCapacity: capacityById[meterId],
+        );
         prev = value;
         results.add({
           'meter_id': meterId,
           'site_id': row['site_id'] ?? siteId,
           'reading_date': row['reading_date'],
-          'daily_consumption': daily,
+          'daily_consumption': delta.consumption,
+          'consumption_status': delta.transition.dbValue,
           'meters': meta,
         });
       }
@@ -1664,6 +1677,7 @@ profiles:entered_by(full_name, email)
     required String siteId,
     required List<String> meterIds,
     required Map<String, Map<String, dynamic>> meterMetaById,
+    required Map<String, double?> capacityById,
     required DateTime from,
     required DateTime to,
     required ChartBucket bucket,
@@ -1716,16 +1730,21 @@ profiles:entered_by(full_name, email)
             final firstValue = earliest[meterId] == null
                 ? null
                 : _toDouble(earliest[meterId]!['normalized_value']);
-            final consumption = periodConsumptionFromEndpoints(
-              lastInPeriod: lastValue,
-              previousBeforePeriod: prevByMeter[meterId],
-              firstInPeriod: firstValue,
+            // Endpoint delta (previous-before-window, else first-in-window).
+            // A net drop across the window is only counted when it is a
+            // plausible single rollover; otherwise it is unverifiable (null)
+            // rather than silently clamped to 0.
+            final delta = classifyCumulativeDelta(
+              previous: prevByMeter[meterId] ?? firstValue,
+              current: lastValue,
+              normalizedCapacity: capacityById[meterId],
             );
             out.add({
               'meter_id': meterId,
               'site_id': lastRow['site_id'] ?? siteId,
               'reading_date': lastRow['reading_date'],
-              'daily_consumption': consumption,
+              'daily_consumption': delta.consumption,
+              'consumption_status': delta.transition.dbValue,
               'meters': meta,
             });
           }
@@ -1889,6 +1908,12 @@ profiles:entered_by(full_name, email)
     return prevByMeter;
   }
 
+  static double? _normalizedCapacity(Meter meter) => normalizedRolloverCapacity(
+        rawCapacity: meter.rolloverCapacity,
+        unitToBaseFactor: meter.unitToBaseFactor,
+        meterMultiplier: meter.meterMultiplier,
+      );
+
   Map<String, dynamic> _meterEmbedMap(Meter meter) {
     final category = meter.categoryConfig;
     return {
@@ -1897,6 +1922,8 @@ profiles:entered_by(full_name, email)
       'meter_code': meter.meterCode,
       'category_id': meter.categoryId,
       'base_unit': meter.baseUnit,
+      // Raw (pre-normalization) unit — lets COP reject kVAh meters.
+      'unit_code': meter.unitConfig?.code ?? meter.unit.dbValue,
       'meter_categories': category == null
           ? {
               'name_en': meter.category.label,

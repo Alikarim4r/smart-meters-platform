@@ -1,4 +1,5 @@
-import '../../domain/chart_period.dart';
+import '../../domain/cumulative_consumption.dart';
+import '../../domain/unit_conversion.dart';
 import '../domain/period_windows.dart';
 import '../models/actual_vs_baseline_result.dart';
 import '../models/calculation_meta.dart';
@@ -50,8 +51,21 @@ class ActualVsBaselineService {
       }
     }
 
-    final incompatible =
-        meters.where((m) => m.unitCode != baseline.unitCode).toList();
+    final incompatible = <PeriodMeterReadingSeries>[];
+    final conversionFactors = <String, double>{};
+
+    for (final m in meters) {
+      // Identical codes (even custom ones) stay compatible 1:1.
+      final factor = m.unitCode == baseline.unitCode
+          ? 1.0
+          : UnitConversion.factor(m.unitCode, baseline.unitCode);
+      if (factor == null) {
+        incompatible.add(m);
+      } else {
+        conversionFactors[m.meterId] = factor;
+      }
+    }
+
     if (incompatible.isNotEmpty) {
       return _insufficient(
         baseline: baseline,
@@ -70,6 +84,7 @@ class ActualVsBaselineService {
       meters: meters,
       periodStart: periodStart,
       periodEnd: effectiveEnd,
+      conversionFactors: conversionFactors,
     );
 
     // Combined confidence = min(baseline, actual) — conservative.
@@ -180,6 +195,7 @@ class ActualVsBaselineService {
     required List<PeriodMeterReadingSeries> meters,
     required DateTime periodStart,
     required DateTime periodEnd,
+    required Map<String, double> conversionFactors,
   }) {
     if (meters.isEmpty) {
       return (
@@ -202,11 +218,15 @@ class ActualVsBaselineService {
       );
       readingCount += endpoints.readingCountInPeriod;
       if (!endpoints.hasValidConsumptionEndpoints) continue;
-      total += periodConsumptionFromEndpoints(
-        lastInPeriod: endpoints.lastInPeriod!,
-        previousBeforePeriod: endpoints.previousBeforePeriod,
-        firstInPeriod: endpoints.firstInPeriod,
+
+      final run = cumulativeRunConsumption(
+        values: endpoints.cumulativeRunValues,
+        normalizedCapacity: meter.normalizedCapacity,
       );
+      final rawConsumption = run.consumption;
+      if (rawConsumption == null) continue;
+      final factor = conversionFactors[meter.meterId] ?? 1.0;
+      total += rawConsumption * factor;
       withEndpoints++;
     }
 
@@ -297,4 +317,5 @@ class ActualVsBaselineService {
 
   static String _iso(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
 }

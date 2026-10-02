@@ -1,17 +1,8 @@
 import '../models/enums.dart';
 
-/// Platform owner (super-super-admin) email allowlist.
-///
-/// Passwords must never be stored in source. Ownership is email-based only.
-const kPlatformOwnerEmails = <String>{
-  'alikarim4r@gmail.com',
-  'support@alimind.com',
-};
-
-bool isPlatformOwnerEmail(String? email) {
-  if (email == null) return false;
-  return kPlatformOwnerEmails.contains(email.trim().toLowerCase());
-}
+// Platform ownership is decided server-side only (`public.is_platform_owner()`,
+// migration 120) and reaches clients as `Profile.isPlatformOwner`
+// (`profiles.is_platform_owner`). There is deliberately no client allowlist.
 
 /// Which client apps a role can open after approval.
 enum AppAccessCategory {

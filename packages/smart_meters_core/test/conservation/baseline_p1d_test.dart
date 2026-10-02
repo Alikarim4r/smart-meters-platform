@@ -284,13 +284,65 @@ void main() {
       double value = 100,
       double completeness = 1.0,
       int confidence = 90,
+      String unit = 'kWh',
     }) =>
         draftBaseline(
           value: value,
           completeness: completeness,
           confidence: confidence,
+          unit: unit,
           status: ConservationBaselineStatus.approved,
         );
+
+    test('replacement in AFTER period is missing, never a zero saving', () {
+      final r = avb.evaluate(
+        baseline: approved(value: 100),
+        analysisPeriodStart: DateTime(2026, 2, 1),
+        analysisPeriodEnd: DateTime(2026, 2, 28),
+        analysisAsOf: DateTime(2026, 2, 28),
+        meters: [
+          PeriodMeterReadingSeries(
+            meterId: 'm1',
+            unitCode: 'kWh',
+            readings: [
+              p(DateTime(2026, 1, 31), 950),
+              p(DateTime(2026, 2, 10), 5),
+              p(DateTime(2026, 2, 28), 25),
+            ],
+          ),
+        ],
+      );
+
+      expect(r.isInsufficient, isTrue);
+      expect(r.actualValue, isNull);
+      expect(r.actualCompleteness, lessThan(1));
+      expect(r.actualConfidence, lessThan(100));
+    });
+
+    test('valid rollover in AFTER period computes consumption', () {
+      final r = avb.evaluate(
+        baseline: approved(value: 75),
+        analysisPeriodStart: DateTime(2026, 2, 1),
+        analysisPeriodEnd: DateTime(2026, 2, 28),
+        analysisAsOf: DateTime(2026, 2, 28),
+        meters: [
+          PeriodMeterReadingSeries(
+            meterId: 'm1',
+            unitCode: 'kWh',
+            rolloverCapacity: 1000,
+            readings: [
+              p(DateTime(2026, 1, 31), 950),
+              p(DateTime(2026, 2, 10), 5),
+              p(DateTime(2026, 2, 28), 25),
+            ],
+          ),
+        ],
+      );
+
+      expect(r.status, ActualVsBaselineStatus.ok);
+      expect(r.actualValue, 75);
+      expect(r.standing, ActualVsBaselineStanding.onBaseline);
+    });
 
     test('actual above baseline', () {
       final r = avb.evaluate(
@@ -491,6 +543,49 @@ void main() {
       for (final standing in ActualVsBaselineStanding.values) {
         expect(standing.name.toLowerCase(), isNot(contains('saving')));
       }
+    });
+
+    test('mixed units are converted correctly', () {
+      final r = avb.evaluate(
+        baseline: approved(value: 100, unit: 'mwh'),
+        analysisPeriodStart: DateTime(2026, 2, 1),
+        analysisPeriodEnd: DateTime(2026, 2, 28),
+        analysisAsOf: DateTime(2026, 2, 28),
+        meters: [
+          PeriodMeterReadingSeries(
+            meterId: 'm1',
+            unitCode: 'kwh', // 1 mwh = 1000 kwh
+            readings: [
+              p(DateTime(2026, 1, 31), 0),
+              p(DateTime(2026, 2, 28), 100000), // 100,000 kwh = 100 mwh
+            ],
+          ),
+        ],
+      );
+      expect(r.status, ActualVsBaselineStatus.ok);
+      expect(r.standing, ActualVsBaselineStanding.onBaseline);
+      expect(r.actualValue, 100.0);
+    });
+
+    test('incompatible units are explicitly rejected', () {
+      final r = avb.evaluate(
+        baseline: approved(value: 100, unit: 'm3'),
+        analysisPeriodStart: DateTime(2026, 2, 1),
+        analysisPeriodEnd: DateTime(2026, 2, 28),
+        analysisAsOf: DateTime(2026, 2, 28),
+        meters: [
+          PeriodMeterReadingSeries(
+            meterId: 'm1',
+            unitCode: 'kwh',
+            readings: [
+              p(DateTime(2026, 1, 31), 0),
+              p(DateTime(2026, 2, 28), 100),
+            ],
+          ),
+        ],
+      );
+      expect(r.isInsufficient, isTrue);
+      expect(r.message, contains('Incompatible'));
     });
   });
 

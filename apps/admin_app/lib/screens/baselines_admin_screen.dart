@@ -371,7 +371,7 @@ class BaselinesAdminScreen extends ConsumerWidget {
       final rows = await ref
           .read(supabaseClientProvider)
           .from('meter_readings')
-          .select('meter_id, reading_date, normalized_value')
+          .select('meter_id, reading_date, raw_value')
           .eq('site_id', siteId)
           .inFilter('meter_id', matching.map((m) => m.id).toList())
           .gte('reading_date', fetchFromIso)
@@ -383,7 +383,7 @@ class BaselinesAdminScreen extends ConsumerWidget {
         byMeter.putIfAbsent(id, () => []).add(
               PeriodReadingPoint(
                 date: DateTime.parse(map['reading_date'] as String),
-                value: (map['normalized_value'] as num).toDouble(),
+                value: (map['raw_value'] as num).toDouble(),
               ),
             );
       }
@@ -391,8 +391,8 @@ class BaselinesAdminScreen extends ConsumerWidget {
 
     final series = [
       for (final m in matching)
-        PeriodMeterReadingSeries(
-          meterId: m.id,
+        PeriodMeterReadingSeries.fromMeter(
+          meter: m,
           unitCode: unit,
           readings: byMeter[m.id] ?? const [],
         ),
