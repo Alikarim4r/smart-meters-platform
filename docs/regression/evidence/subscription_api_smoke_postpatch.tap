@@ -1,0 +1,16 @@
+ok 1 - anon cannot read subscriptions
+ok 2 - anon cannot call subscription_access_state
+ok 3 - viewer (forged claims) cannot PATCH max_sites
+ok 4 - viewer cannot INSERT subscription
+ok 5 - viewer cannot read provider refs
+ok 6 - viewer gets server max_sites despite forged claim
+ok 7 - viewer cannot read org B entitlement (IDOR)
+ok 8 - viewer cannot probe org B features (IDOR)
+ok 9 - viewer cannot create site
+ok 10 - site admin (forged) cannot create site
+ok 11 - site admin cannot move site to org B
+ok 12 - site admin cannot attach site to org B zone
+ok 13 - org admin B cannot plant site in org A via own zone
+ok 14 - org admin B creates site N within quota (legit)
+ok 15 - org admin B site N+1 rejected by quota
+1..15
