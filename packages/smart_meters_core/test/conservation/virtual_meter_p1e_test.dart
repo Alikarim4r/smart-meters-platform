@@ -541,5 +541,56 @@ void main() {
       expect('Residual'.toLowerCase(), isNot(contains('leak')));
       expect('Balance Difference'.toLowerCase(), isNot(contains('leak')));
     });
+
+    test('mixed compatible units normalize correctly', () {
+      final children = calc.contributorsFromSeries(
+        periodStart: DateTime(2026, 7, 1),
+        periodEnd: DateTime(2026, 7, 31),
+        leaves: [
+          PeriodMeterReadingSeries(
+            meterId: 'c1',
+            unitCode: 'mwh',
+            readings: [p(DateTime(2026, 6, 30), 0), p(DateTime(2026, 7, 31), 1)],
+          ),
+          PeriodMeterReadingSeries(
+            meterId: 'c2',
+            unitCode: 'kwh',
+            readings: [p(DateTime(2026, 6, 30), 0), p(DateTime(2026, 7, 31), 500)],
+          ),
+        ],
+      );
+      final r = calc.calculate(
+        calculationType: CalculationType.sumChildren,
+        unitCode: 'kwh',
+        periodStart: DateTime(2026, 7, 1),
+        periodEnd: DateTime(2026, 7, 31),
+        children: children,
+      );
+      expect(r.status, VirtualMeterResultStatus.ok);
+      expect(r.value, 1500.0);
+    });
+
+    test('incompatible units explicitly rejected', () {
+      final children = calc.contributorsFromSeries(
+        periodStart: DateTime(2026, 7, 1),
+        periodEnd: DateTime(2026, 7, 31),
+        leaves: [
+          PeriodMeterReadingSeries(
+            meterId: 'c1',
+            unitCode: 'mwh',
+            readings: [p(DateTime(2026, 6, 30), 0), p(DateTime(2026, 7, 31), 1)],
+          ),
+        ],
+      );
+      final r = calc.calculate(
+        calculationType: CalculationType.sumChildren,
+        unitCode: 'm3',
+        periodStart: DateTime(2026, 7, 1),
+        periodEnd: DateTime(2026, 7, 31),
+        children: children,
+      );
+      expect(r.isInsufficient, isTrue);
+      expect(r.message, contains('Incompatible'));
+    });
   });
 }

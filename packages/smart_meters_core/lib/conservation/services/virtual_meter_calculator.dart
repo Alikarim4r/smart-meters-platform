@@ -1,3 +1,4 @@
+import '../../catalog/expanded_unit_catalog.dart';
 import '../../domain/chart_period.dart';
 import '../../models/enums.dart';
 import '../domain/period_windows.dart';
@@ -116,30 +117,74 @@ class VirtualMeterCalculator {
       );
     }
 
-    final unitMismatch = children.where((c) => c.unitCode != unitCode).toList();
-    if (unitMismatch.isNotEmpty ||
-        (parent != null && parent.unitCode != unitCode)) {
+    final incompatibleChildren = <VirtualMeterContributorInput>[];
+    final normalizedChildren = <VirtualMeterContributorInput>[];
+
+    for (final c in children) {
+      if (c.unitCode == unitCode) {
+        normalizedChildren.add(c);
+      } else {
+        final factor = _getConversionFactor(c.unitCode, unitCode);
+        if (factor != null) {
+          normalizedChildren.add(VirtualMeterContributorInput(
+            meterId: c.meterId,
+            consumption: c.consumption != null ? c.consumption! * factor : null,
+            hasValidEndpoints: c.hasValidEndpoints,
+            completeness: c.completeness,
+            confidence: c.confidence,
+            unitCode: unitCode,
+            readingSpanStart: c.readingSpanStart,
+            readingSpanEnd: c.readingSpanEnd,
+            isMissing: c.isMissing,
+          ));
+        } else {
+          incompatibleChildren.add(c);
+        }
+      }
+    }
+
+    VirtualMeterContributorInput? normalizedParent = parent;
+    if (parent != null && parent.unitCode != unitCode) {
+      final factor = _getConversionFactor(parent.unitCode, unitCode);
+      if (factor != null) {
+        normalizedParent = VirtualMeterContributorInput(
+          meterId: parent.meterId,
+          consumption: parent.consumption != null ? parent.consumption! * factor : null,
+          hasValidEndpoints: parent.hasValidEndpoints,
+          completeness: parent.completeness,
+          confidence: parent.confidence,
+          unitCode: unitCode,
+          readingSpanStart: parent.readingSpanStart,
+          readingSpanEnd: parent.readingSpanEnd,
+          isMissing: parent.isMissing,
+        );
+      } else {
+        incompatibleChildren.add(parent);
+      }
+    }
+
+    if (incompatibleChildren.isNotEmpty) {
       return _insufficient(
         calculationType: calculationType,
         unitCode: unitCode,
         start: start,
         end: end,
-        reason: 'Unit mismatch among virtual meter contributors.',
+        reason: 'Incompatible units/categories among virtual meter contributors.',
         hierarchyDepth: hierarchyDepth,
-        missing: unitMismatch.map((c) => c.meterId).toList(),
+        missing: incompatibleChildren.map((c) => c.meterId).toList(),
       );
     }
 
-    final missing = children.where((c) => c.isMissing || !c.hasValidEndpoints).toList();
-    final present = children.where((c) => c.hasValidEndpoints && c.consumption != null).toList();
+    final missing = normalizedChildren.where((c) => c.isMissing || !c.hasValidEndpoints).toList();
+    final present = normalizedChildren.where((c) => c.hasValidEndpoints && c.consumption != null).toList();
     final contributingIds = present.map((c) => c.meterId).toList();
     final missingIds = missing.map((c) => c.meterId).toList();
 
-    final completeness = (present.length / children.length).clamp(0.0, 1.0).toDouble();
+    final completeness = (present.length / normalizedChildren.length).clamp(0.0, 1.0).toDouble();
 
     // Conservative confidence = min(contributors) with penalties.
     var confidence = 100;
-    for (final c in children) {
+    for (final c in normalizedChildren) {
       if (c.confidence < confidence) confidence = c.confidence;
     }
     if (missing.isNotEmpty) {
@@ -218,7 +263,7 @@ class VirtualMeterCalculator {
     }
 
     // parent_minus_children
-    if (parent == null || !parent.hasValidEndpoints || parent.consumption == null) {
+    if (normalizedParent == null || !normalizedParent.hasValidEndpoints || normalizedParent.consumption == null) {
       return _insufficient(
         calculationType: calculationType,
         unitCode: unitCode,
@@ -231,14 +276,14 @@ class VirtualMeterCalculator {
         completeness: completeness * 0.5,
         confidence: (confidence - 30).clamp(0, 100),
         contributing: contributingIds,
-        missing: [...missingIds, if (parent != null) parent.meterId else 'parent'],
+        missing: [...missingIds, if (normalizedParent != null) normalizedParent.meterId else 'parent'],
         warnings: warnings,
       );
     }
 
-    if (parent.confidence < confidence) confidence = parent.confidence;
+    if (normalizedParent.confidence < confidence) confidence = normalizedParent.confidence;
 
-    final residual = parent.consumption! - childrenSum;
+    final residual = normalizedParent.consumption! - childrenSum;
     if (residual < 0) {
       confidence -= 15;
       warnings.add(
@@ -259,12 +304,12 @@ class VirtualMeterCalculator {
       end: end,
       completeness: completeness,
       confidence: confidence.clamp(0, 100),
-      contributing: [...contributingIds, parent.meterId],
+      contributing: [...contributingIds, normalizedParent.meterId],
       missing: missingIds,
       hierarchyDepth: hierarchyDepth,
       warnings: warnings,
       expression:
-          'parent(${parent.consumption}) − Σ children($childrenSum) = $residual $unitCode',
+          'parent(${normalizedParent.consumption}) − Σ children($childrenSum) = $residual $unitCode',
     );
 
     return VirtualMeterResult(
@@ -279,10 +324,10 @@ class VirtualMeterCalculator {
       periodEnd: end,
       calculatedAt: meta.calculatedAt,
       meta: meta,
-      contributingMeterIds: [...contributingIds, parent.meterId],
+      contributingMeterIds: [...contributingIds, normalizedParent.meterId],
       missingMeterIds: missingIds,
       hierarchyDepth: hierarchyDepth,
-      parentContribution: parent.consumption,
+      parentContribution: normalizedParent.consumption,
       childrenContribution: childrenSum,
       expressionSummary: meta.notes.firstWhere(
         (n) => n.startsWith('expression='),
@@ -396,5 +441,25 @@ class VirtualMeterCalculator {
       message: reason,
       warnings: warnings,
     );
+  }
+
+  double? _getConversionFactor(String fromUnit, String toUnit) {
+    if (fromUnit == toUnit) return 1.0;
+    
+    final categories = ['water', 'electricity', 'btu', 'fuel'];
+    
+    for (final cat in categories) {
+      final specs = ExpandedUnitCatalog.forCategoryCode(cat);
+      ExpandedUnitSpec? fromSpec;
+      ExpandedUnitSpec? toSpec;
+      for (final s in specs) {
+        if (s.code == fromUnit) fromSpec = s;
+        if (s.code == toUnit) toSpec = s;
+      }
+      if (fromSpec != null && toSpec != null) {
+        return fromSpec.unitToBaseFactor / toSpec.unitToBaseFactor;
+      }
+    }
+    return null;
   }
 }
