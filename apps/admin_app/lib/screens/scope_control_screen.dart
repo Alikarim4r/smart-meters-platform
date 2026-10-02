@@ -126,10 +126,9 @@ class _ScopeControlScreenState extends ConsumerState<ScopeControlScreen>
           );
       if (!mounted) return;
       setState(() {
-        // Owner never listed — automatic full access.
-        _all = rows
-            .where((a) => !isPlatformOwnerEmail(a.email))
-            .toList(growable: false);
+        // Owner never listed — automatic full access. The server
+        // (list_scope_assignees_at) already excludes platform owners.
+        _all = rows.toList(growable: false);
         _loading = false;
       });
     } catch (error) {
@@ -185,7 +184,7 @@ class _ScopeControlScreenState extends ConsumerState<ScopeControlScreen>
 
   bool _matchesAssignPool(AdminUser user, AppAccessCategory app) {
     if (!user.profile.isApprovedForAccess) return false;
-    if (isPlatformOwnerEmail(user.profile.email)) return false;
+    if (user.profile.isPlatformOwner) return false;
     final role = user.profile.role;
     return switch (app) {
       AppAccessCategory.admin => switch (widget.kind) {

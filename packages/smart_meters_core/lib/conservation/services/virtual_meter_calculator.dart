@@ -1,5 +1,5 @@
-import '../../catalog/expanded_unit_catalog.dart';
 import '../../domain/chart_period.dart';
+import '../../domain/unit_conversion.dart';
 import '../../models/enums.dart';
 import '../domain/period_windows.dart';
 import '../domain/virtual_meter_validation.dart';
@@ -121,46 +121,18 @@ class VirtualMeterCalculator {
     final normalizedChildren = <VirtualMeterContributorInput>[];
 
     for (final c in children) {
-      if (c.unitCode == unitCode) {
-        normalizedChildren.add(c);
+      final normalized = _toUnit(c, unitCode);
+      if (normalized == null) {
+        incompatibleChildren.add(c);
       } else {
-        final factor = _getConversionFactor(c.unitCode, unitCode);
-        if (factor != null) {
-          normalizedChildren.add(VirtualMeterContributorInput(
-            meterId: c.meterId,
-            consumption: c.consumption != null ? c.consumption! * factor : null,
-            hasValidEndpoints: c.hasValidEndpoints,
-            completeness: c.completeness,
-            confidence: c.confidence,
-            unitCode: unitCode,
-            readingSpanStart: c.readingSpanStart,
-            readingSpanEnd: c.readingSpanEnd,
-            isMissing: c.isMissing,
-          ));
-        } else {
-          incompatibleChildren.add(c);
-        }
+        normalizedChildren.add(normalized);
       }
     }
 
     VirtualMeterContributorInput? normalizedParent = parent;
-    if (parent != null && parent.unitCode != unitCode) {
-      final factor = _getConversionFactor(parent.unitCode, unitCode);
-      if (factor != null) {
-        normalizedParent = VirtualMeterContributorInput(
-          meterId: parent.meterId,
-          consumption: parent.consumption != null ? parent.consumption! * factor : null,
-          hasValidEndpoints: parent.hasValidEndpoints,
-          completeness: parent.completeness,
-          confidence: parent.confidence,
-          unitCode: unitCode,
-          readingSpanStart: parent.readingSpanStart,
-          readingSpanEnd: parent.readingSpanEnd,
-          isMissing: parent.isMissing,
-        );
-      } else {
-        incompatibleChildren.add(parent);
-      }
+    if (parent != null) {
+      normalizedParent = _toUnit(parent, unitCode);
+      if (normalizedParent == null) incompatibleChildren.add(parent);
     }
 
     if (incompatibleChildren.isNotEmpty) {
@@ -443,23 +415,25 @@ class VirtualMeterCalculator {
     );
   }
 
-  double? _getConversionFactor(String fromUnit, String toUnit) {
-    if (fromUnit == toUnit) return 1.0;
-    
-    final categories = ['water', 'electricity', 'btu', 'fuel'];
-    
-    for (final cat in categories) {
-      final specs = ExpandedUnitCatalog.forCategoryCode(cat);
-      ExpandedUnitSpec? fromSpec;
-      ExpandedUnitSpec? toSpec;
-      for (final s in specs) {
-        if (s.code == fromUnit) fromSpec = s;
-        if (s.code == toUnit) toSpec = s;
-      }
-      if (fromSpec != null && toSpec != null) {
-        return fromSpec.unitToBaseFactor / toSpec.unitToBaseFactor;
-      }
-    }
-    return null;
+  /// [c] expressed in [unitCode], or `null` when the units are incompatible
+  /// (different category, unknown, or apparent vs real energy).
+  VirtualMeterContributorInput? _toUnit(
+    VirtualMeterContributorInput c,
+    String unitCode,
+  ) {
+    if (c.unitCode == unitCode) return c;
+    final factor = UnitConversion.factor(c.unitCode, unitCode);
+    if (factor == null) return null;
+    return VirtualMeterContributorInput(
+      meterId: c.meterId,
+      consumption: c.consumption == null ? null : c.consumption! * factor,
+      hasValidEndpoints: c.hasValidEndpoints,
+      completeness: c.completeness,
+      confidence: c.confidence,
+      unitCode: unitCode,
+      readingSpanStart: c.readingSpanStart,
+      readingSpanEnd: c.readingSpanEnd,
+      isMissing: c.isMissing,
+    );
   }
 }

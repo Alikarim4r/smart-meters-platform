@@ -648,11 +648,24 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
         unitCode: _record.unitCode,
       );
 
+      // All verified rows on the site (not just the same scope) plus real
+      // topology, so parent/child and balance-group overlaps are detected.
       final existing = await MeasurementVerificationRepository(client)
-          .listVerifiedOverlappingScope(
-        siteId: widget.siteId,
-        meterId: _record.meterId,
-        balanceGroupId: _record.balanceGroupId,
+          .listVerifiedOverlappingScope(siteId: widget.siteId);
+      final siteMeters = await MeterRepository(client).getMetersForSite(
+        widget.siteId,
+      );
+      final groups = await BalanceGroupRepository(client).listForSite(
+        widget.siteId,
+      );
+      final topology = DoubleCountTopology.fromSite(
+        parentMeterIdByMeterId: {
+          for (final m in siteMeters) m.id: m.parentMeterId,
+        },
+        mainMeterIdByGroupId: {for (final g in groups) g.id: g.mainMeterId},
+        memberMeterIdsByGroupId: {
+          for (final g in groups) g.id: g.memberMeterIds,
+        },
       );
 
       final outcome = svc.verify(
@@ -676,6 +689,7 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
                 balanceGroupId: e.balanceGroupId,
               ),
         ],
+        topology: topology,
       );
 
       if (!outcome.success || outcome.record == null) {

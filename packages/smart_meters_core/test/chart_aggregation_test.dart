@@ -285,17 +285,147 @@ void main() {
       expect(coolingToKwh(1, 'kw·h'), 1);
     });
 
-    test('supports ton-hour/TRH/RTh variants with physically correct conversion', () {
-      const factor = 3.51685284;
-      expect(coolingToKwh(1, 'ton-hour'), closeTo(factor, 0.000001));
-      expect(coolingToKwh(1, 'TRH'), closeTo(factor, 0.000001));
-      expect(coolingToKwh(1, 'RTh'), closeTo(factor, 0.000001));
+    test('accepts the real DB BTU base unit "kWh thermal" 1:1', () {
+      // meters.base_unit for the btu category is 'kWh thermal' (001/006).
+      expect(coolingToKwh(42, 'kWh thermal'), 42);
+      expect(coolingToKwh(42, 'kwh_thermal'), 42);
+      expect(coolingToKwh(42, '  KWH THERMAL '), 42);
     });
 
-    test('throws ArgumentError on unknown units instead of assuming 1:1', () {
-      expect(() => coolingToKwh(1, 'unknown'), throwsArgumentError);
-      expect(() => coolingToKwh(1, ''), throwsArgumentError);
-      expect(() => coolingToKwh(1, null), throwsArgumentError);
+    test('ton_hour / rt_hour catalog codes and aliases use the DB factor', () {
+      const factor = UnitConversion.tonHourToKwhThermal; // 3.51685 (DB)
+      expect(factor, 3.51685);
+      for (final code in ['ton_hour', 'rt_hour', 'ton-hour', 'TRH', 'RTh']) {
+        expect(coolingToKwh(1, code), closeTo(factor, 1e-12), reason: code);
+      }
+    });
+
+    test('unknown / null / apparent-energy units return null (no crash)', () {
+      expect(coolingToKwh(1, 'unknown'), isNull);
+      expect(coolingToKwh(1, ''), isNull);
+      expect(coolingToKwh(1, null), isNull);
+      expect(coolingToKwh(1, 'kVAh'), isNull);
+      expect(coolingToKwh(1, 'm3'), isNull);
+    });
+  });
+
+  group('electricityToKwh conversion', () {
+    test('kWh / MWh / Wh convert; case-insensitive', () {
+      expect(electricityToKwh(1, 'kWh'), 1);
+      expect(electricityToKwh(1, 'MWH'), 1000);
+      expect(electricityToKwh(1000, 'wh'), closeTo(1, 1e-12));
+    });
+
+    test('kVAh / thermal / unknown / null never map to kWh', () {
+      expect(electricityToKwh(1, 'kVAh'), isNull);
+      expect(electricityToKwh(1, 'kvah'), isNull);
+      expect(electricityToKwh(1, 'MVAh'), isNull);
+      expect(electricityToKwh(1, 'kWh thermal'), isNull);
+      expect(electricityToKwh(1, 'bogus'), isNull);
+      expect(electricityToKwh(1, null), isNull);
+    });
+  });
+
+  group('aggregateCopTrend with production-shaped rows', () {
+    final range = ChartPeriodRange(
+      period: ChartPeriod.weekly,
+      from: DateTime(2026, 7, 1),
+      to: DateTime(2026, 7, 3),
+      bucket: ChartBucket.daily,
+    );
+
+    Map<String, dynamic> row(
+      String meterId,
+      String date,
+      Object? consumption, {
+      String? baseUnit,
+      String? unitCode,
+      String? status,
+    }) =>
+        {
+          'meter_id': meterId,
+          'reading_date': date,
+          'daily_consumption': consumption,
+          if (status != null) 'consumption_status': status,
+          'meters': {
+            'base_unit': baseUnit,
+            'unit_code': unitCode,
+          },
+        };
+
+    test('BTU meter with base unit "kWh thermal" (ton_hour register) → COP',
+        () {
+      // Readings are normalized server-side: 100 ton-h × 3.51685 = 351.685.
+      final points = aggregateCopTrend(
+        range: range,
+        btuWeights: const {'chw': 1},
+        electricityWeights: const {'chiller': 1},
+        consumptionRows: [
+          row('chw', '2026-07-01', 351.685,
+              baseUnit: 'kWh thermal', unitCode: 'ton_hour'),
+          row('chiller', '2026-07-01', 100.0,
+              baseUnit: 'kWh', unitCode: 'kwh'),
+        ],
+      );
+      final day = points.firstWhere((p) => p.date == DateTime(2026, 7, 1));
+      expect(day.cop, closeTo(3.51685, 1e-9));
+      expect(day.btuConsumption, closeTo(351.685, 1e-9));
+    });
+
+    test('unknown or null cooling unit → no COP for that bucket, no crash', () {
+      final points = aggregateCopTrend(
+        range: range,
+        btuWeights: const {'chw': 1},
+        electricityWeights: const {'chiller': 1},
+        consumptionRows: [
+          row('chw', '2026-07-01', 300.0, baseUnit: 'furlongs'),
+          row('chiller', '2026-07-01', 100.0, baseUnit: 'kWh'),
+          row('chw', '2026-07-02', 300.0), // null unit
+          row('chiller', '2026-07-02', 100.0, baseUnit: 'kWh'),
+          row('chw', '2026-07-03', 300.0, baseUnit: 'kWh thermal'),
+          row('chiller', '2026-07-03', 100.0, baseUnit: 'kWh'),
+        ],
+      );
+      final byDate = {for (final p in points) p.date: p};
+      expect(byDate[DateTime(2026, 7, 1)]!.cop, isNull);
+      expect(byDate[DateTime(2026, 7, 1)]!.btuConsumption, isNull);
+      expect(byDate[DateTime(2026, 7, 2)]!.cop, isNull);
+      expect(byDate[DateTime(2026, 7, 3)]!.cop, closeTo(3.0, 1e-9));
+      expect(averageCopValues(points), closeTo(3.0, 1e-9));
+    });
+
+    test('kVAh electricity meter (normalized into kWh base) → no COP', () {
+      final points = aggregateCopTrend(
+        range: range,
+        btuWeights: const {'chw': 1},
+        electricityWeights: const {'chiller': 1},
+        consumptionRows: [
+          row('chw', '2026-07-01', 300.0, baseUnit: 'kWh thermal'),
+          row('chiller', '2026-07-01', 100.0,
+              baseUnit: 'kWh', unitCode: 'kvah'),
+        ],
+      );
+      expect(points.every((p) => p.cop == null), isTrue);
+    });
+
+    test('unverifiable cumulative drop invalidates the bucket', () {
+      final points = aggregateCopTrend(
+        range: range,
+        btuWeights: const {'chw': 1},
+        electricityWeights: const {'chiller': 1},
+        consumptionRows: [
+          row('chw', '2026-07-01', null,
+              baseUnit: 'kWh thermal', status: 'reset_or_replacement'),
+          row('chiller', '2026-07-01', 100.0, baseUnit: 'kWh'),
+          row('chw', '2026-07-02', 20.0,
+              baseUnit: 'kWh thermal', status: 'rollover'),
+          row('chiller', '2026-07-02', 10.0,
+              baseUnit: 'kWh', status: 'normal'),
+        ],
+      );
+      final byDate = {for (final p in points) p.date: p};
+      expect(byDate[DateTime(2026, 7, 1)]!.cop, isNull);
+      expect(byDate[DateTime(2026, 7, 2)]!.cop, closeTo(2.0, 1e-9));
     });
   });
 }

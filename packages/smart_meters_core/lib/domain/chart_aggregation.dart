@@ -1,11 +1,13 @@
 import '../models/chart_models.dart';
 import '../models/meter.dart';
 import 'chart_period.dart';
+import 'cumulative_consumption.dart';
+import 'unit_conversion.dart';
 
 /// Consumption for charts is never negative.
 ///
-/// A later reading smaller than an earlier one (meter reset / fault) yields a
-/// negative daily delta in the DB — treat that as 0 on charts.
+/// Unverifiable drops arrive as `null` (see [classifyCumulativeDelta]) and
+/// contribute 0 — excluded, never invented.
 double nonNegativeConsumption(dynamic value) {
   final parsed = _toDouble(value);
   return parsed < 0 ? 0 : parsed;
@@ -212,6 +214,12 @@ MeterComparisonResult buildMeterComparison({
   );
 }
 
+/// COP per bucket from weighted BTU / electricity consumption rows.
+///
+/// A bucket yields **no COP** (cop/eer and both totals null) when any
+/// contributing row cannot be trusted: unknown/null/apparent-energy unit, or
+/// an unverifiable cumulative drop (`consumption_status`). Partial sums would
+/// silently bias COP, so the bucket is dropped instead.
 List<CopTrendPoint> aggregateCopTrend({
   required ChartPeriodRange range,
   required Map<String, double> btuWeights,
@@ -221,71 +229,70 @@ List<CopTrendPoint> aggregateCopTrend({
   final timeline = chartBucketTimeline(range: range);
   final btuByDate = <DateTime, double>{};
   final elecByDate = <DateTime, double>{};
+  final invalidBuckets = <DateTime>{};
 
   for (final row in consumptionRows) {
     final meterId = row['meter_id'] as String;
     final date = _dateOnlyFromReading(row['reading_date']);
     if (date.isBefore(range.from) || date.isAfter(range.to)) continue;
     final bucket = chartBucketKey(date: date, bucket: range.bucket);
+    final unverifiable = ConsumptionTransition.fromDb(
+          row['consumption_status'],
+        )?.isUnverifiable ??
+        false;
     final consumption = nonNegativeConsumption(row['daily_consumption']);
-    final unitCode = _meterBaseUnitCode(row['meters']);
+    final meta = row['meters'];
+    final unitCode = _meterBaseUnitCode(meta);
+    final rawUnitCode = meta is Map ? meta['unit_code'] as String? : null;
 
     final btuWeight = btuWeights[meterId];
     if (btuWeight != null) {
-      btuByDate[bucket] = (btuByDate[bucket] ?? 0) +
-          coolingToKwh(consumption, unitCode) * btuWeight;
+      final kwh = unverifiable ? null : coolingToKwh(consumption, unitCode);
+      if (kwh == null) {
+        invalidBuckets.add(bucket);
+      } else {
+        btuByDate[bucket] = (btuByDate[bucket] ?? 0) + kwh * btuWeight;
+      }
     }
     final elecWeight = electricityWeights[meterId];
     if (elecWeight != null) {
-      elecByDate[bucket] = (elecByDate[bucket] ?? 0) +
-          electricityToKwh(consumption, unitCode) * elecWeight;
+      // kVAh meters are normalized 1:1 into a 'kWh' base unit by the DB
+      // catalog; check the raw meter unit so apparent energy never feeds COP.
+      final kwh = unverifiable || UnitConversion.isApparentEnergy(rawUnitCode)
+          ? null
+          : electricityToKwh(consumption, unitCode);
+      if (kwh == null) {
+        invalidBuckets.add(bucket);
+      } else {
+        elecByDate[bucket] = (elecByDate[bucket] ?? 0) + kwh * elecWeight;
+      }
     }
   }
 
   return [
     for (final key in timeline)
-      _copPoint(date: key, btu: btuByDate[key], electricity: elecByDate[key]),
+      invalidBuckets.contains(key)
+          ? CopTrendPoint(date: key)
+          : _copPoint(
+              date: key,
+              btu: btuByDate[key],
+              electricity: elecByDate[key],
+            ),
   ];
 }
 
 /// Convert cooling energy to kWh thermal for COP/EER.
-double coolingToKwh(double value, String? unitCode) {
-  final normalized = (unitCode ?? '').trim().toLowerCase();
-  switch (normalized) {
-    case 'gj':
-      return value * 277.7777778;
-    case 'btu':
-      return value / 3412.142;
-    case 'mwh':
-      return value * 1000;
-    case 'kwh':
-    case 'kw·h':
-      return value;
-    case 'ton-hour':
-    case 'trh':
-    case 'rth':
-      return value * 3.51685284;
-    default:
-      throw ArgumentError(
-        'Unknown cooling unit: "$unitCode". Cannot safely assume 1:1 conversion for COP.',
-      );
-  }
-}
+///
+/// Accepts the DB base unit `kWh thermal` and catalog codes (`ton_hour`,
+/// `rt_hour`, `btu`, `gj`, …). Returns `null` for unknown/null units — the
+/// caller must then produce no COP rather than assume 1:1.
+double? coolingToKwh(double value, String? unitCode) =>
+    UnitConversion.toKwhThermal(value, unitCode);
 
-/// Convert electric energy to kWh.
-double electricityToKwh(double value, String? unitCode) {
-  switch ((unitCode ?? '').trim().toLowerCase()) {
-    case 'mwh':
-      return value * 1000;
-    case 'wh':
-      return value / 1000;
-    case 'kwh':
-    case 'kw·h':
-      return value;
-    default:
-      return value;
-  }
-}
+/// Convert electric energy to kWh. Returns `null` for unknown/null, thermal
+/// or apparent-energy (kVAh) units.
+double? electricityToKwh(double value, String? unitCode) =>
+    UnitConversion.toKwhElectric(value, unitCode);
 
 /// EER ≈ COP × 3.412 (dimensionless COP → BTU/Wh).
 const kCopToEerFactor = 3.412;

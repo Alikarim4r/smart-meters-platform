@@ -1,5 +1,5 @@
-import '../../catalog/expanded_unit_catalog.dart';
 import '../../domain/chart_period.dart';
+import '../../domain/unit_conversion.dart';
 import '../domain/period_windows.dart';
 import '../models/actual_vs_baseline_result.dart';
 import '../models/calculation_meta.dart';
@@ -55,11 +55,10 @@ class ActualVsBaselineService {
     final conversionFactors = <String, double>{};
 
     for (final m in meters) {
-      if (m.unitCode == baseline.unitCode) {
-        conversionFactors[m.meterId] = 1.0;
-        continue;
-      }
-      final factor = _getConversionFactor(m.unitCode, baseline.unitCode);
+      // Identical codes (even custom ones) stay compatible 1:1.
+      final factor = m.unitCode == baseline.unitCode
+          ? 1.0
+          : UnitConversion.factor(m.unitCode, baseline.unitCode);
       if (factor == null) {
         incompatible.add(m);
       } else {
@@ -318,33 +317,4 @@ class ActualVsBaselineService {
   static String _iso(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
-  double? _getConversionFactor(String fromUnit, String toUnit) {
-    if (fromUnit == toUnit) return 1.0;
-    final fromLower = fromUnit.trim().toLowerCase();
-    final toLower = toUnit.trim().toLowerCase();
-    if (fromLower == toLower) return 1.0;
-
-    const categories = ['water', 'electricity', 'btu', 'fuel'];
-    for (final cat in categories) {
-      final units = ExpandedUnitCatalog.forCategoryCode(cat);
-      var foundFrom = false;
-      var foundTo = false;
-      var fromFactor = 1.0;
-      var toFactor = 1.0;
-      for (final u in units) {
-        if (u.code == fromLower) {
-          foundFrom = true;
-          fromFactor = u.unitToBaseFactor;
-        }
-        if (u.code == toLower) {
-          foundTo = true;
-          toFactor = u.unitToBaseFactor;
-        }
-      }
-      if (foundFrom && foundTo) {
-        return fromFactor / toFactor;
-      }
-    }
-    return null;
-  }
 }

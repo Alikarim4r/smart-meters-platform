@@ -26,7 +26,11 @@ class ProfileRepository {
     try {
       final ensured = await _client.rpc('ensure_own_pending_profile');
       final map = _asProfileMap(ensured);
-      if (map != null && map['id']?.toString() == userId) {
+      // Require the server-maintained owner flag; otherwise re-read the row
+      // so ownership is never silently dropped by an older RPC shape.
+      if (map != null &&
+          map['id']?.toString() == userId &&
+          map.containsKey('is_platform_owner')) {
         return Profile.fromJson(map);
       }
     } catch (_) {

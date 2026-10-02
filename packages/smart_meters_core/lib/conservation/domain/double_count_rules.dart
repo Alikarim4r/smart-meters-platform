@@ -35,6 +35,57 @@ class DoubleCountOverlap {
   final String reason;
 }
 
+/// Site topology used by [DoubleCountRules]: meter parent chain plus the
+/// meters each balance group covers.
+class DoubleCountTopology {
+  const DoubleCountTopology({
+    this.parentByMeterId = const {},
+    this.balanceGroupMembers = const {},
+  });
+
+  /// Build from raw site data.
+  ///
+  /// [parentMeterIdByMeterId]: meter id → `parent_meter_id` (null/empty = root).
+  /// [mainMeterIdByGroupId]: balance group id → `main_meter_id`.
+  /// [memberMeterIdsByGroupId]: balance group id → member meter ids.
+  ///
+  /// A group covers its main meter **and** its members — Main − Σ children
+  /// is computed from all of them.
+  factory DoubleCountTopology.fromSite({
+    required Map<String, String?> parentMeterIdByMeterId,
+    required Map<String, String> mainMeterIdByGroupId,
+    required Map<String, List<String>> memberMeterIdsByGroupId,
+  }) {
+    final parents = <String, String>{};
+    parentMeterIdByMeterId.forEach((meterId, parentId) {
+      if (parentId != null && parentId.isNotEmpty && parentId != meterId) {
+        parents[meterId] = parentId;
+      }
+    });
+
+    final covered = <String, Set<String>>{};
+    mainMeterIdByGroupId.forEach((groupId, mainId) {
+      if (mainId.isNotEmpty) covered.putIfAbsent(groupId, () => {}).add(mainId);
+    });
+    memberMeterIdsByGroupId.forEach((groupId, ids) {
+      final set = covered.putIfAbsent(groupId, () => {});
+      for (final id in ids) {
+        if (id.isNotEmpty) set.add(id);
+      }
+    });
+    final members = <String, List<String>>{
+      for (final e in covered.entries) e.key: e.value.toList(),
+    };
+    return DoubleCountTopology(
+      parentByMeterId: parents,
+      balanceGroupMembers: members,
+    );
+  }
+
+  final Map<String, String> parentByMeterId;
+  final Map<String, List<String>> balanceGroupMembers;
+}
+
 /// Detect overlapping verified savings for the same meter / balance scope.
 ///
 /// Active statuses: [MvStatus.verified] only (superseded/archived/rejected
@@ -103,41 +154,58 @@ abstract final class DoubleCountRules {
     Map<String, String> parentByMeterId,
     Map<String, List<String>> balanceGroupMembers,
   ) {
-    if (a.meterId != null &&
-        a.meterId!.isNotEmpty &&
-        a.meterId == b.meterId) {
-      return 'meter:${a.meterId}';
-    }
-    if (a.balanceGroupId != null &&
-        a.balanceGroupId!.isNotEmpty &&
-        a.balanceGroupId == b.balanceGroupId) {
-      return 'balance_group:${a.balanceGroupId}';
-    }
+    final aMeter = _nonEmpty(a.meterId);
+    final bMeter = _nonEmpty(b.meterId);
+    final aGroup = _nonEmpty(a.balanceGroupId);
+    final bGroup = _nonEmpty(b.balanceGroupId);
 
-    if (a.meterId != null && a.meterId!.isNotEmpty && b.meterId != null && b.meterId!.isNotEmpty) {
-      if (_isAncestor(a.meterId!, b.meterId!, parentByMeterId)) {
-        return 'hierarchy:${a.meterId}->${b.meterId}';
-      }
-      if (_isAncestor(b.meterId!, a.meterId!, parentByMeterId)) {
-        return 'hierarchy:${b.meterId}->${a.meterId}';
-      }
-    }
+    if (aMeter != null && aMeter == bMeter) return 'meter:$aMeter';
+    if (aGroup != null && aGroup == bGroup) return 'balance_group:$aGroup';
 
-    if (a.balanceGroupId != null && a.balanceGroupId!.isNotEmpty && b.meterId != null && b.meterId!.isNotEmpty) {
-      final members = balanceGroupMembers[a.balanceGroupId!] ?? const [];
-      if (members.contains(b.meterId)) {
-        return 'bg_membership:${a.balanceGroupId}->${b.meterId}';
-      }
-    }
-    if (b.balanceGroupId != null && b.balanceGroupId!.isNotEmpty && a.meterId != null && a.meterId!.isNotEmpty) {
-      final members = balanceGroupMembers[b.balanceGroupId!] ?? const [];
-      if (members.contains(a.meterId)) {
-        return 'bg_membership:${b.balanceGroupId}->${a.meterId}';
-      }
-    }
+    // Each candidate covers its own meter plus every meter of its balance
+    // group (main + members). Two candidates double-count when any covered
+    // meters coincide or sit on the same parent/child chain.
+    final aCovered = _covered(aMeter, aGroup, balanceGroupMembers);
+    final bCovered = _covered(bMeter, bGroup, balanceGroupMembers);
 
+    for (final x in aCovered.entries) {
+      for (final y in bCovered.entries) {
+        if (x.key == y.key) {
+          if (x.value != null && y.value != null) {
+            return 'bg_shared_member:${x.value}&${y.value}:${x.key}';
+          }
+          final group = x.value ?? y.value;
+          if (group != null) return 'bg_membership:$group->${x.key}';
+          return 'meter:${x.key}';
+        }
+        if (_isAncestor(x.key, y.key, parentByMeterId)) {
+          return 'hierarchy:${x.key}->${y.key}';
+        }
+        if (_isAncestor(y.key, x.key, parentByMeterId)) {
+          return 'hierarchy:${y.key}->${x.key}';
+        }
+      }
+    }
     return null;
   }
+
+  /// Covered meter id → balance group it came from (`null` = direct meter).
+  static Map<String, String?> _covered(
+    String? meterId,
+    String? groupId,
+    Map<String, List<String>> balanceGroupMembers,
+  ) {
+    final out = <String, String?>{};
+    if (meterId != null) out[meterId] = null;
+    if (groupId != null) {
+      for (final m in balanceGroupMembers[groupId] ?? const <String>[]) {
+        if (m.isNotEmpty) out.putIfAbsent(m, () => groupId);
+      }
+    }
+    return out;
+  }
+
+  static String? _nonEmpty(String? v) => v == null || v.isEmpty ? null : v;
 
   static bool _isAncestor(
     String ancestorId,
