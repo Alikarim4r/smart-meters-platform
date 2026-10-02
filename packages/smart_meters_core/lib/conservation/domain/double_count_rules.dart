@@ -45,6 +45,8 @@ abstract final class DoubleCountRules {
   static List<DoubleCountOverlap> detectOverlap(
     List<DoubleCountCandidate> candidates, {
     Set<MvStatus> activeStatuses = const {MvStatus.verified},
+    Map<String, String> parentByMeterId = const {},
+    Map<String, List<String>> balanceGroupMembers = const {},
   }) {
     final active = candidates
         .where((c) => activeStatuses.contains(c.status))
@@ -55,7 +57,7 @@ abstract final class DoubleCountRules {
       for (var j = i + 1; j < active.length; j++) {
         final a = active[i];
         final b = active[j];
-        final scope = _sharedScope(a, b);
+        final scope = _sharedScope(a, b, parentByMeterId, balanceGroupMembers);
         if (scope == null) continue;
         if (!_periodsOverlap(
           a.postPeriodStart,
@@ -85,11 +87,22 @@ abstract final class DoubleCountRules {
   static List<DoubleCountOverlap> detectAgainstExisting({
     required DoubleCountCandidate candidate,
     required List<DoubleCountCandidate> existing,
+    Map<String, String> parentByMeterId = const {},
+    Map<String, List<String>> balanceGroupMembers = const {},
   }) {
-    return detectOverlap([candidate, ...existing]);
+    return detectOverlap(
+      [candidate, ...existing],
+      parentByMeterId: parentByMeterId,
+      balanceGroupMembers: balanceGroupMembers,
+    );
   }
 
-  static String? _sharedScope(DoubleCountCandidate a, DoubleCountCandidate b) {
+  static String? _sharedScope(
+    DoubleCountCandidate a,
+    DoubleCountCandidate b,
+    Map<String, String> parentByMeterId,
+    Map<String, List<String>> balanceGroupMembers,
+  ) {
     if (a.meterId != null &&
         a.meterId!.isNotEmpty &&
         a.meterId == b.meterId) {
@@ -100,7 +113,45 @@ abstract final class DoubleCountRules {
         a.balanceGroupId == b.balanceGroupId) {
       return 'balance_group:${a.balanceGroupId}';
     }
+
+    if (a.meterId != null && a.meterId!.isNotEmpty && b.meterId != null && b.meterId!.isNotEmpty) {
+      if (_isAncestor(a.meterId!, b.meterId!, parentByMeterId)) {
+        return 'hierarchy:${a.meterId}->${b.meterId}';
+      }
+      if (_isAncestor(b.meterId!, a.meterId!, parentByMeterId)) {
+        return 'hierarchy:${b.meterId}->${a.meterId}';
+      }
+    }
+
+    if (a.balanceGroupId != null && a.balanceGroupId!.isNotEmpty && b.meterId != null && b.meterId!.isNotEmpty) {
+      final members = balanceGroupMembers[a.balanceGroupId!] ?? const [];
+      if (members.contains(b.meterId)) {
+        return 'bg_membership:${a.balanceGroupId}->${b.meterId}';
+      }
+    }
+    if (b.balanceGroupId != null && b.balanceGroupId!.isNotEmpty && a.meterId != null && a.meterId!.isNotEmpty) {
+      final members = balanceGroupMembers[b.balanceGroupId!] ?? const [];
+      if (members.contains(a.meterId)) {
+        return 'bg_membership:${b.balanceGroupId}->${a.meterId}';
+      }
+    }
+
     return null;
+  }
+
+  static bool _isAncestor(
+    String ancestorId,
+    String descendantId,
+    Map<String, String> parentByMeterId,
+  ) {
+    String? current = parentByMeterId[descendantId];
+    final seen = <String>{};
+    while (current != null) {
+      if (current == ancestorId) return true;
+      if (!seen.add(current)) break;
+      current = parentByMeterId[current];
+    }
+    return false;
   }
 
   static bool _periodsOverlap(
