@@ -250,7 +250,8 @@ List<CopTrendPoint> aggregateCopTrend({
 
 /// Convert cooling energy to kWh thermal for COP/EER.
 double coolingToKwh(double value, String? unitCode) {
-  switch ((unitCode ?? '').trim().toLowerCase()) {
+  final normalized = (unitCode ?? '').trim().toLowerCase();
+  switch (normalized) {
     case 'gj':
       return value * 277.7777778;
     case 'btu':
@@ -260,9 +261,14 @@ double coolingToKwh(double value, String? unitCode) {
     case 'kwh':
     case 'kw·h':
       return value;
+    case 'ton-hour':
+    case 'trh':
+    case 'rth':
+      return value * 3.51685284;
     default:
-      // Unknown cooling unit — treat as already thermal-kWh-compatible.
-      return value;
+      throw ArgumentError(
+        'Unknown cooling unit: "$unitCode". Cannot safely assume 1:1 conversion for COP.',
+      );
   }
 }
 

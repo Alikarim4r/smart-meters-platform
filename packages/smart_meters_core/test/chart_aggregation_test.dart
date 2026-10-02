@@ -275,4 +275,27 @@ void main() {
     expect(day.cop, closeTo(2.0, 0.01));
     expect(day.eer, closeTo(2.0 * kCopToEerFactor, 0.01));
   });
+
+  group('coolingToKwh conversion', () {
+    test('preserves existing GJ/BTU/MWh behavior', () {
+      expect(coolingToKwh(1, 'GJ'), closeTo(277.7777778, 0.001));
+      expect(coolingToKwh(1, 'BTU'), closeTo(1 / 3412.142, 0.001));
+      expect(coolingToKwh(1, 'MWh'), 1000);
+      expect(coolingToKwh(1, 'kWh'), 1);
+      expect(coolingToKwh(1, 'kw·h'), 1);
+    });
+
+    test('supports ton-hour/TRH/RTh variants with physically correct conversion', () {
+      const factor = 3.51685284;
+      expect(coolingToKwh(1, 'ton-hour'), closeTo(factor, 0.000001));
+      expect(coolingToKwh(1, 'TRH'), closeTo(factor, 0.000001));
+      expect(coolingToKwh(1, 'RTh'), closeTo(factor, 0.000001));
+    });
+
+    test('throws ArgumentError on unknown units instead of assuming 1:1', () {
+      expect(() => coolingToKwh(1, 'unknown'), throwsArgumentError);
+      expect(() => coolingToKwh(1, ''), throwsArgumentError);
+      expect(() => coolingToKwh(1, null), throwsArgumentError);
+    });
+  });
 }
