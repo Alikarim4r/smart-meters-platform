@@ -1,16 +1,26 @@
 import '../models/enums.dart';
 
-/// Platform owner (super-super-admin) email allowlist.
+/// Secure configuration-based platform owner resolution.
 ///
-/// Passwords must never be stored in source. Ownership is email-based only.
-const kPlatformOwnerEmails = <String>{
-  'alikarim4r@gmail.com',
-  'support@alimind.com',
-};
-
-bool isPlatformOwnerEmail(String? email) {
-  if (email == null) return false;
-  return kPlatformOwnerEmails.contains(email.trim().toLowerCase());
+/// Ownership is determined via build-time configuration `--dart-define=PLATFORM_OWNER_EMAILS=...`
+/// which contains a comma-separated list of authorized platform owner emails.
+/// Hardcoded personal emails are strictly prohibited.
+bool isPlatformOwnerEmail(
+  String? email, {
+  String? configOverride,
+}) {
+  if (email == null || email.trim().isEmpty) return false;
+  
+  final configStr = configOverride ?? const String.fromEnvironment('PLATFORM_OWNER_EMAILS');
+  if (configStr.trim().isEmpty) return false;
+  
+  final configuredEmails = configStr
+      .split(',')
+      .map((e) => e.trim().toLowerCase())
+      .where((e) => e.isNotEmpty)
+      .toSet();
+      
+  return configuredEmails.contains(email.trim().toLowerCase());
 }
 
 /// Which client apps a role can open after approval.
