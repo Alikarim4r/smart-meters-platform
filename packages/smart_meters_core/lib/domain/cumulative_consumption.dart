@@ -116,3 +116,55 @@ ConsumptionDelta classifyCumulativeDelta({
         : ConsumptionTransition.correctionOrImplausibleDrop,
   );
 }
+
+/// Consumption across a chronological run of cumulative readings.
+class CumulativeRunConsumption {
+  const CumulativeRunConsumption({
+    required this.consumption,
+    this.rolloverCount = 0,
+    this.unverifiableTransitions = const [],
+  });
+
+  /// Sum of every step; `null` when the run is empty or any step is
+  /// unverifiable (a drop is never clamped to zero).
+  final double? consumption;
+  final int rolloverCount;
+  final List<ConsumptionTransition> unverifiableTransitions;
+
+  bool get isVerifiable => consumption != null;
+  bool get hasUnverifiableTransition => unverifiableTransitions.isNotEmpty;
+}
+
+/// Classify every step of [values] (normalized, chronological; `values.first`
+/// is the boundary reading) with [classifyCumulativeDelta] and sum them.
+///
+/// Classifying each step — not just the endpoints — means a replacement or
+/// correction inside the period cannot hide behind a plausible net delta, and
+/// a valid rollover inside the period still yields its consumption.
+CumulativeRunConsumption cumulativeRunConsumption({
+  required List<double> values,
+  double? normalizedCapacity,
+}) {
+  if (values.isEmpty) return const CumulativeRunConsumption(consumption: null);
+  var total = 0.0;
+  var rollovers = 0;
+  final unverifiable = <ConsumptionTransition>[];
+  for (var i = 1; i < values.length; i++) {
+    final delta = classifyCumulativeDelta(
+      previous: values[i - 1],
+      current: values[i],
+      normalizedCapacity: normalizedCapacity,
+    );
+    if (delta.isUnverifiable) {
+      unverifiable.add(delta.transition);
+      continue;
+    }
+    if (delta.isRollover) rollovers++;
+    total += delta.consumption!;
+  }
+  return CumulativeRunConsumption(
+    consumption: unverifiable.isEmpty ? total : null,
+    rolloverCount: rollovers,
+    unverifiableTransitions: List.unmodifiable(unverifiable),
+  );
+}
