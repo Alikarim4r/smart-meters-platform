@@ -1,3 +1,4 @@
+import '../../catalog/expanded_unit_catalog.dart';
 import '../../domain/chart_period.dart';
 import '../domain/period_windows.dart';
 import '../models/actual_vs_baseline_result.dart';
@@ -50,8 +51,22 @@ class ActualVsBaselineService {
       }
     }
 
-    final incompatible =
-        meters.where((m) => m.unitCode != baseline.unitCode).toList();
+    final incompatible = <PeriodMeterReadingSeries>[];
+    final conversionFactors = <String, double>{};
+
+    for (final m in meters) {
+      if (m.unitCode == baseline.unitCode) {
+        conversionFactors[m.meterId] = 1.0;
+        continue;
+      }
+      final factor = _getConversionFactor(m.unitCode, baseline.unitCode);
+      if (factor == null) {
+        incompatible.add(m);
+      } else {
+        conversionFactors[m.meterId] = factor;
+      }
+    }
+
     if (incompatible.isNotEmpty) {
       return _insufficient(
         baseline: baseline,
@@ -70,6 +85,7 @@ class ActualVsBaselineService {
       meters: meters,
       periodStart: periodStart,
       periodEnd: effectiveEnd,
+      conversionFactors: conversionFactors,
     );
 
     // Combined confidence = min(baseline, actual) — conservative.
@@ -180,6 +196,7 @@ class ActualVsBaselineService {
     required List<PeriodMeterReadingSeries> meters,
     required DateTime periodStart,
     required DateTime periodEnd,
+    required Map<String, double> conversionFactors,
   }) {
     if (meters.isEmpty) {
       return (
@@ -202,11 +219,14 @@ class ActualVsBaselineService {
       );
       readingCount += endpoints.readingCountInPeriod;
       if (!endpoints.hasValidConsumptionEndpoints) continue;
-      total += periodConsumptionFromEndpoints(
+      
+      final rawConsumption = periodConsumptionFromEndpoints(
         lastInPeriod: endpoints.lastInPeriod!,
         previousBeforePeriod: endpoints.previousBeforePeriod,
         firstInPeriod: endpoints.firstInPeriod,
       );
+      final factor = conversionFactors[meter.meterId] ?? 1.0;
+      total += rawConsumption * factor;
       withEndpoints++;
     }
 
@@ -297,4 +317,34 @@ class ActualVsBaselineService {
 
   static String _iso(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
+
+  double? _getConversionFactor(String fromUnit, String toUnit) {
+    if (fromUnit == toUnit) return 1.0;
+    final fromLower = fromUnit.trim().toLowerCase();
+    final toLower = toUnit.trim().toLowerCase();
+    if (fromLower == toLower) return 1.0;
+
+    const categories = ['water', 'electricity', 'btu', 'fuel'];
+    for (final cat in categories) {
+      final units = ExpandedUnitCatalog.forCategoryCode(cat);
+      var foundFrom = false;
+      var foundTo = false;
+      var fromFactor = 1.0;
+      var toFactor = 1.0;
+      for (final u in units) {
+        if (u.code == fromLower) {
+          foundFrom = true;
+          fromFactor = u.unitToBaseFactor;
+        }
+        if (u.code == toLower) {
+          foundTo = true;
+          toFactor = u.unitToBaseFactor;
+        }
+      }
+      if (foundFrom && foundTo) {
+        return fromFactor / toFactor;
+      }
+    }
+    return null;
+  }
 }
