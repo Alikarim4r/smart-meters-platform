@@ -1,0 +1,12 @@
+workers=12 max_sites=1 active_sites=1 max_meters=1 active_meters=1
+ok 1 - concurrent site inserts cannot exceed max_sites
+ok 2 - concurrent meter inserts cannot exceed max_meters
+exit=0
+workers=12 max_sites=1 active_sites=1 max_meters=1 active_meters=1
+ok 1 - concurrent site inserts cannot exceed max_sites
+ok 2 - concurrent meter inserts cannot exceed max_meters
+exit=0
+workers=12 max_sites=1 active_sites=1 max_meters=1 active_meters=1
+ok 1 - concurrent site inserts cannot exceed max_sites
+ok 2 - concurrent meter inserts cannot exceed max_meters
+exit=0

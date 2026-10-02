@@ -91,3 +91,6 @@ export 'ui/site_network_canvas.dart';
 export 'ui/utility_network_canvas.dart';
 export 'ingestion/ingestion.dart';
 export 'notifications/notifications.dart';
+export 'models/subscription.dart';
+export 'models/subscription_plan.dart';
+export 'repositories/subscription_repository.dart';

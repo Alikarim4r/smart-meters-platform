@@ -1,0 +1,114 @@
+1..113
+ok 1 - D1 anon cannot execute any public SECURITY DEFINER function
+ok 2 - D2 authenticated cannot execute site-limit trigger function
+ok 3 - D3 authenticated cannot execute meter-limit trigger function
+ok 4 - D4 every subscription function pins search_path
+ok 5 - D5 no SECURITY DEFINER subscription function is directly callable by authenticated
+ok 6 - D6 authenticated holds no write/TRUNCATE/TRIGGER/REFERENCES on organization_subscriptions
+ok 7 - D7 authenticated holds no write/TRUNCATE/TRIGGER/REFERENCES on subscription_plan_catalog
+ok 8 - D8 billing provider references are not client-readable
+ok 9 - D9 RLS enabled on subscription tables
+ok 10 - B1 anon cannot read subscriptions
+ok 11 - B2 anon cannot call subscription_access_state
+ok 12 - B3 anon cannot call subscription_has_feature
+ok 13 - B4 anon cannot call subscription_usage
+ok 14 - B5 viewer cannot insert a subscription
+ok 15 - B6 viewer cannot raise max_sites
+ok 16 - B7 org admin cannot self-upgrade plan/limits/features
+ok 17 - B8 org admin cannot extend status/period
+ok 18 - B9 org admin cannot delete subscription row
+ok 19 - B10 org admin cannot rewrite plan catalog
+ok 20 - B11 site admin cannot TRUNCATE subscriptions (RLS bypass vector)
+ok 21 - B12 site admin cannot TRUNCATE plan catalog
+ok 22 - B12b subscription rows survive TRUNCATE attempts
+ok 23 - B13 viewer cannot read own org billing provider refs
+ok 24 - B14 viewer reads own org entitlement (legit)
+ok 25 - B15 viewer cannot read other org entitlement (IDOR)
+ok 26 - B16 viewer cannot read other org usage (IDOR)
+ok 27 - B17 viewer cannot probe other org features (IDOR)
+ok 28 - B18 viewer cannot select other org subscription row
+ok 29 - B19 non-boolean feature value does not error
+ok 30 - B20 viewer sees granted feature for own org (legit)
+ok 31 - B21 forged max_sites claim ignored: server value returned
+ok 32 - B22 forged plan claim ignored
+ok 33 - B23 forged features claim does not grant automation
+ok 34 - B24 forged organization_id claim does not grant other-org read
+ok 35 - B25 forged super_admin claims do not grant site creation
+ok 36 - A1 viewer cannot create site
+ok 37 - A2 viewer cannot update site
+ok 38 - A3 viewer cannot delete site
+ok 39 - A4 viewer cannot create meter
+ok 40 - A5 viewer cannot update meter
+ok 41 - A6 viewer cannot delete meter
+ok 42 - A7 viewer cannot self-escalate profile role
+ok 43 - A8 viewer cannot grant self org_admin scope
+ok 44 - A9 viewer cannot grant self legacy site_admin
+ok 45 - A10 viewer cannot read other org site
+ok 46 - A11 technician cannot create site
+ok 47 - A12 technician cannot delete site
+ok 48 - A13 technician cannot create meter
+ok 49 - A14 technician cannot update meter
+ok 50 - A15 technician cannot create meter in other org site (IDOR)
+ok 51 - A16 technician cannot read other org meter
+ok 52 - A17 technician cannot grant self site_admin
+ok 53 - A18 technician cannot self-escalate profile role
+ok 54 - A19 technician cannot mutate subscription
+ok 55 - A20 site admin cannot create sites in own org
+ok 56 - A21 site admin cannot create sites in other org (IDOR)
+ok 57 - A22 site admin cannot create meter in other org site (IDOR)
+ok 58 - A23 site admin cannot update other org meter
+ok 59 - A24 site admin cannot move own meter into other org site
+ok 60 - A25 site admin cannot move own site into other org (cross-tenant)
+ok 61 - A26 site admin cannot attach own site to other org zone (cross-tenant)
+ok 62 - A27 site admin cannot grant self org_admin
+ok 63 - A28 site admin cannot grant self other-org site_admin
+ok 64 - A29 site admin cannot read other org site
+ok 65 - A30 site admin cannot delete site
+ok 66 - A31 site admin can rename own site (legit)
+ok 67 - A32 legacy site admin cannot create meter in other org site (IDOR)
+ok 68 - A33 legacy site admin cannot move site into other org
+ok 69 - A34 org admin A cannot create site in org B (IDOR)
+ok 70 - A35 org admin A cannot update org B site
+ok 71 - A36 org admin A cannot push own site into org B
+ok 72 - A37 org admin B cannot plant a site in org A via own zone (cross-tenant)
+ok 73 - C1 site N (=max_sites) allowed
+ok 74 - C2 site N+1 rejected
+ok 75 - C3 inactive site insert allowed (not counted)
+ok 76 - C4 reactivation past limit rejected
+ok 77 - C5 deactivate frees a slot
+ok 78 - C6 reactivation within limit allowed
+ok 79 - C7 delete frees a slot
+ok 80 - C8 recreate after delete allowed
+ok 81 - C9 limit still enforced after recreate
+ok 82 - C10 multi-row insert cannot exceed limit
+ok 83 - C11 site admin creates meter within quota (legit)
+ok 84 - C12 meter N (=max_meters) allowed
+ok 85 - C13 meter N+1 rejected
+ok 86 - C14 forged max_meters claim cannot bypass meter limit
+ok 87 - C15 inactive meter insert allowed
+ok 88 - C16 meter reactivation past limit rejected
+ok 89 - C17 org B quota independent of org A
+ok 90 - C18 org B usage counts only org B sites
+ok 91 - C18b cross-tenant insert into full org returns 42501 (no quota oracle)
+ok 92 - C19 meter move into full org rejected
+ok 93 - C20 site move cannot carry meters past target org meter quota
+ok 94 - C21 past_due blocks site creation
+ok 95 - C22 past_due has_access=false
+ok 96 - C23 canceled blocks meter creation
+ok 97 - C24 expired blocks site creation
+ok 98 - C25 open grace period allows creation within quota
+ok 99 - C26 lapsed grace period blocks creation
+ok 100 - C27 lapsed grace has_access=false
+ok 101 - C28 trial past current_period_end blocks creation
+ok 102 - C29 ended trial has_access=false
+ok 103 - C30 ended trial grants no features
+ok 104 - C31 active past current_period_end blocks creation
+ok 105 - C32 active open-ended contract allows creation within quota
+ok 106 - C33 missing subscription fails closed
+ok 107 - C34 new org gets server-provisioned trial from catalog
+ok 108 - C35 provisioned trial ends after catalog trial_days
+ok 109 - E1 org admin reads own entitlement
+ok 110 - E2 org admin sees own feature
+ok 111 - E3 technician still reads assigned site
+ok 112 - E4 technician still reads assigned meters
+ok 113 - E5 viewer still reads assigned site
