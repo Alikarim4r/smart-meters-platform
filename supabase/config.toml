@@ -385,6 +385,11 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Google Play purchase verification (docs/regression/GOOGLE_PLAY_BILLING_V1.md).
+# Gateway JWT verification stays on; the function re-authorizes via the DB.
+[functions.google-play-verify]
+verify_jwt = true
+
 [analytics]
 enabled = true
 port = 54327

@@ -855,4 +855,103 @@ class AdminStrings {
         'Enable conservation_module and related flags for this organization/site.',
         'فعّل conservation_module والأعلام ذات الصلة لهذه الجهة/الموقع.',
       );
+
+  // Subscription & billing ----------------------------------------------------
+  String get subscriptionBilling =>
+      _t('Subscription & billing', 'الاشتراك والفوترة');
+  String get currentPlan => _t('Current plan', 'الخطة الحالية');
+  String get usage => _t('Usage', 'الاستخدام');
+  String get planUsers => _t('Users', 'المستخدمون');
+  String get planSites => _t('Sites', 'المواقع');
+  String get planMeters => _t('Meters', 'العدادات');
+  String get accessActive => _t('Access active', 'الوصول مفعّل');
+  String get accessInactive => _t('No active access', 'لا يوجد وصول مفعّل');
+  String get renewsOn => _t('Renews on', 'يتجدد في');
+  String get endsOn => _t('Ends on', 'ينتهي في');
+  String get graceEndsOn => _t('Grace period ends', 'تنتهي فترة السماح');
+  String get cancelsAtPeriodEnd => _t(
+    'Canceled: access continues until the period ends.',
+    'تم الإلغاء: يستمر الوصول حتى نهاية الفترة.',
+  );
+  String get entitlementUnavailable => _t(
+    'Subscription details are not available for your account.',
+    'تفاصيل الاشتراك غير متاحة لحسابك.',
+  );
+  String get availablePlans => _t('Available plans', 'الخطط المتاحة');
+  String get monthly => _t('Monthly', 'شهري');
+  String get annual => _t('Annual', 'سنوي');
+  String get perMonth => _t('/ month', '/ شهر');
+  String get perYear => _t('/ year', '/ سنة');
+  String get introOffer => _t('Introductory offer', 'عرض تمهيدي');
+  String get subscribe => _t('Subscribe', 'اشترك');
+  String get restorePurchases => _t('Restore purchases', 'استعادة المشتريات');
+  String get billingAndroidOnly => _t(
+    'Purchases are available in the Android app from Google Play.',
+    'الشراء متاح في تطبيق Android عبر Google Play.',
+  );
+  String get billingStoreUnavailable => _t(
+    'Google Play billing is not available on this device.',
+    'فوترة Google Play غير متاحة على هذا الجهاز.',
+  );
+  String get billingNotConfigured => _t(
+    'No plans are available for purchase yet.',
+    'لا توجد خطط متاحة للشراء بعد.',
+  );
+  String get billingForbidden => _t(
+    'Only organization administrators can manage billing.',
+    'إدارة الفوترة متاحة لمسؤولي الجهة فقط.',
+  );
+  String get billingActiveSubscriptionLocked => _t(
+    'This organization already has an active subscription. Change or cancel it in Google Play.',
+    'لدى هذه الجهة اشتراك نشط. غيّره أو ألغه من Google Play.',
+  );
+  String get purchasePending => _t(
+    'Payment pending. Access starts once Google Play confirms the payment.',
+    'الدفع قيد الانتظار. يبدأ الوصول بعد تأكيد Google Play للدفع.',
+  );
+  String get verifyingPurchase => _t(
+    'Verifying purchase with the server…',
+    'جارٍ التحقق من الشراء مع الخادم…',
+  );
+  String get purchaseVerified =>
+      _t('Subscription confirmed by the server.', 'أكّد الخادم الاشتراك.');
+  String get purchaseRecordedNoAccess => _t(
+    'Purchase recorded, but it does not grant access yet.',
+    'تم تسجيل الشراء، لكنه لا يمنح وصولاً بعد.',
+  );
+  String get purchaseNotVerified => _t(
+    'The purchase could not be verified, so no access was granted. '
+        'Google Play automatically refunds purchases that are never confirmed.',
+    'تعذّر التحقق من الشراء، لذلك لم يُمنح أي وصول. '
+        'تسترد Google Play تلقائياً المشتريات التي لا يتم تأكيدها.',
+  );
+  String get purchaseConflict => _t(
+    'This organization already has an active subscription. The new purchase was not applied.',
+    'لدى هذه الجهة اشتراك نشط بالفعل. لم يُطبّق الشراء الجديد.',
+  );
+  String get purchaseStoreError =>
+      _t('Google Play reported an error.', 'أبلغت Google Play عن خطأ.');
+  String get purchaseVerifyFailedRetry => _t(
+    'Could not reach the server to verify the purchase. Use "Restore purchases" to retry.',
+    'تعذّر الوصول إلى الخادم للتحقق من الشراء. استخدم "استعادة المشتريات" لإعادة المحاولة.',
+  );
+  String get billingLoadFailed =>
+      _t('Failed to load billing details.', 'تعذّر تحميل تفاصيل الفوترة.');
+  String planLabel(String plan) => switch (plan) {
+    'trial' => _t('Trial', 'تجريبي'),
+    'starter' => _t('Starter', 'المبتدئة'),
+    'professional' => _t('Professional', 'الاحترافية'),
+    'business' => _t('Business', 'الأعمال'),
+    'enterprise' => _t('Enterprise', 'المؤسسات'),
+    _ => plan,
+  };
+  String statusLabel(String status) => switch (status) {
+    'trialing' => _t('Trial', 'فترة تجريبية'),
+    'active' => _t('Active', 'نشط'),
+    'pastDue' || 'past_due' => _t('Payment issue', 'مشكلة في الدفع'),
+    'gracePeriod' || 'grace_period' => _t('Grace period', 'فترة سماح'),
+    'canceled' => _t('Canceled', 'ملغى'),
+    'expired' => _t('Expired', 'منتهي'),
+    _ => status,
+  };
 }

@@ -9,6 +9,7 @@ import '../screens/catalog_dashboard_screen.dart';
 import '../screens/corrections_tab.dart';
 import '../screens/data_integrations_hub_screen.dart';
 import '../screens/settings_tab.dart';
+import '../screens/subscription_billing_screen.dart';
 import '../utils/user_validation.dart';
 
 /// Settings-only drawer: account, language, appearance, and advanced tools.
@@ -140,6 +141,17 @@ class AdminSettingsDrawer extends ConsumerWidget {
                     context,
                     title: s.policySettings,
                     child: const SettingsTab(),
+                  ),
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.workspace_premium_outlined),
+                  title: Text(s.subscriptionBilling),
+                  trailing: const Icon(Icons.chevron_right, size: 20),
+                  onTap: () => _pushTool(
+                    context,
+                    title: s.subscriptionBilling,
+                    child: const SubscriptionBillingScreen(),
                   ),
                 ),
                 ListTile(
