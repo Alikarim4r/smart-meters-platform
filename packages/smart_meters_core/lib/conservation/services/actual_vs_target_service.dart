@@ -1,4 +1,4 @@
-import '../../domain/chart_period.dart';
+import '../../domain/cumulative_consumption.dart';
 import '../models/actual_vs_target_result.dart';
 import '../models/calculation_meta.dart';
 import '../models/conservation_target.dart';
@@ -8,7 +8,7 @@ import 'period_comparison_service.dart';
 ///
 /// Do **not** invent a reading on `periodStart - 1 day`. Use the latest reading
 /// strictly before the period when available; otherwise fall back to the first
-/// reading **in** the period (same as [periodConsumptionFromEndpoints]). If
+/// reading **in** the period. If
 /// neither boundary exists → Insufficient Data.
 enum MeterPeriodBoundaryPolicy {
   requireValidEndpoints,
@@ -177,11 +177,13 @@ class ActualVsTargetService {
       );
       readingCount += endpoints.readingCountInPeriod;
       if (!endpoints.hasValidConsumptionEndpoints) continue;
-      total += periodConsumptionFromEndpoints(
-        lastInPeriod: endpoints.lastInPeriod!,
-        previousBeforePeriod: endpoints.previousBeforePeriod,
-        firstInPeriod: endpoints.firstInPeriod,
+      final run = cumulativeRunConsumption(
+        values: endpoints.cumulativeRunValues,
+        normalizedCapacity: meter.normalizedCapacity,
       );
+      final consumption = run.consumption;
+      if (consumption == null) continue;
+      total += consumption;
       withEndpoints++;
     }
 

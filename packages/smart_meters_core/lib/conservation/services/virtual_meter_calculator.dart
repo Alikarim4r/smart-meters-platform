@@ -1,4 +1,4 @@
-import '../../domain/chart_period.dart';
+import '../../domain/cumulative_consumption.dart';
 import '../../domain/unit_conversion.dart';
 import '../../models/enums.dart';
 import '../domain/period_windows.dart';
@@ -9,8 +9,8 @@ import 'period_comparison_service.dart';
 
 /// Read-only Virtual Meter calculator (P1E).
 ///
-/// Uses existing [periodConsumptionFromEndpoints] semantics — does not invent
-/// periodStart-1 readings. Labels residual as Residual / Balance Difference only.
+/// Does not invent periodStart-1 readings. Labels residual as Residual /
+/// Balance Difference only.
 class VirtualMeterCalculator {
   const VirtualMeterCalculator();
 
@@ -49,11 +49,23 @@ class VirtualMeterCalculator {
         ));
         continue;
       }
-      final value = periodConsumptionFromEndpoints(
-        lastInPeriod: endpoints.lastInPeriod!,
-        previousBeforePeriod: endpoints.previousBeforePeriod,
-        firstInPeriod: endpoints.firstInPeriod,
+      final run = cumulativeRunConsumption(
+        values: endpoints.cumulativeRunValues,
+        normalizedCapacity: series.normalizedCapacity,
       );
+      final value = run.consumption;
+      if (value == null) {
+        out.add(VirtualMeterContributorInput(
+          meterId: series.meterId,
+          consumption: null,
+          hasValidEndpoints: false,
+          completeness: 0,
+          confidence: 0,
+          unitCode: series.unitCode,
+          isMissing: true,
+        ));
+        continue;
+      }
       var confidence = 100;
       if (endpoints.previousBeforePeriod == null) confidence -= 15;
       if (endpoints.readingCountInPeriod < 2) confidence -= 10;

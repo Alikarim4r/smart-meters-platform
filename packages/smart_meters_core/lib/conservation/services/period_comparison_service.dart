@@ -1,4 +1,4 @@
-import '../../domain/chart_period.dart';
+import '../../domain/cumulative_consumption.dart';
 import '../domain/period_windows.dart';
 import '../models/calculation_meta.dart';
 import '../models/period_comparison_result.dart';
@@ -148,24 +148,28 @@ class PeriodComparisonService {
       );
       readingCount += endpoints.readingCountInPeriod;
 
+      var meterExpectedSlots = 0;
+      var meterObservedSlots = 0;
       if (meter.expectedIntervalDays != null &&
           meter.expectedIntervalDays! > 0) {
         final days = inclusiveDayCount(periodStart, periodEnd);
-        final slots =
-            (days / meter.expectedIntervalDays!).ceil().clamp(1, days) as int;
-        expectedSlots += slots;
-        observedSlots +=
-            endpoints.readingCountInPeriod.clamp(0, slots) as int;
+        meterExpectedSlots =
+            (days / meter.expectedIntervalDays!).ceil().clamp(1, days);
+        meterObservedSlots =
+            endpoints.readingCountInPeriod.clamp(0, meterExpectedSlots);
+        expectedSlots += meterExpectedSlots;
       }
 
       if (!endpoints.hasValidConsumptionEndpoints) {
         continue;
       }
-      final consumption = periodConsumptionFromEndpoints(
-        lastInPeriod: endpoints.lastInPeriod!,
-        previousBeforePeriod: endpoints.previousBeforePeriod,
-        firstInPeriod: endpoints.firstInPeriod,
+      final run = cumulativeRunConsumption(
+        values: endpoints.cumulativeRunValues,
+        normalizedCapacity: meter.normalizedCapacity,
       );
+      final consumption = run.consumption;
+      if (consumption == null) continue;
+      observedSlots += meterObservedSlots;
       total += consumption;
       anyValid = true;
       metersWithEndpoints++;
@@ -471,6 +475,8 @@ class PeriodMeterReadingSeries {
     required this.unitCode,
     required this.readings,
     this.meterMultiplier = 1.0,
+    this.unitToBaseFactor = 1.0,
+    this.rolloverCapacity,
     this.expectedIntervalDays,
     this.correctionDates = const [],
   });
@@ -478,6 +484,8 @@ class PeriodMeterReadingSeries {
   final String meterId;
   final String unitCode;
   final double meterMultiplier;
+  final double unitToBaseFactor;
+  final double? rolloverCapacity;
   final List<PeriodReadingPoint> readings;
   final int? expectedIntervalDays;
   final List<DateTime> correctionDates;
@@ -486,9 +494,15 @@ class PeriodMeterReadingSeries {
         for (final r in readings)
           PeriodReadingPoint(
             date: r.date,
-            value: r.value * meterMultiplier,
+            value: r.value * unitToBaseFactor * meterMultiplier,
           ),
       ];
+
+  double? get normalizedCapacity => normalizedRolloverCapacity(
+        rawCapacity: rolloverCapacity,
+        unitToBaseFactor: unitToBaseFactor,
+        meterMultiplier: meterMultiplier,
+      );
 
   int correctionCountInPeriod({
     required DateTime periodStart,
@@ -516,19 +530,21 @@ class PeriodEndpointExtraction {
     required this.firstInPeriod,
     required this.lastInPeriod,
     required this.readingCountInPeriod,
+    required this.cumulativeRunValues,
   });
 
   final double? previousBeforePeriod;
   final double? firstInPeriod;
   final double? lastInPeriod;
   final int readingCountInPeriod;
+  final List<double> cumulativeRunValues;
 
   bool get hasValidConsumptionEndpoints =>
       lastInPeriod != null &&
       (previousBeforePeriod != null || firstInPeriod != null);
 }
 
-/// Extract endpoint normalized values for [periodConsumptionFromEndpoints].
+/// Extract endpoint values and the chronological boundary-to-period run.
 PeriodEndpointExtraction extractEndpoints({
   required List<PeriodReadingPoint> readings,
   required DateTime periodStart,
@@ -542,6 +558,7 @@ PeriodEndpointExtraction extractEndpoints({
   double? firstIn;
   double? lastIn;
   var count = 0;
+  final inPeriodValues = <double>[];
 
   for (final r in sorted) {
     final d = dateOnly(r.date);
@@ -553,6 +570,7 @@ PeriodEndpointExtraction extractEndpoints({
     count++;
     firstIn ??= r.value;
     lastIn = r.value;
+    inPeriodValues.add(r.value);
   }
 
   return PeriodEndpointExtraction(
@@ -560,6 +578,7 @@ PeriodEndpointExtraction extractEndpoints({
     firstInPeriod: firstIn,
     lastInPeriod: lastIn,
     readingCountInPeriod: count,
+    cumulativeRunValues: [?previousBefore, ...inPeriodValues],
   );
 }
 

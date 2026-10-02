@@ -1,4 +1,4 @@
-import '../../domain/chart_period.dart';
+import '../../domain/cumulative_consumption.dart';
 import '../domain/baseline_approval_gates.dart';
 import '../domain/period_windows.dart';
 import '../models/calculation_meta.dart';
@@ -166,13 +166,13 @@ class BaselineCalculationService {
       readingCount += endpoints.readingCountInPeriod;
       if (!endpoints.hasValidConsumptionEndpoints) continue;
 
-      // Still compute via existing helper for draft preview, but classify
-      // boundary quality separately (do not invent periodStart-1).
-      total += periodConsumptionFromEndpoints(
-        lastInPeriod: endpoints.lastInPeriod!,
-        previousBeforePeriod: endpoints.previousBeforePeriod,
-        firstInPeriod: endpoints.firstInPeriod,
+      final run = cumulativeRunConsumption(
+        values: endpoints.cumulativeRunValues,
+        normalizedCapacity: meter.normalizedCapacity,
       );
+      final consumption = run.consumption;
+      if (consumption == null) continue;
+      total += consumption;
       withEndpoints++;
       if (endpoints.previousBeforePeriod != null) {
         withExactPre++;

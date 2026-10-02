@@ -1,4 +1,4 @@
-import '../../domain/chart_period.dart';
+import '../../domain/cumulative_consumption.dart';
 import '../../domain/unit_conversion.dart';
 import '../domain/period_windows.dart';
 import '../models/actual_vs_baseline_result.dart';
@@ -218,12 +218,13 @@ class ActualVsBaselineService {
       );
       readingCount += endpoints.readingCountInPeriod;
       if (!endpoints.hasValidConsumptionEndpoints) continue;
-      
-      final rawConsumption = periodConsumptionFromEndpoints(
-        lastInPeriod: endpoints.lastInPeriod!,
-        previousBeforePeriod: endpoints.previousBeforePeriod,
-        firstInPeriod: endpoints.firstInPeriod,
+
+      final run = cumulativeRunConsumption(
+        values: endpoints.cumulativeRunValues,
+        normalizedCapacity: meter.normalizedCapacity,
       );
+      final rawConsumption = run.consumption;
+      if (rawConsumption == null) continue;
       final factor = conversionFactors[meter.meterId] ?? 1.0;
       total += rawConsumption * factor;
       withEndpoints++;

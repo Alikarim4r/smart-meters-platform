@@ -294,6 +294,56 @@ void main() {
           status: ConservationBaselineStatus.approved,
         );
 
+    test('replacement in AFTER period is missing, never a zero saving', () {
+      final r = avb.evaluate(
+        baseline: approved(value: 100),
+        analysisPeriodStart: DateTime(2026, 2, 1),
+        analysisPeriodEnd: DateTime(2026, 2, 28),
+        analysisAsOf: DateTime(2026, 2, 28),
+        meters: [
+          PeriodMeterReadingSeries(
+            meterId: 'm1',
+            unitCode: 'kWh',
+            readings: [
+              p(DateTime(2026, 1, 31), 950),
+              p(DateTime(2026, 2, 10), 5),
+              p(DateTime(2026, 2, 28), 25),
+            ],
+          ),
+        ],
+      );
+
+      expect(r.isInsufficient, isTrue);
+      expect(r.actualValue, isNull);
+      expect(r.actualCompleteness, lessThan(1));
+      expect(r.actualConfidence, lessThan(100));
+    });
+
+    test('valid rollover in AFTER period computes consumption', () {
+      final r = avb.evaluate(
+        baseline: approved(value: 75),
+        analysisPeriodStart: DateTime(2026, 2, 1),
+        analysisPeriodEnd: DateTime(2026, 2, 28),
+        analysisAsOf: DateTime(2026, 2, 28),
+        meters: [
+          PeriodMeterReadingSeries(
+            meterId: 'm1',
+            unitCode: 'kWh',
+            rolloverCapacity: 1000,
+            readings: [
+              p(DateTime(2026, 1, 31), 950),
+              p(DateTime(2026, 2, 10), 5),
+              p(DateTime(2026, 2, 28), 25),
+            ],
+          ),
+        ],
+      );
+
+      expect(r.status, ActualVsBaselineStatus.ok);
+      expect(r.actualValue, 75);
+      expect(r.standing, ActualVsBaselineStanding.onBaseline);
+    });
+
     test('actual above baseline', () {
       final r = avb.evaluate(
         baseline: approved(value: 50),
