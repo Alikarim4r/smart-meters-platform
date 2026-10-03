@@ -56,8 +56,9 @@ class ChartPeriodControls extends StatelessWidget {
               children: [
                 for (final kind in UtilityChartPeriodKind.values)
                   Padding(
-                    padding:
-                        const EdgeInsets.only(right: DashboardSpacing.xs - 2),
+                    padding: const EdgeInsetsDirectional.only(
+                      end: DashboardSpacing.xs - 2,
+                    ),
                     child: _PeriodChip(
                       kind: kind,
                       state: state,
@@ -67,8 +68,9 @@ class ChartPeriodControls extends StatelessWidget {
                   ),
                 if (customRangeActive)
                   Padding(
-                    padding:
-                        const EdgeInsets.only(right: DashboardSpacing.xs - 2),
+                    padding: const EdgeInsetsDirectional.only(
+                      end: DashboardSpacing.xs - 2,
+                    ),
                     child: _CustomPeriodChip(label: s.customRange),
                   ),
               ],
@@ -152,10 +154,7 @@ class _CustomPeriodChip extends StatelessWidget {
 }
 
 class ChartTypeControls extends StatelessWidget {
-  const ChartTypeControls({
-    super.key,
-    required this.child,
-  });
+  const ChartTypeControls({super.key, required this.child});
 
   final Widget child;
 

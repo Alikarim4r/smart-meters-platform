@@ -4,6 +4,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../../l10n/conservation_strings.dart';
 import '../../providers/conservation_providers.dart';
+import '../../theme/dashboard_theme.dart';
 import '../conservation/actual_vs_baseline_card.dart';
 import '../conservation/actual_vs_target_card.dart';
 import '../conservation/advanced_conservation_tabs.dart';
@@ -32,110 +33,126 @@ class SiteConservationPanel extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ConservationStrings.of(context);
-    final visibleAsync =
-        ref.watch(conservationSectionVisibleProvider(siteId));
+    final visibleAsync = ref.watch(conservationSectionVisibleProvider(siteId));
     return visibleAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text(s.friendlyLoadError(e))),
       data: (visible) {
         if (!visible) return const SizedBox.shrink();
 
-        final periodOn = ref
+        final periodOn =
+            ref
                 .watch(conservationPeriodCompareEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final targetsOn = ref
-                .watch(conservationTargetsEnabledProvider(siteId))
-                .valueOrNull ??
+        final targetsOn =
+            ref.watch(conservationTargetsEnabledProvider(siteId)).valueOrNull ??
             false;
-        final baselineOn = ref
+        final baselineOn =
+            ref
                 .watch(conservationBaselineEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final virtualOn = ref
+        final virtualOn =
+            ref
                 .watch(conservationVirtualMetersEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final waterBalanceOn = ref
+        final waterBalanceOn =
+            ref
                 .watch(conservationWaterBalanceEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final energyBalanceOn = ref
+        final energyBalanceOn =
+            ref
                 .watch(conservationEnergyBalanceEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final benchmarkingOn = ref
+        final benchmarkingOn =
+            ref
                 .watch(conservationBenchmarkingEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final intensityOn = ref
+        final intensityOn =
+            ref
                 .watch(conservationIntensityEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final anomaliesOn = ref
+        final anomaliesOn =
+            ref
                 .watch(conservationPeriodicAnomaliesEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final copOn = ref
+        final copOn =
+            ref
                 .watch(conservationCopConservationEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final opportunitiesOn = ref
+        final opportunitiesOn =
+            ref
                 .watch(conservationOpportunitiesEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final investigationsOn = ref
+        final investigationsOn =
+            ref
                 .watch(conservationInvestigationsEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final estimationOn = ref
+        final estimationOn =
+            ref
                 .watch(conservationSavingsEstimationEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final verificationOn = ref
+        final verificationOn =
+            ref
                 .watch(conservationSavingsVerificationEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final costRoiOn = ref
-                .watch(conservationCostRoiEnabledProvider(siteId))
-                .valueOrNull ??
+        final costRoiOn =
+            ref.watch(conservationCostRoiEnabledProvider(siteId)).valueOrNull ??
             false;
         final mvSectionOn = estimationOn || verificationOn;
-        final weatherOn = ref
+        final weatherOn =
+            ref
                 .watch(conservationWeatherNormalizationEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final occupancyOn = ref
+        final occupancyOn =
+            ref
                 .watch(
                   conservationOccupancyNormalizationEnabledProvider(siteId),
                 )
                 .valueOrNull ??
             false;
-        final persistenceOn = ref
+        final persistenceOn =
+            ref
                 .watch(conservationSavingPersistenceEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final carbonOn = ref
+        final carbonOn =
+            ref
                 .watch(conservationCarbonAccountingEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final forecastOn = ref
+        final forecastOn =
+            ref
                 .watch(conservationForecastingEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final recoOn = ref
-                .watch(
-                  conservationRecommendationEngineEnabledProvider(siteId),
-                )
+        final recoOn =
+            ref
+                .watch(conservationRecommendationEngineEnabledProvider(siteId))
                 .valueOrNull ??
             false;
-        final advancedOn = weatherOn ||
+        final advancedOn =
+            weatherOn ||
             occupancyOn ||
             persistenceOn ||
             carbonOn ||
             forecastOn ||
             recoOn;
-        final trendsOn = periodOn ||
+        final trendsOn =
+            periodOn ||
             anomaliesOn ||
             copOn ||
             benchmarkingOn ||
@@ -144,6 +161,9 @@ class SiteConservationPanel extends ConsumerWidget {
             energyBalanceOn;
 
         final s = ConservationStrings.of(context);
+        final colors = dashboardColors(context);
+        final scheme = Theme.of(context).colorScheme;
+        final isDark = Theme.of(context).brightness == Brightness.dark;
 
         final tabs = <_ConservationTab>[];
         if (trendsOn) {
@@ -213,8 +233,8 @@ class SiteConservationPanel extends ConsumerWidget {
                   title: waterBalanceOn && energyBalanceOn
                       ? s.waterAndEnergyBalance
                       : waterBalanceOn
-                          ? s.waterBalance
-                          : s.energyBalance,
+                      ? s.waterBalance
+                      : s.energyBalance,
                   initiallyExpanded: true,
                   child: _BalanceSection(
                     siteId: siteId,
@@ -226,7 +246,10 @@ class SiteConservationPanel extends ConsumerWidget {
             ),
           );
         }
-        if (benchmarkingOn || intensityOn || anomaliesOn || copOn ||
+        if (benchmarkingOn ||
+            intensityOn ||
+            anomaliesOn ||
+            copOn ||
             opportunitiesOn) {
           tabs.add(
             _ConservationTab(
@@ -242,8 +265,8 @@ class SiteConservationPanel extends ConsumerWidget {
                     title: anomaliesOn && copOn
                         ? s.anomaliesAndCop
                         : anomaliesOn
-                            ? s.anomalies
-                            : s.copTrend,
+                        ? s.anomalies
+                        : s.copTrend,
                     subtitle: copOn ? s.copTrendNote : null,
                     initiallyExpanded: true,
                     child: _AnomaliesSection(siteId: siteId),
@@ -275,10 +298,7 @@ class SiteConservationPanel extends ConsumerWidget {
                   title: s.measurementVerification,
                   subtitle: s.mvDisclaimer,
                   initiallyExpanded: true,
-                  child: _MvSection(
-                    siteId: siteId,
-                    showCostRoi: costRoiOn,
-                  ),
+                  child: _MvSection(siteId: siteId, showCostRoi: costRoiOn),
                 ),
               ],
             ),
@@ -327,31 +347,108 @@ class SiteConservationPanel extends ConsumerWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                Text(
-                  s.conservation,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w800,
+                Container(
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: AlignmentDirectional.topStart,
+                      end: AlignmentDirectional.bottomEnd,
+                      colors: [
+                        scheme.primary.withValues(alpha: isDark ? 0.16 : 0.08),
+                        colors.card.withValues(alpha: 0.96),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: scheme.primary.withValues(
+                        alpha: isDark ? 0.28 : 0.16,
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        width: 42,
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: scheme.primary.withValues(alpha: 0.14),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(
+                          Icons.energy_savings_leaf_outlined,
+                          color: scheme.primary,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              s.conservation,
+                              style: Theme.of(context).textTheme.titleLarge
+                                  ?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    color: colors.textPrimary,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              s.derivedMetricsOnly,
+                              style: Theme.of(context).textTheme.bodySmall
+                                  ?.copyWith(
+                                    color: colors.textMuted,
+                                    height: 1.45,
+                                  ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  s.derivedMetricsOnly,
-                  style: const TextStyle(fontSize: 12),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: BoxDecoration(
+                    color: colors.cardElevated,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: colors.border),
+                  ),
+                  child: TabBar(
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    dividerColor: Colors.transparent,
+                    labelColor: colors.textPrimary,
+                    unselectedLabelColor: colors.textMuted,
+                    labelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w800,
+                    ),
+                    unselectedLabelStyle: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    labelPadding: const EdgeInsets.symmetric(horizontal: 14),
+                    indicatorSize: TabBarIndicatorSize.tab,
+                    indicator: BoxDecoration(
+                      color: scheme.primary.withValues(
+                        alpha: isDark ? 0.18 : 0.10,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: scheme.primary.withValues(alpha: 0.36),
+                      ),
+                    ),
+                    tabs: [for (final t in tabs) Tab(text: t.label)],
+                  ),
                 ),
                 const SizedBox(height: 8),
-                TabBar(
-                  isScrollable: true,
-                  tabAlignment: TabAlignment.start,
-                  tabs: [for (final t in tabs) Tab(text: t.label)],
-                ),
-                const SizedBox(height: 4),
                 Text(
                   s.tapToExpandSection,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: Theme.of(context).hintColor,
-                  ),
+                  style: TextStyle(fontSize: 11, color: colors.textMuted),
                 ),
                 const SizedBox(height: 4),
                 Expanded(
@@ -369,7 +466,6 @@ class SiteConservationPanel extends ConsumerWidget {
             ),
           ),
         );
-
       },
     );
   }
@@ -395,9 +491,9 @@ class SiteConservationPanel extends ConsumerWidget {
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.friendlyLoadError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.friendlyLoadError(e))));
     }
   }
 }
@@ -423,18 +519,23 @@ class _LazyConservationAccordion extends StatefulWidget {
       _LazyConservationAccordionState();
 }
 
-class _LazyConservationAccordionState extends State<_LazyConservationAccordion> {
+class _LazyConservationAccordionState
+    extends State<_LazyConservationAccordion> {
   late bool _expanded = widget.initiallyExpanded;
 
   @override
   Widget build(BuildContext context) {
-    final border = Theme.of(context).dividerColor.withValues(alpha: 0.55);
+    final colors = dashboardColors(context);
+    final scheme = Theme.of(context).colorScheme;
+    final border = colors.border.withValues(alpha: 0.9);
     return Padding(
       padding: const EdgeInsets.only(top: 12),
       child: Material(
-        color: Theme.of(context).cardColor,
+        color: colors.card,
+        elevation: 0,
+        shadowColor: scheme.primary.withValues(alpha: 0.10),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(18),
           side: BorderSide(color: border),
         ),
         clipBehavior: Clip.antiAlias,
@@ -444,15 +545,27 @@ class _LazyConservationAccordionState extends State<_LazyConservationAccordion> 
             InkWell(
               onTap: () => setState(() => _expanded = !_expanded),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(
-                      _expanded ? Icons.expand_less : Icons.expand_more,
-                      size: 24,
+                    Container(
+                      width: 34,
+                      height: 34,
+                      decoration: BoxDecoration(
+                        color: scheme.primary.withValues(alpha: 0.10),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
+                      child: Icon(
+                        _expanded ? Icons.expand_less : Icons.expand_more,
+                        size: 20,
+                        color: scheme.primary,
+                      ),
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -486,11 +599,16 @@ class _LazyConservationAccordionState extends State<_LazyConservationAccordion> 
               ),
             ),
             // Lazy mount: providers inside [child] only run when expanded.
-            if (_expanded)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
-                child: widget.child,
-              ),
+            AnimatedSize(
+              duration: const Duration(milliseconds: 220),
+              curve: Curves.easeOutCubic,
+              child: _expanded
+                  ? Padding(
+                      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+                      child: widget.child,
+                    )
+                  : const SizedBox.shrink(),
+            ),
           ],
         ),
       ),
@@ -808,23 +926,20 @@ class _OpportunitiesSection extends ConsumerWidget {
       );
       ref.invalidate(conservationOpportunitiesProvider(siteId));
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.investigationStarted)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.investigationStarted)));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.friendlyLoadError(e))),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.friendlyLoadError(e))));
     }
   }
 }
 
 class _MvSection extends ConsumerWidget {
-  const _MvSection({
-    required this.siteId,
-    required this.showCostRoi,
-  });
+  const _MvSection({required this.siteId, required this.showCostRoi});
 
   final String siteId;
   final bool showCostRoi;
@@ -843,16 +958,10 @@ class _MvSection extends ConsumerWidget {
         final totals = computeMvPortfolioTotals(rows);
         return Column(
           children: [
-            MvSummaryStrip(
-              totals: totals,
-              showCostRoi: showCostRoi,
-            ),
+            MvSummaryStrip(totals: totals, showCostRoi: showCostRoi),
             const SizedBox(height: 10),
             for (final row in rows) ...[
-              MvVerificationCard(
-                record: row,
-                showCostRoi: showCostRoi,
-              ),
+              MvVerificationCard(record: row, showCostRoi: showCostRoi),
               const SizedBox(height: 8),
             ],
           ],

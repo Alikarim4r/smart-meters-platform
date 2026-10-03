@@ -236,9 +236,7 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                       child: Text(
-                        isAr
-                            ? 'تصنيف حسب التطبيق'
-                            : 'Category by app',
+                        isAr ? 'تصنيف حسب التطبيق' : 'Category by app',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
                           fontWeight: FontWeight.w700,
                         ),
@@ -253,7 +251,7 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                         children: [
                           for (final bucket in UserAppBucketFilter.values)
                             Padding(
-                              padding: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsetsDirectional.only(end: 8),
                               child: FilterChip(
                                 label: Text(
                                   bucket == UserAppBucketFilter.pending &&
@@ -290,7 +288,7 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                             UserApprovalFilter.suspended,
                           ])
                             Padding(
-                              padding: const EdgeInsets.only(right: 8),
+                              padding: const EdgeInsetsDirectional.only(end: 8),
                               child: FilterChip(
                                 label: Text(_approvalFilterLabel(filter, s)),
                                 selected: approvalFilter == filter,
@@ -315,9 +313,7 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                         initialValue: roleFilter,
                         isExpanded: true,
                         decoration: catalogFieldDecoration(
-                          labelText: isAr
-                              ? 'تصفية الصلاحية'
-                              : s.roleFilter,
+                          labelText: isAr ? 'تصفية الصلاحية' : s.roleFilter,
                           hintText: s.allRoles,
                         ),
                         items: [
@@ -341,7 +337,10 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                             value: UserRoleFilter.siteAdmin,
                             child: Text(s.roleSiteAdmin),
                           ),
-                          if (ref.watch(authProvider).profile?.isPlatformOwner ??
+                          if (ref
+                                  .watch(authProvider)
+                                  .profile
+                                  ?.isPlatformOwner ??
                               false)
                             DropdownMenuItem(
                               value: UserRoleFilter.superAdmin,
@@ -407,9 +406,13 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                                       children: [
                                         Text(
                                           isAr
-                                              ? user.profile.role
+                                              ? user
+                                                    .profile
+                                                    .role
                                                     .registrationSourceLabelAr
-                                              : user.profile.role
+                                              : user
+                                                    .profile
+                                                    .role
                                                     .registrationSourceLabelEn,
                                           style: Theme.of(
                                             context,

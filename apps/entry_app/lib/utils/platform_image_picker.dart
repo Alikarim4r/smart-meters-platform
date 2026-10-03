@@ -31,15 +31,11 @@ bool usesDesktopImageFileSelector({
 }
 
 Future<file_selector.XFile?> _openDesktopStudio() {
-  return file_selector.openFile(
-    acceptedTypeGroups: const [_desktopImageTypes],
-  );
+  return file_selector.openFile(acceptedTypeGroups: const [_desktopImageTypes]);
 }
 
 Future<file_selector.XFile?> _openWebFiles() {
-  return file_selector.openFile(
-    acceptedTypeGroups: const [_webImageTypes],
-  );
+  return file_selector.openFile(acceptedTypeGroups: const [_webImageTypes]);
 }
 
 Future<bool> _ensureMobileCapturePermission(ImageSource source) async {
@@ -58,17 +54,10 @@ Future<bool> _ensureMobileCapturePermission(ImageSource source) async {
     return false;
   }
 
-  // Gallery / photos — Android 13+ uses photos; older uses storage.
-  PermissionStatus status = await Permission.photos.request();
-  if (status.isGranted || status.isLimited) return true;
-  status = await Permission.storage.request();
-  if (status.isGranted || status.isLimited) return true;
-  if (status.isPermanentlyDenied) {
-    await openAppSettings();
-  }
-  // On Android 13+ the system photo picker often works without storage
-  // permission — allow the picker attempt anyway.
-  return defaultTargetPlatform == TargetPlatform.android;
+  // Gallery selection is delegated to the platform picker. Android's Photo
+  // Picker / document provider and iOS PHPicker do not require broad library
+  // access for selecting a single user-authorized image.
+  return true;
 }
 
 /// Picks an image for meter entry.

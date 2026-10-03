@@ -47,7 +47,8 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
     if (profile == null) return;
     final today = qatarBusinessDate();
     final current = ref.read(businessDateProvider);
-    final isPastSelected = current.year != today.year ||
+    final isPastSelected =
+        current.year != today.year ||
         current.month != today.month ||
         current.day != today.day;
     // Refresh overnight drift; keep intentional backdated day when allowed.
@@ -79,8 +80,7 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
     final VoidCallback? onBack;
     if (selectedCategory != null) {
       title = s.categoryName(selectedCategory);
-      onBack = () =>
-          ref.read(selectedCategoryProvider.notifier).state = null;
+      onBack = () => ref.read(selectedCategoryProvider.notifier).state = null;
     } else if (selectedSite != null) {
       title = s.siteName(selectedSite);
       onBack = () => ref.read(selectedSiteProvider.notifier).state = null;
@@ -103,16 +103,14 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
                 businessDate: businessDate,
                 strings: s,
                 onBack: onBack,
-                onOpenSettings: () =>
-                    _scaffoldKey.currentState?.openDrawer(),
+                onOpenSettings: () => _scaffoldKey.currentState?.openDrawer(),
                 onPickDate: profile.allowBackdatedReadings
                     ? () async {
                         final today = qatarBusinessDate();
                         final picked = await showDatePicker(
                           context: context,
                           initialDate: businessDate,
-                          firstDate:
-                              today.subtract(const Duration(days: 365)),
+                          firstDate: today.subtract(const Duration(days: 365)),
                           lastDate: today,
                           helpText: s.pickEntryDate,
                         );
@@ -132,9 +130,8 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
                           onSiteSelected: (site) {
                             ref.read(selectedSiteProvider.notifier).state =
                                 site;
-                            ref
-                                .read(selectedCategoryProvider.notifier)
-                                .state = null;
+                            ref.read(selectedCategoryProvider.notifier).state =
+                                null;
                             ref.read(meterListSearchProvider.notifier).state =
                                 '';
                             ref.read(meterListFilterProvider.notifier).state =
@@ -142,40 +139,35 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
                           },
                         )
                       : selectedCategory == null
-                          ? CategorySelectionScreen(
-                              key: const ValueKey('category'),
-                              site: selectedSite,
-                              onBack: () {
-                                ref
-                                    .read(selectedSiteProvider.notifier)
-                                    .state = null;
-                              },
-                              onCategorySelected: (category) {
-                                ref
-                                    .read(selectedCategoryProvider.notifier)
-                                    .state = category;
-                                ref
-                                    .read(meterListSearchProvider.notifier)
-                                    .state = '';
-                                ref
-                                    .read(meterListFilterProvider.notifier)
-                                    .state = MeterListFilter.all;
-                              },
-                            )
-                          : CategoryReadingsScreen(
-                              key: ValueKey(
-                                '${selectedSite.id}-${selectedCategory.id}-$businessDate',
-                              ),
-                              site: selectedSite,
-                              category: selectedCategory,
-                              businessDate: businessDate,
-                              // Back handled by shell header.
-                              onBack: () {
-                                ref
-                                    .read(selectedCategoryProvider.notifier)
-                                    .state = null;
-                              },
-                            ),
+                      ? CategorySelectionScreen(
+                          key: const ValueKey('category'),
+                          site: selectedSite,
+                          onBack: () {
+                            ref.read(selectedSiteProvider.notifier).state =
+                                null;
+                          },
+                          onCategorySelected: (category) {
+                            ref.read(selectedCategoryProvider.notifier).state =
+                                category;
+                            ref.read(meterListSearchProvider.notifier).state =
+                                '';
+                            ref.read(meterListFilterProvider.notifier).state =
+                                MeterListFilter.all;
+                          },
+                        )
+                      : CategoryReadingsScreen(
+                          key: ValueKey(
+                            '${selectedSite.id}-${selectedCategory.id}-$businessDate',
+                          ),
+                          site: selectedSite,
+                          category: selectedCategory,
+                          businessDate: businessDate,
+                          // Back handled by shell header.
+                          onBack: () {
+                            ref.read(selectedCategoryProvider.notifier).state =
+                                null;
+                          },
+                        ),
                 ),
               ),
             ],
@@ -211,14 +203,21 @@ class EntryHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final isBackdated = formatBusinessDate(businessDate) !=
+    final isBackdated =
+        formatBusinessDate(businessDate) !=
         formatBusinessDate(qatarBusinessDate());
-    final border =
-        EntryChrome.border(isDark: isDark, scheme: theme.colorScheme);
-    final muted =
-        EntryChrome.mutedColor(isDark: isDark, scheme: theme.colorScheme);
-    final titleColor =
-        EntryChrome.titleColor(isDark: isDark, scheme: theme.colorScheme);
+    final border = EntryChrome.border(
+      isDark: isDark,
+      scheme: theme.colorScheme,
+    );
+    final muted = EntryChrome.mutedColor(
+      isDark: isDark,
+      scheme: theme.colorScheme,
+    );
+    final titleColor = EntryChrome.titleColor(
+      isDark: isDark,
+      scheme: theme.colorScheme,
+    );
 
     return Container(
       constraints: const BoxConstraints(minHeight: 80, maxHeight: 96),
@@ -255,7 +254,7 @@ class EntryHeader extends StatelessWidget {
             Container(
               width: 36,
               height: 36,
-              margin: const EdgeInsets.only(right: 10),
+              margin: const EdgeInsetsDirectional.only(end: 10),
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(10),
                 gradient: EntryChrome.iconWellGradient,
@@ -291,7 +290,9 @@ class EntryHeader extends StatelessWidget {
                       children: [
                         Flexible(
                           child: Text(
-                            formatBusinessDateDisplay(businessDate),
+                            EntryStrings(
+                              Localizations.localeOf(context),
+                            ).dateDisplay(businessDate),
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: muted,
                               fontSize: 12,

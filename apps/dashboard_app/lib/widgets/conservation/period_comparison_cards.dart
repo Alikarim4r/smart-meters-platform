@@ -70,14 +70,20 @@ class PeriodComparisonCard extends StatelessWidget {
                     ),
                   )
                 else ...[
-                  _kv(s.current, s.formatQuantity(result.currentValue, result.unitCode)),
+                  _kv(
+                    s.current,
+                    s.formatQuantity(result.currentValue, result.unitCode),
+                  ),
                   _kv(
                     s.comparison,
                     s.formatQuantity(result.comparisonValue, result.unitCode),
                   ),
                   _kv(
                     s.absoluteDifference,
-                    s.formatQuantity(result.absoluteDifference, result.unitCode),
+                    s.formatQuantity(
+                      result.absoluteDifference,
+                      result.unitCode,
+                    ),
                   ),
                   _kv(s.percentageChange, pctText),
                   if (pctWarn) ...[

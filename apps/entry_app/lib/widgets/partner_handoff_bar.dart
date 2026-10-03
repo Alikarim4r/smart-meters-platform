@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../navigation/entry_partner_navigation.dart';
+import '../l10n/entry_strings.dart';
 
 class PartnerHandoffButton extends StatelessWidget {
   const PartnerHandoffButton({
@@ -47,7 +48,7 @@ class EntryPartnerHandoffBar extends ConsumerWidget {
       runSpacing: 8,
       children: [
         PartnerHandoffButton(
-          label: 'Open Dashboard',
+          label: entryText(context, 'Open Dashboard', 'فتح تطبيق العرض'),
           icon: Icons.dashboard_outlined,
           onPressed: () => launchEntryPartnerApp(
             context,
@@ -59,7 +60,7 @@ class EntryPartnerHandoffBar extends ConsumerWidget {
           ),
         ),
         PartnerHandoffButton(
-          label: 'Open Admin',
+          label: entryText(context, 'Open Admin', 'فتح تطبيق الإدارة'),
           icon: Icons.admin_panel_settings_outlined,
           onPressed: () => launchEntryPartnerApp(
             context,

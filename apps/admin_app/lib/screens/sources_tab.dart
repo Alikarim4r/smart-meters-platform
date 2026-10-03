@@ -6,6 +6,7 @@ import '../providers/catalog_providers.dart';
 import '../utils/catalog_validation.dart';
 import '../widgets/catalog_widgets.dart';
 import 'source_form_screen.dart';
+import '../l10n/admin_strings.dart';
 
 class SourcesTab extends ConsumerStatefulWidget {
   const SourcesTab({super.key});
@@ -48,16 +49,16 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete source?'),
+        title: Text(adminText(context, 'Delete source?', 'حذف المصدر؟')),
         content: Text('Delete "${source.nameEn}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(adminText(context, 'Delete', 'حذف')),
           ),
         ],
       ),
@@ -101,9 +102,13 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
       ),
       data: (categories) {
         if (categories.isEmpty) {
-          return const CatalogEmptyState(
-            title: 'No categories',
-            message: 'Create a category first before adding sources.',
+          return CatalogEmptyState(
+            title: adminText(context, 'No categories', 'لا توجد فئات'),
+            message: adminText(
+              context,
+              'Create a category first before adding sources.',
+              'أنشئ فئة أولًا قبل إضافة المصادر.',
+            ),
             icon: Icons.category_outlined,
           );
         }
@@ -129,7 +134,7 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
                   heroTag: 'admin_fab_sources',
                   onPressed: () => _openAddForm(categoryId),
                   icon: const Icon(Icons.add),
-                  label: const Text('Add source'),
+                  label: Text(adminText(context, 'Add source', 'إضافة مصدر')),
                 )
               : null,
           body: SafeArea(
@@ -140,7 +145,7 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: DropdownMenu<String>(
                     expandedInsets: EdgeInsets.zero,
-                    label: const Text('Category'),
+                    label: Text(adminText(context, 'Category', 'الفئة')),
                     initialSelection: categoryId,
                     dropdownMenuEntries: [
                       for (final category in categories)
@@ -167,7 +172,11 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
                     searchController: _searchController,
                     activeFilter: _filter,
                     onFilterChanged: (value) => setState(() => _filter = value),
-                    hintText: 'Search sources…',
+                    hintText: adminText(
+                      context,
+                      'Search sources…',
+                      'بحث في المصادر…',
+                    ),
                   ),
                 ),
                 Expanded(
@@ -191,7 +200,11 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
 
                       if (filtered.isEmpty) {
                         return CatalogEmptyState(
-                          title: 'No sources',
+                          title: adminText(
+                            context,
+                            'No sources',
+                            'لا توجد مصادر',
+                          ),
                           message: canManage
                               ? 'No sources for ${selectedCategory.nameEn}. Tap Add source to create one.'
                               : 'No sources for ${selectedCategory.nameEn}.',
@@ -283,9 +296,11 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
                                         }
                                       },
                                       itemBuilder: (context) => [
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                           value: 'edit',
-                                          child: Text('Edit'),
+                                          child: Text(
+                                            adminText(context, 'Edit', 'تعديل'),
+                                          ),
                                         ),
                                         PopupMenuItem(
                                           value: 'toggle',
@@ -295,9 +310,11 @@ class _SourcesTabState extends ConsumerState<SourcesTab> {
                                                 : 'Activate',
                                           ),
                                         ),
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                           value: 'delete',
-                                          child: Text('Delete'),
+                                          child: Text(
+                                            adminText(context, 'Delete', 'حذف'),
+                                          ),
                                         ),
                                       ],
                                     )

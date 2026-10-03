@@ -97,7 +97,11 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
         children: [
           if (!widget.embedded) ...[
             Text(
-              s.welcomeUser(profile.fullName.trim().isEmpty ? profile.email : profile.fullName),
+              s.welcomeUser(
+                profile.fullName.trim().isEmpty
+                    ? profile.email
+                    : profile.fullName,
+              ),
               style: Theme.of(context).textTheme.titleMedium,
             ),
             Text(
@@ -107,7 +111,9 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
             const SizedBox(height: 16),
           ] else
             PremiumSectionHeader(
-              title: widget.alertsFocus ? s.alertsOverview : s.homeDashboardTitle,
+              title: widget.alertsFocus
+                  ? s.alertsOverview
+                  : s.homeDashboardTitle,
               subtitle: widget.alertsFocus
                   ? s.alertsOverviewSubtitle
                   : s.homeDashboardSubtitle,
@@ -123,7 +129,9 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
               loading: () => const DashboardCard(
                 child: Center(child: CircularProgressIndicator()),
               ),
-              error: (error, _) => DashboardErrorState(message: '$error'),
+              error: (error, _) => DashboardErrorState(
+                message: AppStrings.of(context).genericError,
+              ),
               data: (summary) {
                 final topCritical = filterAlertsBySeverity(
                   summary.alerts,
@@ -138,17 +146,17 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
                       Text(
                         s.topCriticalAlerts,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                       const SizedBox(height: 8),
                       for (final alert in topCritical)
                         Padding(
                           padding: const EdgeInsets.only(bottom: 8),
                           child: AlertListTile(
-                          alert: alert,
-                          onTap: () => openSiteFromHomeAlert(ref, alert),
-                        ),
+                            alert: alert,
+                            onTap: () => openSiteFromHomeAlert(ref, alert),
+                          ),
                         ),
                     ],
                     const SizedBox(height: 8),
@@ -175,9 +183,13 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
                           child: Text(s.infoOnly),
                         ),
                       ],
-                      onChanged: (value) => ref
-                          .read(homeAlertSeverityFilterProvider.notifier)
-                          .state = value,
+                      onChanged: (value) =>
+                          ref
+                                  .read(
+                                    homeAlertSeverityFilterProvider.notifier,
+                                  )
+                                  .state =
+                              value,
                     ),
                     const SizedBox(height: 12),
                     for (final alert in filterAlertsBySeverity(
@@ -233,7 +245,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
                 child: Center(child: CircularProgressIndicator()),
               ),
               error: (error, _) => DashboardErrorState(
-                message: '$error',
+                message: AppStrings.of(context).genericError,
                 onRetry: _refresh,
               ),
               data: (sites) => _SitesHierarchySection(
@@ -280,10 +292,14 @@ class _HomeKpiGrid extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppStrings.of(context);
     final totalMeters = sites.fold<int>(0, (sum, s) => sum + s.meterCount);
-    final submitted =
-        sites.fold<int>(0, (sum, s) => sum + s.readingsSubmittedToday);
-    final eligible =
-        sites.fold<int>(0, (sum, s) => sum + s.entryEligibleMeterCount);
+    final submitted = sites.fold<int>(
+      0,
+      (sum, s) => sum + s.readingsSubmittedToday,
+    );
+    final eligible = sites.fold<int>(
+      0,
+      (sum, s) => sum + s.entryEligibleMeterCount,
+    );
     final pending = (eligible - submitted).clamp(0, eligible);
     final completion = eligible == 0
         ? '—'
@@ -446,7 +462,8 @@ class _SitesHierarchySectionState extends State<_SitesHierarchySection> {
       final orgId = entry.key;
       final orgSites = entry.value;
       final sample = orgSites.first.site.organization;
-      final orgNameEn = sample?.nameEn ?? orgSites.first.site.displayOrganizationName;
+      final orgNameEn =
+          sample?.nameEn ?? orgSites.first.site.displayOrganizationName;
       final orgNameAr = sample?.nameAr ?? orgNameEn;
 
       final direct = orgSites.where((o) => o.site.zoneId == null).toList()
@@ -591,15 +608,13 @@ class _OrgExpansionCard extends StatelessWidget {
                       children: [
                         Text(
                           title,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         Text(
                           '${s.sitesCount(bucket.siteCount)} · ${s.zonesCount(bucket.zoneCount)}',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colors.onSurfaceVariant,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -671,9 +686,9 @@ class _OrgBody extends StatelessWidget {
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(
               s.directSites,
-              style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+              style: Theme.of(
+                context,
+              ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
             ),
           ),
           for (final overview in bucket.directSites)
@@ -681,9 +696,8 @@ class _OrgBody extends StatelessWidget {
               padding: const EdgeInsets.only(bottom: 8),
               child: DashboardSiteListTile(
                 overview: overviewBySiteId[overview.site.id] ?? overview,
-                onTap: () => onSiteTap(
-                  overviewBySiteId[overview.site.id] ?? overview,
-                ),
+                onTap: () =>
+                    onSiteTap(overviewBySiteId[overview.site.id] ?? overview),
               ),
             ),
           if (visibleZones.isNotEmpty) const SizedBox(height: 4),
@@ -751,7 +765,11 @@ class _ZoneExpansionCard extends StatelessWidget {
                   CircleAvatar(
                     radius: 18,
                     backgroundColor: colors.primary.withValues(alpha: 0.1),
-                    child: Icon(Icons.map_outlined, color: colors.primary, size: 18),
+                    child: Icon(
+                      Icons.map_outlined,
+                      color: colors.primary,
+                      size: 18,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -760,15 +778,13 @@ class _ZoneExpansionCard extends StatelessWidget {
                       children: [
                         Text(
                           s.zoneDisplayName(group.zoneName),
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.w800,
-                              ),
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(fontWeight: FontWeight.w800),
                         ),
                         Text(
                           s.sitesCount(group.sites.length),
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colors.onSurfaceVariant,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.onSurfaceVariant),
                         ),
                       ],
                     ),
@@ -792,8 +808,8 @@ class _ZoneExpansionCard extends StatelessWidget {
                 child: Text(
                   s.noAccessibleSitesInZone,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                      ),
+                    color: colors.onSurfaceVariant,
+                  ),
                 ),
               )
             else

@@ -192,8 +192,12 @@ class OpportunityDetailScreen extends ConsumerWidget {
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                       const SizedBox(height: 4),
-                      const Text(
-                        'Not Saving / Verified Saving / Confirmed Cause.',
+                      Text(
+                        adminText(
+                          context,
+                          'Not Saving / Verified Saving / Confirmed Cause.',
+                          'ليست وفرًا / وفر متحقق منه / سبب مؤكد.',
+                        ),
                         style: TextStyle(fontSize: 12),
                       ),
                       const SizedBox(height: 8),
@@ -380,12 +384,18 @@ class OpportunityDetailScreen extends ConsumerWidget {
       );
       _invalidateAll(ref);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Investigation started')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            adminText(context, 'Investigation started', 'بدأ التحقيق'),
+          ),
+        ),
+      );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -399,7 +409,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
       _invalidateAll(ref);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -413,7 +425,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
       _invalidateAll(ref);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -432,7 +446,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
       _invalidateAll(ref);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -446,7 +462,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
       _invalidateAll(ref);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -524,7 +542,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
       _invalidateAll(ref);
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -625,7 +645,9 @@ class OpportunityDetailScreen extends ConsumerWidget {
       ref.invalidate(_opportunityEvidenceProvider(opportunityId));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -659,7 +681,7 @@ class _InvestigationsBlock extends ConsumerWidget {
     final async = ref.watch(_opportunityInvestigationsProvider(opportunityId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(adminUserError(context)),
       data: (items) {
         if (items.isEmpty) {
           return Text(s.isAr ? 'لا تحقيقات بعد' : 'No investigations yet');
@@ -783,7 +805,9 @@ class _InvestigationsBlock extends ConsumerWidget {
       ref.invalidate(_opportunityInvestigationsProvider(opportunityId));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -843,7 +867,9 @@ class _InvestigationsBlock extends ConsumerWidget {
       ref.invalidate(_opportunityInvestigationsProvider(opportunityId));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -901,7 +927,9 @@ class _InvestigationsBlock extends ConsumerWidget {
       ref.invalidate(_opportunityInvestigationsProvider(opportunityId));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 }
@@ -916,9 +944,13 @@ class _ActionsBlock extends ConsumerWidget {
     final async = ref.watch(_opportunityActionsProvider(opportunityId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(adminUserError(context)),
       data: (items) {
-        if (items.isEmpty) return const Text('No actions yet');
+        if (items.isEmpty) {
+          return Text(
+            adminText(context, 'No actions yet', 'لا توجد إجراءات بعد'),
+          );
+        }
         return Column(
           children: [
             for (final a in items) ...[
@@ -935,7 +967,11 @@ class _ActionsBlock extends ConsumerWidget {
                   isThreeLine: true,
                   trailing: canManage
                       ? IconButton(
-                          tooltip: 'Set implementation cost',
+                          tooltip: adminText(
+                            context,
+                            'Set implementation cost',
+                            'تحديد تكلفة التنفيذ',
+                          ),
                           icon: const Icon(Icons.payments_outlined),
                           onPressed: () => _setCost(context, ref, a),
                         )
@@ -964,31 +1000,37 @@ class _ActionsBlock extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Implementation cost'),
+        title: Text(adminText(context, 'Implementation cost', 'تكلفة التنفيذ')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: costCtrl,
-              decoration: const InputDecoration(
-                labelText: 'Cost (empty = clear / ROI N/A)',
+              decoration: InputDecoration(
+                labelText: adminText(
+                  context,
+                  'Cost (empty = clear / ROI N/A)',
+                  'التكلفة (فارغ = مسح / العائد غير متاح)',
+                ),
               ),
               keyboardType: TextInputType.number,
             ),
             TextField(
               controller: currencyCtrl,
-              decoration: const InputDecoration(labelText: 'Currency'),
+              decoration: InputDecoration(
+                labelText: adminText(context, 'Currency', 'العملة'),
+              ),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Save'),
+            child: Text(adminText(context, 'Save', 'حفظ')),
           ),
         ],
       ),
@@ -1007,11 +1049,21 @@ class _ActionsBlock extends ConsumerWidget {
       ref.invalidate(_opportunityActionsProvider(opportunityId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Implementation cost saved')),
+        SnackBar(
+          content: Text(
+            adminText(
+              context,
+              'Implementation cost saved',
+              'تم حفظ تكلفة التنفيذ',
+            ),
+          ),
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -1030,9 +1082,13 @@ class _EvidenceBlock extends ConsumerWidget {
     final async = ref.watch(_opportunityEvidenceProvider(opportunityId));
     return async.when(
       loading: () => const LinearProgressIndicator(),
-      error: (e, _) => Text('$e'),
+      error: (e, _) => Text(adminUserError(context)),
       data: (items) {
-        if (items.isEmpty) return const Text('No evidence yet');
+        if (items.isEmpty) {
+          return Text(
+            adminText(context, 'No evidence yet', 'لا توجد أدلة بعد'),
+          );
+        }
         return Column(
           children: [
             for (final e in items) ...[

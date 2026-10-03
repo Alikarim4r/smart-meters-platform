@@ -8,7 +8,6 @@ import '../../providers/chart_providers.dart';
 import '../../providers/conservation_providers.dart';
 import '../../providers/dashboard_providers.dart';
 import '../../theme/dashboard_theme.dart';
-import '../../theme/design_system/dashboard_colors.dart';
 import '../../utils/chart_period_selection.dart';
 import '../chart_widgets.dart';
 
@@ -27,28 +26,35 @@ class ConservationTrendsSection extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final s = ConservationStrings.of(context);
     final periodOn =
-        ref.watch(conservationPeriodCompareEnabledProvider(siteId)).valueOrNull ??
-            false;
-    final anomaliesOn = ref
+        ref
+            .watch(conservationPeriodCompareEnabledProvider(siteId))
+            .valueOrNull ??
+        false;
+    final anomaliesOn =
+        ref
             .watch(conservationPeriodicAnomaliesEnabledProvider(siteId))
             .valueOrNull ??
         false;
-    final copOn = ref
+    final copOn =
+        ref
             .watch(conservationCopConservationEnabledProvider(siteId))
             .valueOrNull ??
         false;
-    final benchmarkingOn = ref
+    final benchmarkingOn =
+        ref
             .watch(conservationBenchmarkingEnabledProvider(siteId))
             .valueOrNull ??
         false;
     final intensityOn =
         ref.watch(conservationIntensityEnabledProvider(siteId)).valueOrNull ??
-            false;
-    final waterBalanceOn = ref
+        false;
+    final waterBalanceOn =
+        ref
             .watch(conservationWaterBalanceEnabledProvider(siteId))
             .valueOrNull ??
         false;
-    final energyBalanceOn = ref
+    final energyBalanceOn =
+        ref
             .watch(conservationEnergyBalanceEnabledProvider(siteId))
             .valueOrNull ??
         false;
@@ -57,8 +63,7 @@ class ConservationTrendsSection extends ConsumerWidget {
       if (periodOn) _PeriodComparisonChartBlock(siteId: siteId),
       if (copOn) _CopTrendChartBlock(siteId: siteId),
       if (anomaliesOn) _AnomalyHistoryChartBlock(siteId: siteId),
-      if (benchmarkingOn || intensityOn)
-        _BenchmarkChartBlock(siteId: siteId),
+      if (benchmarkingOn || intensityOn) _BenchmarkChartBlock(siteId: siteId),
       if (waterBalanceOn || energyBalanceOn)
         _BalanceShareChartBlock(siteId: siteId),
     ];
@@ -96,11 +101,7 @@ class ConservationTrendsSection extends ConsumerWidget {
 }
 
 class _ChartCard extends StatelessWidget {
-  const _ChartCard({
-    required this.title,
-    required this.child,
-    this.subtitle,
-  });
+  const _ChartCard({required this.title, required this.child, this.subtitle});
 
   final String title;
   final String? subtitle;
@@ -108,36 +109,78 @@ class _ChartCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      color: DashboardColors.card(context),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: Theme.of(context).dividerColor.withValues(alpha: 0.55),
+    final colors = dashboardColors(context);
+    final scheme = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: AlignmentDirectional.topStart,
+          end: AlignmentDirectional.bottomEnd,
+          colors: [
+            colors.cardElevated.withValues(alpha: isDark ? 0.76 : 0.46),
+            colors.card,
+          ],
         ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: colors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: isDark ? 0.18 : 0.05),
+            blurRadius: 22,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 12, 12, 10),
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              title,
-              style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 14),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 2),
-              Text(
-                subtitle!,
-                style: TextStyle(
-                  fontSize: 11,
-                  color: Theme.of(context).hintColor,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 34,
+                  height: 34,
+                  decoration: BoxDecoration(
+                    color: scheme.primary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Icon(
+                    Icons.insights_rounded,
+                    size: 18,
+                    color: scheme.primary,
+                  ),
                 ),
-              ),
-            ],
-            const SizedBox(height: 10),
-            SizedBox(height: 220, child: child),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.titleMedium
+                            ?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              color: colors.textPrimary,
+                            ),
+                      ),
+                      if (subtitle != null) ...[
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle!,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.textMuted, height: 1.4),
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            SizedBox(height: 232, child: child),
           ],
         ),
       ),
@@ -164,17 +207,18 @@ class _PeriodComparisonChartBlock extends ConsumerWidget {
               ref.invalidate(conservationPeriodComparisonsProvider(siteId)),
         ),
         data: (bundles) {
-          final groups = <({String label, double? current, double? comparison})>[
-            for (final b in bundles)
-              if (!b.previous.isInsufficient &&
-                  (b.previous.currentValue != null ||
-                      b.previous.comparisonValue != null))
-                (
-                  label: b.utilityLabel,
-                  current: b.previous.currentValue,
-                  comparison: b.previous.comparisonValue,
-                ),
-          ];
+          final groups =
+              <({String label, double? current, double? comparison})>[
+                for (final b in bundles)
+                  if (!b.previous.isInsufficient &&
+                      (b.previous.currentValue != null ||
+                          b.previous.comparisonValue != null))
+                    (
+                      label: s.localizeDomainLabel(b.utilityLabel),
+                      current: b.previous.currentValue,
+                      comparison: b.previous.comparisonValue,
+                    ),
+              ];
           if (groups.isEmpty) {
             return ChartEmptyPlaceholder(message: s.chartNoData);
           }
@@ -256,8 +300,7 @@ class _AnomalyHistoryChartBlock extends ConsumerWidget {
         loading: () => const ChartLoadingSkeleton(),
         error: (e, _) => ChartErrorPlaceholder(
           message: s.friendlyLoadError(e),
-          onRetry: () =>
-              ref.invalidate(conservationAnomaliesProvider(siteId)),
+          onRetry: () => ref.invalidate(conservationAnomaliesProvider(siteId)),
         ),
         data: (bundles) {
           final consumption = bundles
@@ -340,19 +383,19 @@ class _BenchmarkChartBlock extends ConsumerWidget {
         loading: () => const ChartLoadingSkeleton(),
         error: (e, _) => ChartErrorPlaceholder(
           message: s.friendlyLoadError(e),
-          onRetry: () =>
-              ref.invalidate(conservationBenchmarkProvider(siteId)),
+          onRetry: () => ref.invalidate(conservationBenchmarkProvider(siteId)),
         ),
         data: (bundles) {
-          final groups = <({String label, double? current, double? comparison})>[
-            for (final b in bundles)
-              if (b.consumption != null || b.peerMedian != null)
-                (
-                  label: b.utilityLabel,
-                  current: b.consumption,
-                  comparison: b.peerMedian,
-                ),
-          ];
+          final groups =
+              <({String label, double? current, double? comparison})>[
+                for (final b in bundles)
+                  if (b.consumption != null || b.peerMedian != null)
+                    (
+                      label: s.localizeDomainLabel(b.utilityLabel),
+                      current: b.consumption,
+                      comparison: b.peerMedian,
+                    ),
+              ];
           if (groups.isEmpty) {
             return ChartEmptyPlaceholder(message: s.chartNoData);
           }
@@ -397,14 +440,15 @@ class _BalanceShareChartBlock extends ConsumerWidget {
             return ChartEmptyPlaceholder(message: s.chartNoData);
           }
           // Prefer first group; show all as dual bars (main vs children sum).
-          final groups = <({String label, double? current, double? comparison})>[
-            for (final b in usable.take(4))
-              (
-                label: b.group.name,
-                current: b.result.mainConsumption,
-                comparison: b.result.childrenConsumption,
-              ),
-          ];
+          final groups =
+              <({String label, double? current, double? comparison})>[
+                for (final b in usable.take(4))
+                  (
+                    label: b.group.name,
+                    current: b.result.mainConsumption,
+                    comparison: b.result.childrenConsumption,
+                  ),
+              ];
           return _DualSeriesBarChart(
             groups: groups,
             currentLabel: s.chartMainMeter,
@@ -455,10 +499,8 @@ class _DualSeriesBarChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
                 rightTitles: const AxisTitles(
@@ -520,8 +562,10 @@ class _DualSeriesBarChart extends StatelessWidget {
                         ),
                       ),
                       BarChartRodData(
-                        toY: (groups[i].comparison ?? 0)
-                            .clamp(0, double.infinity),
+                        toY: (groups[i].comparison ?? 0).clamp(
+                          0,
+                          double.infinity,
+                        ),
                         width: 12,
                         color: comparisonColor,
                         borderRadius: const BorderRadius.vertical(

@@ -12,8 +12,21 @@ String formatBusinessDate(DateTime date) {
   return '$y-$m-$d';
 }
 
-String formatBusinessDateDisplay(DateTime date) {
-  const months = [
+String localizeDigits(String input, {required String languageCode}) {
+  if (!languageCode.toLowerCase().startsWith('ar')) return input;
+  const western = '0123456789';
+  const arabicIndic = '٠١٢٣٤٥٦٧٨٩';
+  final out = StringBuffer();
+  for (final rune in input.runes) {
+    final ch = String.fromCharCode(rune);
+    final i = western.indexOf(ch);
+    out.write(i < 0 ? ch : arabicIndic[i]);
+  }
+  return out.toString();
+}
+
+String formatBusinessDateDisplay(DateTime date, {String languageCode = 'en'}) {
+  const monthsEn = [
     'Jan',
     'Feb',
     'Mar',
@@ -27,5 +40,23 @@ String formatBusinessDateDisplay(DateTime date) {
     'Nov',
     'Dec',
   ];
-  return '${months[date.month - 1]} ${date.day}, ${date.year}';
+  const monthsAr = [
+    'يناير',
+    'فبراير',
+    'مارس',
+    'أبريل',
+    'مايو',
+    'يونيو',
+    'يوليو',
+    'أغسطس',
+    'سبتمبر',
+    'أكتوبر',
+    'نوفمبر',
+    'ديسمبر',
+  ];
+  final ar = languageCode.toLowerCase().startsWith('ar');
+  final raw = ar
+      ? '${date.day} ${monthsAr[date.month - 1]} ${date.year}'
+      : '${monthsEn[date.month - 1]} ${date.day}, ${date.year}';
+  return localizeDigits(raw, languageCode: languageCode);
 }

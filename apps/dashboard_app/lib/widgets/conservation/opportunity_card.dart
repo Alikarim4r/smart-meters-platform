@@ -25,16 +25,14 @@ class OpportunityCard extends StatelessWidget {
     final utilityLabel = opportunity.utilityType.isEmpty
         ? s.utility
         : opportunity.utilityType[0].toUpperCase() +
-            opportunity.utilityType.substring(1);
+              opportunity.utilityType.substring(1);
 
     return Card(
       elevation: 0,
       color: DashboardColors.card(context),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(
-          color: priorityColor.withValues(alpha: 0.45),
-        ),
+        side: BorderSide(color: priorityColor.withValues(alpha: 0.45)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -55,8 +53,10 @@ class OpportunityCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: priorityColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(8),
@@ -91,7 +91,7 @@ class OpportunityCard extends StatelessWidget {
                 opportunity.unitCode == null
                     ? _fmt(opportunity.estimatedWasteQuantity!)
                     : '${_fmt(opportunity.estimatedWasteQuantity!)} '
-                        '${opportunity.unitCode}',
+                          '${opportunity.unitCode}',
               ),
             const SizedBox(height: 6),
             Text(
@@ -114,7 +114,7 @@ class OpportunityCard extends StatelessWidget {
                 opportunity.status.isOpen) ...[
               const SizedBox(height: 10),
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: OutlinedButton.icon(
                   onPressed: onStartInvestigation,
                   icon: const Icon(Icons.search_outlined, size: 18),
@@ -129,11 +129,11 @@ class OpportunityCard extends StatelessWidget {
   }
 
   Color _priorityColor(OpportunityPriorityLevel p) => switch (p) {
-        OpportunityPriorityLevel.low => Colors.teal.shade700,
-        OpportunityPriorityLevel.medium => Colors.orange.shade800,
-        OpportunityPriorityLevel.high => Colors.deepOrange.shade800,
-        OpportunityPriorityLevel.critical => Colors.red.shade800,
-      };
+    OpportunityPriorityLevel.low => Colors.teal.shade700,
+    OpportunityPriorityLevel.medium => Colors.orange.shade800,
+    OpportunityPriorityLevel.high => Colors.deepOrange.shade800,
+    OpportunityPriorityLevel.critical => Colors.red.shade800,
+  };
 
   Widget _kv(String k, String v) {
     return Padding(

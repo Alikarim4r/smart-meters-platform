@@ -36,7 +36,7 @@ class StructureTab extends ConsumerWidget {
       skipLoadingOnRefresh: true,
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => CatalogErrorView(
-        message: '$error',
+        message: adminUserError(context),
         onRetry: () => ref.invalidate(structureTreeProvider),
       ),
       data: (tree) {
@@ -47,12 +47,14 @@ class StructureTab extends ConsumerWidget {
               tree.organizations.any((o) => o.id == organizationId),
             StructureSiteTypesSelection(:final organizationId) =>
               tree.organizations.any((o) => o.id == organizationId),
-            StructureZoneSelection(:final zoneId) => tree.zonesByOrg.values
-                .expand((z) => z)
-                .any((z) => z.id == zoneId),
-            StructureSiteSelection(:final siteId) => tree.sitesByOrg.values
-                .expand((s) => s)
-                .any((site) => site.id == siteId),
+            StructureZoneSelection(:final zoneId) =>
+              tree.zonesByOrg.values
+                  .expand((z) => z)
+                  .any((z) => z.id == zoneId),
+            StructureSiteSelection(:final siteId) =>
+              tree.sitesByOrg.values
+                  .expand((s) => s)
+                  .any((site) => site.id == siteId),
           };
           if (!stillValid) {
             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -614,6 +616,7 @@ class _OrgDetail extends ConsumerWidget {
   final Organization org;
   final AdminStrings strings;
   final bool canManage;
+
   /// Platform owner only — assign super_admins at organization level.
   final bool canManageOrgControl;
   final bool canForceDelete;
@@ -639,7 +642,7 @@ class _OrgDetail extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -816,7 +819,7 @@ class _SiteTypesDetailState extends ConsumerState<_SiteTypesDetail> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -835,7 +838,7 @@ class _SiteTypesDetailState extends ConsumerState<_SiteTypesDetail> {
         const SizedBox(height: 16),
         typesAsync.when(
           loading: () => const LinearProgressIndicator(),
-          error: (e, _) => Text('$e'),
+          error: (e, _) => Text(adminUserError(context)),
           data: (types) {
             if (types.isEmpty) {
               return Text(s.noSiteTypesYet);
@@ -932,7 +935,7 @@ class _ZoneDetail extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -974,7 +977,9 @@ class _ZoneDetail extends ConsumerWidget {
                 canEdit: true,
                 onPathChanged: (path) async {
                   try {
-                    await ref.read(zoneRepositoryProvider).updateZoneReportLogo(
+                    await ref
+                        .read(zoneRepositoryProvider)
+                        .updateZoneReportLogo(
                           zoneId: zone.id,
                           reportLogoPath: path,
                         );
@@ -985,18 +990,18 @@ class _ZoneDetail extends ConsumerWidget {
                         content: Text(
                           path == null
                               ? (strings.isAr
-                                  ? 'تم مسح الشعار'
-                                  : 'Logo cleared')
+                                    ? 'تم مسح الشعار'
+                                    : 'Logo cleared')
                               : (strings.isAr
-                                  ? 'تم حفظ شعار المنطقة'
-                                  : 'Zone logo saved'),
+                                    ? 'تم حفظ شعار المنطقة'
+                                    : 'Zone logo saved'),
                         ),
                       ),
                     );
                   } catch (error) {
                     if (!context.mounted) return;
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('$error')),
+                      SnackBar(content: Text(adminUserError(context))),
                     );
                   }
                 },
@@ -1118,7 +1123,7 @@ class _SiteDetailActions extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 

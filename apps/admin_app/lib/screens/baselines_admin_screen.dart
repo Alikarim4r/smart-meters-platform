@@ -7,34 +7,31 @@ import '../providers/admin_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 
-final _siteBaselinesEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.baseline,
-    siteId: siteId,
-  );
-});
+final _siteBaselinesEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.baseline,
+        siteId: siteId,
+      );
+    });
 
-final _siteBaselineHistoryProvider =
-    FutureProvider.autoDispose.family<List<ConservationBaseline>, String>((
-  ref,
-  siteId,
-) {
-  return ConservationBaselineRepository(
-    ref.read(supabaseClientProvider),
-  ).listHistoryForSite(siteId);
-});
+final _siteBaselineHistoryProvider = FutureProvider.autoDispose
+    .family<List<ConservationBaseline>, String>((ref, siteId) {
+      return ConservationBaselineRepository(
+        ref.read(supabaseClientProvider),
+      ).listHistoryForSite(siteId);
+    });
 
 /// Admin UI for versioned baselines (gated by conservation_module + baseline).
 class BaselinesAdminScreen extends ConsumerWidget {
@@ -48,7 +45,8 @@ class BaselinesAdminScreen extends ConsumerWidget {
     final enabledAsync = ref.watch(_siteBaselinesEnabledProvider(siteId));
     final canManage = ref.watch(canManageMetersProvider);
     final profile = ref.watch(authProvider).profile;
-    final canApprove = canManage &&
+    final canApprove =
+        canManage &&
         (profile?.isSiteAdmin == true ||
             profile?.isSuperAdmin == true ||
             profile?.isPlatformOwner == true);
@@ -156,7 +154,7 @@ class BaselinesAdminScreen extends ConsumerWidget {
                               canApprove) ...[
                             const SizedBox(height: 8),
                             Align(
-                              alignment: Alignment.centerRight,
+                              alignment: AlignmentDirectional.centerEnd,
                               child: FilledButton(
                                 onPressed: !gate.allowed
                                     ? null
@@ -174,8 +172,9 @@ class BaselinesAdminScreen extends ConsumerWidget {
                                             ),
                                           );
                                           if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
                                             SnackBar(
                                               content: Text(
                                                 s.isAr
@@ -186,9 +185,14 @@ class BaselinesAdminScreen extends ConsumerWidget {
                                           );
                                         } catch (e) {
                                           if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context)
-                                              .showSnackBar(
-                                            SnackBar(content: Text('$e')),
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                adminUserError(context),
+                                              ),
+                                            ),
                                           );
                                         }
                                       },
@@ -245,10 +249,7 @@ class BaselinesAdminScreen extends ConsumerWidget {
                       ),
                       items: [
                         for (final m in BaselineCalculationMethod.values)
-                          DropdownMenuItem(
-                            value: m,
-                            child: Text(m.dbValue),
-                          ),
+                          DropdownMenuItem(value: m, child: Text(m.dbValue)),
                       ],
                       onChanged: (v) {
                         if (v == null) return;
@@ -280,20 +281,26 @@ class BaselinesAdminScreen extends ConsumerWidget {
                         // Preview for custom_fixed without readings; for
                         // reading-derived methods admin should rely on gates
                         // after save with completeness from a later calc pass.
-                        final calc = const BaselineCalculationService().calculate(
-                          method: method,
-                          referencePeriodStart: start,
-                          referencePeriodEnd: end,
-                          unitCode: unitCtrl.text.trim().isEmpty
-                              ? 'kWh'
-                              : unitCtrl.text.trim(),
-                          meters: const [],
-                          customFixedValue:
-                              double.tryParse(valueCtrl.text.trim()),
-                        );
+                        final calc = const BaselineCalculationService()
+                            .calculate(
+                              method: method,
+                              referencePeriodStart: start,
+                              referencePeriodEnd: end,
+                              unitCode: unitCtrl.text.trim().isEmpty
+                                  ? 'kWh'
+                                  : unitCtrl.text.trim(),
+                              meters: const [],
+                              customFixedValue: double.tryParse(
+                                valueCtrl.text.trim(),
+                              ),
+                            );
                         setLocal(() => preview = calc);
                       },
-                      child: Text(s.isAr ? 'معاينة (custom)' : 'Preview (custom / empty meters)'),
+                      child: Text(
+                        s.isAr
+                            ? 'معاينة (custom)'
+                            : 'Preview (custom / empty meters)',
+                      ),
                     ),
                     if (preview != null) ...[
                       const SizedBox(height: 8),
@@ -345,8 +352,9 @@ class BaselinesAdminScreen extends ConsumerWidget {
     if (unit.isEmpty) return;
 
     // Prefer reading-derived calc when meters available.
-    final meters =
-        await ref.read(meterRepositoryProvider).getMetersForSite(siteId);
+    final meters = await ref
+        .read(meterRepositoryProvider)
+        .getMetersForSite(siteId);
     final active = meters.where((m) => m.isActive).toList();
     final matching = active.where((m) {
       final code = (m.categoryConfig?.code ?? m.category.dbValue).toLowerCase();
@@ -380,7 +388,9 @@ class BaselinesAdminScreen extends ConsumerWidget {
       for (final row in (rows as List)) {
         final map = Map<String, dynamic>.from(row as Map);
         final id = map['meter_id'] as String;
-        byMeter.putIfAbsent(id, () => []).add(
+        byMeter
+            .putIfAbsent(id, () => [])
+            .add(
               PeriodReadingPoint(
                 date: DateTime.parse(map['reading_date'] as String),
                 value: (map['raw_value'] as num).toDouble(),
@@ -408,8 +418,8 @@ class BaselinesAdminScreen extends ConsumerWidget {
     );
 
     final profile = ref.read(authProvider).profile;
-    final value = calc.baselineValue ??
-        (double.tryParse(valueCtrl.text.trim()) ?? 0.0);
+    final value =
+        calc.baselineValue ?? (double.tryParse(valueCtrl.text.trim()) ?? 0.0);
 
     await ConservationBaselineRepository(
       ref.read(supabaseClientProvider),
@@ -436,8 +446,8 @@ class BaselinesAdminScreen extends ConsumerWidget {
         content: Text(
           calc.isInsufficient
               ? (s.isAr
-                  ? 'حُفظت مسودة ببيانات غير كافية (لا يمكن الاعتماد)'
-                  : 'Draft saved with Insufficient Data (not approvable)')
+                    ? 'حُفظت مسودة ببيانات غير كافية (لا يمكن الاعتماد)'
+                    : 'Draft saved with Insufficient Data (not approvable)')
               : (s.isAr ? 'تم حفظ المسودة' : 'Draft saved'),
         ),
       ),

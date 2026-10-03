@@ -7,30 +7,31 @@ import '../providers/admin_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 
-final _siteVirtualMetersEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.virtualMeters,
-    siteId: siteId,
-  );
-});
+final _siteVirtualMetersEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.virtualMeters,
+        siteId: siteId,
+      );
+    });
 
-final _siteVirtualMetersProvider =
-    FutureProvider.autoDispose.family<List<Meter>, String>((ref, siteId) {
-  return VirtualMeterRepository(ref.read(supabaseClientProvider))
-      .listVirtualMetersForSite(siteId);
-});
+final _siteVirtualMetersProvider = FutureProvider.autoDispose
+    .family<List<Meter>, String>((ref, siteId) {
+      return VirtualMeterRepository(
+        ref.read(supabaseClientProvider),
+      ).listVirtualMetersForSite(siteId);
+    });
 
 /// Admin UI for virtual meters (gated by conservation_module + virtual_meters).
 class VirtualMetersAdminScreen extends ConsumerWidget {
@@ -85,7 +86,9 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
             data: (meters) {
               if (meters.isEmpty) {
                 return CatalogEmptyState(
-                  title: s.isAr ? 'لا توجد عدادات افتراضية' : 'No virtual meters',
+                  title: s.isAr
+                      ? 'لا توجد عدادات افتراضية'
+                      : 'No virtual meters',
                   message: s.isAr
                       ? 'أنشئ عداد مجموع لمجموعة عدادات من نفس الفئة، أو رئيسي − الأبناء.'
                       : 'Create a sum-group of same-category meters, or parent − children.',
@@ -124,7 +127,9 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
                                 } catch (e) {
                                   if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('$e')),
+                                    SnackBar(
+                                      content: Text(adminUserError(context)),
+                                    ),
                                   );
                                 }
                               },
@@ -149,18 +154,23 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
   ) async {
     final repo = VirtualMeterRepository(ref.read(supabaseClientProvider));
     final memberIds = await repo.listMemberIds(virtual.id);
-    final siteMeters =
-        await ref.read(meterRepositoryProvider).getMetersForSite(siteId);
+    final siteMeters = await ref
+        .read(meterRepositoryProvider)
+        .getMetersForSite(siteId);
     final byId = {for (final m in siteMeters) m.id: m};
-    final members = [for (final id in memberIds) if (byId[id] != null) byId[id]!];
+    final members = [
+      for (final id in memberIds)
+        if (byId[id] != null) byId[id]!,
+    ];
 
     final validation = const VirtualMeterValidation().validateConfig(
       meterKind: virtual.meterKind,
       calculationType: virtual.calculationType,
       siteId: virtual.siteId,
       categoryId: virtual.categoryId,
-      unitCode:
-          virtual.baseUnit.isNotEmpty ? virtual.baseUnit : virtual.unit.dbValue,
+      unitCode: virtual.baseUnit.isNotEmpty
+          ? virtual.baseUnit
+          : virtual.unit.dbValue,
       parentMeterId: virtual.parentMeterId,
       memberMeters: members,
       metersById: byId,
@@ -190,8 +200,12 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
                     : 'Validation errors:\n- ${validation.issues.map((i) => i.message).join('\n- ')}',
               ),
               const SizedBox(height: 8),
-              const Text(
-                'Residual naming: Residual / Balance Difference only (not Leak).',
+              Text(
+                adminText(
+                  context,
+                  'Residual naming: Residual / Balance Difference only (not Leak).',
+                  'تسمية المتبقي: متبقي / فرق الموازنة فقط (وليس تسربًا).',
+                ),
                 style: TextStyle(fontSize: 12),
               ),
             ],
@@ -200,7 +214,7 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Close'),
+            child: Text(adminText(context, 'Close', 'إغلاق')),
           ),
         ],
       ),
@@ -209,8 +223,9 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
 
   Future<void> _openCreate(BuildContext context, WidgetRef ref) async {
     final s = AdminStrings(ref.read(adminLocaleProvider));
-    final siteMeters =
-        await ref.read(meterRepositoryProvider).getMetersForSite(siteId);
+    final siteMeters = await ref
+        .read(meterRepositoryProvider)
+        .getMetersForSite(siteId);
     final physical = siteMeters
         .where(
           (m) =>
@@ -260,8 +275,10 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
 
     void applyCategoryDefaults(String catId) {
       final meta = categories[catId]!;
-      final sample =
-          physical.firstWhere((m) => m.categoryId == catId, orElse: () => physical.first);
+      final sample = physical.firstWhere(
+        (m) => m.categoryId == catId,
+        orElse: () => physical.first,
+      );
       codeCtrl.text = 'VM-${meta.code.toUpperCase()}-SUM';
       nameEnCtrl.text = 'Sum of ${meta.label} meters';
       nameArCtrl.text = s.isAr
@@ -269,9 +286,7 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
           : 'مجموع عدادات ${sample.categoryConfig?.nameAr ?? meta.label}';
       selected
         ..clear()
-        ..addAll(
-          physical.where((m) => m.categoryId == catId).map((m) => m.id),
-        );
+        ..addAll(physical.where((m) => m.categoryId == catId).map((m) => m.id));
       parentId = null;
     }
 
@@ -283,8 +298,9 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setLocal) {
-            final sameCat =
-                physical.where((m) => m.categoryId == categoryId).toList();
+            final sameCat = physical
+                .where((m) => m.categoryId == categoryId)
+                .toList();
             return AlertDialog(
               title: Text(
                 s.isAr
@@ -346,8 +362,9 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
                       DropdownButtonFormField<CalculationType>(
                         initialValue: calcType,
                         decoration: InputDecoration(
-                          labelText:
-                              s.isAr ? 'طريقة الحساب' : 'Calculation type',
+                          labelText: s.isAr
+                              ? 'طريقة الحساب'
+                              : 'Calculation type',
                         ),
                         items: [
                           DropdownMenuItem(
@@ -392,9 +409,7 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
                         title: Text(
-                          s.isAr
-                              ? 'إظهار في لوحة التحكم'
-                              : 'Show on dashboard',
+                          s.isAr ? 'إظهار في لوحة التحكم' : 'Show on dashboard',
                         ),
                         subtitle: Text(
                           s.isAr
@@ -497,7 +512,9 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            s.isAr ? 'اختر عضواً واحداً على الأقل' : 'Select at least one member',
+            s.isAr
+                ? 'اختر عضواً واحداً على الأقل'
+                : 'Select at least one member',
           ),
         ),
       );
@@ -505,8 +522,9 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
     }
     final sample = members.first;
     try {
-      await VirtualMeterRepository(ref.read(supabaseClientProvider))
-          .createVirtualMeter(
+      await VirtualMeterRepository(
+        ref.read(supabaseClientProvider),
+      ).createVirtualMeter(
         siteId: siteId,
         meterCode: codeCtrl.text.trim(),
         nameEn: nameEnCtrl.text.trim(),
@@ -518,19 +536,24 @@ class VirtualMetersAdminScreen extends ConsumerWidget {
         unitId: sample.unitId,
         calculationType: calcType,
         memberMeterIds: members.map((m) => m.id).toList(),
-        parentMeterId:
-            calcType == CalculationType.parentMinusChildren ? parentId : null,
+        parentMeterId: calcType == CalculationType.parentMinusChildren
+            ? parentId
+            : null,
         sortOrder: 0,
         includeInDashboard: includeInDashboard,
       );
       ref.invalidate(_siteVirtualMetersProvider(siteId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.isAr ? 'تم الإنشاء' : 'Virtual meter created')),
+        SnackBar(
+          content: Text(s.isAr ? 'تم الإنشاء' : 'Virtual meter created'),
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       codeCtrl.dispose();
       nameEnCtrl.dispose();

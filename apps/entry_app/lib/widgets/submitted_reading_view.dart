@@ -5,6 +5,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../providers/entry_providers.dart';
 import '../screens/photo_preview_screen.dart';
 import '../widgets/reading_photo_section.dart';
+import '../l10n/entry_strings.dart';
 
 class SubmittedReadingView extends ConsumerWidget {
   const SubmittedReadingView({
@@ -73,7 +74,7 @@ class SubmittedReadingView extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Submitted reading',
+                entryText(context, 'Submitted reading', 'القراءة المرسلة'),
                 style: theme.textTheme.labelLarge?.copyWith(
                   color: Colors.grey.shade600,
                 ),
@@ -88,15 +89,18 @@ class SubmittedReadingView extends ConsumerWidget {
               ),
               const SizedBox(height: 10),
               _DetailLine(
-                label: 'Submitted at',
+                label: entryText(context, 'Submitted at', 'وقت الإرسال'),
                 value: _formatSubmittedAt(reading.enteredAt),
               ),
               if (reading.note != null && reading.note!.trim().isNotEmpty)
-                _DetailLine(label: 'Note', value: reading.note!.trim()),
+                _DetailLine(
+                  label: entryText(context, 'Note', 'ملاحظة'),
+                  value: reading.note!.trim(),
+                ),
               if (localPhotoPath != null || imageStoragePath != null) ...[
                 const SizedBox(height: 12),
                 Text(
-                  'Meter photo',
+                  entryText(context, 'Meter photo', 'صورة العداد'),
                   style: theme.textTheme.labelLarge?.copyWith(
                     color: Colors.grey.shade600,
                   ),
@@ -104,9 +108,8 @@ class SubmittedReadingView extends ConsumerWidget {
                 const SizedBox(height: 8),
                 remoteUrlAsync.when(
                   loading: () => const LinearProgressIndicator(),
-                  error: (_, _) => ReadingPhotoThumbnail(
-                    localPath: localPhotoPath,
-                  ),
+                  error: (_, _) =>
+                      ReadingPhotoThumbnail(localPath: localPhotoPath),
                   data: (remoteUrl) => ReadingPhotoThumbnail(
                     localPath: localPhotoPath,
                     remoteUrl: remoteUrl,
@@ -130,13 +133,17 @@ class SubmittedReadingView extends ConsumerWidget {
         const SizedBox(height: 20),
         OutlinedButton(
           onPressed: onBackToMeters,
-          child: const Text('Back to meters'),
+          child: Text(
+            entryText(context, 'Back to meters', 'العودة إلى العدادات'),
+          ),
         ),
         if (showNextPending) ...[
           const SizedBox(height: 8),
           FilledButton(
             onPressed: onNextPending,
-            child: const Text('Next pending meter'),
+            child: Text(
+              entryText(context, 'Next pending meter', 'العداد المعلّق التالي'),
+            ),
           ),
         ],
       ],

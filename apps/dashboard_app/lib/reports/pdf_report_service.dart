@@ -123,7 +123,8 @@ class PdfReportService {
                     _barChart(
                       points: [
                         for (final p in result.points)
-                          if (p.cop != null) (formatBusinessDate(p.date), p.cop!),
+                          if (p.cop != null)
+                            (formatBusinessDate(p.date), p.cop!),
                       ],
                       color: PdfColors.purple700,
                       label: 'COP',
@@ -132,7 +133,8 @@ class PdfReportService {
                     _barChart(
                       points: [
                         for (final p in result.points)
-                          if ((p.eer ?? (p.cop == null ? null : p.cop! * 3.412)) !=
+                          if ((p.eer ??
+                                  (p.cop == null ? null : p.cop! * 3.412)) !=
                               null)
                             (
                               formatBusinessDate(p.date),
@@ -280,8 +282,9 @@ class PdfReportService {
     if (points.isEmpty) {
       return _emptyNote('No chart points');
     }
-    final maxV =
-        points.map((e) => e.$2).fold<double>(0, (a, b) => a > b ? a : b);
+    final maxV = points
+        .map((e) => e.$2)
+        .fold<double>(0, (a, b) => a > b ? a : b);
     final safeMax = maxV <= 0 ? 1.0 : maxV;
     return pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
@@ -314,7 +317,7 @@ class PdfReportService {
         ),
         pw.SizedBox(height: 2),
         pw.Text(
-          '${points.first.$1} → ${points.last.$1}  ·  max ${safeMax.toStringAsFixed(1)}',
+          '${points.first.$1} -> ${points.last.$1}  -  max ${safeMax.toStringAsFixed(1)}',
           style: const pw.TextStyle(fontSize: 7, color: PdfColors.grey600),
         ),
       ],
@@ -356,7 +359,10 @@ class PdfReportService {
             sanitizePdfText(value),
             style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
           ),
-          pw.Text(sanitizePdfText(label), style: const pw.TextStyle(fontSize: 9)),
+          pw.Text(
+            sanitizePdfText(label),
+            style: const pw.TextStyle(fontSize: 9),
+          ),
         ],
       ),
     );
@@ -426,14 +432,7 @@ class PdfReportService {
       return _emptyNote('No meters at this site.');
     }
     return _table(
-      headers: const [
-        'Code',
-        'Name',
-        'Category',
-        'Unit',
-        'Latest',
-        'Today',
-      ],
+      headers: const ['Code', 'Name', 'Category', 'Unit', 'Latest', 'Today'],
       rows: [
         for (final meter in bundle.meters.take(200))
           [
@@ -473,7 +472,8 @@ class PdfReportService {
   pw.Widget _rankingTable(SiteReportBundle bundle) {
     final rows = <List<dynamic>>[];
     for (final entry in bundle.categoryRankings.entries) {
-      final category = bundle.categories
+      final category =
+          bundle.categories
               .where((c) => c.category.id == entry.key)
               .map((c) => c.category.displayName)
               .firstOrNull ??
@@ -566,10 +566,7 @@ class PdfReportService {
                     ? ConservationSavingLabels.costAvoidedNa
                     : cons.costAvoidedTotal!.toStringAsFixed(2),
               ],
-              [
-                'Verification Pending',
-                '${cons.verificationPendingCount}',
-              ],
+              ['Verification Pending', '${cons.verificationPendingCount}'],
             ],
           ),
           pw.SizedBox(height: 12),
@@ -595,12 +592,12 @@ class PdfReportService {
                       row.estimatedSavingQuantity?.toStringAsFixed(2) ?? '—',
                       row.status == MvStatus.verified
                           ? (row.verifiedSavingQuantity?.toStringAsFixed(2) ??
-                              '—')
+                                '—')
                           : '—',
                       row.costAvoided == null
                           ? ConservationSavingLabels.costAvoidedNa
                           : '${row.costAvoided!.toStringAsFixed(2)} '
-                              '${row.costCurrency ?? 'QAR'}',
+                                '${row.costCurrency ?? 'QAR'}',
                       '${row.confidenceScore}',
                     ],
               ],
@@ -629,7 +626,9 @@ class PdfReportService {
               cop.emptyMessage ?? 'Not enough readings to calculate COP',
             )
           else ...[
-            pw.Text('Average COP: ${cop.averageCop?.toStringAsFixed(2) ?? '-'}'),
+            pw.Text(
+              'Average COP: ${cop.averageCop?.toStringAsFixed(2) ?? '-'}',
+            ),
             pw.Text('Min COP: ${cop.minCop?.toStringAsFixed(2) ?? '-'}'),
             pw.Text('Max COP: ${cop.maxCop?.toStringAsFixed(2) ?? '-'}'),
             _table(

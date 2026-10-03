@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../providers/theme_mode_provider.dart';
+import '../../l10n/app_strings.dart';
 
 class ThemeModeToggle extends ConsumerWidget {
   const ThemeModeToggle({
@@ -18,8 +19,8 @@ class ThemeModeToggle extends ConsumerWidget {
     final mode = ref.watch(themeModeProvider);
     final platformDark =
         MediaQuery.platformBrightnessOf(context) == Brightness.dark;
-    final effectiveDark = mode == ThemeMode.dark ||
-        (mode == ThemeMode.system && platformDark);
+    final effectiveDark =
+        mode == ThemeMode.dark || (mode == ThemeMode.system && platformDark);
     final icon = effectiveDark
         ? Icons.dark_mode_outlined
         : Icons.light_mode_outlined;
@@ -31,10 +32,7 @@ class ThemeModeToggle extends ConsumerWidget {
         onPressed: () => ref
             .read(themeModeProvider.notifier)
             .toggleLightDark(MediaQuery.platformBrightnessOf(context)),
-        icon: Icon(
-          icon,
-          color: lightForeground ? Colors.white70 : null,
-        ),
+        icon: Icon(icon, color: lightForeground ? Colors.white70 : null),
       );
     }
 
@@ -43,9 +41,18 @@ class ThemeModeToggle extends ConsumerWidget {
       icon: Icon(icon, color: lightForeground ? Colors.white70 : null),
       onSelected: ref.read(themeModeProvider.notifier).setMode,
       itemBuilder: (context) => [
-        const PopupMenuItem(value: ThemeMode.light, child: Text('Light')),
-        const PopupMenuItem(value: ThemeMode.dark, child: Text('Dark')),
-        const PopupMenuItem(value: ThemeMode.system, child: Text('System')),
+        PopupMenuItem(
+          value: ThemeMode.light,
+          child: Text(dashboardText(context, 'Light', 'فاتح')),
+        ),
+        PopupMenuItem(
+          value: ThemeMode.dark,
+          child: Text(dashboardText(context, 'Dark', 'داكن')),
+        ),
+        PopupMenuItem(
+          value: ThemeMode.system,
+          child: Text(dashboardText(context, 'System', 'النظام')),
+        ),
       ],
     );
   }

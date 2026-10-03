@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/dashboard_providers.dart';
 import '../../theme/design_system/dashboard_design_system.dart';
 import '../../utils/dashboard_filters.dart';
+import '../../l10n/app_strings.dart';
 
 enum ReadingPhotoKind { previous, current }
 
@@ -29,10 +30,7 @@ Future<void> showReadingPhotoViewer({
       return SafeArea(
         child: Center(
           child: ConstrainedBox(
-            constraints: const BoxConstraints(
-              maxWidth: 420,
-              maxHeight: 760,
-            ),
+            constraints: const BoxConstraints(maxWidth: 420, maxHeight: 760),
             child: Material(
               color: DashboardColors.photoScrim(dialogContext),
               borderRadius: BorderRadius.circular(DashboardRadius.dialog),
@@ -121,12 +119,9 @@ class ReadingPhotoViewerContent extends StatelessWidget {
                 ),
               ),
               IconButton(
-                tooltip: 'Close (Esc)',
+                tooltip: dashboardText(context, 'Close (Esc)', 'إغلاق (Esc)'),
                 onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(
-                  Icons.close_rounded,
-                  color: Color(0xFFF2EFEA),
-                ),
+                icon: const Icon(Icons.close_rounded, color: Color(0xFFF2EFEA)),
               ),
             ],
           ),
@@ -140,12 +135,14 @@ class ReadingPhotoViewerContent extends StatelessWidget {
               ),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
-                child: !hasPhoto ||
-                        storagePath == null ||
-                        storagePath!.isEmpty
-                    ? const Center(
+                child: !hasPhoto || storagePath == null || storagePath!.isEmpty
+                    ? Center(
                         child: Text(
-                          'No photo available for this reading.',
+                          dashboardText(
+                            context,
+                            'No photo available for this reading.',
+                            'لا توجد صورة متاحة لهذه القراءة.',
+                          ),
                           style: TextStyle(color: Color(0xFF9AA3B2)),
                           textAlign: TextAlign.center,
                         ),
@@ -175,17 +172,21 @@ class _ZoomablePhoto extends ConsumerWidget {
       loading: () => const Center(
         child: CircularProgressIndicator(color: Color(0xFF6B9BD1)),
       ),
-      error: (_, _) => const Center(
+      error: (_, _) => Center(
         child: Text(
-          'Could not load photo',
+          dashboardText(context, 'Could not load photo', 'تعذّر تحميل الصورة'),
           style: TextStyle(color: Color(0xFF9AA3B2)),
         ),
       ),
       data: (url) {
         if (url == null || url.isEmpty) {
-          return const Center(
+          return Center(
             child: Text(
-              'No photo available for this reading.',
+              dashboardText(
+                context,
+                'No photo available for this reading.',
+                'لا توجد صورة متاحة لهذه القراءة.',
+              ),
               style: TextStyle(color: Color(0xFF9AA3B2)),
             ),
           );
@@ -203,9 +204,13 @@ class _ZoomablePhoto extends ConsumerWidget {
                   child: CircularProgressIndicator(color: Color(0xFF6B9BD1)),
                 );
               },
-              errorBuilder: (_, _, _) => const Center(
+              errorBuilder: (_, _, _) => Center(
                 child: Text(
-                  'Could not load photo',
+                  dashboardText(
+                    context,
+                    'Could not load photo',
+                    'تعذّر تحميل الصورة',
+                  ),
                   style: TextStyle(color: Color(0xFF9AA3B2)),
                 ),
               ),

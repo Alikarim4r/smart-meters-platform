@@ -15,6 +15,7 @@ class AppStrings {
   final Locale locale;
 
   bool get isAr => locale.languageCode == 'ar';
+  String text(String en, String ar) => isAr ? ar : en;
 
   static AppStrings of(BuildContext context) {
     return AppStrings(Localizations.localeOf(context));
@@ -87,6 +88,20 @@ class AppStrings {
       isAr ? 'يتبع إعدادات الجهاز تلقائياً' : 'Follows your device setting';
 
   String get support => isAr ? 'الدعم' : 'Support';
+  String get notifications => isAr ? 'الإشعارات' : 'Notifications';
+  String get enableSystemNotifications =>
+      isAr ? 'تفعيل إشعارات النظام' : 'Enable system notifications';
+  String get systemNotificationsHint => isAr
+      ? 'استلم تنبيهات التشغيل والعدادات على هذا الجهاز.'
+      : 'Receive operational and meter alerts on this device.';
+  String get notificationPermissionGranted =>
+      isAr ? 'تم تفعيل إشعارات النظام.' : 'System notifications enabled.';
+  String get notificationPermissionNotGranted => isAr
+      ? 'لم يتم منح إذن الإشعارات. يمكنك تفعيله لاحقًا من إعدادات الجهاز.'
+      : 'Notification permission was not granted. You can enable it later in device settings.';
+  String get genericError => isAr
+      ? 'حدث خطأ. يرجى المحاولة مرة أخرى.'
+      : 'Something went wrong. Please try again.';
   String get supportHint => isAr
       ? 'تحتاج مساعدة؟ تواصل مع فريق الدعم عبر البريد الإلكتروني.'
       : 'Need help? Contact our support team by email.';
@@ -250,9 +265,8 @@ class AppStrings {
       isAr ? 'تعذر تحميل خريطة الشبكة' : 'Could not load network map';
   String get pleaseRefreshNetworkMap =>
       isAr ? 'حدّث الصفحة أو جرّب لاحقًا' : 'Refresh or try again later';
-  String get networkMapEmpty => isAr
-      ? 'لا توجد شبكة مياه بعد'
-      : 'No water network yet';
+  String get networkMapEmpty =>
+      isAr ? 'لا توجد شبكة مياه بعد' : 'No water network yet';
   String get networkMapEmptyHint => isAr
       ? 'أضف عناصر في تطبيق الإدارة — تظهر هنا مباشرة وتُحدَّث باستمرار.'
       : 'Add elements in Meter Admin — they appear here and stay in sync.';
@@ -423,8 +437,7 @@ class AppStrings {
 
   String dateDisplay(DateTime date) {
     final d = DateTime(date.year, date.month, date.day);
-    if (!isAr) return formatBusinessDateDisplay(d);
-    return '${d.day} ${monthName(d.month)} ${d.year}';
+    return formatBusinessDateDisplay(d, languageCode: locale.languageCode);
   }
 
   String dateSelectionLabel(DashboardDateSelection selection) {
@@ -509,7 +522,8 @@ class AppStrings {
       AlertType.highConsumption => alert.message,
       AlertType.zeroUnexpected => 'الاستهلاك صفر رغم وجود قراءات سابقة.',
       AlertType.missingPhoto => 'قراءة اليوم بدون صورة مرفقة.',
-      AlertType.inactiveMeterReading => 'هذا العداد غير نشط لكن لديه قراءة حديثة.',
+      AlertType.inactiveMeterReading =>
+        'هذا العداد غير نشط لكن لديه قراءة حديثة.',
       AlertType.lowCop => alert.message,
       AlertType.copMissingData => 'مجموعة COP تحتاج ربط عدادات BTU والكهرباء.',
       AlertType.lowCompletion => alert.message,
@@ -831,28 +845,31 @@ class AppStrings {
   String get reportsPanelSubtitle => isAr
       ? 'صدّر نظرة عامة للموقع أو تقارير لكل مرفق. التقرير الكامل يفصل الأقسام بوضوح.'
       : 'Export site overview or utility-specific reports. Full report uses clearly separated sections.';
-  String get reportSiteOverview => isAr ? 'نظرة عامة على الموقع' : 'Site overview';
-  String get reportSiteOverviewSubtitle => isAr
-      ? 'ملخص تشغيلي بصيغة PDF أو Excel'
-      : 'Operational summary PDF/Excel';
-  String reportUtilityTitle(UtilitySystemKey system) => isAr
-      ? 'تقرير ${utilityLabel(system)}'
-      : '${system.label} report';
+  String get reportSiteOverview =>
+      isAr ? 'نظرة عامة على الموقع' : 'Site overview';
+  String get reportSiteOverviewSubtitle =>
+      isAr ? 'ملخص تشغيلي بصيغة PDF أو Excel' : 'Operational summary PDF/Excel';
+  String reportUtilityTitle(UtilitySystemKey system) =>
+      isAr ? 'تقرير ${utilityLabel(system)}' : '${system.label} report';
   String reportUtilitySubtitle(UtilitySystemKey system) => isAr
       ? 'الاستهلاك بوحدة ${system.defaultUnit == 'm³' || system.defaultUnit == 'm3' ? 'م³' : system.defaultUnit} فقط'
       : 'Consumption in ${system.defaultUnit} only';
-  String get reportBtuCop => isAr ? 'تقرير التبريد / معامل الأداء' : 'BTU / COP report';
+  String get reportBtuCop =>
+      isAr ? 'تقرير التبريد / معامل الأداء' : 'BTU / COP report';
   String get reportBtuCopSubtitle =>
       isAr ? 'أداء التبريد' : 'Cooling performance';
-  String get reportConservation => isAr ? 'تقرير الترشيد' : 'Conservation report';
+  String get reportConservation =>
+      isAr ? 'تقرير الترشيد' : 'Conservation report';
   String get reportConservationSubtitle => isAr
       ? 'التوفير التقديري مقابل المُحقَّق · التكلفة المتجنَّبة (غير متاح إن لم تُحدَّد التعرفة)'
       : 'Estimated vs Verified Saving · Cost Avoided (N/A if no tariff)';
-  String get reportReadingsExport => isAr ? 'تصدير القراءات' : 'Readings export';
+  String get reportReadingsExport =>
+      isAr ? 'تصدير القراءات' : 'Readings export';
   String get reportReadingsExportSubtitle => isAr
       ? 'قراءات Excel للفترة المحددة'
       : 'Excel readings for selected period';
-  String get reportFullSite => isAr ? 'تقرير الموقع الكامل' : 'Full site report';
+  String get reportFullSite =>
+      isAr ? 'تقرير الموقع الكامل' : 'Full site report';
   String get reportFullSiteSubtitle => isAr
       ? 'جميع المرافق في أقسام منفصلة'
       : 'All utilities in separate sections';
@@ -867,3 +884,6 @@ String shellUserRoleLabelEn(UserRole role) {
     UserRole.viewer => 'Viewer',
   };
 }
+
+String dashboardText(BuildContext context, String en, String ar) =>
+    AppStrings.of(context).text(en, ar);

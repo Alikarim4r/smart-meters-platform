@@ -7,34 +7,31 @@ import '../providers/preferences_providers.dart';
 import '../l10n/admin_strings.dart';
 import '../widgets/catalog_widgets.dart';
 
-final _siteTargetsEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.targets,
-    siteId: siteId,
-  );
-});
+final _siteTargetsEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.targets,
+        siteId: siteId,
+      );
+    });
 
-final _siteTargetsProvider =
-    FutureProvider.autoDispose.family<List<ConservationTarget>, String>((
-  ref,
-  siteId,
-) {
-  return ConservationTargetRepository(
-    ref.read(supabaseClientProvider),
-  ).listForSite(siteId);
-});
+final _siteTargetsProvider = FutureProvider.autoDispose
+    .family<List<ConservationTarget>, String>((ref, siteId) {
+      return ConservationTargetRepository(
+        ref.read(supabaseClientProvider),
+      ).listForSite(siteId);
+    });
 
 /// Admin CRUD for versioned conservation targets (gated by feature flags).
 /// History is archived on activate — never overwritten in place for active rows.
@@ -114,7 +111,8 @@ class TargetsAdminScreen extends ConsumerWidget {
                         '(≠ Baseline)',
                       ),
                       isThreeLine: true,
-                      trailing: t.status == ConservationTargetStatus.draft &&
+                      trailing:
+                          t.status == ConservationTargetStatus.draft &&
                               canManage
                           ? TextButton(
                               onPressed: () async {
@@ -136,7 +134,9 @@ class TargetsAdminScreen extends ConsumerWidget {
                                 } catch (e) {
                                   if (!context.mounted) return;
                                   ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('$e')),
+                                    SnackBar(
+                                      content: Text(adminUserError(context)),
+                                    ),
                                   );
                                 }
                               },
@@ -154,7 +154,10 @@ class TargetsAdminScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _showCreateDraftDialog(BuildContext context, WidgetRef ref) async {
+  Future<void> _showCreateDraftDialog(
+    BuildContext context,
+    WidgetRef ref,
+  ) async {
     final s = AdminStrings(ref.read(adminLocaleProvider));
     var periodType = ConservationTargetPeriodType.monthly;
     final valueCtrl = TextEditingController(text: '100');
@@ -181,10 +184,7 @@ class TargetsAdminScreen extends ConsumerWidget {
                       ),
                       items: [
                         for (final p in ConservationTargetPeriodType.values)
-                          DropdownMenuItem(
-                            value: p,
-                            child: Text(p.dbValue),
-                          ),
+                          DropdownMenuItem(value: p, child: Text(p.dbValue)),
                       ],
                       onChanged: (v) {
                         if (v == null) return;

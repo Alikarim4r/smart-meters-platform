@@ -5,6 +5,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../providers/catalog_providers.dart';
 import '../utils/catalog_validation.dart';
 import '../widgets/catalog_widgets.dart';
+import '../l10n/admin_strings.dart';
 
 class SourceFormScreen extends ConsumerStatefulWidget {
   const SourceFormScreen({super.key, required this.categoryId, this.source});
@@ -107,7 +108,7 @@ class _SourceFormScreenState extends ConsumerState<SourceFormScreen> {
         actions: [
           if (canManage)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilledButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
@@ -119,7 +120,7 @@ class _SourceFormScreenState extends ConsumerState<SourceFormScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Save'),
+                    : Text(adminText(context, 'Save', 'حفظ')),
               ),
             ),
         ],
@@ -131,12 +132,16 @@ class _SourceFormScreenState extends ConsumerState<SourceFormScreen> {
             padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + bottomInset),
             children: [
               CatalogFormSection(
-                title: 'Basic information',
+                title: adminText(
+                  context,
+                  'Basic information',
+                  'المعلومات الأساسية',
+                ),
                 children: [
                   TextFormField(
                     controller: _codeController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Code *',
+                      labelText: adminText(context, 'Code *', 'الرمز *'),
                       hintText: 'e.g. compressor, grid',
                     ),
                     enabled: canManage,
@@ -145,7 +150,11 @@ class _SourceFormScreenState extends ConsumerState<SourceFormScreen> {
                   TextFormField(
                     controller: _nameEnController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'English name *',
+                      labelText: adminText(
+                        context,
+                        'English name *',
+                        'الاسم بالإنجليزية *',
+                      ),
                     ),
                     enabled: canManage,
                     validator: (v) => validateRequiredText(v, 'English name'),
@@ -153,14 +162,22 @@ class _SourceFormScreenState extends ConsumerState<SourceFormScreen> {
                   TextFormField(
                     controller: _nameArController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Arabic name',
+                      labelText: adminText(
+                        context,
+                        'Arabic name',
+                        'الاسم بالعربية',
+                      ),
                     ),
                     enabled: canManage,
                   ),
                   TextFormField(
                     controller: _sortOrderController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Sort order *',
+                      labelText: adminText(
+                        context,
+                        'Sort order *',
+                        'ترتيب العرض *',
+                      ),
                     ),
                     keyboardType: TextInputType.number,
                     enabled: canManage,
@@ -169,11 +186,15 @@ class _SourceFormScreenState extends ConsumerState<SourceFormScreen> {
                 ],
               ),
               CatalogFormSection(
-                title: 'Status',
+                title: adminText(context, 'Status', 'الحالة'),
                 children: [
                   CatalogSwitchTile(
-                    title: 'Active',
-                    subtitle: 'Inactive sources are hidden from entry apps',
+                    title: adminText(context, 'Active', 'مفعّل'),
+                    subtitle: adminText(
+                      context,
+                      'Inactive sources are hidden from entry apps',
+                      'المصادر غير المفعّلة مخفية من تطبيق الإدخال',
+                    ),
                     value: _isActive,
                     onChanged: canManage
                         ? (value) => setState(() => _isActive = value)

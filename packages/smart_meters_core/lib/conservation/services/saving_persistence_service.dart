@@ -81,7 +81,7 @@ class SavingPersistenceService {
     final suggestReopen = status == PersistenceStatus.notSustained ||
         (persistencePct != null && persistencePct < 0.3);
     final reopenKey = suggestReopen
-        ? 'reopen:${measurementVerificationId}:${window.dbValue}'
+        ? 'reopen:$measurementVerificationId:${window.dbValue}'
         : null;
     final deduped = reopenKey != null && existingReopenKeys.contains(reopenKey);
 

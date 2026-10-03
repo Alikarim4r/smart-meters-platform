@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/app_strings.dart';
 
 class PhotoPreviewScreen extends StatelessWidget {
   const PhotoPreviewScreen({
@@ -23,7 +24,9 @@ class PhotoPreviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Reading photo')),
+      appBar: AppBar(
+        title: Text(dashboardText(context, 'Reading photo', 'صورة القراءة')),
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -36,8 +39,14 @@ class PhotoPreviewScreen extends StatelessWidget {
                 errorBuilder: (_, _, _) => Container(
                   height: 240,
                   color: Colors.grey.shade200,
-                  child: const Center(
-                    child: Text('Could not load image. Pull to refresh.'),
+                  child: Center(
+                    child: Text(
+                      dashboardText(
+                        context,
+                        'Could not load image. Pull to refresh.',
+                        'تعذّر تحميل الصورة. اسحب للتحديث.',
+                      ),
+                    ),
                   ),
                 ),
               ),
@@ -45,14 +54,24 @@ class PhotoPreviewScreen extends StatelessWidget {
             const SizedBox(height: 16),
             if (meterName != null)
               _MetaRow(
-                label: 'Meter',
+                label: dashboardText(context, 'Meter', 'العداد'),
                 value: '$meterName${meterCode != null ? ' ($meterCode)' : ''}',
               ),
             if (readingDate != null)
-              _MetaRow(label: 'Reading date', value: readingDate!),
-            if (value != null) _MetaRow(label: 'Value', value: value!),
+              _MetaRow(
+                label: dashboardText(context, 'Reading date', 'تاريخ القراءة'),
+                value: readingDate!,
+              ),
+            if (value != null)
+              _MetaRow(
+                label: dashboardText(context, 'Value', 'القيمة'),
+                value: value!,
+              ),
             if (storagePath != null)
-              _MetaRow(label: 'Storage path', value: storagePath!),
+              _MetaRow(
+                label: dashboardText(context, 'Storage path', 'مسار التخزين'),
+                value: storagePath!,
+              ),
           ],
         ),
       ),
@@ -75,10 +94,7 @@ class _MetaRow extends StatelessWidget {
         children: [
           SizedBox(
             width: 110,
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey.shade700),
-            ),
+            child: Text(label, style: TextStyle(color: Colors.grey.shade700)),
           ),
           Expanded(child: Text(value)),
         ],

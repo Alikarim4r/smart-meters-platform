@@ -36,8 +36,9 @@ class NotificationSession {
     if (_started || kIsWeb) return;
     _started = true;
 
+    // Initialize delivery without prompting. Permission is requested only from
+    // an explicit user action in each app's notification/settings UI.
     await LocalNotificationDelivery.instance.initialize();
-    await LocalNotificationDelivery.instance.requestPermission();
     await widgetSync?.configure();
 
     await _refreshFromServer(deliverNew: false);
@@ -101,9 +102,8 @@ class NotificationSession {
           .limit(50);
       final list = (rows as List)
           .map(
-            (e) => InAppNotification.fromMap(
-              Map<String, dynamic>.from(e as Map),
-            ),
+            (e) =>
+                InAppNotification.fromMap(Map<String, dynamic>.from(e as Map)),
           )
           .toList();
 

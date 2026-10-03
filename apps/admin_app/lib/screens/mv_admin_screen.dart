@@ -7,37 +7,37 @@ import '../providers/admin_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 
-final _siteMvUiEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  final estimation = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.savingsEstimation,
-    siteId: siteId,
-  );
-  if (estimation) return true;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.savingsVerification,
-    siteId: siteId,
-  );
-});
+final _siteMvUiEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      final estimation = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.savingsEstimation,
+        siteId: siteId,
+      );
+      if (estimation) return true;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.savingsVerification,
+        siteId: siteId,
+      );
+    });
 
 final _siteMvListProvider = FutureProvider.autoDispose
     .family<List<MeasurementVerification>, String>((ref, siteId) {
-  return MeasurementVerificationRepository(
-    ref.read(supabaseClientProvider),
-  ).listForSite(siteId, limit: 100);
-});
+      return MeasurementVerificationRepository(
+        ref.read(supabaseClientProvider),
+      ).listForSite(siteId, limit: 100);
+    });
 
 /// Whether current Data Quality snapshots contain a finding that makes
 /// cumulative consumption unverifiable for savings.
@@ -48,9 +48,8 @@ final _siteMvListProvider = FutureProvider.autoDispose
 /// M&V period snapshot.
 bool hasBlockingMvDataQuality(Iterable<DataQualityResult> results) {
   return results.any(
-    (result) => result.findings.any(
-      (finding) => finding.blocksSavingsVerification,
-    ),
+    (result) =>
+        result.findings.any((finding) => finding.blocksSavingsVerification),
   );
 }
 
@@ -66,7 +65,8 @@ class MvAdminScreen extends ConsumerWidget {
     final enabledAsync = ref.watch(_siteMvUiEnabledProvider(siteId));
     final canManage = ref.watch(canManageMetersProvider);
     final profile = ref.watch(authProvider).profile;
-    final canVerify = canManage &&
+    final canVerify =
+        canManage &&
         ConservationAuthorityPolicy.canVerifySaving(
           profile?.isPlatformOwner == true
               ? 'platform_owner'
@@ -148,11 +148,11 @@ class MvAdminScreen extends ConsumerWidget {
                           : null,
                       onTap: canManage
                           ? () => _openDetail(
-                                context,
-                                ref,
-                                row,
-                                canVerify: canVerify,
-                              )
+                              context,
+                              ref,
+                              row,
+                              canVerify: canVerify,
+                            )
                           : null,
                     ),
                   );
@@ -167,19 +167,26 @@ class MvAdminScreen extends ConsumerWidget {
 
   Future<void> _createDraft(BuildContext context, WidgetRef ref) async {
     final client = ref.read(supabaseClientProvider);
-    final opportunities =
-        await OpportunityRepository(client).listForSite(siteId, limit: 100);
-    final baselines = await ConservationBaselineRepository(client)
-        .listApprovedForSite(siteId);
-    final actions =
-        await ActionRepository(client).listForSite(siteId, limit: 100);
+    final opportunities = await OpportunityRepository(
+      client,
+    ).listForSite(siteId, limit: 100);
+    final baselines = await ConservationBaselineRepository(
+      client,
+    ).listApprovedForSite(siteId);
+    final actions = await ActionRepository(
+      client,
+    ).listForSite(siteId, limit: 100);
 
     if (!context.mounted) return;
     if (opportunities.isEmpty || baselines.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Need at least one opportunity and one approved baseline.',
+            adminText(
+              context,
+              'Need at least one opportunity and one approved baseline.',
+              'يلزم وجود فرصة واحدة على الأقل وخط أساس معتمد.',
+            ),
           ),
         ),
       );
@@ -204,10 +211,17 @@ class MvAdminScreen extends ConsumerWidget {
       builder: (ctx) {
         return StatefulBuilder(
           builder: (ctx, setState) {
-            final oppActions =
-                actions.where((a) => a.opportunityId == opp!.id).toList();
+            final oppActions = actions
+                .where((a) => a.opportunityId == opp!.id)
+                .toList();
             return AlertDialog(
-              title: const Text('Create M&V draft'),
+              title: Text(
+                adminText(
+                  context,
+                  'Create M&V draft',
+                  'إنشاء مسودة قياس وتحقق',
+                ),
+              ),
               content: SingleChildScrollView(
                 child: SizedBox(
                   width: 420,
@@ -216,8 +230,13 @@ class MvAdminScreen extends ConsumerWidget {
                     children: [
                       DropdownButtonFormField<ConservationOpportunity>(
                         initialValue: opp,
-                        decoration:
-                            const InputDecoration(labelText: 'Opportunity'),
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Opportunity',
+                            'الفرصة',
+                          ),
+                        ),
                         items: [
                           for (final o in opportunities)
                             DropdownMenuItem(
@@ -236,13 +255,19 @@ class MvAdminScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<ConservationAction?>(
                         initialValue: action,
-                        decoration: const InputDecoration(
-                          labelText: 'Action (optional)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Action (optional)',
+                            'الإجراء (اختياري)',
+                          ),
                         ),
                         items: [
-                          const DropdownMenuItem(
+                          DropdownMenuItem(
                             value: null,
-                            child: Text('— none —'),
+                            child: Text(
+                              adminText(context, '— none —', '— لا يوجد —'),
+                            ),
                           ),
                           for (final a in oppActions)
                             DropdownMenuItem(
@@ -258,8 +283,13 @@ class MvAdminScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       DropdownButtonFormField<ConservationBaseline>(
                         initialValue: baseline,
-                        decoration:
-                            const InputDecoration(labelText: 'Baseline'),
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Baseline',
+                            'خط الأساس',
+                          ),
+                        ),
                         items: [
                           for (final b in baselines)
                             DropdownMenuItem(
@@ -275,21 +305,19 @@ class MvAdminScreen extends ConsumerWidget {
                           if (v == null) return;
                           setState(() {
                             baseline = v;
-                            baselineValueCtrl.text =
-                                v.baselineValue.toString();
+                            baselineValueCtrl.text = v.baselineValue.toString();
                           });
                         },
                       ),
                       const SizedBox(height: 8),
                       DropdownButtonFormField<MvVerificationMethod>(
                         initialValue: method,
-                        decoration: const InputDecoration(labelText: 'Method'),
+                        decoration: InputDecoration(
+                          labelText: adminText(context, 'Method', 'الطريقة'),
+                        ),
                         items: [
                           for (final m in MvVerificationMethod.values)
-                            DropdownMenuItem(
-                              value: m,
-                              child: Text(m.dbValue),
-                            ),
+                            DropdownMenuItem(value: m, child: Text(m.dbValue)),
                         ],
                         onChanged: (v) {
                           if (v != null) setState(() => method = v);
@@ -298,40 +326,64 @@ class MvAdminScreen extends ConsumerWidget {
                       const SizedBox(height: 8),
                       TextField(
                         controller: baselineValueCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Baseline value',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Baseline value',
+                            'قيمة خط الأساس',
+                          ),
                         ),
                         keyboardType: TextInputType.number,
                       ),
                       TextField(
                         controller: actualPostCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Actual post value (optional)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Actual post value (optional)',
+                            'القيمة الفعلية بعد التنفيذ (اختياري)',
+                          ),
                         ),
                         keyboardType: TextInputType.number,
                       ),
                       TextField(
                         controller: preStart,
-                        decoration: const InputDecoration(
-                          labelText: 'Pre start (YYYY-MM-DD)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Pre start (YYYY-MM-DD)',
+                            'بداية فترة ما قبل التنفيذ (YYYY-MM-DD)',
+                          ),
                         ),
                       ),
                       TextField(
                         controller: preEnd,
-                        decoration: const InputDecoration(
-                          labelText: 'Pre end (YYYY-MM-DD)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Pre end (YYYY-MM-DD)',
+                            'نهاية فترة ما قبل التنفيذ (YYYY-MM-DD)',
+                          ),
                         ),
                       ),
                       TextField(
                         controller: postStart,
-                        decoration: const InputDecoration(
-                          labelText: 'Post start (YYYY-MM-DD)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Post start (YYYY-MM-DD)',
+                            'بداية فترة ما بعد التنفيذ (YYYY-MM-DD)',
+                          ),
                         ),
                       ),
                       TextField(
                         controller: postEnd,
-                        decoration: const InputDecoration(
-                          labelText: 'Post end (YYYY-MM-DD)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Post end (YYYY-MM-DD)',
+                            'نهاية فترة ما بعد التنفيذ (YYYY-MM-DD)',
+                          ),
                         ),
                       ),
                     ],
@@ -341,11 +393,11 @@ class MvAdminScreen extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel'),
+                  child: Text(adminText(context, 'Cancel', 'إلغاء')),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Create'),
+                  child: Text(adminText(context, 'Create', 'إنشاء')),
                 ),
               ],
             );
@@ -359,37 +411,41 @@ class MvAdminScreen extends ConsumerWidget {
       DateTime parse(String t) => DateTime.parse(t.trim());
       final created = await MeasurementVerificationRepository(client)
           .createDraft(
-        siteId: siteId,
-        opportunityId: opp!.id,
-        baselineId: baseline.id,
-        utilityType: opp!.utilityType.isEmpty
-            ? baseline.unitCode
-            : opp!.utilityType,
-        verificationMethod: method,
-        prePeriodStart: parse(preStart.text),
-        prePeriodEnd: parse(preEnd.text),
-        postPeriodStart: parse(postStart.text),
-        postPeriodEnd: parse(postEnd.text),
-        baselineValue: double.parse(baselineValueCtrl.text),
-        unitCode: baseline.unitCode,
-        actionId: action?.id,
-        meterId: opp!.meterId,
-        balanceGroupId: opp!.balanceGroupId,
-        actualPostValue: actualPostCtrl.text.trim().isEmpty
-            ? null
-            : double.parse(actualPostCtrl.text.trim()),
-        confidenceScore: 50,
-        createdBy: client.auth.currentUser?.id,
-      );
+            siteId: siteId,
+            opportunityId: opp!.id,
+            baselineId: baseline.id,
+            utilityType: opp!.utilityType.isEmpty
+                ? baseline.unitCode
+                : opp!.utilityType,
+            verificationMethod: method,
+            prePeriodStart: parse(preStart.text),
+            prePeriodEnd: parse(preEnd.text),
+            postPeriodStart: parse(postStart.text),
+            postPeriodEnd: parse(postEnd.text),
+            baselineValue: double.parse(baselineValueCtrl.text),
+            unitCode: baseline.unitCode,
+            actionId: action?.id,
+            meterId: opp!.meterId,
+            balanceGroupId: opp!.balanceGroupId,
+            actualPostValue: actualPostCtrl.text.trim().isEmpty
+                ? null
+                : double.parse(actualPostCtrl.text.trim()),
+            confidenceScore: 50,
+            createdBy: client.auth.currentUser?.id,
+          );
       // Bind org for tariff later; site org from site.
       ref.invalidate(_siteMvListProvider(siteId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Draft created (${created.id.substring(0, 8)}…)')),
+        SnackBar(
+          content: Text('Draft created (${created.id.substring(0, 8)}…)'),
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -491,10 +547,10 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
           Text('Confidence: ${_record.confidenceScore}'),
           Text('Baseline id: ${_record.baselineId}'),
           if (_record.status == MvStatus.verificationPending)
-            const Padding(
+            Padding(
               padding: EdgeInsets.only(top: 8),
               child: Text(
-                'Ready for Verification',
+                adminText(context, 'Ready for Verification', 'جاهز للتحقق'),
                 style: TextStyle(fontWeight: FontWeight.w700),
               ),
             ),
@@ -503,8 +559,12 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
           const SizedBox(height: 12),
           TextField(
             controller: _actualCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Actual post value',
+            decoration: InputDecoration(
+              labelText: adminText(
+                context,
+                'Actual post value',
+                'القيمة الفعلية بعد التنفيذ',
+              ),
               border: OutlineInputBorder(),
             ),
             keyboardType: TextInputType.number,
@@ -518,18 +578,24 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
                   _record.status == MvStatus.estimated)
                 FilledButton(
                   onPressed: _busy ? null : () => _estimate(svc),
-                  child: const Text('Estimate'),
+                  child: Text(adminText(context, 'Estimate', 'تقدير')),
                 ),
               if (_record.status == MvStatus.estimated)
                 OutlinedButton(
                   onPressed: _busy ? null : () => _submitPending(svc),
-                  child: const Text('Submit for verification'),
+                  child: Text(
+                    adminText(
+                      context,
+                      'Submit for verification',
+                      'إرسال للتحقق',
+                    ),
+                  ),
                 ),
               if (_record.status == MvStatus.verificationPending &&
                   widget.canVerify)
                 FilledButton(
                   onPressed: _busy ? null : () => _verify(svc),
-                  child: const Text('Verify'),
+                  child: Text(adminText(context, 'Verify', 'تحقق')),
                 ),
               if ((_record.status == MvStatus.verificationPending ||
                       _record.status == MvStatus.estimated ||
@@ -537,7 +603,7 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
                   widget.canVerify)
                 OutlinedButton(
                   onPressed: _busy ? null : () => _reject(svc),
-                  child: const Text('Reject'),
+                  child: Text(adminText(context, 'Reject', 'رفض')),
                 ),
               if (_record.status == MvStatus.verified ||
                   _record.status == MvStatus.estimated ||
@@ -545,22 +611,36 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
                   _record.status == MvStatus.rejected)
                 OutlinedButton(
                   onPressed: _busy ? null : () => _recalculate(svc),
-                  child: const Text('Recalculate / supersede'),
+                  child: Text(
+                    adminText(
+                      context,
+                      'Recalculate / supersede',
+                      'إعادة حساب / استبدال',
+                    ),
+                  ),
                 ),
             ],
           ),
           if (!widget.canVerify) ...[
             const SizedBox(height: 8),
-            const Text(
-              'Technician cannot verify. Site admin / super admin required.',
+            Text(
+              adminText(
+                context,
+                'Technician cannot verify. Site admin / super admin required.',
+                'لا يمكن للفني إجراء التحقق. يلزم مشرف موقع أو مشرف عام.',
+              ),
               style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600),
             ),
           ],
           const SizedBox(height: 12),
           TextField(
             controller: _rejectCtrl,
-            decoration: const InputDecoration(
-              labelText: 'Rejection reason (optional)',
+            decoration: InputDecoration(
+              labelText: adminText(
+                context,
+                'Rejection reason (optional)',
+                'سبب الرفض (اختياري)',
+              ),
               border: OutlineInputBorder(),
             ),
           ),
@@ -585,11 +665,21 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
       widget.onChanged();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Estimated Saving applied')),
+        SnackBar(
+          content: Text(
+            adminText(
+              context,
+              'Estimated Saving applied',
+              'تم تطبيق الوفر التقديري',
+            ),
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -600,17 +690,28 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
     try {
       final client = ref.read(supabaseClientProvider);
       final pending = svc.prepareVerificationPending(_record);
-      final saved =
-          await MeasurementVerificationRepository(client).updateRow(pending);
+      final saved = await MeasurementVerificationRepository(
+        client,
+      ).updateRow(pending);
       setState(() => _record = saved);
       widget.onChanged();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Submitted — Ready for Verification')),
+        SnackBar(
+          content: Text(
+            adminText(
+              context,
+              'Submitted — Ready for Verification',
+              'تم الإرسال — جاهز للتحقق',
+            ),
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -642,16 +743,18 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
         ).status;
       }
 
-      final opp =
-          await OpportunityRepository(client).getById(_record.opportunityId);
+      final opp = await OpportunityRepository(
+        client,
+      ).getById(_record.opportunityId);
       opportunityStatus = opp?.status;
 
       if (_record.actionId != null) {
-        final actions = await ActionRepository(client).listByOpportunity(
-          _record.opportunityId,
-        );
-        final match =
-            actions.where((a) => a.id == _record.actionId).firstOrNull;
+        final actions = await ActionRepository(
+          client,
+        ).listByOpportunity(_record.opportunityId);
+        final match = actions
+            .where((a) => a.id == _record.actionId)
+            .firstOrNull;
         actionStatus = match?.status;
       }
 
@@ -664,20 +767,19 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
       );
 
       final dataQualityResults = await _evaluateDataQuality();
-      final hasPendingCriticalDq = hasBlockingMvDataQuality(
-        dataQualityResults,
-      );
+      final hasPendingCriticalDq = hasBlockingMvDataQuality(dataQualityResults);
 
       // All verified rows on the site (not just the same scope) plus real
       // topology, so parent/child and balance-group overlaps are detected.
-      final existing = await MeasurementVerificationRepository(client)
-          .listVerifiedOverlappingScope(siteId: widget.siteId);
-      final siteMeters = await MeterRepository(client).getMetersForSite(
-        widget.siteId,
-      );
-      final groups = await BalanceGroupRepository(client).listForSite(
-        widget.siteId,
-      );
+      final existing = await MeasurementVerificationRepository(
+        client,
+      ).listVerifiedOverlappingScope(siteId: widget.siteId);
+      final siteMeters = await MeterRepository(
+        client,
+      ).getMetersForSite(widget.siteId);
+      final groups = await BalanceGroupRepository(
+        client,
+      ).listForSite(widget.siteId);
       final topology = DoubleCountTopology.fromSite(
         parentMeterIdByMeterId: {
           for (final m in siteMeters) m.id: m.parentMeterId,
@@ -720,17 +822,28 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
         );
       }
 
-      final saved = await MeasurementVerificationRepository(client)
-          .updateRow(outcome.record!);
+      final saved = await MeasurementVerificationRepository(
+        client,
+      ).updateRow(outcome.record!);
       setState(() => _record = saved);
       widget.onChanged();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Verified Saving recorded')),
+        SnackBar(
+          content: Text(
+            adminText(
+              context,
+              'Verified Saving recorded',
+              'تم تسجيل الوفر المتحقق منه',
+            ),
+          ),
+        ),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -901,17 +1014,20 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
             ? null
             : _rejectCtrl.text.trim(),
       );
-      final saved =
-          await MeasurementVerificationRepository(client).updateRow(rejected);
+      final saved = await MeasurementVerificationRepository(
+        client,
+      ).updateRow(rejected);
       setState(() => _record = saved);
       widget.onChanged();
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Rejected')),
+        SnackBar(content: Text(adminText(context, 'Rejected', 'مرفوض'))),
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -931,9 +1047,9 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
       );
       final draft = await MeasurementVerificationRepository(client)
           .persistRecalculation(
-        versioning,
-        createdBy: client.auth.currentUser?.id,
-      );
+            versioning,
+            createdBy: client.auth.currentUser?.id,
+          );
       setState(() => _record = draft);
       widget.onChanged();
       if (!mounted) return;
@@ -946,7 +1062,9 @@ class _MvDetailSheetState extends ConsumerState<_MvDetailSheet> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _busy = false);
     }

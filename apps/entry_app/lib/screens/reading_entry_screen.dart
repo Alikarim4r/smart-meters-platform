@@ -55,15 +55,15 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
   }
 
   ReadingEntryQuery get _query => ReadingEntryQuery(
-        siteId: widget.site.id,
-        organizationId: widget.site.organizationId,
-        meterId: widget.meter.id,
-        category: widget.category,
-        businessDate: widget.businessDate,
-        initialTodayReading: widget.initialStatus?.todayReading,
-        initialLastReading: widget.initialStatus?.lastReading,
-        initialLocalDraft: widget.initialStatus?.localDraft,
-      );
+    siteId: widget.site.id,
+    organizationId: widget.site.organizationId,
+    meterId: widget.meter.id,
+    category: widget.category,
+    businessDate: widget.businessDate,
+    initialTodayReading: widget.initialStatus?.todayReading,
+    initialLastReading: widget.initialStatus?.lastReading,
+    initialLocalDraft: widget.initialStatus?.localDraft,
+  );
 
   double? get _lastRawValue {
     final last = ref.read(readingEntryProvider(_query)).lastReading;
@@ -89,7 +89,10 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
     return value.toString();
   }
 
-  Future<bool> _confirmHighReadingIfNeeded(double rawValue, double? lastRaw) async {
+  Future<bool> _confirmHighReadingIfNeeded(
+    double rawValue,
+    double? lastRaw,
+  ) async {
     if (!shouldWarnHighReading(newReading: rawValue, lastRawValue: lastRaw)) {
       return true;
     }
@@ -145,11 +148,9 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       return;
     }
 
-    final success =
-        await ref.read(readingEntryProvider(_query).notifier).saveReading(
-              rawValue: rawValue,
-              note: _noteController.text,
-            );
+    final success = await ref
+        .read(readingEntryProvider(_query).notifier)
+        .saveReading(rawValue: rawValue, note: _noteController.text);
 
     if (!mounted || !success) {
       return;
@@ -161,9 +162,11 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
         content: Text(
           entryState.savedLocally
               ? (s.isAr
-                  ? 'حُفظت القراءة محلياً. ستُزامن عند الاتصال.'
-                  : 'Reading saved locally. It will sync when online.')
-              : (s.isAr ? 'تم حفظ القراءة بنجاح' : 'Reading saved successfully'),
+                    ? 'حُفظت القراءة محلياً. ستُزامن عند الاتصال.'
+                    : 'Reading saved locally. It will sync when online.')
+              : (s.isAr
+                    ? 'تم حفظ القراءة بنجاح'
+                    : 'Reading saved successfully'),
         ),
       ),
     );
@@ -177,8 +180,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       siteLocation: widget.site.location,
     );
 
-    final statuses =
-        await ref.read(metersWithStatusProvider(listQuery).future);
+    final statuses = await ref.read(metersWithStatusProvider(listQuery).future);
     final pending = statuses.where((s) => s.canEnterReading).toList();
 
     if (!mounted) {
@@ -220,8 +222,7 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       businessDate: widget.businessDate,
       siteLocation: widget.site.location,
     );
-    final statuses =
-        await ref.read(metersWithStatusProvider(listQuery).future);
+    final statuses = await ref.read(metersWithStatusProvider(listQuery).future);
     return statuses.any(
       (s) => s.canEnterReading && s.meter.id != widget.meter.id,
     );
@@ -275,9 +276,9 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       );
       if (picked == null) {
         if (!mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(s.photoPickCancelled)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(s.photoPickCancelled)));
         return;
       }
 
@@ -304,7 +305,8 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
       );
     } on PlatformException catch (error) {
       if (!mounted) return;
-      final denied = error.code.contains('permission') ||
+      final denied =
+          error.code.contains('permission') ||
           error.code.contains('access_denied');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -318,7 +320,11 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذّر اختيار الصورة: $error')),
+        SnackBar(
+          content: Text(
+            EntryStrings(Localizations.localeOf(context)).photoPickFailed,
+          ),
+        ),
       );
     }
   }
@@ -360,19 +366,20 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                       location: widget.site.location,
                     ),
                     FutureBuilder<bool>(
-                      future: PlatformFeatureFlagRepository(
-                        Supabase.instance.client,
-                      ).isEnabled(
-                        organizationId: widget.site.organizationId,
-                        flagKey: PlatformFeatureFlags.unifiedIngestion,
-                        siteId: widget.site.id,
-                      ),
+                      future:
+                          PlatformFeatureFlagRepository(
+                            Supabase.instance.client,
+                          ).isEnabled(
+                            organizationId: widget.site.organizationId,
+                            flagKey: PlatformFeatureFlags.unifiedIngestion,
+                            siteId: widget.site.id,
+                          ),
                       builder: (context, snap) {
                         if (snap.data != true) {
                           return const SizedBox.shrink();
                         }
-                        final source = entryState.todayReading
-                                ?.effectiveReadingSource ??
+                        final source =
+                            entryState.todayReading?.effectiveReadingSource ??
                             'manual';
                         return Padding(
                           padding: const EdgeInsets.only(top: 8),
@@ -392,7 +399,8 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                         future: _hasOtherPendingMeters(),
                         builder: (context, snapshot) {
                           final draft = entryState.localDraft;
-                          final storagePath = displayReading.imageStoragePath ??
+                          final storagePath =
+                              displayReading.imageStoragePath ??
                               draft?.remotePhotoPath;
                           return SubmittedReadingView(
                             reading: displayReading,
@@ -424,8 +432,10 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                         isReadOnly: false,
                         isBusy:
                             entryState.isSaving || entryState.isAttachingPhoto,
-                        onCameraTap: () => _attachPhoto(ReadingPhotoSource.camera),
-                        onGalleryTap: () => _attachPhoto(ReadingPhotoSource.gallery),
+                        onCameraTap: () =>
+                            _attachPhoto(ReadingPhotoSource.camera),
+                        onGalleryTap: () =>
+                            _attachPhoto(ReadingPhotoSource.gallery),
                         onRemovePhoto: () => ref
                             .read(readingEntryProvider(_query).notifier)
                             .removePhoto(),
@@ -450,8 +460,9 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                             ? const SizedBox(
                                 height: 20,
                                 width: 20,
-                                child:
-                                    CircularProgressIndicator(strokeWidth: 2),
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
                               )
                             : Text(s.isAr ? 'حفظ القراءة' : 'Save reading'),
                       ),
@@ -476,7 +487,11 @@ class _LocalDraftBanner extends StatelessWidget {
         border: Border.all(color: Colors.indigo.shade100),
       ),
       child: Text(
-        'You are editing a locally saved reading. Changes sync when online.',
+        entryText(
+          context,
+          'You are editing a locally saved reading. Changes sync when online.',
+          'أنت تعدّل قراءة محفوظة محليًا. ستتم مزامنة التغييرات عند الاتصال.',
+        ),
         style: TextStyle(color: Colors.indigo.shade900, fontSize: 13),
       ),
     );
@@ -519,20 +534,31 @@ class _InfoCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 6),
-            _InfoRow(label: 'Code', value: meter.meterCode),
-            if (location != null && location!.trim().isNotEmpty)
-              _InfoRow(label: 'Location', value: location!),
-            _InfoRow(label: 'Unit', value: meter.unitDisplayLabel),
             _InfoRow(
-              label: 'Today',
-              value: formatBusinessDateDisplay(businessDate),
+              label: entryText(context, 'Code', 'الرمز'),
+              value: meter.meterCode,
+            ),
+            if (location != null && location!.trim().isNotEmpty)
+              _InfoRow(
+                label: entryText(context, 'Location', 'الموقع'),
+                value: location!,
+              ),
+            _InfoRow(
+              label: entryText(context, 'Unit', 'الوحدة'),
+              value: meter.unitDisplayLabel,
             ),
             _InfoRow(
-              label: 'Last reading',
+              label: entryText(context, 'Today', 'اليوم'),
+              value: EntryStrings(
+                Localizations.localeOf(context),
+              ).dateDisplay(businessDate),
+            ),
+            _InfoRow(
+              label: entryText(context, 'Last reading', 'آخر قراءة'),
               value: lastReading == null
                   ? 'No previous reading'
                   : '${lastReading!.rawValue} ${meter.unitDisplayLabel} '
-                      '(${formatBusinessDate(lastReading!.readingDate)})',
+                        '(${formatBusinessDate(lastReading!.readingDate)})',
             ),
           ],
         ),

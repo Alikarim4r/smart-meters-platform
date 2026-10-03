@@ -8,6 +8,7 @@ import '../utils/admin_validation.dart';
 import '../utils/user_validation.dart';
 import '../widgets/catalog_widgets.dart';
 import '../widgets/user_widgets.dart';
+import '../l10n/admin_strings.dart';
 
 class UserSiteAssignmentScreen extends ConsumerStatefulWidget {
   const UserSiteAssignmentScreen({super.key, required this.userId});
@@ -100,17 +101,17 @@ class _UserSiteAssignmentScreenState
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove assignment?'),
+        title: Text(adminText(context, 'Remove assignment?', 'إزالة التعيين؟')),
         content: Text('Remove access to $siteName?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
-            child: const Text('Remove'),
+            child: Text(adminText(context, 'Remove', 'إزالة')),
           ),
         ],
       ),
@@ -124,9 +125,13 @@ class _UserSiteAssignmentScreenState
           .read(userAdminRepositoryProvider)
           .removeUserSiteAccess(access.id);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Assignment removed')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            adminText(context, 'Assignment removed', 'تمت إزالة التعيين'),
+          ),
+        ),
+      );
       await _refresh();
     } catch (error) {
       if (!mounted) return;
@@ -149,29 +154,45 @@ class _UserSiteAssignmentScreenState
       appBar: AppBar(
         title: userAsync.maybeWhen(
           data: (user) => Text('Sites · ${user.displayName}'),
-          orElse: () => const Text('Site assignments'),
+          orElse: () =>
+              Text(adminText(context, 'Site assignments', 'تعيينات المواقع')),
         ),
       ),
       body: SafeArea(
         child: userAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => UserEmptyState(
-            title: 'Could not load user',
+            title: adminText(
+              context,
+              'Could not load user',
+              'تعذّر تحميل المستخدم',
+            ),
             subtitle: friendlyUserAdminError(error),
           ),
           data: (user) {
             if (!canEditSiteAssignments(user)) {
-              return const UserEmptyState(
-                title: 'Assignments unavailable',
-                subtitle:
-                    'Only approved active users can receive site assignments.',
+              return UserEmptyState(
+                title: adminText(
+                  context,
+                  'Assignments unavailable',
+                  'التعيينات غير متاحة',
+                ),
+                subtitle: adminText(
+                  context,
+                  'Only approved active users can receive site assignments.',
+                  'يمكن تعيين المواقع للمستخدمين النشطين المعتمدين فقط.',
+                ),
               );
             }
 
             return sitesAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) => UserEmptyState(
-                title: 'Could not load sites',
+                title: adminText(
+                  context,
+                  'Could not load sites',
+                  'تعذّر تحميل المواقع',
+                ),
                 subtitle: friendlySiteError(error),
               ),
               data: (allSites) {
@@ -179,7 +200,11 @@ class _UserSiteAssignmentScreenState
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
                   error: (error, _) => UserEmptyState(
-                    title: 'Could not load assignments',
+                    title: adminText(
+                      context,
+                      'Could not load assignments',
+                      'تعذّر تحميل التعيينات',
+                    ),
                     subtitle: friendlyUserAdminError(error),
                   ),
                   data: (assignments) {
@@ -213,12 +238,22 @@ class _UserSiteAssignmentScreenState
                             padding: const EdgeInsets.all(16),
                             children: [
                               Text(
-                                'Current assignments',
+                                adminText(
+                                  context,
+                                  'Current assignments',
+                                  'التعيينات الحالية',
+                                ),
                                 style: Theme.of(context).textTheme.titleSmall,
                               ),
                               const SizedBox(height: 8),
                               if (assignments.isEmpty)
-                                const Text('No sites assigned yet.')
+                                Text(
+                                  adminText(
+                                    context,
+                                    'No sites assigned yet.',
+                                    'لا توجد مواقع معيّنة بعد.',
+                                  ),
+                                )
                               else
                                 for (final access in assignments)
                                   Card(
@@ -250,7 +285,13 @@ class _UserSiteAssignmentScreenState
                                                 child: SwitchListTile(
                                                   contentPadding:
                                                       EdgeInsets.zero,
-                                                  title: const Text('Read'),
+                                                  title: Text(
+                                                    adminText(
+                                                      context,
+                                                      'Read',
+                                                      'قراءة',
+                                                    ),
+                                                  ),
                                                   value: access.canRead,
                                                   onChanged: _saving
                                                       ? null
@@ -267,7 +308,13 @@ class _UserSiteAssignmentScreenState
                                                 child: SwitchListTile(
                                                   contentPadding:
                                                       EdgeInsets.zero,
-                                                  title: const Text('Write'),
+                                                  title: Text(
+                                                    adminText(
+                                                      context,
+                                                      'Write',
+                                                      'كتابة',
+                                                    ),
+                                                  ),
                                                   value: access.canWrite,
                                                   onChanged:
                                                       _saving || !access.canRead
@@ -284,7 +331,8 @@ class _UserSiteAssignmentScreenState
                                             ],
                                           ),
                                           Align(
-                                            alignment: Alignment.centerRight,
+                                            alignment:
+                                                AlignmentDirectional.centerEnd,
                                             child: TextButton.icon(
                                               onPressed: _saving
                                                   ? null
@@ -296,7 +344,11 @@ class _UserSiteAssignmentScreenState
                                                 color: Colors.red.shade700,
                                               ),
                                               label: Text(
-                                                'Remove',
+                                                adminText(
+                                                  context,
+                                                  'Remove',
+                                                  'إزالة',
+                                                ),
                                                 style: TextStyle(
                                                   color: Colors.red.shade700,
                                                 ),
@@ -309,7 +361,11 @@ class _UserSiteAssignmentScreenState
                                   ),
                               const SizedBox(height: 24),
                               Text(
-                                'Add site assignment',
+                                adminText(
+                                  context,
+                                  'Add site assignment',
+                                  'إضافة تعيين موقع',
+                                ),
                                 style: Theme.of(context).textTheme.titleSmall,
                               ),
                               const SizedBox(height: 8),
@@ -317,8 +373,16 @@ class _UserSiteAssignmentScreenState
                                 controller: _searchController,
                                 decoration:
                                     catalogFieldDecoration(
-                                      labelText: 'Search sites',
-                                      hintText: 'Name or location…',
+                                      labelText: adminText(
+                                        context,
+                                        'Search sites',
+                                        'بحث في المواقع',
+                                      ),
+                                      hintText: adminText(
+                                        context,
+                                        'Name or location…',
+                                        'الاسم أو الموقع…',
+                                      ),
                                     ).copyWith(
                                       prefixIcon: const Icon(Icons.search),
                                     ),
@@ -328,14 +392,26 @@ class _UserSiteAssignmentScreenState
                                 initialValue: zoneFilter,
                                 isExpanded: true,
                                 decoration: catalogFieldDecoration(
-                                  labelText: 'Zone filter',
-                                  hintText: 'All zones',
+                                  labelText: adminText(
+                                    context,
+                                    'Zone filter',
+                                    'تصفية المنطقة',
+                                  ),
+                                  hintText: adminText(
+                                    context,
+                                    'All zones',
+                                    'كل المناطق',
+                                  ),
                                 ),
                                 items: [
-                                  const DropdownMenuItem<String?>(
+                                  DropdownMenuItem<String?>(
                                     value: null,
                                     child: Text(
-                                      'All zones',
+                                      adminText(
+                                        context,
+                                        'All zones',
+                                        'كل المناطق',
+                                      ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
@@ -379,10 +455,14 @@ class _UserSiteAssignmentScreenState
                               ),
                               const SizedBox(height: 12),
                               if (groups.isEmpty)
-                                const Padding(
+                                Padding(
                                   padding: EdgeInsets.symmetric(vertical: 16),
                                   child: Text(
-                                    'No available sites match your search.',
+                                    adminText(
+                                      context,
+                                      'No available sites match your search.',
+                                      'لا توجد مواقع متاحة تطابق البحث.',
+                                    ),
                                   ),
                                 )
                               else
@@ -416,7 +496,9 @@ class _UserSiteAssignmentScreenState
                                               ? null
                                               : () =>
                                                     _addAssignment(site, user),
-                                          child: const Text('Add'),
+                                          child: Text(
+                                            adminText(context, 'Add', 'إضافة'),
+                                          ),
                                         ),
                                       ),
                                     ),

@@ -76,9 +76,9 @@ class DashboardTopHeader extends ConsumerWidget {
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: colors.textPrimary,
-                  ),
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
             ),
           ),
           if (dateSelection != null && onDateSelectionChanged != null)
@@ -99,10 +99,7 @@ class DashboardTopHeader extends ConsumerWidget {
             ),
           if (siteId != null) ...[
             const SizedBox(width: DashboardSpacing.xs),
-            DashboardAlertBellButton(
-              siteId: siteId!,
-              onViewAll: onViewAlerts,
-            ),
+            DashboardAlertBellButton(siteId: siteId!, onViewAll: onViewAlerts),
           ] else ...[
             const SizedBox(width: DashboardSpacing.xs),
             DashboardHomeAlertBellButton(onViewAll: onViewAlerts),

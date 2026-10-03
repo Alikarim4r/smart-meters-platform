@@ -83,18 +83,19 @@ class _MeterReadingHistoryContentState
     try {
       final from = normalizeDashboardDate(widget.dateSelection.startDate);
       final to = normalizeDashboardDate(widget.dateSelection.endDate);
-      final rows =
-          await ref.read(dashboardRepositoryProvider).getRecentSiteReadings(
-                siteId: widget.siteId,
-                filters: DashboardReadingFilters(
-                  fromDate: from,
-                  toDate: to,
-                  meterId: widget.meter.meterId,
-                  hasPhoto: _photoFilter,
-                  // Full selected period (daily meters ≈ 31–366 rows).
-                  limit: 5000,
-                ),
-              );
+      final rows = await ref
+          .read(dashboardRepositoryProvider)
+          .getRecentSiteReadings(
+            siteId: widget.siteId,
+            filters: DashboardReadingFilters(
+              fromDate: from,
+              toDate: to,
+              meterId: widget.meter.meterId,
+              hasPhoto: _photoFilter,
+              // Full selected period (daily meters ≈ 31–366 rows).
+              limit: 5000,
+            ),
+          );
       if (mounted) {
         setState(() => _readings = AsyncValue.data(rows));
       }
@@ -116,23 +117,23 @@ class _MeterReadingHistoryContentState
           Text(
             s.meterReadingHistory,
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: DashboardPalette.navy,
-                ),
+              fontWeight: FontWeight.w800,
+              color: DashboardPalette.navy,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
             '${widget.meter.meterName} · ${widget.meter.meterCode}',
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: DashboardPalette.textMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: DashboardPalette.textMuted),
           ),
           const SizedBox(height: 4),
           Text(
             formatDashboardDateSelectionLabel(widget.dateSelection),
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: DashboardPalette.textMuted,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: DashboardPalette.textMuted),
           ),
           const SizedBox(height: 12),
           DropdownButtonFormField<bool?>(
@@ -151,10 +152,7 @@ class _MeterReadingHistoryContentState
                 value: true,
                 child: Text(s.isAr ? 'به صورة' : 'Has photo'),
               ),
-              DropdownMenuItem(
-                value: false,
-                child: Text(s.noPhoto),
-              ),
+              DropdownMenuItem(value: false, child: Text(s.noPhoto)),
             ],
             onChanged: (value) {
               setState(() => _photoFilter = value);
@@ -168,9 +166,9 @@ class _MeterReadingHistoryContentState
                   ? '${rows.length} قراءة في الفترة المحددة'
                   : '${rows.length} readings in selected period',
               style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: DashboardPalette.textMuted,
-                    fontWeight: FontWeight.w600,
-                  ),
+                color: DashboardPalette.textMuted,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             orElse: () => const SizedBox.shrink(),
           ),
@@ -250,11 +248,7 @@ class _MeterReadingHistoryContentState
     );
   }
 
-  DataRow _buildRow(
-    List<DashboardReadingRow> rows,
-    int index,
-    AppStrings s,
-  ) {
+  DataRow _buildRow(List<DashboardReadingRow> rows, int index, AppStrings s) {
     final row = rows[index];
     final reading = row.reading;
     double? consumption;
@@ -270,9 +264,9 @@ class _MeterReadingHistoryContentState
       cells: [
         DataCell(Text(formatDashboardDate(reading.readingDate))),
         DataCell(Text('${reading.rawValue} ${row.unitLabel}')),
-        DataCell(Text(
-          consumption != null ? consumption.toStringAsFixed(2) : '—',
-        )),
+        DataCell(
+          Text(consumption != null ? consumption.toStringAsFixed(2) : '—'),
+        ),
         DataCell(
           hasPhoto && photoPath != null && photoPath.isNotEmpty
               ? TextButton.icon(
@@ -344,7 +338,9 @@ class _MeterReadingHistoryContentState
                       },
                       errorBuilder: (_, _, _) => Center(
                         child: Text(
-                          s.isAr ? 'تعذّر تحميل الصورة' : 'Could not load photo',
+                          s.isAr
+                              ? 'تعذّر تحميل الصورة'
+                              : 'Could not load photo',
                         ),
                       ),
                     ),
@@ -359,9 +355,7 @@ class _MeterReadingHistoryContentState
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            s.isAr ? 'تعذّر فتح الصورة' : 'Could not open photo',
-          ),
+          content: Text(s.isAr ? 'تعذّر فتح الصورة' : 'Could not open photo'),
         ),
       );
     }

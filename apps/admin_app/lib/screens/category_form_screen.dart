@@ -5,6 +5,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../providers/catalog_providers.dart';
 import '../utils/catalog_validation.dart';
 import '../widgets/catalog_widgets.dart';
+import '../l10n/admin_strings.dart';
 
 class CategoryFormScreen extends ConsumerStatefulWidget {
   const CategoryFormScreen({super.key, this.category});
@@ -139,7 +140,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
         actions: [
           if (canManage)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilledButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
@@ -151,7 +152,7 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Save'),
+                    : Text(adminText(context, 'Save', 'حفظ')),
               ),
             ),
         ],
@@ -166,9 +167,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 Card(
                   margin: const EdgeInsets.only(bottom: 20),
                   color: Colors.blue.shade50,
-                  child: const ListTile(
+                  child: ListTile(
                     leading: Icon(Icons.info_outline),
-                    title: Text('System category'),
+                    title: Text(
+                      adminText(context, 'System category', 'فئة نظام'),
+                    ),
                     subtitle: Text(
                       'Code and base unit are locked. You can edit labels, '
                       'icon, color, and sort order.',
@@ -176,13 +179,21 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                   ),
                 ),
               CatalogFormSection(
-                title: 'Basic information',
-                subtitle: 'Identifiers and display names',
+                title: adminText(
+                  context,
+                  'Basic information',
+                  'المعلومات الأساسية',
+                ),
+                subtitle: adminText(
+                  context,
+                  'Identifiers and display names',
+                  'المعرّفات وأسماء العرض',
+                ),
                 children: [
                   TextFormField(
                     controller: _codeController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Code *',
+                      labelText: adminText(context, 'Code *', 'الرمز *'),
                       hintText: 'e.g. compressed_air',
                     ),
                     enabled: canManage && !_isProtected,
@@ -191,7 +202,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                   TextFormField(
                     controller: _nameEnController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'English name *',
+                      labelText: adminText(
+                        context,
+                        'English name *',
+                        'الاسم بالإنجليزية *',
+                      ),
                     ),
                     enabled: canManage,
                     validator: (v) => validateRequiredText(v, 'English name'),
@@ -199,14 +214,22 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                   TextFormField(
                     controller: _nameArController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Arabic name',
+                      labelText: adminText(
+                        context,
+                        'Arabic name',
+                        'الاسم بالعربية',
+                      ),
                     ),
                     enabled: canManage,
                   ),
                   TextFormField(
                     controller: _baseUnitController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Base unit code *',
+                      labelText: adminText(
+                        context,
+                        'Base unit code *',
+                        'رمز الوحدة الأساسية *',
+                      ),
                       hintText: 'e.g. m3, kwh',
                     ),
                     enabled: canManage && !_isProtected,
@@ -215,7 +238,11 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                   TextFormField(
                     controller: _sortOrderController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Sort order *',
+                      labelText: adminText(
+                        context,
+                        'Sort order *',
+                        'ترتيب العرض *',
+                      ),
                     ),
                     keyboardType: TextInputType.number,
                     enabled: canManage,
@@ -224,21 +251,29 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 ],
               ),
               CatalogFormSection(
-                title: 'Display options',
-                subtitle: 'Icon and color shown in entry apps',
+                title: adminText(context, 'Display options', 'خيارات العرض'),
+                subtitle: adminText(
+                  context,
+                  'Icon and color shown in entry apps',
+                  'الأيقونة واللون الظاهران في تطبيق الإدخال',
+                ),
                 children: [
                   TextFormField(
                     controller: _iconController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Icon',
-                      hintText: 'Material icon name',
+                      labelText: adminText(context, 'Icon', 'الأيقونة'),
+                      hintText: adminText(
+                        context,
+                        'Material icon name',
+                        'اسم أيقونة Material',
+                      ),
                     ),
                     enabled: canManage,
                   ),
                   TextFormField(
                     controller: _colorController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Color',
+                      labelText: adminText(context, 'Color', 'اللون'),
                       hintText: '#RRGGBB',
                     ),
                     enabled: canManage,
@@ -246,20 +281,44 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 ],
               ),
               CatalogFormSection(
-                title: 'COP / consumption flags',
-                subtitle: 'Energy performance and consumption behavior',
+                title: adminText(
+                  context,
+                  'COP / consumption flags',
+                  'خصائص COP / الاستهلاك',
+                ),
+                subtitle: adminText(
+                  context,
+                  'Energy performance and consumption behavior',
+                  'أداء الطاقة وسلوك الاستهلاك',
+                ),
                 children: [
                   CatalogSwitchTile(
-                    title: 'Supports COP output',
-                    subtitle: 'Category can report coefficient of performance',
+                    title: adminText(
+                      context,
+                      'Supports COP output',
+                      'يدعم مخرج COP',
+                    ),
+                    subtitle: adminText(
+                      context,
+                      'Category can report coefficient of performance',
+                      'يمكن للفئة عرض معامل الأداء',
+                    ),
                     value: _supportsCopOutput,
                     onChanged: canManage
                         ? (value) => setState(() => _supportsCopOutput = value)
                         : null,
                   ),
                   CatalogSwitchTile(
-                    title: 'Supports electric input (COP)',
-                    subtitle: 'Category accepts electric input for COP calc',
+                    title: adminText(
+                      context,
+                      'Supports electric input (COP)',
+                      'يدعم مدخل الكهرباء (COP)',
+                    ),
+                    subtitle: adminText(
+                      context,
+                      'Category accepts electric input for COP calc',
+                      'تقبل الفئة مدخل الكهرباء لحساب COP',
+                    ),
                     value: _supportsElectricInput,
                     onChanged: canManage
                         ? (value) =>
@@ -267,8 +326,16 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                         : null,
                   ),
                   CatalogSwitchTile(
-                    title: 'Consumption category',
-                    subtitle: 'Readings count as consumption',
+                    title: adminText(
+                      context,
+                      'Consumption category',
+                      'فئة استهلاك',
+                    ),
+                    subtitle: adminText(
+                      context,
+                      'Readings count as consumption',
+                      'تُحتسب القراءات كاستهلاك',
+                    ),
                     value: _isConsumptionCategory,
                     onChanged: canManage
                         ? (value) =>
@@ -278,11 +345,15 @@ class _CategoryFormScreenState extends ConsumerState<CategoryFormScreen> {
                 ],
               ),
               CatalogFormSection(
-                title: 'Status',
+                title: adminText(context, 'Status', 'الحالة'),
                 children: [
                   CatalogSwitchTile(
-                    title: 'Active',
-                    subtitle: 'Inactive categories are hidden from entry apps',
+                    title: adminText(context, 'Active', 'مفعّل'),
+                    subtitle: adminText(
+                      context,
+                      'Inactive categories are hidden from entry apps',
+                      'الفئات غير المفعّلة مخفية من تطبيق الإدخال',
+                    ),
                     value: _isActive,
                     onChanged: canManage
                         ? (value) => setState(() => _isActive = value)

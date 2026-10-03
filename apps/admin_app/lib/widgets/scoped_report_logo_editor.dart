@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'report_logo_crop_dialog.dart';
 import 'report_logo_slots_editor.dart';
+import '../l10n/admin_strings.dart';
 
 /// Single scoped logo slot (zone or site) for PDF top-left — 6×2 cm.
 class ScopedReportLogoEditor extends ConsumerStatefulWidget {
@@ -23,6 +24,7 @@ class ScopedReportLogoEditor extends ConsumerStatefulWidget {
   });
 
   final String organizationId;
+
   /// Relative key under org folder, e.g. `sites/{id}.png` or `zones/{id}.png`.
   final String storageKey;
   final String title;
@@ -68,7 +70,9 @@ class _ScopedReportLogoEditorState
     try {
       final path = '${widget.organizationId}/${widget.storageKey}';
       final client = ref.read(supabaseClientProvider);
-      await client.storage.from(kReportLogosBucket).uploadBinary(
+      await client.storage
+          .from(kReportLogosBucket)
+          .uploadBinary(
             path,
             cropped,
             fileOptions: const FileOptions(
@@ -80,7 +84,11 @@ class _ScopedReportLogoEditorState
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logo upload failed: $error')),
+        SnackBar(
+          content: Text(
+            adminText(context, 'Logo upload failed.', 'تعذّر رفع الشعار.'),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -105,10 +113,9 @@ class _ScopedReportLogoEditorState
               color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
             ),
             borderRadius: BorderRadius.circular(6),
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: 0.35),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
           ),
           clipBehavior: Clip.antiAlias,
           child: path == null || path.isEmpty
@@ -148,13 +155,11 @@ class _ScopedReportLogoEditorState
               child: Text(widget.canEdit ? 'Import' : 'Locked'),
             ),
             TextButton(
-              onPressed: widget.canEdit &&
-                      !_busy &&
-                      path != null &&
-                      path.isNotEmpty
+              onPressed:
+                  widget.canEdit && !_busy && path != null && path.isNotEmpty
                   ? () => widget.onPathChanged(null)
                   : null,
-              child: const Text('Clear'),
+              child: Text(adminText(context, 'Clear', 'مسح')),
             ),
           ],
         ),

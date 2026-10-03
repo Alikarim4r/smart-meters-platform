@@ -163,7 +163,7 @@ class _SitesTabState extends ConsumerState<SitesTab> {
 
                   if (filtered.isEmpty) {
                     return CatalogEmptyState(
-                      title: 'No sites',
+                      title: adminText(context, 'No sites', 'لا توجد مواقع'),
                       message: canCreate
                           ? 'No sites match your filters. Tap Add site to create one.'
                           : 'No sites match your filters.',
@@ -316,12 +316,20 @@ class _SitesTabState extends ConsumerState<SitesTab> {
                                       final confirmed = canForceDelete
                                           ? await confirmForceDelete(
                                               context: context,
-                                              title: 'Force-delete site?',
+                                              title: adminText(
+                                                context,
+                                                'Force-delete site?',
+                                                'حذف الموقع إجباريًا؟',
+                                              ),
                                               entityName: site.nameEn,
                                             )
                                           : await confirmRestrictedDelete(
                                               context: context,
-                                              title: 'Delete site?',
+                                              title: adminText(
+                                                context,
+                                                'Delete site?',
+                                                'حذف الموقع؟',
+                                              ),
                                               entityName: site.nameEn,
                                               restrictionMessage:
                                                   'Not allowed while meters, tanks, or other linked data still reference this site. '
@@ -535,7 +543,7 @@ class _SiteFormScreenState extends ConsumerState<SiteFormScreen> {
         actions: [
           if (canEdit)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilledButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
@@ -622,7 +630,7 @@ class _SiteFormScreenState extends ConsumerState<SiteFormScreen> {
                         .watch(organizationSiteTypesProvider(_organizationId!))
                         .when(
                           loading: () => const LinearProgressIndicator(),
-                          error: (error, _) => Text('$error'),
+                          error: (error, _) => Text(adminUserError(context)),
                           data: (types) {
                             final active = types
                                 .where((t) => t.isActive)
@@ -700,7 +708,11 @@ class _SiteFormScreenState extends ConsumerState<SiteFormScreen> {
               ),
               CatalogFormSection(
                 title: s.zone,
-                subtitle: 'Optional — headquarters may have no zone',
+                subtitle: adminText(
+                  context,
+                  'Optional — headquarters may have no zone',
+                  'اختياري — قد لا يتبع المقر الرئيسي لمنطقة',
+                ),
                 children: [
                   zonesAsync.when(
                     loading: () =>
@@ -762,7 +774,11 @@ class _SiteFormScreenState extends ConsumerState<SiteFormScreen> {
                 children: [
                   CatalogSwitchTile(
                     title: s.active,
-                    subtitle: 'Inactive sites are hidden from entry apps',
+                    subtitle: adminText(
+                      context,
+                      'Inactive sites are hidden from entry apps',
+                      'المواقع غير المفعّلة مخفية من تطبيق الإدخال',
+                    ),
                     value: _isActive,
                     onChanged: canEdit
                         ? (value) => setState(() => _isActive = value)
@@ -822,9 +838,9 @@ Future<String?> _showAddSiteTypeDialog(
               if (ctx.mounted) Navigator.pop(ctx, type.id);
             } catch (error) {
               if (ctx.mounted) {
-                ScaffoldMessenger.of(
-                  ctx,
-                ).showSnackBar(SnackBar(content: Text('$error')));
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text(adminUserError(context))),
+                );
               }
             }
           },

@@ -1,6 +1,5 @@
 import '../../domain/cumulative_consumption.dart';
 import '../domain/baseline_approval_gates.dart';
-import '../domain/period_windows.dart';
 import '../models/calculation_meta.dart';
 import '../models/conservation_baseline.dart';
 import 'period_comparison_service.dart';

@@ -34,6 +34,22 @@ class _NotificationSettingsScreenState
     });
   }
 
+  Future<void> _requestSystemPermission(AdminStrings s) async {
+    await LocalNotificationDelivery.instance.initialize();
+    final granted = await LocalNotificationDelivery.instance
+        .requestPermission();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          granted
+              ? s.notificationPermissionGranted
+              : s.notificationPermissionNotGranted,
+        ),
+      ),
+    );
+  }
+
   Future<void> _save(NotificationSoundPrefs next) async {
     await LocalNotificationDelivery.instance.updatePrefs(next);
     if (!mounted) return;
@@ -61,9 +77,24 @@ class _NotificationSettingsScreenState
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 16),
+        Card(
+          child: ListTile(
+            leading: const Icon(Icons.notifications_active_outlined),
+            title: Text(s.enableSystemNotifications),
+            subtitle: Text(s.systemNotificationsHint),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => _requestSystemPermission(s),
+          ),
+        ),
+        const SizedBox(height: 12),
         SwitchListTile(
-          title: const Text('صوت إشعارات الستارة'),
-          subtitle: const Text('تشغيل الصوت عند تنبيهات التحذير والحرج'),
+          title: Text(s.text('Notification sound', 'صوت الإشعارات')),
+          subtitle: Text(
+            s.text(
+              'Play sound for warning and critical alerts',
+              'تشغيل الصوت عند تنبيهات التحذير والحرج',
+            ),
+          ),
           value: _prefs.soundEnabled,
           onChanged: (v) => _save(
             NotificationSoundPrefs(
@@ -73,13 +104,22 @@ class _NotificationSettingsScreenState
           ),
         ),
         const SizedBox(height: 8),
-        Text('أدنى شدة للصوت', style: Theme.of(context).textTheme.titleSmall),
+        Text(
+          s.text('Minimum sound severity', 'أدنى شدة للصوت'),
+          style: Theme.of(context).textTheme.titleSmall,
+        ),
         const SizedBox(height: 8),
         SegmentedButton<String>(
-          segments: const [
-            ButtonSegment(value: 'info', label: Text('الكل')),
-            ButtonSegment(value: 'warning', label: Text('تحذير+')),
-            ButtonSegment(value: 'critical', label: Text('حرج فقط')),
+          segments: [
+            ButtonSegment(value: 'info', label: Text(s.text('All', 'الكل'))),
+            ButtonSegment(
+              value: 'warning',
+              label: Text(s.text('Warning+', 'تحذير+')),
+            ),
+            ButtonSegment(
+              value: 'critical',
+              label: Text(s.text('Critical only', 'حرج فقط')),
+            ),
           ],
           selected: {_prefs.minSeverity},
           onSelectionChanged: (set) => _save(

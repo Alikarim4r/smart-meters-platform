@@ -7,36 +7,37 @@ import '../providers/admin_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 
-final _siteBalanceGroupsEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  final water = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.waterBalance,
-    siteId: siteId,
-  );
-  if (water) return true;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.energyBalance,
-    siteId: siteId,
-  );
-});
+final _siteBalanceGroupsEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      final water = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.waterBalance,
+        siteId: siteId,
+      );
+      if (water) return true;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.energyBalance,
+        siteId: siteId,
+      );
+    });
 
-final _siteBalanceGroupsProvider =
-    FutureProvider.autoDispose.family<List<BalanceGroup>, String>((ref, siteId) {
-  return BalanceGroupRepository(ref.read(supabaseClientProvider))
-      .listForSite(siteId);
-});
+final _siteBalanceGroupsProvider = FutureProvider.autoDispose
+    .family<List<BalanceGroup>, String>((ref, siteId) {
+      return BalanceGroupRepository(
+        ref.read(supabaseClientProvider),
+      ).listForSite(siteId);
+    });
 
 /// Admin UI for balance groups (gated by conservation_module + water/energy_balance).
 class BalanceGroupsAdminScreen extends ConsumerWidget {
@@ -86,8 +87,7 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => CatalogErrorView(
               message: e.toString(),
-              onRetry: () =>
-                  ref.invalidate(_siteBalanceGroupsProvider(siteId)),
+              onRetry: () => ref.invalidate(_siteBalanceGroupsProvider(siteId)),
             ),
             data: (groups) {
               if (groups.isEmpty) {
@@ -140,9 +140,14 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
                                       );
                                     } catch (e) {
                                       if (!context.mounted) return;
-                                      ScaffoldMessenger.of(context)
-                                          .showSnackBar(
-                                        SnackBar(content: Text('$e')),
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            adminUserError(context),
+                                          ),
+                                        ),
                                       );
                                     }
                                   },
@@ -163,13 +168,16 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
 
   Future<void> _openCreate(BuildContext context, WidgetRef ref) async {
     final s = AdminStrings(ref.read(adminLocaleProvider));
-    final siteMeters =
-        await ref.read(meterRepositoryProvider).getMetersForSite(siteId);
+    final siteMeters = await ref
+        .read(meterRepositoryProvider)
+        .getMetersForSite(siteId);
     final physical = siteMeters
-        .where((m) =>
-            m.isActive &&
-            m.meterKind == MeterKind.physical &&
-            m.calculationType == CalculationType.directReading)
+        .where(
+          (m) =>
+              m.isActive &&
+              m.meterKind == MeterKind.physical &&
+              m.calculationType == CalculationType.directReading,
+        )
         .toList();
     if (!context.mounted) return;
     if (physical.isEmpty) {
@@ -187,8 +195,9 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
     var unitCode = 'm³';
     String? mainId = physical.first.id;
     final selected = <String>{};
-    final nameCtrl =
-        TextEditingController(text: 'Balance ${physical.first.meterCode}');
+    final nameCtrl = TextEditingController(
+      text: 'Balance ${physical.first.meterCode}',
+    );
     final unitCtrl = TextEditingController(text: unitCode);
 
     final ok = await showDialog<bool>(
@@ -197,8 +206,8 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setLocal) {
             final filtered = physical.where((m) {
-              final code =
-                  (m.categoryConfig?.code ?? m.category.dbValue).toLowerCase();
+              final code = (m.categoryConfig?.code ?? m.category.dbValue)
+                  .toLowerCase();
               return utility == 'water'
                   ? code.contains('water')
                   : code.contains('electric');
@@ -213,19 +222,25 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
                     children: [
                       TextField(
                         controller: nameCtrl,
-                        decoration: const InputDecoration(labelText: 'Name'),
+                        decoration: InputDecoration(
+                          labelText: adminText(context, 'Name', 'الاسم'),
+                        ),
                       ),
                       DropdownButtonFormField<String>(
                         initialValue: utility,
-                        decoration: const InputDecoration(labelText: 'Utility'),
-                        items: const [
+                        decoration: InputDecoration(
+                          labelText: adminText(context, 'Utility', 'الخدمة'),
+                        ),
+                        items: [
                           DropdownMenuItem(
-                            value: 'water',
-                            child: Text('water'),
+                            value: adminText(context, 'water', 'مياه'),
+                            child: Text(adminText(context, 'water', 'مياه')),
                           ),
                           DropdownMenuItem(
-                            value: 'electricity',
-                            child: Text('electricity'),
+                            value: adminText(context, 'electricity', 'كهرباء'),
+                            child: Text(
+                              adminText(context, 'electricity', 'كهرباء'),
+                            ),
                           ),
                         ],
                         onChanged: (v) {
@@ -234,21 +249,29 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
                             utility = v;
                             unitCode = v == 'water' ? 'm³' : 'kWh';
                             unitCtrl.text = unitCode;
-                            mainId =
-                                filtered.isNotEmpty ? filtered.first.id : null;
+                            mainId = filtered.isNotEmpty
+                                ? filtered.first.id
+                                : null;
                             selected.clear();
                           });
                         },
                       ),
                       TextField(
-                        decoration: const InputDecoration(labelText: 'Unit'),
+                        decoration: InputDecoration(
+                          labelText: adminText(context, 'Unit', 'الوحدة'),
+                        ),
                         controller: unitCtrl,
                         onChanged: (v) => unitCode = v,
                       ),
                       DropdownButtonFormField<String>(
                         initialValue: mainId,
-                        decoration:
-                            const InputDecoration(labelText: 'Main meter'),
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Main meter',
+                            'العداد الرئيسي',
+                          ),
+                        ),
                         items: [
                           for (final m in filtered)
                             DropdownMenuItem(
@@ -259,9 +282,15 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
                         onChanged: (v) => setLocal(() => mainId = v),
                       ),
                       const SizedBox(height: 8),
-                      const Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text('Member submeters'),
+                      Align(
+                        alignment: AlignmentDirectional.centerStart,
+                        child: Text(
+                          adminText(
+                            context,
+                            'Member submeters',
+                            'العدادات الفرعية الأعضاء',
+                          ),
+                        ),
                       ),
                       for (final m in filtered)
                         if (m.id != mainId)
@@ -280,8 +309,12 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
                             },
                           ),
                       const SizedBox(height: 8),
-                      const Text(
-                        'Labels: Balance Difference only — never auto Leak.',
+                      Text(
+                        adminText(
+                          context,
+                          'Labels: Balance Difference only — never auto Leak.',
+                          'التسمية: فرق الموازنة فقط — ولا يُصنف تسربًا تلقائيًا.',
+                        ),
                         style: TextStyle(fontSize: 12),
                       ),
                     ],
@@ -324,7 +357,9 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
       ref.invalidate(_siteBalanceGroupsProvider(siteId));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -347,9 +382,7 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setLocal) {
             return AlertDialog(
-              title: Text(
-                s.isAr ? 'تصنيف بشري' : 'Human classification',
-              ),
+              title: Text(s.isAr ? 'تصنيف بشري' : 'Human classification'),
               content: SizedBox(
                 width: 420,
                 child: Column(
@@ -362,8 +395,12 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
                     const SizedBox(height: 8),
                     DropdownButtonFormField<BalanceClassificationType>(
                       initialValue: classification,
-                      decoration: const InputDecoration(
-                        labelText: 'Classification (human-reviewed)',
+                      decoration: InputDecoration(
+                        labelText: adminText(
+                          context,
+                          'Classification (human-reviewed)',
+                          'التصنيف (مراجعة بشرية)',
+                        ),
                       ),
                       items: [
                         for (final t in BalanceClassificationType.values)
@@ -383,18 +420,30 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
                     ),
                     TextField(
                       controller: notesCtrl,
-                      decoration: const InputDecoration(labelText: 'Notes'),
+                      decoration: InputDecoration(
+                        labelText: adminText(context, 'Notes', 'ملاحظات'),
+                      ),
                       maxLines: 2,
                     ),
                     CheckboxListTile(
                       dense: true,
                       value: humanReviewed,
-                      title: const Text('Human reviewed'),
+                      title: Text(
+                        adminText(
+                          context,
+                          'Human reviewed',
+                          'تمت مراجعته بشريًا',
+                        ),
+                      ),
                       onChanged: (v) =>
                           setLocal(() => humanReviewed = v ?? false),
                     ),
-                    const Text(
-                      'Confirmed Leak is never auto-assigned.',
+                    Text(
+                      adminText(
+                        context,
+                        'Confirmed Leak is never auto-assigned.',
+                        'لا يتم تعيين تسرب مؤكد تلقائيًا أبدًا.',
+                      ),
                       style: TextStyle(fontSize: 12),
                     ),
                   ],
@@ -419,8 +468,9 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
 
     final userId = ref.read(supabaseClientProvider).auth.currentUser?.id;
     try {
-      await BalanceClassificationRepository(ref.read(supabaseClientProvider))
-          .upsert(
+      await BalanceClassificationRepository(
+        ref.read(supabaseClientProvider),
+      ).upsert(
         siteId: siteId,
         balanceGroupId: group.id,
         periodStart: periodStart,
@@ -434,14 +484,14 @@ class BalanceGroupsAdminScreen extends ConsumerWidget {
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            s.isAr ? 'تم حفظ التصنيف' : 'Classification saved',
-          ),
+          content: Text(s.isAr ? 'تم حفظ التصنيف' : 'Classification saved'),
         ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 }

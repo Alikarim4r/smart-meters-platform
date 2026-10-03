@@ -4,6 +4,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../utils/admin_validation.dart';
 import '../widgets/catalog_widgets.dart';
+import '../l10n/admin_strings.dart';
 
 /// Quick-create a meter with schema-neutral hierarchy defaults (v2 owns links).
 Future<Meter?> showQuickCreateMainMeterDialog({
@@ -95,7 +96,7 @@ class _QuickCreateMainMeterDialogState
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Create meter'),
+      title: Text(adminText(context, 'Create meter', 'إنشاء عداد')),
       content: SizedBox(
         width: 420,
         child: Form(
@@ -106,21 +107,37 @@ class _QuickCreateMainMeterDialogState
               children: [
                 TextFormField(
                   controller: _code,
-                  decoration: catalogFieldDecoration(labelText: 'Meter code *'),
+                  decoration: catalogFieldDecoration(
+                    labelText: adminText(
+                      context,
+                      'Meter code *',
+                      'رمز العداد *',
+                    ),
+                  ),
                   validator: validateMeterCode,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _nameEn,
                   decoration: catalogFieldDecoration(
-                    labelText: 'English name *',
+                    labelText: adminText(
+                      context,
+                      'English name *',
+                      'الاسم بالإنجليزية *',
+                    ),
                   ),
                   validator: validateSiteNameEn,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _nameAr,
-                  decoration: catalogFieldDecoration(labelText: 'Arabic name'),
+                  decoration: catalogFieldDecoration(
+                    labelText: adminText(
+                      context,
+                      'Arabic name',
+                      'الاسم بالعربية',
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -130,7 +147,7 @@ class _QuickCreateMainMeterDialogState
       actions: [
         TextButton(
           onPressed: _saving ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(adminText(context, 'Cancel', 'إلغاء')),
         ),
         FilledButton(
           onPressed: _saving ? null : _save,
@@ -140,7 +157,7 @@ class _QuickCreateMainMeterDialogState
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Create'),
+              : Text(adminText(context, 'Create', 'إنشاء')),
         ),
       ],
     );

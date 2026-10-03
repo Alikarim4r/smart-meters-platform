@@ -28,14 +28,14 @@ class SiteReportsPanel extends ConsumerWidget {
     final s = AppStrings.of(context);
     final padding = DashboardBreakpoints.contentPadding(context);
     final categoriesAsync = ref.watch(siteCategoriesSummaryProvider(siteId));
-    final conservationReportsOn = ref
-            .watch(conservationReportsEnabledProvider(siteId))
-            .valueOrNull ??
+    final conservationReportsOn =
+        ref.watch(conservationReportsEnabledProvider(siteId)).valueOrNull ??
         false;
 
     return categoriesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => DashboardErrorState(message: '$e'),
+      error: (e, _) =>
+          DashboardErrorState(message: AppStrings.of(context).genericError),
       data: (categories) {
         return ListView(
           padding: EdgeInsets.all(padding),
@@ -48,11 +48,7 @@ class SiteReportsPanel extends ConsumerWidget {
               title: s.reportSiteOverview,
               subtitle: s.reportSiteOverviewSubtitle,
               icon: Icons.dashboard_outlined,
-              onTap: () => _export(
-                context,
-                ref,
-                type: ReportType.siteSummary,
-              ),
+              onTap: () => _export(context, ref, type: ReportType.siteSummary),
             ),
             for (final system in UtilitySystemKey.values) ...[
               if (categorySummaryForUtility(categories, system) != null)
@@ -62,18 +58,18 @@ class SiteReportsPanel extends ConsumerWidget {
                   icon: system == UtilitySystemKey.water
                       ? Icons.water_drop_outlined
                       : system == UtilitySystemKey.electricity
-                          ? Icons.bolt_outlined
-                          : system == UtilitySystemKey.btu
-                              ? Icons.ac_unit_outlined
-                              : Icons.local_gas_station_outlined,
+                      ? Icons.bolt_outlined
+                      : system == UtilitySystemKey.btu
+                      ? Icons.ac_unit_outlined
+                      : Icons.local_gas_station_outlined,
                   onTap: () => _export(
                     context,
                     ref,
                     type: ReportType.categoryConsumption,
-                    categoryId:
-                        categorySummaryForUtility(categories, system)!
-                            .category
-                            .id,
+                    categoryId: categorySummaryForUtility(
+                      categories,
+                      system,
+                    )!.category.id,
                   ),
                 ),
             ],
@@ -144,7 +140,10 @@ class _ReportTile extends StatelessWidget {
       child: DashboardCard(
         child: ListTile(
           leading: Icon(icon, color: AppColors.navy),
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.w700),
+          ),
           subtitle: Text(subtitle),
           trailing: const Icon(Icons.chevron_right),
           onTap: onTap,

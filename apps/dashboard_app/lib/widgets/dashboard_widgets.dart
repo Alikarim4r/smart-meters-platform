@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../l10n/app_strings.dart';
+import '../theme/dashboard_theme.dart';
 
 import '../theme/glass_surface.dart';
 
@@ -43,6 +44,7 @@ class DashboardSummaryTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = dashboardColors(context);
     final accent = color ?? theme.colorScheme.primary;
 
     return DashboardCard(
@@ -64,7 +66,7 @@ class DashboardSummaryTile extends StatelessWidget {
           Text(
             label,
             style: theme.textTheme.bodySmall?.copyWith(
-              color: Colors.grey.shade700,
+              color: colors.textMuted,
             ),
           ),
         ],
@@ -118,21 +120,38 @@ class DashboardEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colors = dashboardColors(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 56, color: Colors.grey.shade400),
+            Container(
+              width: 72,
+              height: 72,
+              decoration: BoxDecoration(
+                color: colors.cardElevated,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: colors.border),
+              ),
+              child: Icon(icon, size: 34, color: colors.navyMuted),
+            ),
             const SizedBox(height: 16),
-            Text(title, textAlign: TextAlign.center),
+            Text(
+              title,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: colors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                  ),
+            ),
             if (subtitle != null) ...[
               const SizedBox(height: 8),
               Text(
                 subtitle!,
                 textAlign: TextAlign.center,
-                style: TextStyle(color: Colors.grey.shade600),
+                style: TextStyle(color: colors.textMuted),
               ),
             ],
           ],
@@ -215,6 +234,7 @@ class DashboardSiteListTile extends StatelessWidget {
     final s = AppStrings.of(context);
     final site = overview.site;
     final theme = Theme.of(context);
+    final colors = dashboardColors(context);
 
     return DashboardCard(
       child: InkWell(
@@ -245,14 +265,14 @@ class DashboardSiteListTile extends StatelessWidget {
               Text(
                 '${s.zoneDisplayName(site.displayZoneName)} · ${s.siteTypeLabel(site.siteType)}',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  color: Colors.grey.shade700,
+                  color: colors.textMuted,
                 ),
               ),
               if (site.location != null && site.location!.isNotEmpty)
                 Text(
                   site.location!,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: Colors.grey.shade600,
+                    color: colors.textMuted,
                   ),
                 ),
               const SizedBox(height: 10),
@@ -300,13 +320,22 @@ class _ChipLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
+    final colors = dashboardColors(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
+      decoration: BoxDecoration(
+        color: colors.cardElevated,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: colors.border.withValues(alpha: 0.8)),
+      ),
+      child: Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon, size: 14, color: Colors.grey.shade600),
+        Icon(icon, size: 14, color: colors.textMuted),
         const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey.shade700)),
+        Text(label, style: TextStyle(fontSize: 12, color: colors.textMuted)),
       ],
+      ),
     );
   }
 }
@@ -341,8 +370,12 @@ class DashboardReadingThumbnail extends StatelessWidget {
           errorBuilder: (_, _, _) => Container(
             width: size,
             height: size,
-            color: Colors.grey.shade200,
-            child: Icon(Icons.broken_image_outlined, size: size * 0.36),
+            color: dashboardColors(context).cardElevated,
+            child: Icon(
+              Icons.broken_image_outlined,
+              size: size * 0.36,
+              color: dashboardColors(context).textMuted,
+            ),
           ),
         ),
       ),

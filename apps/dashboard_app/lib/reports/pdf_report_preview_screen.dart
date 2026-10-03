@@ -7,6 +7,7 @@ import 'package:printing/printing.dart';
 
 import 'report_file_service.dart';
 import 'report_models.dart';
+import '../l10n/app_strings.dart';
 
 /// On-screen preview of an A4 PDF, scaled to fit the phone width while
 /// keeping true A4 proportions (210×297 mm).
@@ -45,15 +46,11 @@ class PdfReportPreviewScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: theme.colorScheme.surfaceContainerHighest,
       appBar: AppBar(
-        title: Text(
-          filename,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-        ),
+        title: Text(filename, maxLines: 1, overflow: TextOverflow.ellipsis),
         actions: [
           if (savedFile != null && fileService != null) ...[
             IconButton(
-              tooltip: 'Share',
+              tooltip: dashboardText(context, 'Share', 'مشاركة'),
               icon: const Icon(Icons.share_outlined),
               onPressed: () async {
                 try {
@@ -61,14 +58,16 @@ class PdfReportPreviewScreen extends StatelessWidget {
                 } catch (error) {
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('Share failed: $error')),
+                      SnackBar(
+                        content: Text(AppStrings.of(context).genericError),
+                      ),
                     );
                   }
                 }
               },
             ),
             IconButton(
-              tooltip: 'Open',
+              tooltip: dashboardText(context, 'Open', 'فتح'),
               icon: const Icon(Icons.open_in_new),
               onPressed: () async {
                 final result = await fileService!.openReport(savedFile!);

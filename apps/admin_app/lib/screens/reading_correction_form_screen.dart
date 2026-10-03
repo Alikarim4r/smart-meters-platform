@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/admin_strings.dart';
 import '../providers/correction_providers.dart';
 import 'reading_audit_history_screen.dart';
 
@@ -47,6 +48,7 @@ class _ReadingCorrectionFormScreenState
   }
 
   Future<void> _replacePhoto(ReadingCorrectionDetails details) async {
+    final genericError = adminUserError(context);
     final profile = ref.read(authProvider).profile;
     if (profile == null) return;
     final picker = ImagePicker();
@@ -60,7 +62,9 @@ class _ReadingCorrectionFormScreenState
     // Resolve organization from site via accessible sites list if needed.
     String? organizationId;
     try {
-      final sites = await ref.read(siteRepositoryProvider).getAccessibleSites(profile);
+      final sites = await ref
+          .read(siteRepositoryProvider)
+          .getAccessibleSites(profile);
       for (final site in sites) {
         if (site.id == details.reading.siteId) {
           organizationId = site.organizationId;
@@ -74,7 +78,9 @@ class _ReadingCorrectionFormScreenState
     try {
       final bytes = await file.readAsBytes();
       final oldPath = details.reading.imageStoragePath;
-      await ref.read(readingCorrectionRepositoryProvider).replaceReadingPhoto(
+      await ref
+          .read(readingCorrectionRepositoryProvider)
+          .replaceReadingPhoto(
             readingId: widget.readingId,
             bytes: bytes,
             organizationId: organizationId,
@@ -86,21 +92,25 @@ class _ReadingCorrectionFormScreenState
       ref.invalidate(adminCorrectionsProvider);
       _showMessage('Photo updated.');
     } catch (error) {
-      _showMessage('Could not update photo: $error');
+      _showMessage(genericError);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
   }
 
   Future<void> _deletePhoto(ReadingCorrectionDetails details) async {
+    final genericError = adminUserError(context);
     final path = details.reading.imageStoragePath;
     if (path == null || path.trim().isEmpty) return;
 
     final confirmed = await _confirmDialog(
-      title: 'Delete photo?',
-      message:
-          'This removes the reading photo permanently. The numeric reading stays unchanged.',
-      confirmLabel: 'Delete photo',
+      title: adminText(context, 'Delete photo?', 'حذف الصورة؟'),
+      message: adminText(
+        context,
+        'This removes the reading photo permanently. The numeric reading stays unchanged.',
+        'سيؤدي هذا إلى حذف صورة القراءة نهائيًا مع بقاء القيمة الرقمية دون تغيير.',
+      ),
+      confirmLabel: adminText(context, 'Delete photo', 'حذف الصورة'),
       isCritical: true,
     );
     if (!confirmed) return;
@@ -118,7 +128,7 @@ class _ReadingCorrectionFormScreenState
       ref.invalidate(adminCorrectionsProvider);
       _showMessage('Photo deleted.');
     } catch (error) {
-      _showMessage('Could not delete photo: $error');
+      _showMessage(genericError);
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -144,11 +154,15 @@ class _ReadingCorrectionFormScreenState
 
     if (validation.requiresLowerThanPreviousConfirm) {
       final confirmed = await _confirmDialog(
-        title: 'Lower than previous reading',
+        title: adminText(
+          context,
+          'Lower than previous reading',
+          'أقل من القراءة السابقة',
+        ),
         message:
             'The corrected value ($parsed) is lower than the previous reading (${details.previousValue}). '
             'This is unusual. Confirm you want to proceed.',
-        confirmLabel: 'Confirm correction',
+        confirmLabel: adminText(context, 'Confirm correction', 'تأكيد التصحيح'),
         isCritical: true,
       );
       if (!confirmed) return;
@@ -158,11 +172,15 @@ class _ReadingCorrectionFormScreenState
 
     if (validation.requiresGreaterThanNextWarning) {
       final acknowledged = await _confirmDialog(
-        title: 'Greater than next reading',
+        title: adminText(
+          context,
+          'Greater than next reading',
+          'أكبر من القراءة التالية',
+        ),
         message:
             'The corrected value ($parsed) is greater than the next reading (${details.nextValue}). '
             'This may indicate an ordering issue. Proceed anyway?',
-        confirmLabel: 'Proceed',
+        confirmLabel: adminText(context, 'Proceed', 'متابعة'),
         isCritical: false,
       );
       if (!acknowledged) return;
@@ -203,7 +221,7 @@ class _ReadingCorrectionFormScreenState
     } on CorrectionValidationException catch (error) {
       _showMessage(error.message);
     } catch (error) {
-      _showMessage('Failed to save correction: $error');
+      _showMessage(adminUserError(context));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -227,7 +245,7 @@ class _ReadingCorrectionFormScreenState
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -253,10 +271,10 @@ class _ReadingCorrectionFormScreenState
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Correct reading'),
+        title: Text(adminText(context, 'Correct reading', 'تصحيح القراءة')),
         actions: [
           IconButton(
-            tooltip: 'Audit history',
+            tooltip: adminText(context, 'Audit history', 'سجل التدقيق'),
             icon: const Icon(Icons.history),
             onPressed: () {
               Navigator.of(context).push(
@@ -271,7 +289,7 @@ class _ReadingCorrectionFormScreenState
       ),
       body: detailsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        error: (error, _) => Center(child: Text(adminUserError(context))),
         data: (details) {
           _initializeFields(details);
           final reading = details.reading;
@@ -324,14 +342,16 @@ class _ReadingCorrectionFormScreenState
                 Row(
                   children: [
                     Text(
-                      'Photo',
+                      adminText(context, 'Photo', 'الصورة'),
                       style: Theme.of(context).textTheme.titleSmall,
                     ),
                     const Spacer(),
                     TextButton.icon(
                       onPressed: _saving ? null : () => _replacePhoto(details),
                       icon: const Icon(Icons.add_a_photo_outlined),
-                      label: const Text('Replace photo'),
+                      label: Text(
+                        adminText(context, 'Replace photo', 'استبدال الصورة'),
+                      ),
                     ),
                     TextButton.icon(
                       onPressed: _saving ? null : () => _deletePhoto(details),
@@ -340,7 +360,7 @@ class _ReadingCorrectionFormScreenState
                         color: Theme.of(context).colorScheme.error,
                       ),
                       label: Text(
-                        'Delete photo',
+                        adminText(context, 'Delete photo', 'حذف الصورة'),
                         style: TextStyle(
                           color: Theme.of(context).colorScheme.error,
                         ),
@@ -376,13 +396,13 @@ class _ReadingCorrectionFormScreenState
                 OutlinedButton.icon(
                   onPressed: _saving ? null : () => _replacePhoto(details),
                   icon: const Icon(Icons.add_a_photo_outlined),
-                  label: const Text('Add photo'),
+                  label: Text(adminText(context, 'Add photo', 'إضافة صورة')),
                 ),
               ],
               if (details.relatedAlerts.isNotEmpty) ...[
                 const SizedBox(height: 12),
                 Text(
-                  'Related alerts',
+                  adminText(context, 'Related alerts', 'التنبيهات المرتبطة'),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 8),
@@ -401,20 +421,28 @@ class _ReadingCorrectionFormScreenState
                 ),
                 const SizedBox(height: 4),
                 Text(
-                  'Related alerts may disappear after correction if resolved.',
+                  adminText(
+                    context,
+                    'Related alerts may disappear after correction if resolved.',
+                    'قد تختفي التنبيهات المرتبطة بعد التصحيح إذا تمت معالجتها.',
+                  ),
                   style: Theme.of(context).textTheme.bodySmall,
                 ),
               ],
               const Divider(height: 32),
               Text(
-                'Correction',
+                adminText(context, 'Correction', 'التصحيح'),
                 style: Theme.of(context).textTheme.titleMedium,
               ),
               const SizedBox(height: 12),
               TextFormField(
                 controller: _valueController,
                 decoration: InputDecoration(
-                  labelText: 'Corrected value *',
+                  labelText: adminText(
+                    context,
+                    'Corrected value *',
+                    'القيمة المصححة *',
+                  ),
                   suffixText: reading.unitLabel,
                   border: const OutlineInputBorder(),
                 ),
@@ -429,8 +457,12 @@ class _ReadingCorrectionFormScreenState
               const SizedBox(height: 12),
               TextFormField(
                 controller: _noteController,
-                decoration: const InputDecoration(
-                  labelText: 'Corrected note',
+                decoration: InputDecoration(
+                  labelText: adminText(
+                    context,
+                    'Corrected note',
+                    'ملاحظة التصحيح',
+                  ),
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 2,
@@ -439,15 +471,19 @@ class _ReadingCorrectionFormScreenState
               DropdownButtonFormField<CorrectionReason?>(
                 initialValue: _reason,
                 isExpanded: true,
-                decoration: const InputDecoration(
-                  labelText: 'Correction reason *',
+                decoration: InputDecoration(
+                  labelText: adminText(
+                    context,
+                    'Correction reason *',
+                    'سبب التصحيح *',
+                  ),
                   border: OutlineInputBorder(),
                 ),
                 items: [
-                  const DropdownMenuItem<CorrectionReason?>(
+                  DropdownMenuItem<CorrectionReason?>(
                     value: null,
                     child: Text(
-                      'Select reason',
+                      adminText(context, 'Select reason', 'اختر السبب'),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -468,8 +504,12 @@ class _ReadingCorrectionFormScreenState
               const SizedBox(height: 12),
               TextFormField(
                 controller: _internalCommentController,
-                decoration: const InputDecoration(
-                  labelText: 'Internal comment (admin only)',
+                decoration: InputDecoration(
+                  labelText: adminText(
+                    context,
+                    'Internal comment (admin only)',
+                    'تعليق داخلي (للمسؤول فقط)',
+                  ),
                   border: OutlineInputBorder(),
                 ),
                 maxLines: 2,
@@ -506,7 +546,7 @@ class _ReadingCorrectionFormScreenState
                           ),
                         );
                       },
-                      child: const Text('View all'),
+                      child: Text(adminText(context, 'View all', 'عرض الكل')),
                     ),
                   ],
                 ),

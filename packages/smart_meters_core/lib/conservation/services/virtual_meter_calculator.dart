@@ -1,7 +1,6 @@
 import '../../domain/cumulative_consumption.dart';
 import '../../domain/unit_conversion.dart';
 import '../../models/enums.dart';
-import '../domain/period_windows.dart';
 import '../domain/virtual_meter_validation.dart';
 import '../models/calculation_meta.dart';
 import '../models/virtual_meter_result.dart';
@@ -364,7 +363,7 @@ class VirtualMeterCalculator {
     required String expression,
   }) {
     return CalculationMeta(
-      calculationMethod: '${method}:${calculationType.dbValue}',
+      calculationMethod: '$method:${calculationType.dbValue}',
       periodStart: start,
       periodEnd: end,
       dataCompleteness: completeness,
@@ -399,7 +398,7 @@ class VirtualMeterCalculator {
     List<String> warnings = const [],
   }) {
     final meta = CalculationMeta(
-      calculationMethod: '${method}:${calculationType.dbValue}',
+      calculationMethod: '$method:${calculationType.dbValue}',
       periodStart: start,
       periodEnd: end,
       dataCompleteness: completeness,

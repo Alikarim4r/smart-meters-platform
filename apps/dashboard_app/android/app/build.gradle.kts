@@ -13,6 +13,16 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+
+val releaseTaskRequested = gradle.startParameter.taskNames.any {
+    it.contains("release", ignoreCase = true)
+}
+if (releaseTaskRequested && !keystorePropertiesFile.exists()) {
+    throw GradleException(
+        "Release signing requires key.properties. Refusing to use debug signing.",
+    )
+}
+
 android {
     namespace = "com.smartmeters.dashboard_app"
     compileSdk = flutter.compileSdkVersion
@@ -46,13 +56,11 @@ android {
 
     buildTypes {
         release {
-            signingConfig = if (keystorePropertiesFile.exists()) {
-                signingConfigs.getByName("release")
-            } else {
-                // Debug signing until key.properties is provided (see key.properties.example).
-                signingConfigs.getByName("debug")
+            // Never publish a release artifact signed with the debug key. Debug
+            // builds remain unaffected when key.properties is intentionally absent.
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
             }
-            // AGP 9 R8 full mode can strip WorkManager Room constructors used via reflection.
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",

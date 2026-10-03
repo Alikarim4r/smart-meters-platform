@@ -39,4 +39,42 @@ void main() {
     expect(intent?.kind, PartnerLinkKind.adminSite);
     expect(intent?.siteId, siteId);
   });
+  group('configured HTTPS base matching', () {
+    test('accepts exact host and path segment prefix', () {
+      expect(
+        partnerWebBaseMatchesForTest(
+          Uri.parse('https://meters.example.com/dashboard?site=1'),
+          'https://meters.example.com/dashboard',
+        ),
+        isTrue,
+      );
+    });
+
+    test('rejects host prefix confusion and path lookalikes', () {
+      expect(
+        partnerWebBaseMatchesForTest(
+          Uri.parse('https://meters.example.com.evil.test/dashboard?site=1'),
+          'https://meters.example.com/dashboard',
+        ),
+        isFalse,
+      );
+      expect(
+        partnerWebBaseMatchesForTest(
+          Uri.parse('https://meters.example.com/dashboard-evil?site=1'),
+          'https://meters.example.com/dashboard',
+        ),
+        isFalse,
+      );
+    });
+
+    test('rejects non-https configured bases', () {
+      expect(
+        partnerWebBaseMatchesForTest(
+          Uri.parse('https://meters.example.com/dashboard'),
+          'http://meters.example.com/dashboard',
+        ),
+        isFalse,
+      );
+    });
+  });
 }

@@ -5,6 +5,7 @@ import '../offline/local_reading_draft.dart';
 import '../photos/reading_photo_models.dart';
 import '../screens/photo_preview_screen.dart';
 import 'local_photo_image.dart';
+import '../l10n/entry_strings.dart';
 
 class ReadingPhotoSection extends StatelessWidget {
   const ReadingPhotoSection({
@@ -60,13 +61,16 @@ class ReadingPhotoSection extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(Icons.photo_camera_outlined, color: Colors.blueGrey.shade700),
+              Icon(
+                Icons.photo_camera_outlined,
+                color: Colors.blueGrey.shade700,
+              ),
               const SizedBox(width: 8),
               Text(
-                'Meter photo',
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                entryText(context, 'Meter photo', 'صورة العداد'),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w600),
               ),
               const Spacer(),
               _PhotoStatusChip(status: _status),
@@ -86,10 +90,10 @@ class ReadingPhotoSection extends StatelessWidget {
                   ? 'A meter photo is required by policy.'
                   : 'Optional photo with visible watermark for audit trail.',
               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: photoRequired
-                        ? theme.colorScheme.error
-                        : Colors.grey.shade700,
-                  ),
+                color: photoRequired
+                    ? theme.colorScheme.error
+                    : Colors.grey.shade700,
+              ),
             ),
           if (draft?.photoErrorMessage != null) ...[
             const SizedBox(height: 8),
@@ -106,7 +110,7 @@ class ReadingPhotoSection extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: isBusy ? null : onCameraTap,
                     icon: const Icon(Icons.camera_alt_outlined, size: 18),
-                    label: const Text('Camera'),
+                    label: Text(entryText(context, 'Camera', 'الكاميرا')),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -114,7 +118,7 @@ class ReadingPhotoSection extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: isBusy ? null : onGalleryTap,
                     icon: const Icon(Icons.photo_library_outlined, size: 18),
-                    label: const Text('Gallery'),
+                    label: Text(entryText(context, 'Gallery', 'الاستوديو')),
                   ),
                 ),
               ],
@@ -122,23 +126,29 @@ class ReadingPhotoSection extends StatelessWidget {
             if (hasPreview) ...[
               const SizedBox(height: 8),
               Align(
-                alignment: Alignment.centerRight,
+                alignment: AlignmentDirectional.centerEnd,
                 child: TextButton.icon(
                   onPressed: isBusy ? null : onRemovePhoto,
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text('Remove photo'),
+                  label: Text(
+                    entryText(context, 'Remove photo', 'إزالة الصورة'),
+                  ),
                 ),
               ),
             ],
           ] else if (hasPreview) ...[
             const SizedBox(height: 8),
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: AlignmentDirectional.centerStart,
               child: Text(
-                'Photo is read-only after submission.',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                entryText(
+                  context,
+                  'Photo is read-only after submission.',
+                  'الصورة للعرض فقط بعد الإرسال.',
+                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: Colors.grey.shade600),
               ),
             ),
           ],
@@ -173,7 +183,10 @@ class _PhotoStatusChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
       PhotoUploadStatus.none => ('No photo', Colors.grey.shade700),
-      PhotoUploadStatus.attachedLocally => ('Local photo', Colors.indigo.shade800),
+      PhotoUploadStatus.attachedLocally => (
+        'Local photo',
+        Colors.indigo.shade800,
+      ),
       PhotoUploadStatus.uploading => ('Uploading', Colors.blue.shade800),
       PhotoUploadStatus.uploaded => ('Uploaded', Colors.green.shade800),
       PhotoUploadStatus.failed => ('Upload failed', Colors.red.shade800),
@@ -188,7 +201,11 @@ class _PhotoStatusChip extends StatelessWidget {
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: color),
+        style: TextStyle(
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: color,
+        ),
       ),
     );
   }
@@ -219,13 +236,11 @@ class _PhotoPreviewTile extends ConsumerWidget {
           child: localPath != null && localPath!.isNotEmpty
               ? LocalPhotoImage(path: localPath, fit: BoxFit.cover)
               : remoteUrl != null
-                  ? Image.network(remoteUrl!, fit: BoxFit.cover)
-                  : Container(
-                      color: Colors.grey.shade200,
-                      child: const Center(
-                        child: Icon(Icons.broken_image_outlined),
-                      ),
-                    ),
+              ? Image.network(remoteUrl!, fit: BoxFit.cover)
+              : Container(
+                  color: Colors.grey.shade200,
+                  child: const Center(child: Icon(Icons.broken_image_outlined)),
+                ),
         ),
       ),
     );

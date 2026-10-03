@@ -8,7 +8,7 @@ import '../providers/chart_providers.dart';
 import '../providers/dashboard_providers.dart';
 import '../reports/report_export_button.dart';
 import '../theme/dashboard_palette.dart';
-import '../theme/design_system/dashboard_design_system.dart';
+import '../theme/dashboard_theme.dart';
 import '../utils/dashboard_breakpoints.dart';
 import '../utils/dashboard_date_range.dart';
 import '../utils/site_system_navigation.dart';
@@ -45,7 +45,7 @@ class SiteDashboardScreen extends ConsumerWidget {
     final rawSection = ref.watch(siteDashboardSectionProvider);
     final conservationVisible =
         ref.watch(conservationSectionVisibleProvider(siteId)).valueOrNull ??
-            false;
+        false;
     final section = normalizeSiteDashboardSection(
       rawSection,
       conservationVisible: conservationVisible,
@@ -83,57 +83,57 @@ class SiteDashboardScreen extends ConsumerWidget {
     }) {
       return switch (section) {
         SiteDashboardSection.overview => SiteOverviewPanel(
-            siteId: siteId,
-            summary: summary,
-            useDesktop: meterLayoutWide,
-            onOpenAlerts: () => openSection(SiteDashboardSection.alerts),
-            onOpenSystem: openSection,
-          ),
+          siteId: siteId,
+          summary: summary,
+          useDesktop: meterLayoutWide,
+          onOpenAlerts: () => openSection(SiteDashboardSection.alerts),
+          onOpenSystem: openSection,
+        ),
         SiteDashboardSection.water => UtilitySystemPanel(
-            siteId: siteId,
-            system: UtilitySystemKey.water,
-            useDesktop: meterLayoutWide,
-          ),
+          siteId: siteId,
+          system: UtilitySystemKey.water,
+          useDesktop: meterLayoutWide,
+        ),
         SiteDashboardSection.electricity => UtilitySystemPanel(
-            siteId: siteId,
-            system: UtilitySystemKey.electricity,
-            useDesktop: meterLayoutWide,
-          ),
+          siteId: siteId,
+          system: UtilitySystemKey.electricity,
+          useDesktop: meterLayoutWide,
+        ),
         SiteDashboardSection.btuCooling => UtilitySystemPanel(
-            siteId: siteId,
-            system: UtilitySystemKey.btu,
-            useDesktop: meterLayoutWide,
-            showCopSection: true,
-          ),
+          siteId: siteId,
+          system: UtilitySystemKey.btu,
+          useDesktop: meterLayoutWide,
+          showCopSection: true,
+        ),
         SiteDashboardSection.fuel => UtilitySystemPanel(
-            siteId: siteId,
-            system: UtilitySystemKey.fuel,
-            useDesktop: meterLayoutWide,
-          ),
+          siteId: siteId,
+          system: UtilitySystemKey.fuel,
+          useDesktop: meterLayoutWide,
+        ),
         SiteDashboardSection.network => UtilitySystemPanel(
-            siteId: siteId,
-            system: UtilitySystemKey.water,
-            useDesktop: meterLayoutWide,
-          ),
+          siteId: siteId,
+          system: UtilitySystemKey.water,
+          useDesktop: meterLayoutWide,
+        ),
         SiteDashboardSection.alerts => SiteAlertsPanel(
-            siteId: siteId,
-            useDesktop: meterLayoutWide,
-          ),
+          siteId: siteId,
+          useDesktop: meterLayoutWide,
+        ),
         SiteDashboardSection.reports => SiteReportsPanel(
-            siteId: siteId,
-            useDesktop: meterLayoutWide,
-          ),
+          siteId: siteId,
+          useDesktop: meterLayoutWide,
+        ),
         SiteDashboardSection.conservation => SiteConservationPanel(
-            siteId: siteId,
-            useDesktop: meterLayoutWide,
-          ),
+          siteId: siteId,
+          useDesktop: meterLayoutWide,
+        ),
       };
     }
 
     final body = summaryAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (error, _) => DashboardErrorState(
-        message: '$error',
+        message: AppStrings.of(context).genericError,
         onRetry: () => ref.invalidate(siteDashboardSummaryProvider(siteId)),
       ),
       data: (summary) {
@@ -147,9 +147,9 @@ class SiteDashboardScreen extends ConsumerWidget {
                 exportType: reportTypeForSiteSection(section),
                 exportCategoryId: exportCategoryId,
                 dateSelection: dateSelection,
-                onDateSelectionChanged: (value) => ref
-                    .read(siteDateSelectionProvider(siteId).notifier)
-                    .state = value,
+                onDateSelectionChanged: (value) =>
+                    ref.read(siteDateSelectionProvider(siteId).notifier).state =
+                        value,
                 onRefresh: refreshSite,
                 onViewAlerts: () => openSection(SiteDashboardSection.alerts),
                 onBack: embedded
@@ -166,9 +166,9 @@ class SiteDashboardScreen extends ConsumerWidget {
                 sections: siteDashboardSectionsForFlags(
                   conservationVisible: conservationVisible,
                 ),
-                onDateChanged: (value) => ref
-                    .read(siteDateSelectionProvider(siteId).notifier)
-                    .state = value,
+                onDateChanged: (value) =>
+                    ref.read(siteDateSelectionProvider(siteId).notifier).state =
+                        value,
                 onSectionChanged: openSection,
               ),
             Expanded(
@@ -204,14 +204,26 @@ class SiteDashboardScreen extends ConsumerWidget {
       appBar: useShellChrome
           ? null
           : AppBar(
+              toolbarHeight: 72,
+              titleSpacing: 4,
               title: summaryAsync.maybeWhen(
                 data: (summary) => Text(
                   s.localizedName(
                     en: summary.site.nameEn,
                     ar: summary.site.nameAr,
                   ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
                 ),
-                orElse: () => Text(fallbackTitle),
+                orElse: () => Text(
+                  fallbackTitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
               actions: [
                 IconButton(
@@ -230,10 +242,7 @@ class SiteDashboardScreen extends ConsumerWidget {
                 ),
               ],
             ),
-      body: SafeArea(
-        top: false,
-        child: body,
-      ),
+      body: SafeArea(top: false, child: body),
     );
   }
 
@@ -269,37 +278,42 @@ class _MobileToolbar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final pad = DashboardBreakpoints.contentPadding(context);
+    final colors = dashboardColors(context);
     return Material(
-      color: DashboardColors.card(context),
-      elevation: 0.5,
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(pad, 8, pad, 8),
+      color: colors.card,
+      elevation: 0,
+      child: Container(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: colors.border.withValues(alpha: 0.75)),
+          ),
+        ),
+        padding: EdgeInsets.fromLTRB(pad, 10, pad, 10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DashboardDateQuickBar(
-                selection: dateSelection,
-                onChanged: onDateChanged,
-                siteId: siteId,
-                compact: true,
-              ),
+            DashboardDateQuickBar(
+              selection: dateSelection,
+              onChanged: onDateChanged,
+              siteId: siteId,
+              compact: true,
             ),
             const SizedBox(height: 8),
-            SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: Row(
-                children: [
-                  for (final item in sections) ...[
-                    UtilitySystemChip(
-                      section: item,
-                      selected: section == item,
-                      onSelected: onSectionChanged,
-                    ),
-                    const SizedBox(width: 6),
-                  ],
-                ],
+            SizedBox(
+              height: 46,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                physics: const BouncingScrollPhysics(),
+                itemCount: sections.length,
+                separatorBuilder: (_, _) => const SizedBox(width: 8),
+                itemBuilder: (context, index) {
+                  final item = sections[index];
+                  return UtilitySystemChip(
+                    section: item,
+                    selected: section == item,
+                    onSelected: onSectionChanged,
+                  );
+                },
               ),
             ),
           ],

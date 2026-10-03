@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/entry_strings.dart';
 
 class OptionalNoteField extends StatelessWidget {
   const OptionalNoteField({
@@ -18,7 +19,7 @@ class OptionalNoteField extends StatelessWidget {
       maxLines: 2,
       style: Theme.of(context).textTheme.bodyMedium,
       decoration: InputDecoration(
-        labelText: 'Note (optional)',
+        labelText: entryText(context, 'Note (optional)', 'ملاحظة (اختياري)'),
         labelStyle: TextStyle(
           color: Colors.grey.shade600,
           fontSize: 13,

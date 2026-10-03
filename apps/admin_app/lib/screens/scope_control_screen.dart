@@ -134,7 +134,7 @@ class _ScopeControlScreenState extends ConsumerState<ScopeControlScreen>
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _error = '$error';
+        _error = adminUserError(context);
         _loading = false;
       });
     }
@@ -175,9 +175,7 @@ class _ScopeControlScreenState extends ConsumerState<ScopeControlScreen>
               profile == 'technician',
         // Dashboard tab: viewers only (admins appear under Admin tab).
         AppAccessCategory.dashboard =>
-          code == 'viewer' ||
-              code == 'auditor' ||
-              profile == 'viewer',
+          code == 'viewer' || code == 'auditor' || profile == 'viewer',
       };
     }).toList();
   }
@@ -280,7 +278,7 @@ class _ScopeControlScreenState extends ConsumerState<ScopeControlScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -296,9 +294,9 @@ class _ScopeControlScreenState extends ConsumerState<ScopeControlScreen>
         (assignee.profileRole == 'super_admin' ||
             assignee.scopeRoleCode == 'system_admin' ||
             assignee.scopeRoleCode == 'org_admin')) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.onlyOwnerManagesSuperAdmins)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.onlyOwnerManagesSuperAdmins)));
       return;
     }
 
@@ -329,7 +327,7 @@ class _ScopeControlScreenState extends ConsumerState<ScopeControlScreen>
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -451,10 +449,7 @@ class _AppAssigneesPane extends StatelessWidget {
           title: Text(strings.accountsWithPermission),
           children: [
             if (assignees.isEmpty)
-              ListTile(
-                dense: true,
-                title: Text(strings.noAccountsInTab),
-              )
+              ListTile(dense: true, title: Text(strings.noAccountsInTab))
             else
               for (final a in assignees)
                 ListTile(
@@ -515,21 +510,22 @@ class _AppAssigneesPane extends StatelessWidget {
                         TextField(
                           controller: assignSearchController,
                           onChanged: onAssignSearchChanged,
-                          decoration: catalogFieldDecoration(
-                            labelText: strings.search,
-                            hintText: strings.searchUsers,
-                          ).copyWith(
-                            prefixIcon: const Icon(Icons.search),
-                            suffixIcon: assignSearchController.text.isEmpty
-                                ? null
-                                : IconButton(
-                                    icon: const Icon(Icons.clear),
-                                    onPressed: () {
-                                      assignSearchController.clear();
-                                      onAssignSearchChanged('');
-                                    },
-                                  ),
-                          ),
+                          decoration:
+                              catalogFieldDecoration(
+                                labelText: strings.search,
+                                hintText: strings.searchUsers,
+                              ).copyWith(
+                                prefixIcon: const Icon(Icons.search),
+                                suffixIcon: assignSearchController.text.isEmpty
+                                    ? null
+                                    : IconButton(
+                                        icon: const Icon(Icons.clear),
+                                        onPressed: () {
+                                          assignSearchController.clear();
+                                          onAssignSearchChanged('');
+                                        },
+                                      ),
+                              ),
                         ),
                       if (showSearch) const SizedBox(height: 8),
                       if (usersLoading)
@@ -569,7 +565,9 @@ class _AppAssigneesPane extends StatelessWidget {
                                       DataCell(Text(u.displayName)),
                                       DataCell(Text(u.profile.email)),
                                       DataCell(
-                                        Text(_roleLabel(u.profile.role, strings)),
+                                        Text(
+                                          _roleLabel(u.profile.role, strings),
+                                        ),
                                       ),
                                       DataCell(
                                         FilledButton.tonal(

@@ -5,6 +5,7 @@ import '../../theme/dashboard_theme.dart';
 import '../../utils/dashboard_date_range.dart';
 import '../../utils/meter_reading_filters.dart';
 import 'meter_reading_card.dart';
+import '../../l10n/app_strings.dart';
 
 class MeterRelationshipView extends StatelessWidget {
   const MeterRelationshipView({
@@ -28,7 +29,7 @@ class MeterRelationshipView extends StatelessWidget {
     final maxWidth = useDesktop ? 920.0 : double.infinity;
 
     return Align(
-      alignment: Alignment.topLeft,
+      alignment: AlignmentDirectional.topStart,
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: maxWidth),
         child: Column(
@@ -47,7 +48,11 @@ class MeterRelationshipView extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.all(24),
                 child: Text(
-                  'No meters to display in relationship view.',
+                  dashboardText(
+                    context,
+                    'No meters to display in relationship view.',
+                    'لا توجد عدادات لعرضها في مخطط العلاقات.',
+                  ),
                   style: TextStyle(color: colors.textMuted),
                 ),
               ),
@@ -127,10 +132,7 @@ class _BranchRow extends StatelessWidget {
           SizedBox(
             width: 28,
             child: CustomPaint(
-              painter: _BranchLinePainter(
-                color: lineColor,
-                isLast: isLast,
-              ),
+              painter: _BranchLinePainter(color: lineColor, isLast: isLast),
             ),
           ),
           const SizedBox(width: 6),
@@ -167,7 +169,11 @@ class _BranchLinePainter extends CustomPainter {
       ..style = PaintingStyle.stroke;
 
     final midY = 28.0;
-    canvas.drawLine(Offset(size.width * 0.5, 0), Offset(size.width * 0.5, midY), paint);
+    canvas.drawLine(
+      Offset(size.width * 0.5, 0),
+      Offset(size.width * 0.5, midY),
+      paint,
+    );
     canvas.drawLine(
       Offset(size.width * 0.5, midY),
       Offset(size.width, midY),

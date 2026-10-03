@@ -6,6 +6,7 @@ import 'report_export_controller.dart';
 import 'report_models.dart';
 import '../providers/chart_providers.dart';
 import '../utils/site_system_navigation.dart';
+import '../l10n/app_strings.dart';
 
 ReportType reportTypeForSiteTab(int tabIndex) {
   return switch (tabIndex) {
@@ -49,7 +50,7 @@ class ReportExportIconButton extends ConsumerWidget {
         siteId != null ? ref.watch(siteDateSelectionProvider(siteId!)) : null;
 
     return IconButton(
-      tooltip: 'Export report',
+      tooltip: dashboardText(context, 'Export report', 'تصدير التقرير'),
       icon: const Icon(Icons.download_outlined),
       onPressed: () => ReportExportController(ref).showExportDialog(
         context: context,

@@ -6,6 +6,7 @@ void main() {
     test('replaces em dash and superscript for PDF', () {
       expect(sanitizePdfText('Demo Org — HQ'), 'Demo Org - HQ');
       expect(sanitizePdfText('12 m³'), '12 m3');
+      expect(sanitizePdfText('A → B'), 'A ? B');
       expect(sanitizePdfText(null), '-');
       expect(sanitizePdfText(''), '-');
     });

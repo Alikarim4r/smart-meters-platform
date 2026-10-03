@@ -74,7 +74,9 @@ class _ReportLogoSlotsEditorState extends ConsumerState<ReportLogoSlotsEditor> {
       final path =
           '${widget.organizationId}/${primary ? 'primary' : 'secondary'}.png';
       final client = ref.read(supabaseClientProvider);
-      await client.storage.from(kReportLogosBucket).uploadBinary(
+      await client.storage
+          .from(kReportLogosBucket)
+          .uploadBinary(
             path,
             cropped,
             fileOptions: const FileOptions(
@@ -90,7 +92,11 @@ class _ReportLogoSlotsEditorState extends ConsumerState<ReportLogoSlotsEditor> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Logo upload failed: $error')),
+        SnackBar(
+          content: Text(
+            adminText(context, 'Logo upload failed.', 'تعذّر رفع الشعار.'),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -115,15 +121,12 @@ class _ReportLogoSlotsEditorState extends ConsumerState<ReportLogoSlotsEditor> {
       children: [
         Text(
           s.reportLogosTitle,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
-        Text(
-          s.reportLogosHint,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(s.reportLogosHint, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 12),
         Wrap(
           spacing: 16,
@@ -199,10 +202,9 @@ class _LogoSlot extends ConsumerWidget {
               color: Theme.of(context).dividerColor.withValues(alpha: 0.6),
             ),
             borderRadius: BorderRadius.circular(6),
-            color: Theme.of(context)
-                .colorScheme
-                .surfaceContainerHighest
-                .withValues(alpha: 0.35),
+            color: Theme.of(
+              context,
+            ).colorScheme.surfaceContainerHighest.withValues(alpha: 0.35),
           ),
           clipBehavior: Clip.antiAlias,
           child: storagePath == null || storagePath!.isEmpty
@@ -247,13 +249,14 @@ class _LogoSlot extends ConsumerWidget {
               child: Text(canEdit ? 'Import' : 'Locked'),
             ),
             TextButton(
-              onPressed: canEdit &&
+              onPressed:
+                  canEdit &&
                       !busy &&
                       storagePath != null &&
                       storagePath!.isNotEmpty
                   ? onClear
                   : null,
-              child: const Text('Clear'),
+              child: Text(adminText(context, 'Clear', 'مسح')),
             ),
           ],
         ),

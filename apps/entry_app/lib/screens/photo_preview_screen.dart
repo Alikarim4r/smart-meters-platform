@@ -3,6 +3,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../photos/reading_photo_models.dart';
 import '../widgets/local_photo_image.dart';
+import '../l10n/entry_strings.dart';
 
 class PhotoPreviewScreen extends StatelessWidget {
   const PhotoPreviewScreen({
@@ -27,34 +28,38 @@ class PhotoPreviewScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Meter photo')),
+      appBar: AppBar(
+        title: Text(entryText(context, 'Meter photo', 'صورة العداد')),
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: AspectRatio(
-                aspectRatio: 3 / 4,
-                child: _buildImage(),
-              ),
+              child: AspectRatio(aspectRatio: 3 / 4, child: _buildImage()),
             ),
             const SizedBox(height: 16),
             if (meterName != null)
               _MetaRow(
-                label: 'Meter',
-                value:
-                    '$meterName${meterCode != null ? ' ($meterCode)' : ''}',
+                label: entryText(context, 'Meter', 'العداد'),
+                value: '$meterName${meterCode != null ? ' ($meterCode)' : ''}',
               ),
             if (photoSource != null)
-              _MetaRow(label: 'Source', value: photoSource!.label),
+              _MetaRow(
+                label: entryText(context, 'Source', 'المصدر'),
+                value: photoSource!.label,
+              ),
             if (capturedAt != null)
               _MetaRow(
-                label: 'Captured',
+                label: entryText(context, 'Captured', 'تم الالتقاط'),
                 value: formatQatarCaptureTimestamp(capturedAt!),
               ),
             if (storagePath != null)
-              _MetaRow(label: 'Storage path', value: storagePath!),
+              _MetaRow(
+                label: entryText(context, 'Storage path', 'مسار التخزين'),
+                value: storagePath!,
+              ),
           ],
         ),
       ),

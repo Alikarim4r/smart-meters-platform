@@ -111,7 +111,7 @@ class _ZonesTabState extends ConsumerState<ZonesTab> {
 
                   if (filtered.isEmpty) {
                     return CatalogEmptyState(
-                      title: 'No zones',
+                      title: adminText(context, 'No zones', 'لا توجد مناطق'),
                       message: canManage
                           ? 'No zones match your filters. Tap Add zone to create one.'
                           : 'No zones match your filters.',
@@ -290,7 +290,11 @@ class _ZonesTabState extends ConsumerState<ZonesTab> {
                                             ScaffoldMessenger.of(
                                               context,
                                             ).showSnackBar(
-                                              SnackBar(content: Text('$error')),
+                                              SnackBar(
+                                                content: Text(
+                                                  adminUserError(context),
+                                                ),
+                                              ),
                                             );
                                           }
                                       }
@@ -477,7 +481,7 @@ class _ZoneFormScreenState extends ConsumerState<ZoneFormScreen> {
         actions: [
           if (canManage)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilledButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
@@ -634,7 +638,7 @@ class _ZoneFormScreenState extends ConsumerState<ZoneFormScreen> {
                               padding: EdgeInsets.symmetric(vertical: 8),
                               child: LinearProgressIndicator(minHeight: 2),
                             ),
-                            error: (error, _) => Text('$error'),
+                            error: (error, _) => Text(adminUserError(context)),
                             data: (types) {
                               final active = types
                                   .where((t) => t.isActive)
@@ -699,8 +703,11 @@ class _ZoneFormScreenState extends ConsumerState<ZoneFormScreen> {
                   children: [
                     CatalogSwitchTile(
                       title: s.active,
-                      subtitle:
-                          'Inactive zones are hidden from site assignment',
+                      subtitle: adminText(
+                        context,
+                        'Inactive zones are hidden from site assignment',
+                        'المناطق غير المفعّلة مخفية من تعيين المواقع',
+                      ),
                       value: _isActive,
                       onChanged: canManage
                           ? (value) => setState(() => _isActive = value)

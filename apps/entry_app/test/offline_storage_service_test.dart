@@ -104,6 +104,18 @@ void main() {
     expect(storage.getCachedCategories('site-1'), hasLength(1));
   });
 
+  test('photo store deletion removes cached logical bytes', () async {
+    final box = Hive.box<dynamic>(readingPhotoBytesBoxName);
+    const logicalKey = 'draft-1-watermarked.jpg';
+    await box.put(logicalKey, <int>[1, 2, 3]);
+    final fileStore = ReadingPhotoFileStore();
+
+    expect(await fileStore.readBytes(logicalKey), isNotNull);
+    await fileStore.deletePhoto(logicalKey);
+    expect(box.containsKey(logicalKey), isFalse);
+    expect(await fileStore.readBytes(logicalKey), isNull);
+  });
+
   test('last sync metadata is persisted', () async {
     final time = DateTime(2026, 8, 4, 10);
     await storage.setLastSyncTime(time);

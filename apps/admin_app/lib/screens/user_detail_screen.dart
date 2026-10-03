@@ -33,7 +33,7 @@ class UserDetailScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Reject user?'),
+        title: Text(adminText(context, 'Reject user?', 'رفض المستخدم؟')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -42,7 +42,13 @@ class UserDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             TextField(
               controller: noteController,
-              decoration: catalogFieldDecoration(labelText: 'Note (optional)'),
+              decoration: catalogFieldDecoration(
+                labelText: adminText(
+                  context,
+                  'Note (optional)',
+                  'ملاحظة (اختياري)',
+                ),
+              ),
               maxLines: 2,
             ),
           ],
@@ -50,12 +56,12 @@ class UserDetailScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
-            child: const Text('Reject'),
+            child: Text(adminText(context, 'Reject', 'رفض')),
           ),
         ],
       ),
@@ -77,9 +83,11 @@ class UserDetailScreen extends ConsumerWidget {
           );
       noteController.dispose();
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('User rejected')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(adminText(context, 'User rejected', 'تم رفض المستخدم')),
+        ),
+      );
       await _refresh(ref);
     } catch (error) {
       noteController.dispose();
@@ -99,7 +107,7 @@ class UserDetailScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Suspend user?'),
+        title: Text(adminText(context, 'Suspend user?', 'تعليق المستخدم؟')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -110,7 +118,13 @@ class UserDetailScreen extends ConsumerWidget {
             const SizedBox(height: 12),
             TextField(
               controller: noteController,
-              decoration: catalogFieldDecoration(labelText: 'Note (optional)'),
+              decoration: catalogFieldDecoration(
+                labelText: adminText(
+                  context,
+                  'Note (optional)',
+                  'ملاحظة (اختياري)',
+                ),
+              ),
               maxLines: 2,
             ),
           ],
@@ -118,12 +132,12 @@ class UserDetailScreen extends ConsumerWidget {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.deepPurple),
-            child: const Text('Suspend'),
+            child: Text(adminText(context, 'Suspend', 'تعليق')),
           ),
         ],
       ),
@@ -145,9 +159,13 @@ class UserDetailScreen extends ConsumerWidget {
           );
       noteController.dispose();
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('User suspended')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            adminText(context, 'User suspended', 'تم تعليق المستخدم'),
+          ),
+        ),
+      );
       await _refresh(ref);
     } catch (error) {
       noteController.dispose();
@@ -263,9 +281,7 @@ class UserDetailScreen extends ConsumerWidget {
           .changeUserRole(userId: user.profile.id, role: confirmed);
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(isAr ? 'تم تحديث الصلاحية' : 'Role updated'),
-        ),
+        SnackBar(content: Text(isAr ? 'تم تحديث الصلاحية' : 'Role updated')),
       );
       await _refresh(ref);
     } catch (error) {
@@ -285,17 +301,17 @@ class UserDetailScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Remove assignment?'),
+        title: Text(adminText(context, 'Remove assignment?', 'إزالة التعيين؟')),
         content: Text('Remove access to $siteName?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
             style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
-            child: const Text('Remove'),
+            child: Text(adminText(context, 'Remove', 'إزالة')),
           ),
         ],
       ),
@@ -308,9 +324,17 @@ class UserDetailScreen extends ConsumerWidget {
           .read(userAdminRepositoryProvider)
           .removeUserSiteAccess(access.id);
       if (!context.mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Site assignment removed')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            adminText(
+              context,
+              'Site assignment removed',
+              'تمت إزالة تعيين الموقع',
+            ),
+          ),
+        ),
+      );
       await _refresh(ref);
     } catch (error) {
       if (!context.mounted) return;
@@ -332,11 +356,12 @@ class UserDetailScreen extends ConsumerWidget {
       appBar: AppBar(
         title: userAsync.maybeWhen(
           data: (user) => Text(user.displayName),
-          orElse: () => const Text('User details'),
+          orElse: () =>
+              Text(adminText(context, 'User details', 'تفاصيل المستخدم')),
         ),
         actions: [
           IconButton(
-            tooltip: 'Refresh',
+            tooltip: adminText(context, 'Refresh', 'تحديث'),
             onPressed: () => _refresh(ref),
             icon: const Icon(Icons.refresh),
           ),
@@ -346,7 +371,11 @@ class UserDetailScreen extends ConsumerWidget {
         child: userAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (error, _) => UserEmptyState(
-            title: 'Could not load user',
+            title: adminText(
+              context,
+              'Could not load user',
+              'تعذّر تحميل المستخدم',
+            ),
             subtitle: friendlyUserAdminError(error),
             icon: Icons.error_outline,
           ),
@@ -427,8 +456,7 @@ class UserDetailScreen extends ConsumerWidget {
                   const SizedBox(height: 24),
                   Row(
                     children: [
-                      Text(
-                        'Site assignments',
+                      Text(adminText(context, 'Site assignments', 'تعيينات المواقع'),
                         style: Theme.of(context).textTheme.titleMedium,
                       ),
                       const Spacer(),
@@ -444,7 +472,7 @@ class UserDetailScreen extends ConsumerWidget {
                             await _refresh(ref);
                           },
                           icon: const Icon(Icons.edit_location_alt_outlined),
-                          label: const Text('Manage'),
+                          label: Text(adminText(context, 'Manage', 'إدارة')),
                         ),
                     ],
                   ),
@@ -454,9 +482,15 @@ class UserDetailScreen extends ConsumerWidget {
                     error: (error, _) => Text(friendlyUserAdminError(error)),
                     data: (assignments) {
                       if (assignments.isEmpty) {
-                        return const Padding(
+                        return Padding(
                           padding: EdgeInsets.symmetric(vertical: 12),
-                          child: Text('No site assignments yet.'),
+                          child: Text(
+                            adminText(
+                              context,
+                              'No site assignments yet.',
+                              'لا توجد تعيينات مواقع بعد.',
+                            ),
+                          ),
                         );
                       }
                       return Column(
@@ -475,7 +509,11 @@ class UserDetailScreen extends ConsumerWidget {
                                 trailing:
                                     showActions && canEditSiteAssignments(user)
                                     ? IconButton(
-                                        tooltip: 'Remove',
+                                        tooltip: adminText(
+                                          context,
+                                          'Remove',
+                                          'إزالة',
+                                        ),
                                         icon: Icon(
                                           Icons.delete_outline,
                                           color: Colors.red.shade700,
@@ -508,14 +546,15 @@ class UserDetailScreen extends ConsumerWidget {
                           }
                         },
                         icon: const Icon(Icons.check),
-                        label: const Text('Approve user'),
+                        label: Text(
+                          adminText(context, 'Approve user', 'اعتماد المستخدم'),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       OutlinedButton.icon(
                         onPressed: () => _rejectUser(context, ref, user),
                         icon: Icon(Icons.close, color: Colors.red.shade700),
-                        label: Text(
-                          'Reject user',
+                        label: Text(adminText(context, 'Reject user', 'رفض المستخدم'),
                           style: TextStyle(color: Colors.red.shade700),
                         ),
                       ),
@@ -525,7 +564,9 @@ class UserDetailScreen extends ConsumerWidget {
                       OutlinedButton.icon(
                         onPressed: () => _suspendUser(context, ref, user),
                         icon: const Icon(Icons.pause_circle_outline),
-                        label: const Text('Suspend user'),
+                        label: Text(
+                          adminText(context, 'Suspend user', 'تعليق المستخدم'),
+                        ),
                       ),
                     if (profile.approvalStatus == ApprovalStatus.suspended)
                       FilledButton.icon(
@@ -539,7 +580,13 @@ class UserDetailScreen extends ConsumerWidget {
                           }
                         },
                         icon: const Icon(Icons.restart_alt),
-                        label: const Text('Re-approve user'),
+                        label: Text(
+                          adminText(
+                            context,
+                            'Re-approve user',
+                            'إعادة اعتماد المستخدم',
+                          ),
+                        ),
                       ),
                     if (canChangeUserRole(actor, user) &&
                         profile.approvalStatus == ApprovalStatus.approved) ...[

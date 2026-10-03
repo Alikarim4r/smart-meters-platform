@@ -64,17 +64,33 @@ class _DashboardSettingsSheetState
       if (!mounted) return;
       _passwordController.clear();
       _confirmController.clear();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.passwordUpdated)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.passwordUpdated)));
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.genericError)));
     } finally {
       if (mounted) setState(() => _savingPassword = false);
     }
+  }
+
+  Future<void> _requestNotificationPermission(AppStrings s) async {
+    await LocalNotificationDelivery.instance.initialize();
+    final granted = await LocalNotificationDelivery.instance
+        .requestPermission();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          granted
+              ? s.notificationPermissionGranted
+              : s.notificationPermissionNotGranted,
+        ),
+      ),
+    );
   }
 
   Future<void> _launchUri(Uri uri) async {
@@ -109,284 +125,305 @@ class _DashboardSettingsSheetState
             maxHeight: MediaQuery.sizeOf(context).height * 0.92,
           ),
           child: Padding(
-            padding: EdgeInsets.fromLTRB(
-              20,
-              8,
-              20,
-              16 + bottomInset,
-            ),
+            padding: EdgeInsets.fromLTRB(20, 8, 20, 16 + bottomInset),
             child: SingleChildScrollView(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-              Center(
-                child: Container(
-                  width: 36,
-                  height: 4,
-                  margin: const EdgeInsets.only(bottom: 12),
-                  decoration: BoxDecoration(
-                    color: colors.textMuted.withValues(alpha: 0.45),
-                    borderRadius: BorderRadius.circular(999),
+                  Center(
+                    child: Container(
+                      width: 36,
+                      height: 4,
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: colors.textMuted.withValues(alpha: 0.45),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
                   ),
-                ),
-              ),
-              Text(
-                s.settings,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  Text(
+                    s.settings,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
                       color: colors.textPrimary,
                     ),
-              ),
-              const SizedBox(height: 16),
-              _SectionCard(
-                title: s.accountDetails,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    ListTile(
-                      contentPadding: EdgeInsets.zero,
-                      leading:
-                          Icon(Icons.person_outline, color: colors.textMuted),
-                      title: Text(
-                        profile?.fullName.trim().isNotEmpty == true
-                            ? profile!.fullName
-                            : (profile?.email ?? '—'),
-                        style: TextStyle(
-                          color: colors.textPrimary,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      subtitle: Text(
-                        profile != null
-                            ? '${s.role}: ${s.userRole(profile.role)}'
-                            : s.account,
-                        style: TextStyle(color: colors.textMuted),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      s.email,
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  ),
+                  const SizedBox(height: 16),
+                  _SectionCard(
+                    title: s.accountDetails,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        ListTile(
+                          contentPadding: EdgeInsets.zero,
+                          leading: Icon(
+                            Icons.person_outline,
                             color: colors.textMuted,
-                            fontWeight: FontWeight.w600,
                           ),
-                    ),
-                    const SizedBox(height: 4),
-                    _LtrText(
-                      profile?.email ?? '—',
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: colors.textPrimary,
-                          ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      s.changePassword,
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: FontWeight.w700,
-                            color: colors.textPrimary,
-                          ),
-                    ),
-                    const SizedBox(height: 8),
-                    Form(
-                      key: _formKey,
-                      child: Column(
-                        children: [
-                          TextFormField(
-                            controller: _passwordController,
-                            obscureText: _obscureNew,
-                            decoration: InputDecoration(
-                              labelText: s.newPassword,
-                              suffixIcon: IconButton(
-                                onPressed: () => setState(
-                                  () => _obscureNew = !_obscureNew,
-                                ),
-                                icon: Icon(
-                                  _obscureNew
-                                      ? Icons.visibility_outlined
-                                      : Icons.visibility_off_outlined,
-                                  color: colors.textMuted,
-                                ),
-                              ),
-                            ),
-                            validator: (value) {
-                              if (value == null || value.isEmpty) {
-                                return s.passwordRequired;
-                              }
-                              if (value.length < 6) return s.passwordTooShort;
-                              return null;
-                            },
-                          ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _confirmController,
-                          obscureText: _obscureConfirm,
-                          decoration: InputDecoration(
-                            labelText: s.confirmPassword,
-                            suffixIcon: IconButton(
-                              onPressed: () => setState(
-                                () => _obscureConfirm = !_obscureConfirm,
-                              ),
-                              icon: Icon(
-                                _obscureConfirm
-                                    ? Icons.visibility_outlined
-                                    : Icons.visibility_off_outlined,
-                                color: colors.textMuted,
-                              ),
+                          title: Text(
+                            profile?.fullName.trim().isNotEmpty == true
+                                ? profile!.fullName
+                                : (profile?.email ?? '—'),
+                            style: TextStyle(
+                              color: colors.textPrimary,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
-                          validator: (value) {
-                            if (value != _passwordController.text) {
-                              return s.passwordsDoNotMatch;
-                            }
-                            return null;
-                          },
+                          subtitle: Text(
+                            profile != null
+                                ? '${s.role}: ${s.userRole(profile.role)}'
+                                : s.account,
+                            style: TextStyle(color: colors.textMuted),
+                          ),
                         ),
-                        const SizedBox(height: 12),
-                        Align(
-                          alignment: AlignmentDirectional.centerStart,
-                          child: FilledButton(
-                            onPressed:
-                                _savingPassword ? null : () => _savePassword(s),
-                            child: _savingPassword
-                                ? const SizedBox(
-                                    width: 18,
-                                    height: 18,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 2,
+                        const SizedBox(height: 4),
+                        Text(
+                          s.email,
+                          style: Theme.of(context).textTheme.labelMedium
+                              ?.copyWith(
+                                color: colors.textMuted,
+                                fontWeight: FontWeight.w600,
+                              ),
+                        ),
+                        const SizedBox(height: 4),
+                        _LtrText(
+                          profile?.email ?? '—',
+                          style: Theme.of(context).textTheme.bodyLarge
+                              ?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: colors.textPrimary,
+                              ),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          s.changePassword,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w700,
+                                color: colors.textPrimary,
+                              ),
+                        ),
+                        const SizedBox(height: 8),
+                        Form(
+                          key: _formKey,
+                          child: Column(
+                            children: [
+                              TextFormField(
+                                controller: _passwordController,
+                                obscureText: _obscureNew,
+                                decoration: InputDecoration(
+                                  labelText: s.newPassword,
+                                  suffixIcon: IconButton(
+                                    onPressed: () => setState(
+                                      () => _obscureNew = !_obscureNew,
                                     ),
-                                  )
-                                : Text(s.savePassword),
+                                    icon: Icon(
+                                      _obscureNew
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      color: colors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value == null || value.isEmpty) {
+                                    return s.passwordRequired;
+                                  }
+                                  if (value.length < 6) {
+                                    return s.passwordTooShort;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              TextFormField(
+                                controller: _confirmController,
+                                obscureText: _obscureConfirm,
+                                decoration: InputDecoration(
+                                  labelText: s.confirmPassword,
+                                  suffixIcon: IconButton(
+                                    onPressed: () => setState(
+                                      () => _obscureConfirm = !_obscureConfirm,
+                                    ),
+                                    icon: Icon(
+                                      _obscureConfirm
+                                          ? Icons.visibility_outlined
+                                          : Icons.visibility_off_outlined,
+                                      color: colors.textMuted,
+                                    ),
+                                  ),
+                                ),
+                                validator: (value) {
+                                  if (value != _passwordController.text) {
+                                    return s.passwordsDoNotMatch;
+                                  }
+                                  return null;
+                                },
+                              ),
+                              const SizedBox(height: 12),
+                              Align(
+                                alignment: AlignmentDirectional.centerStart,
+                                child: FilledButton(
+                                  onPressed: _savingPassword
+                                      ? null
+                                      : () => _savePassword(s),
+                                  child: _savingPassword
+                                      ? const SizedBox(
+                                          width: 18,
+                                          height: 18,
+                                          child: CircularProgressIndicator(
+                                            strokeWidth: 2,
+                                          ),
+                                        )
+                                      : Text(s.savePassword),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SectionCard(
-              title: s.isAr ? 'الأمان' : 'Security',
-              child: SessionSecuritySettingsSection(
-                locale: locale,
-                dense: true,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SectionCard(
-              title: s.language,
-              child: SizedBox(
-                width: double.infinity,
-                child: SegmentedButton<String>(
-                  showSelectedIcon: false,
-                  style: _segmentStyle(context, colors, isDark),
-                  segments: [
-                    ButtonSegment(value: 'ar', label: Text(s.arabic)),
-                    ButtonSegment(value: 'en', label: Text(s.english)),
-                  ],
-                  selected: {locale.languageCode},
-                  onSelectionChanged: (values) {
-                    ref
-                        .read(localeProvider.notifier)
-                        .setLocale(Locale(values.first));
-                  },
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SectionCard(
-              title: s.appearance,
-              child: Column(
-                children: [
-                  _ThemeOptionTile(
-                    value: ThemeMode.light,
-                    groupValue: themeMode,
-                    icon: Icons.light_mode_outlined,
-                    title: s.lightTheme,
-                    subtitle: s.lightThemeHint,
-                    onChanged: (mode) =>
-                        ref.read(themeModeProvider.notifier).setMode(mode),
-                  ),
-                  Divider(height: 1, color: colors.border.withValues(alpha: 0.7)),
-                  _ThemeOptionTile(
-                    value: ThemeMode.dark,
-                    groupValue: themeMode,
-                    icon: Icons.dark_mode_outlined,
-                    title: s.darkTheme,
-                    subtitle: s.darkThemeHint,
-                    onChanged: (mode) =>
-                        ref.read(themeModeProvider.notifier).setMode(mode),
-                  ),
-                  Divider(height: 1, color: colors.border.withValues(alpha: 0.7)),
-                  _ThemeOptionTile(
-                    value: ThemeMode.system,
-                    groupValue: themeMode,
-                    icon: Icons.brightness_auto_outlined,
-                    title: s.systemTheme,
-                    subtitle: s.systemThemeHint,
-                    onChanged: (mode) =>
-                        ref.read(themeModeProvider.notifier).setMode(mode),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 12),
-            _SectionCard(
-              title: s.support,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    s.supportHint,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          height: 1.4,
-                          color: colors.textMuted,
-                        ),
+                  const SizedBox(height: 12),
+                  _SectionCard(
+                    title: s.isAr ? 'الأمان' : 'Security',
+                    child: SessionSecuritySettingsSection(
+                      locale: locale,
+                      dense: true,
+                    ),
                   ),
                   const SizedBox(height: 12),
-                  _ContactRow(
-                    icon: Icons.mail_outline_rounded,
-                    label: s.email,
-                    value: SupportContact.email,
-                    actionTooltip: s.sendEmail,
-                    actionIcon: Icons.open_in_new_rounded,
-                    onAction: () {
-                      Clipboard.setData(
-                        const ClipboardData(text: SupportContact.email),
-                      );
-                      _launchUri(
-                        Uri(scheme: 'mailto', path: SupportContact.email),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ),
-            if (widget.onSignOut != null) ...[
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    widget.onSignOut!();
-                  },
-                  icon: const Icon(Icons.logout_rounded),
-                  label: Text(s.logout),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Theme.of(context).colorScheme.error,
-                    side: BorderSide(
-                      color: Theme.of(context)
-                          .colorScheme
-                          .error
-                          .withValues(alpha: 0.45),
+                  _SectionCard(
+                    title: s.language,
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: SegmentedButton<String>(
+                        showSelectedIcon: false,
+                        style: _segmentStyle(context, colors, isDark),
+                        segments: [
+                          ButtonSegment(value: 'ar', label: Text(s.arabic)),
+                          ButtonSegment(value: 'en', label: Text(s.english)),
+                        ],
+                        selected: {locale.languageCode},
+                        onSelectionChanged: (values) {
+                          ref
+                              .read(localeProvider.notifier)
+                              .setLocale(Locale(values.first));
+                        },
+                      ),
                     ),
-                    minimumSize: const Size(0, 48),
                   ),
-                ),
-              ),
-            ],
+                  const SizedBox(height: 12),
+                  _SectionCard(
+                    title: s.appearance,
+                    child: Column(
+                      children: [
+                        _ThemeOptionTile(
+                          value: ThemeMode.light,
+                          groupValue: themeMode,
+                          icon: Icons.light_mode_outlined,
+                          title: s.lightTheme,
+                          subtitle: s.lightThemeHint,
+                          onChanged: (mode) => ref
+                              .read(themeModeProvider.notifier)
+                              .setMode(mode),
+                        ),
+                        Divider(
+                          height: 1,
+                          color: colors.border.withValues(alpha: 0.7),
+                        ),
+                        _ThemeOptionTile(
+                          value: ThemeMode.dark,
+                          groupValue: themeMode,
+                          icon: Icons.dark_mode_outlined,
+                          title: s.darkTheme,
+                          subtitle: s.darkThemeHint,
+                          onChanged: (mode) => ref
+                              .read(themeModeProvider.notifier)
+                              .setMode(mode),
+                        ),
+                        Divider(
+                          height: 1,
+                          color: colors.border.withValues(alpha: 0.7),
+                        ),
+                        _ThemeOptionTile(
+                          value: ThemeMode.system,
+                          groupValue: themeMode,
+                          icon: Icons.brightness_auto_outlined,
+                          title: s.systemTheme,
+                          subtitle: s.systemThemeHint,
+                          onChanged: (mode) => ref
+                              .read(themeModeProvider.notifier)
+                              .setMode(mode),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SectionCard(
+                    title: s.notifications,
+                    child: ListTile(
+                      contentPadding: EdgeInsets.zero,
+                      leading: const Icon(Icons.notifications_active_outlined),
+                      title: Text(s.enableSystemNotifications),
+                      subtitle: Text(s.systemNotificationsHint),
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => _requestNotificationPermission(s),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  _SectionCard(
+                    title: s.support,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Text(
+                          s.supportHint,
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(height: 1.4, color: colors.textMuted),
+                        ),
+                        const SizedBox(height: 12),
+                        _ContactRow(
+                          icon: Icons.mail_outline_rounded,
+                          label: s.email,
+                          value: SupportContact.email,
+                          actionTooltip: s.sendEmail,
+                          actionIcon: Icons.open_in_new_rounded,
+                          onAction: () {
+                            Clipboard.setData(
+                              const ClipboardData(text: SupportContact.email),
+                            );
+                            _launchUri(
+                              Uri(scheme: 'mailto', path: SupportContact.email),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (widget.onSignOut != null) ...[
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                          widget.onSignOut!();
+                        },
+                        icon: const Icon(Icons.logout_rounded),
+                        label: Text(s.logout),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Theme.of(context).colorScheme.error,
+                          side: BorderSide(
+                            color: Theme.of(
+                              context,
+                            ).colorScheme.error.withValues(alpha: 0.45),
+                          ),
+                          minimumSize: const Size(0, 48),
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -433,11 +470,7 @@ class _LtrText extends StatelessWidget {
       alignment: AlignmentDirectional.centerStart,
       child: Directionality(
         textDirection: TextDirection.ltr,
-        child: Text(
-          text,
-          textAlign: TextAlign.left,
-          style: style,
-        ),
+        child: Text(text, textAlign: TextAlign.left, style: style),
       ),
     );
   }
@@ -475,9 +508,9 @@ class _ContactRow extends StatelessWidget {
               Text(
                 label,
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: colors.textMuted,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  color: colors.textMuted,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               const SizedBox(height: 2),
               Directionality(
@@ -488,10 +521,10 @@ class _ContactRow extends StatelessWidget {
                     value,
                     textAlign: TextAlign.left,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w600,
-                          color: colors.textPrimary,
-                          letterSpacing: 0.2,
-                        ),
+                      fontWeight: FontWeight.w600,
+                      color: colors.textPrimary,
+                      letterSpacing: 0.2,
+                    ),
                   ),
                 ),
               ),
@@ -538,11 +571,7 @@ class _ThemeOptionTile extends StatelessWidget {
         padding: const EdgeInsets.symmetric(vertical: 10),
         child: Row(
           children: [
-            Icon(
-              icon,
-              size: 22,
-              color: selected ? primary : colors.textMuted,
-            ),
+            Icon(icon, size: 22, color: selected ? primary : colors.textMuted),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -582,10 +611,7 @@ class _ThemeOptionTile extends StatelessWidget {
 }
 
 class _SectionCard extends StatelessWidget {
-  const _SectionCard({
-    required this.title,
-    required this.child,
-  });
+  const _SectionCard({required this.title, required this.child});
 
   final String title;
   final Widget child;
@@ -610,9 +636,9 @@ class _SectionCard extends StatelessWidget {
             Text(
               title,
               style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: colors.textPrimary,
-                  ),
+                fontWeight: FontWeight.w800,
+                color: colors.textPrimary,
+              ),
             ),
             const SizedBox(height: 10),
             child,

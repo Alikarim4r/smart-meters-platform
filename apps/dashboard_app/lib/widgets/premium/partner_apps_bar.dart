@@ -5,6 +5,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../../navigation/partner_app_launcher.dart';
 import '../../theme/dashboard_palette.dart';
 import '../../theme/dashboard_theme.dart';
+import '../../l10n/app_strings.dart';
 
 enum PartnerAppsLayout { sidebar, inline }
 
@@ -39,7 +40,7 @@ class PartnerAppsBar extends ConsumerWidget {
           children: [
             if (canEntry)
               _SidebarPartnerButton(
-                label: 'Data Entry',
+                label: dashboardText(context, 'Data Entry', 'إدخال البيانات'),
                 icon: Icons.edit_note_rounded,
                 onTap: () => DashboardPartnerApps.launchOrSnackBar(
                   context,
@@ -53,7 +54,7 @@ class PartnerAppsBar extends ConsumerWidget {
             if (canEntry && canAdmin) const SizedBox(height: 6),
             if (canAdmin)
               _SidebarPartnerButton(
-                label: 'Site Admin',
+                label: dashboardText(context, 'Site Admin', 'إدارة الموقع'),
                 icon: Icons.admin_panel_settings_outlined,
                 accent: DashboardPalette.gold,
                 onTap: () => DashboardPartnerApps.launchOrSnackBar(
@@ -74,7 +75,7 @@ class PartnerAppsBar extends ConsumerWidget {
       children: [
         if (canEntry)
           _InlinePartnerButton(
-            label: 'Data Entry',
+            label: dashboardText(context, 'Data Entry', 'إدخال البيانات'),
             icon: Icons.edit_note_rounded,
             color: colors.navy,
             onTap: () => DashboardPartnerApps.launchOrSnackBar(
@@ -88,7 +89,7 @@ class PartnerAppsBar extends ConsumerWidget {
           ),
         if (canAdmin)
           _InlinePartnerButton(
-            label: 'Site Admin',
+            label: dashboardText(context, 'Site Admin', 'إدارة الموقع'),
             icon: Icons.admin_panel_settings_outlined,
             color: DashboardPalette.gold,
             onTap: () => DashboardPartnerApps.launchOrSnackBar(

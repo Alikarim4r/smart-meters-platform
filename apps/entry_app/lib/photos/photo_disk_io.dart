@@ -27,3 +27,11 @@ Future<String?> resolvePhotoDocumentsPath(String relativeFileName) async {
   }
   return p.join(dir.path, relativeFileName);
 }
+
+Future<void> deletePhotoFromDisk(String absolutePath) async {
+  if (absolutePath.isEmpty) return;
+  final file = File(absolutePath);
+  if (await file.exists()) {
+    await file.delete();
+  }
+}

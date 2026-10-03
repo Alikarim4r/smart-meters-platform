@@ -169,8 +169,9 @@ class AdminSettingsDrawer extends ConsumerWidget {
                   title: Text(s.dataAndIntegrations),
                   trailing: const Icon(Icons.chevron_right, size: 20),
                   onTap: () async {
-                    final orgs =
-                        await ref.read(adminOrganizationsProvider.future);
+                    final orgs = await ref.read(
+                      adminOrganizationsProvider.future,
+                    );
                     final orgId = orgs.isNotEmpty ? orgs.first.id : null;
                     if (!context.mounted) return;
                     if (orgId == null) {
@@ -293,7 +294,7 @@ class AdminSettingsDrawer extends ConsumerWidget {
         if (context.mounted) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text('$error')));
+          ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
         }
       }
     }
@@ -465,10 +466,14 @@ class _SupportCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.10 : 0.055),
+        color: theme.colorScheme.primary.withValues(
+          alpha: isDark ? 0.10 : 0.055,
+        ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(
-          color: theme.colorScheme.primary.withValues(alpha: isDark ? 0.34 : 0.18),
+          color: theme.colorScheme.primary.withValues(
+            alpha: isDark ? 0.34 : 0.18,
+          ),
         ),
       ),
       child: Row(
@@ -481,7 +486,10 @@ class _SupportCard extends StatelessWidget {
               color: theme.colorScheme.primary.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(13),
             ),
-            child: Icon(Icons.mail_outline_rounded, color: theme.colorScheme.primary),
+            child: Icon(
+              Icons.mail_outline_rounded,
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(

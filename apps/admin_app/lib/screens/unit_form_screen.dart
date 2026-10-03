@@ -5,6 +5,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../providers/catalog_providers.dart';
 import '../utils/catalog_validation.dart';
 import '../widgets/catalog_widgets.dart';
+import '../l10n/admin_strings.dart';
 
 class UnitFormScreen extends ConsumerStatefulWidget {
   const UnitFormScreen({
@@ -138,7 +139,7 @@ class _UnitFormScreenState extends ConsumerState<UnitFormScreen> {
         actions: [
           if (canManage)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilledButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
@@ -150,7 +151,7 @@ class _UnitFormScreenState extends ConsumerState<UnitFormScreen> {
                           color: Colors.white,
                         ),
                       )
-                    : const Text('Save'),
+                    : Text(adminText(context, 'Save', 'حفظ')),
               ),
             ),
         ],
@@ -162,12 +163,16 @@ class _UnitFormScreenState extends ConsumerState<UnitFormScreen> {
             padding: EdgeInsets.fromLTRB(16, 8, 16, 24 + bottomInset),
             children: [
               CatalogFormSection(
-                title: 'Basic information',
+                title: adminText(
+                  context,
+                  'Basic information',
+                  'المعلومات الأساسية',
+                ),
                 children: [
                   TextFormField(
                     controller: _codeController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Code *',
+                      labelText: adminText(context, 'Code *', 'الرمز *'),
                       hintText: 'e.g. m3, gal',
                     ),
                     enabled: canManage,
@@ -176,7 +181,11 @@ class _UnitFormScreenState extends ConsumerState<UnitFormScreen> {
                   TextFormField(
                     controller: _nameEnController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'English name *',
+                      labelText: adminText(
+                        context,
+                        'English name *',
+                        'الاسم بالإنجليزية *',
+                      ),
                     ),
                     enabled: canManage,
                     validator: (v) => validateRequiredText(v, 'English name'),
@@ -184,14 +193,22 @@ class _UnitFormScreenState extends ConsumerState<UnitFormScreen> {
                   TextFormField(
                     controller: _nameArController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Arabic name',
+                      labelText: adminText(
+                        context,
+                        'Arabic name',
+                        'الاسم بالعربية',
+                      ),
                     ),
                     enabled: canManage,
                   ),
                   TextFormField(
                     controller: _factorController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Unit to base factor *',
+                      labelText: adminText(
+                        context,
+                        'Unit to base factor *',
+                        'معامل التحويل إلى الوحدة الأساسية *',
+                      ),
                       helperText: 'Multiply reading by this to get base units',
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
@@ -203,7 +220,11 @@ class _UnitFormScreenState extends ConsumerState<UnitFormScreen> {
                   TextFormField(
                     controller: _sortOrderController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Sort order *',
+                      labelText: adminText(
+                        context,
+                        'Sort order *',
+                        'ترتيب العرض *',
+                      ),
                     ),
                     keyboardType: TextInputType.number,
                     enabled: canManage,
@@ -212,19 +233,31 @@ class _UnitFormScreenState extends ConsumerState<UnitFormScreen> {
                 ],
               ),
               CatalogFormSection(
-                title: 'Status',
+                title: adminText(context, 'Status', 'الحالة'),
                 children: [
                   CatalogSwitchTile(
-                    title: 'Base unit for category',
-                    subtitle: 'Only one base unit per category',
+                    title: adminText(
+                      context,
+                      'Base unit for category',
+                      'الوحدة الأساسية للفئة',
+                    ),
+                    subtitle: adminText(
+                      context,
+                      'Only one base unit per category',
+                      'وحدة أساسية واحدة فقط لكل فئة',
+                    ),
                     value: _isBase,
                     onChanged: canManage
                         ? (value) => setState(() => _isBase = value)
                         : null,
                   ),
                   CatalogSwitchTile(
-                    title: 'Active',
-                    subtitle: 'Inactive units are hidden from entry apps',
+                    title: adminText(context, 'Active', 'مفعّل'),
+                    subtitle: adminText(
+                      context,
+                      'Inactive units are hidden from entry apps',
+                      'الوحدات غير المفعّلة مخفية من تطبيق الإدخال',
+                    ),
                     value: _isActive,
                     onChanged: canManage
                         ? (value) => setState(() => _isActive = value)

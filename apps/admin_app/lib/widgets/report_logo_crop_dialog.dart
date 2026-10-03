@@ -3,6 +3,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
+import '../l10n/admin_strings.dart';
 
 /// Pan/zoom an imported logo inside a fixed 4×2 cm slot, then export cropped bytes.
 Future<Uint8List?> showReportLogoCropDialog({
@@ -50,8 +51,9 @@ class _ReportLogoCropDialogState extends State<_ReportLogoCropDialog> {
     if (_exporting) return;
     setState(() => _exporting = true);
     try {
-      final boundary = _boundaryKey.currentContext?.findRenderObject()
-          as RenderRepaintBoundary?;
+      final boundary =
+          _boundaryKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
       if (boundary == null) return;
       final image = await boundary.toImage(pixelRatio: 3);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
@@ -60,7 +62,11 @@ class _ReportLogoCropDialogState extends State<_ReportLogoCropDialog> {
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not crop logo')),
+        SnackBar(
+          content: Text(
+            adminText(context, 'Could not crop logo', 'تعذّر قص الشعار'),
+          ),
+        ),
       );
     } finally {
       if (mounted) setState(() => _exporting = false);
@@ -76,8 +82,7 @@ class _ReportLogoCropDialogState extends State<_ReportLogoCropDialog> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              'Pan and zoom to fit the 4×2 cm slot, then save.',
+            Text(adminText(context, 'Pan and zoom to fit the 4×2 cm slot, then save.', 'حرّك وكبّر لتناسب خانة 4×2 سم ثم احفظ.'),
               style: Theme.of(context).textTheme.bodySmall,
             ),
             const SizedBox(height: 12),
@@ -111,7 +116,7 @@ class _ReportLogoCropDialogState extends State<_ReportLogoCropDialog> {
       actions: [
         TextButton(
           onPressed: _exporting ? null : () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: Text(adminText(context, 'Cancel', 'إلغاء')),
         ),
         FilledButton(
           onPressed: _exporting ? null : _export,
@@ -121,7 +126,7 @@ class _ReportLogoCropDialogState extends State<_ReportLogoCropDialog> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Save logo'),
+              : Text(adminText(context, 'Save logo', 'حفظ الشعار')),
         ),
       ],
     );

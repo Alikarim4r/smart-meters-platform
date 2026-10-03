@@ -149,12 +149,12 @@ class AnomalyCard extends StatelessWidget {
   }
 
   Color _severityColor(AnomalySeverity severity) => switch (severity) {
-        AnomalySeverity.info => Colors.blueGrey.shade700,
-        AnomalySeverity.low => Colors.teal.shade700,
-        AnomalySeverity.medium => Colors.orange.shade800,
-        AnomalySeverity.high => Colors.deepOrange.shade800,
-        AnomalySeverity.critical => Colors.red.shade800,
-      };
+    AnomalySeverity.info => Colors.blueGrey.shade700,
+    AnomalySeverity.low => Colors.teal.shade700,
+    AnomalySeverity.medium => Colors.orange.shade800,
+    AnomalySeverity.high => Colors.deepOrange.shade800,
+    AnomalySeverity.critical => Colors.red.shade800,
+  };
 
   Widget _kv(String k, String v) {
     return Padding(

@@ -39,10 +39,8 @@ Future<DashboardDateSelection?> showDashboardDatePicker({
   return showDialog<DashboardDateSelection>(
     context: context,
     barrierDismissible: false,
-    builder: (dialogContext) => DashboardDatePickerPanel(
-      initial: initial,
-      siteId: siteId,
-    ),
+    builder: (dialogContext) =>
+        DashboardDatePickerPanel(initial: initial, siteId: siteId),
   );
 }
 
@@ -69,10 +67,12 @@ class DashboardDateSelector extends StatelessWidget {
     final iconSize = compact ? 18.0 : 20.0;
     final label = s.compactDateSelectorLabel(selection);
     final isRtl = Directionality.of(context) == TextDirection.rtl;
-    final previousIcon =
-        isRtl ? Icons.chevron_right_rounded : Icons.chevron_left_rounded;
-    final nextIcon =
-        isRtl ? Icons.chevron_left_rounded : Icons.chevron_right_rounded;
+    final previousIcon = isRtl
+        ? Icons.chevron_right_rounded
+        : Icons.chevron_left_rounded;
+    final nextIcon = isRtl
+        ? Icons.chevron_left_rounded
+        : Icons.chevron_right_rounded;
 
     return SizedBox(
       width: width,
@@ -92,9 +92,8 @@ class DashboardDateSelector extends StatelessWidget {
                 minWidth: compact ? 32 : 36,
                 minHeight: compact ? 32 : 36,
               ),
-              onPressed: () => onChanged(
-                shiftDashboardDateSelection(selection, step: -1),
-              ),
+              onPressed: () =>
+                  onChanged(shiftDashboardDateSelection(selection, step: -1)),
               icon: Icon(
                 previousIcon,
                 size: iconSize,
@@ -161,14 +160,9 @@ class DashboardDateSelector extends StatelessWidget {
                 minWidth: compact ? 32 : 36,
                 minHeight: compact ? 32 : 36,
               ),
-              onPressed: () => onChanged(
-                shiftDashboardDateSelection(selection, step: 1),
-              ),
-              icon: Icon(
-                nextIcon,
-                size: iconSize,
-                color: colors.textPrimary,
-              ),
+              onPressed: () =>
+                  onChanged(shiftDashboardDateSelection(selection, step: 1)),
+              icon: Icon(nextIcon, size: iconSize, color: colors.textPrimary),
             ),
           ],
         ),
@@ -232,21 +226,21 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
   DashboardDateSelection _selectionForKind(_PickerKind kind, DateTime anchor) {
     return switch (kind) {
       _PickerKind.last30Days => dateSelectionForChartPeriodKind(
-          kind: UtilityChartPeriodKind.last30Days,
-          anchorDate: anchor,
-        ),
+        kind: UtilityChartPeriodKind.last30Days,
+        anchorDate: anchor,
+      ),
       _PickerKind.twelveMonths => dateSelectionForChartPeriodKind(
-          kind: UtilityChartPeriodKind.twelveMonths,
-          anchorDate: anchor,
-        ),
+        kind: UtilityChartPeriodKind.twelveMonths,
+        anchorDate: anchor,
+      ),
       _PickerKind.fiveYears => dateSelectionForChartPeriodKind(
-          kind: UtilityChartPeriodKind.fiveYears,
-          anchorDate: anchor,
-        ),
+        kind: UtilityChartPeriodKind.fiveYears,
+        anchorDate: anchor,
+      ),
       _PickerKind.customRange => DashboardDateSelection.singleDay(
-          day: normalizeDashboardDate(anchor),
-          preset: DashboardDatePreset.pickDay,
-        ),
+        day: normalizeDashboardDate(anchor),
+        preset: DashboardDatePreset.pickDay,
+      ),
     };
   }
 
@@ -314,7 +308,8 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
   }
 
   void _apply() {
-    final result = _pendingSelection ??
+    final result =
+        _pendingSelection ??
         DashboardDateSelection.singleDay(
           day: _businessDay,
           preset: DashboardDatePreset.pickDay,
@@ -342,8 +337,9 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
       child: OutlinedButton(
         onPressed: () => _selectKind(kind),
         style: OutlinedButton.styleFrom(
-          backgroundColor:
-              selected ? scheme.primary.withValues(alpha: 0.12) : null,
+          backgroundColor: selected
+              ? scheme.primary.withValues(alpha: 0.12)
+              : null,
           foregroundColor: selected ? scheme.primary : null,
           side: BorderSide(
             color: selected ? scheme.primary : scheme.outlineVariant,
@@ -378,9 +374,9 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
                 ? 'اختر آخر ٣١ يوماً، ١٢ شهراً، ٥ سنوات، أو حدّد فترة يدوياً. ثم اضغط تطبيق.'
                 : 'Choose Last 31 days, 12 months, 5 years, or a custom range. Then press Apply.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: colors.textMuted,
-                  height: 1.35,
-                ),
+              color: colors.textMuted,
+              height: 1.35,
+            ),
           ),
           const SizedBox(height: 12),
           Align(
@@ -395,9 +391,9 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
           Text(
             s.isAr ? 'الفترة' : 'Period',
             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: colors.textPrimary,
-                ),
+              fontWeight: FontWeight.w700,
+              color: colors.textPrimary,
+            ),
           ),
           const SizedBox(height: 6),
           Wrap(
@@ -438,9 +434,9 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
                     ? 'المعاينة: ${s.compactDateSelectorLabel(_pendingSelection!)} — اضغط تطبيق للتأكيد'
                     : 'Preview: ${s.compactDateSelectorLabel(_pendingSelection!)} — press Apply to confirm',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                      color: colors.textPrimary,
-                    ),
+                  fontWeight: FontWeight.w700,
+                  color: colors.textPrimary,
+                ),
               ),
             ),
           ],
@@ -450,13 +446,13 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
               _rangeAnchor == null
                   ? (s.isAr ? 'اضغط تاريخ البداية' : 'Tap the start date')
                   : _rangeEnd == null
-                      ? (s.isAr ? 'اضغط تاريخ النهاية' : 'Tap the end date')
-                      : (s.isAr
-                          ? 'النطاق جاهز — اضغط تطبيق'
-                          : 'Range ready — press Apply'),
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.textMuted,
-                  ),
+                  ? (s.isAr ? 'اضغط تاريخ النهاية' : 'Tap the end date')
+                  : (s.isAr
+                        ? 'النطاق جاهز — اضغط تطبيق'
+                        : 'Range ready — press Apply'),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.textMuted),
             ),
           ],
           const SizedBox(height: 12),
@@ -484,15 +480,9 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
 
     final actions = Row(
       children: [
-        TextButton(
-          onPressed: _cancel,
-          child: Text(s.cancel),
-        ),
+        TextButton(onPressed: _cancel, child: Text(s.cancel)),
         const Spacer(),
-        FilledButton(
-          onPressed: canApply ? _apply : null,
-          child: Text(s.apply),
-        ),
+        FilledButton(onPressed: canApply ? _apply : null, child: Text(s.apply)),
       ],
     );
 
@@ -509,9 +499,9 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
               Text(
                 s.isAr ? 'اختيار تاريخ العمل' : 'Select business date',
                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w800,
-                      color: colors.textPrimary,
-                    ),
+                  fontWeight: FontWeight.w800,
+                  color: colors.textPrimary,
+                ),
               ),
               const SizedBox(height: 12),
               Expanded(child: body),

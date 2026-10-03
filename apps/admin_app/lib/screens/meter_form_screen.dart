@@ -174,9 +174,13 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
         );
       } else if (activeCount < 10) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Could not expand units (need Super Admin). Run 118c SQL in Supabase.',
+              adminText(
+                context,
+                'Could not load the expanded unit catalog. Please try again or contact support.',
+                'تعذّر تحميل كتالوج الوحدات الموسّع. حاول مرة أخرى أو تواصل مع الدعم.',
+              ),
             ),
           ),
         );
@@ -185,9 +189,13 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
       _expandedUnitsForCategoryId = categoryId;
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Could not expand units. Run 118c_units_by_category_code.sql in Supabase.',
+            adminText(
+              context,
+              'Could not load the expanded unit catalog. Please try again or contact support.',
+              'تعذّر تحميل كتالوج الوحدات الموسّع. حاول مرة أخرى أو تواصل مع الدعم.',
+            ),
           ),
         ),
       );
@@ -305,7 +313,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
         actions: [
           if (canManage)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilledButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
@@ -360,9 +368,7 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                   ),
                   TextFormField(
                     controller: _nameArController,
-                    decoration: catalogFieldDecoration(
-                      labelText: s.arabicName,
-                    ),
+                    decoration: catalogFieldDecoration(labelText: s.arabicName),
                     enabled: canManage,
                   ),
                   TextFormField(
@@ -449,7 +455,11 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                           initialValue: _measurementTypeId,
                           isExpanded: true,
                           decoration: catalogFieldDecoration(
-                            labelText: 'Measurement type',
+                            labelText: adminText(
+                              context,
+                              'Measurement type',
+                              'نوع القياس',
+                            ),
                             helperText: s.isAr
                                 ? 'اختياري للتسجيلات — قائمة الوحدات من كتالوج الفئة'
                                 : 'Optional for registers — unit list comes from category catalog',
@@ -511,7 +521,11 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                                 'No units for this category — add them under Units',
                           ),
                           child: Text(
-                            'No units available',
+                            adminText(
+                              context,
+                              'No units available',
+                              'لا توجد وحدات متاحة',
+                            ),
                             style: TextStyle(color: Colors.red.shade700),
                           ),
                         );
@@ -559,9 +573,9 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                         ],
                         onChanged: canManage && !_catalogLocked
                             ? (value) => setState(() {
-                                  _unitId = value;
-                                  _globalUnitId = null;
-                                })
+                                _unitId = value;
+                                _globalUnitId = null;
+                              })
                             : null,
                         validator: (value) =>
                             value == null ? 'Unit is required' : null,
@@ -606,7 +620,11 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                   TextFormField(
                     controller: _multiplierController,
                     decoration: catalogFieldDecoration(
-                      labelText: 'Meter multiplier *',
+                      labelText: adminText(
+                        context,
+                        'Meter multiplier *',
+                        'معامل العداد *',
+                      ),
                       helperText: 'Applied to raw readings',
                     ),
                     keyboardType: const TextInputType.numberWithOptions(
@@ -618,19 +636,31 @@ class _MeterFormScreenState extends ConsumerState<MeterFormScreen> {
                 ],
               ),
               CatalogFormSection(
-                title: 'Status',
+                title: adminText(context, 'Status', 'الحالة'),
                 children: [
                   CatalogSwitchTile(
-                    title: 'Active',
-                    subtitle: 'Inactive meters are hidden from entry apps',
+                    title: adminText(context, 'Active', 'مفعّل'),
+                    subtitle: adminText(
+                      context,
+                      'Inactive meters are hidden from entry apps',
+                      'العدادات غير المفعّلة مخفية من تطبيق الإدخال',
+                    ),
                     value: _isActive,
                     onChanged: canManage
                         ? (value) => setState(() => _isActive = value)
                         : null,
                   ),
                   CatalogSwitchTile(
-                    title: 'Include in dashboard',
-                    subtitle: 'Show this meter on future dashboard views',
+                    title: adminText(
+                      context,
+                      'Include in dashboard',
+                      'إظهار في لوحة العرض',
+                    ),
+                    subtitle: adminText(
+                      context,
+                      'Show this meter on future dashboard views',
+                      'إظهار هذا العداد في شاشات العرض المستقبلية',
+                    ),
                     value: _includeInDashboard,
                     onChanged: canManage
                         ? (value) => setState(() => _includeInDashboard = value)

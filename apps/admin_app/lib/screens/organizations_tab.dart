@@ -32,9 +32,7 @@ final canManageOrganizationsProvider = Provider<bool>((ref) {
 final canManageScopeUsersProvider = Provider<bool>((ref) {
   final profile = ref.watch(authProvider).profile;
   if (profile == null) return false;
-  return profile.isPlatformOwner ||
-      profile.isSuperAdmin ||
-      profile.isSiteAdmin;
+  return profile.isPlatformOwner || profile.isSuperAdmin || profile.isSiteAdmin;
 });
 
 class OrganizationsTab extends ConsumerStatefulWidget {
@@ -84,7 +82,7 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -136,8 +134,12 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
         SnackBar(
           content: Text(
             canForce
-                ? '$error'
-                : 'Could not delete: sites still reference this organization.',
+                ? adminUserError(context)
+                : adminText(
+                    context,
+                    'Could not delete: sites still reference this organization.',
+                    'تعذّر الحذف لأن هناك مواقع ما زالت مرتبطة بهذه الجهة.',
+                  ),
           ),
         ),
       );
@@ -180,7 +182,7 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
               child: orgsAsync.when(
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (error, _) => CatalogErrorView(
-                  message: '$error',
+                  message: adminUserError(context),
                   onRetry: () => ref.invalidate(adminAllOrganizationsProvider),
                 ),
                 data: (orgs) {
@@ -195,7 +197,11 @@ class _OrganizationsTabState extends ConsumerState<OrganizationsTab> {
 
                   if (filtered.isEmpty) {
                     return CatalogEmptyState(
-                      title: 'No organizations',
+                      title: adminText(
+                        context,
+                        'No organizations',
+                        'لا توجد جهات',
+                      ),
                       message: canManage
                           ? 'Add ministries, compounds, or companies that own sites.'
                           : 'No organizations match your filters.',
@@ -489,7 +495,7 @@ class _OrganizationFormScreenState
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(SnackBar(content: Text('$error')));
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -509,7 +515,7 @@ class _OrganizationFormScreenState
         actions: [
           if (canManage)
             Padding(
-              padding: const EdgeInsets.only(right: 8),
+              padding: const EdgeInsetsDirectional.only(end: 8),
               child: FilledButton(
                 onPressed: _isSaving ? null : _save,
                 child: _isSaving
@@ -534,15 +540,18 @@ class _OrganizationFormScreenState
             children: [
               CatalogFormSection(
                 title: s.organization,
-                subtitle:
-                    'A ministry, compound, or company that owns zones and sites',
+                subtitle: adminText(
+                  context,
+                  'A ministry, compound, or company that owns zones and sites',
+                  'وزارة أو مجمع أو شركة تملك مناطق ومواقع',
+                ),
                 children: [
                   if (!widget.isEditing)
                     ref
                         .watch(organizationTemplatesProvider)
                         .when(
                           loading: () => const LinearProgressIndicator(),
-                          error: (e, _) => Text('$e'),
+                          error: (e, _) => Text(adminUserError(context)),
                           data: (templates) {
                             return DropdownButtonFormField<String>(
                               initialValue:
@@ -642,7 +651,7 @@ class _OrganizationFormScreenState
                       controller: _typeEnController,
                       decoration: catalogFieldDecoration(
                         labelText: s.typeNameEn,
-                        hintText: 'School',
+                        hintText: adminText(context, 'School', 'مدرسة'),
                       ),
                     ),
                     TextFormField(
@@ -668,8 +677,11 @@ class _OrganizationFormScreenState
                 children: [
                   CatalogSwitchTile(
                     title: s.active,
-                    subtitle:
-                        'Inactive organizations are hidden from site and zone forms',
+                    subtitle: adminText(
+                      context,
+                      'Inactive organizations are hidden from site and zone forms',
+                      'الجهات غير المفعّلة مخفية من نماذج المواقع والمناطق',
+                    ),
                     value: _isActive,
                     onChanged: canManage
                         ? (value) => setState(() => _isActive = value)

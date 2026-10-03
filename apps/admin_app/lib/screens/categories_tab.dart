@@ -6,6 +6,7 @@ import '../providers/catalog_providers.dart';
 import '../utils/catalog_validation.dart';
 import '../widgets/catalog_widgets.dart';
 import 'category_form_screen.dart';
+import '../l10n/admin_strings.dart';
 
 class CategoriesTab extends ConsumerStatefulWidget {
   const CategoriesTab({super.key});
@@ -57,7 +58,15 @@ class _CategoriesTabState extends ConsumerState<CategoriesTab> {
   Future<void> _deleteCategory(MeterCategoryConfig category) async {
     if (isProtectedSystemCategory(category)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('System categories cannot be deleted.')),
+        SnackBar(
+          content: Text(
+            adminText(
+              context,
+              'System categories cannot be deleted.',
+              'لا يمكن حذف فئات النظام.',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -65,16 +74,16 @@ class _CategoriesTabState extends ConsumerState<CategoriesTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete category?'),
+        title: Text(adminText(context, 'Delete category?', 'حذف الفئة؟')),
         content: Text('Delete "${category.nameEn}"? This cannot be undone.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(adminText(context, 'Delete', 'حذف')),
           ),
         ],
       ),
@@ -109,7 +118,7 @@ class _CategoriesTabState extends ConsumerState<CategoriesTab> {
               heroTag: 'admin_fab_categories',
               onPressed: _openAddForm,
               icon: const Icon(Icons.add),
-              label: const Text('Add category'),
+              label: Text(adminText(context, 'Add category', 'إضافة فئة')),
             )
           : null,
       body: SafeArea(
@@ -122,7 +131,11 @@ class _CategoriesTabState extends ConsumerState<CategoriesTab> {
                 searchController: _searchController,
                 activeFilter: _filter,
                 onFilterChanged: (value) => setState(() => _filter = value),
-                hintText: 'Search categories…',
+                hintText: adminText(
+                  context,
+                  'Search categories…',
+                  'بحث في الفئات…',
+                ),
               ),
             ),
             const SizedBox(height: 8),
@@ -145,7 +158,11 @@ class _CategoriesTabState extends ConsumerState<CategoriesTab> {
 
                   if (filtered.isEmpty) {
                     return CatalogEmptyState(
-                      title: 'No categories',
+                      title: adminText(
+                        context,
+                        'No categories',
+                        'لا توجد فئات',
+                      ),
                       message: canManage
                           ? 'No categories match your filters. Tap Add category to create one.'
                           : 'No categories match your filters.',
@@ -274,9 +291,11 @@ class _CategoriesTabState extends ConsumerState<CategoriesTab> {
                                       }
                                     },
                                     itemBuilder: (context) => [
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: 'edit',
-                                        child: Text('Edit'),
+                                        child: Text(
+                                          adminText(context, 'Edit', 'تعديل'),
+                                        ),
                                       ),
                                       PopupMenuItem(
                                         value: 'toggle',
@@ -287,9 +306,11 @@ class _CategoriesTabState extends ConsumerState<CategoriesTab> {
                                         ),
                                       ),
                                       if (!protected)
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                           value: 'delete',
-                                          child: Text('Delete'),
+                                          child: Text(
+                                            adminText(context, 'Delete', 'حذف'),
+                                          ),
                                         ),
                                     ],
                                   ),

@@ -18,6 +18,7 @@ import 'report_export_log.dart';
 import 'report_file_service.dart';
 import 'report_filename.dart';
 import 'report_models.dart';
+import '../l10n/app_strings.dart';
 
 final reportDataServiceProvider = Provider<ReportDataService>((ref) {
   return ReportDataService(
@@ -61,7 +62,8 @@ class ReportExportController {
     final navigator = Navigator.of(context, rootNavigator: true);
     final messenger = ScaffoldMessenger.maybeOf(context);
 
-    final resolvedDateSelection = defaultDateSelection ??
+    final resolvedDateSelection =
+        defaultDateSelection ??
         (siteId != null
             ? container.read(siteDateSelectionProvider(siteId))
             : null);
@@ -93,20 +95,28 @@ class ReportExportController {
   }) async {
     if (_isExporting) return;
     _isExporting = true;
+    final strings = AppStrings.of(navigator.context);
     reportExportLogReset();
-    reportExportLog('export', 'begin type=${options.type} period=${options.period} charts=${options.includeCharts} format=${options.format}');
+    reportExportLog(
+      'export',
+      'begin type=${options.type} period=${options.period} charts=${options.includeCharts} format=${options.format}',
+    );
 
     var loadingVisible = true;
     showDialog<void>(
       context: navigator.context,
       barrierDismissible: false,
       useRootNavigator: true,
-      builder: (_) => const AlertDialog(
+      builder: (_) => AlertDialog(
         content: Row(
           children: [
             CircularProgressIndicator(),
             SizedBox(width: 16),
-            Expanded(child: Text('Generating report…')),
+            Expanded(
+              child: Text(
+                strings.text('Generating report…', 'جارٍ إنشاء التقرير…'),
+              ),
+            ),
           ],
         ),
       ),
@@ -207,10 +217,7 @@ class ReportExportController {
             includePhotos: options.includePhotos,
             includeCharts: options.includeCharts,
           );
-          reportExportLog(
-            'G',
-            'generate site PDF ok (${bytes.length} bytes)',
-          );
+          reportExportLog('G', 'generate site PDF ok (${bytes.length} bytes)');
         } else if (options.type == ReportType.readings) {
           reportExportLog('H', 'generate readings Excel start');
           bytes = await excelService.buildReadingsExcel(enriched);
@@ -235,8 +242,10 @@ class ReportExportController {
         throw StateError('Generated report is empty');
       }
 
-      final path =
-          await fileService.saveReportBytes(bytes: bytes, filename: filename);
+      final path = await fileService.saveReportBytes(
+        bytes: bytes,
+        filename: filename,
+      );
       final generated = GeneratedReportFile(
         path: path,
         filename: filename,
@@ -263,9 +272,7 @@ class ReportExportController {
     } catch (error, stack) {
       reportExportLog('export', 'failed', error: error, stack: stack);
       dismissLoading();
-      messenger?.showSnackBar(
-        SnackBar(content: Text('Export failed: $error')),
-      );
+      messenger?.showSnackBar(SnackBar(content: Text(strings.genericError)));
     } finally {
       _isExporting = false;
     }
@@ -301,10 +308,7 @@ class ReportExportController {
     final secondary = load(secondaryPath);
     final loaded = await Future.wait<Uint8List?>([primary, secondary]);
     return bundle.copyWith(
-      meta: bundle.meta.withLogoBytes(
-        primary: loaded[0],
-        secondary: loaded[1],
-      ),
+      meta: bundle.meta.withLogoBytes(primary: loaded[0], secondary: loaded[1]),
     );
   }
 
@@ -315,7 +319,8 @@ class ReportExportController {
     Uint8List? pdfBytes,
   }) async {
     // Phone / narrow screens: preview A4 sheet scaled to fit the viewport.
-    final useA4PhonePreview = pdfBytes != null &&
+    final useA4PhonePreview =
+        pdfBytes != null &&
         !file.path.startsWith('download://') &&
         (DashboardBreakpoints.isMobile(context) ||
             MediaQuery.sizeOf(context).shortestSide < 700);
@@ -346,7 +351,7 @@ class ReportExportController {
       context: context,
       useRootNavigator: true,
       builder: (dialogContext) => AlertDialog(
-        title: const Text('Report ready'),
+        title: Text(dashboardText(context, 'Report ready', 'التقرير جاهز')),
         content: Text(
           file.path.startsWith('download://')
               ? 'Report ready:\n${file.filename}\n\nOn web, use the browser download/share prompt.'
@@ -355,7 +360,7 @@ class ReportExportController {
         actions: [
           TextButton(
             onPressed: () => Navigator.of(dialogContext).pop(),
-            child: const Text('Close'),
+            child: Text(dashboardText(context, 'Close', 'إغلاق')),
           ),
           if (!file.path.startsWith('download://') &&
               file.format == ReportFormat.pdf)
@@ -365,7 +370,7 @@ class ReportExportController {
                 // Desktop/tablet: optional open in system viewer.
                 await fileService.openReport(file);
               },
-              child: const Text('Open'),
+              child: Text(dashboardText(context, 'Open', 'فتح')),
             ),
           if (!file.path.startsWith('download://'))
             TextButton(
@@ -375,12 +380,14 @@ class ReportExportController {
                 } catch (error) {
                   if (dialogContext.mounted) {
                     ScaffoldMessenger.of(dialogContext).showSnackBar(
-                      SnackBar(content: Text('Share failed: $error')),
+                      SnackBar(
+                        content: Text(AppStrings.of(context).genericError),
+                      ),
                     );
                   }
                 }
               },
-              child: const Text('Share'),
+              child: Text(dashboardText(context, 'Share', 'مشاركة')),
             ),
           if (!file.path.startsWith('download://') &&
               file.format != ReportFormat.pdf)
@@ -399,12 +406,12 @@ class ReportExportController {
                   );
                 }
               },
-              child: const Text('Open'),
+              child: Text(dashboardText(context, 'Open', 'فتح')),
             ),
           if (file.path.startsWith('download://'))
             FilledButton(
               onPressed: () => Navigator.of(dialogContext).pop(),
-              child: const Text('Done'),
+              child: Text(dashboardText(context, 'Done', 'تم')),
             ),
         ],
       ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../navigation/admin_partner_navigation.dart';
+import '../l10n/admin_strings.dart';
 
 class AdminPartnerHandoffBar extends StatelessWidget {
   const AdminPartnerHandoffBar({
@@ -31,7 +32,7 @@ class AdminPartnerHandoffBar extends StatelessWidget {
             ),
           ),
           icon: const Icon(Icons.dashboard_outlined, size: 16),
-          label: const Text('Open Dashboard'),
+          label: Text(adminText(context, 'Open Dashboard', 'فتح تطبيق العرض')),
           style: OutlinedButton.styleFrom(
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -56,7 +57,7 @@ class AdminPartnerHandoffBar extends StatelessWidget {
             },
           ),
           icon: const Icon(Icons.edit_note_outlined, size: 16),
-          label: const Text('Open Entry'),
+          label: Text(adminText(context, 'Open Entry', 'فتح تطبيق الإدخال')),
           style: OutlinedButton.styleFrom(
             visualDensity: VisualDensity.compact,
             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),

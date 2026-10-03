@@ -28,50 +28,49 @@ class NetworkVersionConflict extends UtilityNetworkException {
 
 class NetworkPermissionError extends UtilityNetworkException {
   const NetworkPermissionError([
-    String message = 'Not allowed to manage or read this utility network',
+    super.message = 'Not allowed to manage or read this utility network',
     Object? cause,
-  ]) : super(message, cause: cause);
+  ]) : super(cause: cause);
 }
 
 class NetworkValidationError extends UtilityNetworkException {
   const NetworkValidationError(
-    String message, {
+    super.message, {
     this.issues = const [],
-    Object? cause,
-  }) : super(message, cause: cause);
+    super.cause,
+  });
 
   final List<Object> issues;
 }
 
 class NetworkNotFoundError extends UtilityNetworkException {
   const NetworkNotFoundError([
-    String message = 'Utility network or revision not found',
+    super.message = 'Utility network or revision not found',
     Object? cause,
-  ]) : super(message, cause: cause);
+  ]) : super(cause: cause);
 }
 
 class NetworkNotPublishedError extends UtilityNetworkException {
   const NetworkNotPublishedError([
-    String message = 'Utility network has not been published',
+    super.message = 'Utility network has not been published',
     Object? cause,
-  ]) : super(message, cause: cause);
+  ]) : super(cause: cause);
 }
 
 class NetworkNoDraftError extends UtilityNetworkException {
   const NetworkNoDraftError([
-    String message = 'Utility network has no draft revision',
+    super.message = 'Utility network has no draft revision',
     Object? cause,
-  ]) : super(message, cause: cause);
+  ]) : super(cause: cause);
 }
 
 class NetworkParentConflictError extends UtilityNetworkException {
   const NetworkParentConflictError([
-    String message = 'Downstream meter parent conflict',
+    super.message = 'Downstream meter parent conflict',
     Object? cause,
-  ]) : super(message, cause: cause);
+  ]) : super(cause: cause);
 }
 
 class NetworkRpcError extends UtilityNetworkException {
-  const NetworkRpcError(String message, {Object? cause})
-    : super(message, cause: cause);
+  const NetworkRpcError(super.message, {super.cause});
 }

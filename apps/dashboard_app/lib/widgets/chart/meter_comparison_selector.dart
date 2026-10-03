@@ -27,7 +27,8 @@ class MeterComparisonSelector extends ConsumerStatefulWidget {
       _MeterComparisonSelectorState();
 }
 
-class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelector> {
+class _MeterComparisonSelectorState
+    extends ConsumerState<MeterComparisonSelector> {
   final _layerLink = LayerLink();
   OverlayEntry? _overlayEntry;
   String _query = '';
@@ -58,8 +59,9 @@ class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelecto
     return OverlayEntry(
       builder: (context) {
         // Read selection inside the builder so checkbox taps refresh the UI.
-        final selected =
-            ref.read(meterComparisonSelectionProvider(widget.comparisonKey));
+        final selected = ref.read(
+          meterComparisonSelectionProvider(widget.comparisonKey),
+        );
         return Stack(
           children: [
             Positioned.fill(
@@ -82,36 +84,41 @@ class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelecto
                 color: dashboardColors(context).card,
                 clipBehavior: Clip.antiAlias,
                 child: SizedBox(
-                  width: (MediaQuery.sizeOf(context).width - 24).clamp(280.0, 360.0),
+                  width: (MediaQuery.sizeOf(context).width - 24).clamp(
+                    280.0,
+                    360.0,
+                  ),
                   height: 320,
-                    child: _ComparisonDropdownBody(
-                      meters: widget.meters,
-                      selected: selected,
-                      query: _query,
-                      onQueryChanged: (value) {
-                        setState(() => _query = value);
-                        _overlayEntry?.markNeedsBuild();
-                      },
-                      onSelectionChanged: (next) {
-                        ref
-                            .read(
-                              meterComparisonSelectionProvider(
-                                widget.comparisonKey,
-                              ).notifier,
-                            )
-                            .state = next;
-                        ref
-                            .read(
-                              meterComparisonRecentProvider(
-                                widget.comparisonKey,
-                              ).notifier,
-                            )
-                            .state = next.toList();
-                        _overlayEntry?.markNeedsBuild();
-                      },
-                      onOverlayRefresh: () => _overlayEntry?.markNeedsBuild(),
-                      comparisonKey: widget.comparisonKey,
-                    ),
+                  child: _ComparisonDropdownBody(
+                    meters: widget.meters,
+                    selected: selected,
+                    query: _query,
+                    onQueryChanged: (value) {
+                      setState(() => _query = value);
+                      _overlayEntry?.markNeedsBuild();
+                    },
+                    onSelectionChanged: (next) {
+                      ref
+                              .read(
+                                meterComparisonSelectionProvider(
+                                  widget.comparisonKey,
+                                ).notifier,
+                              )
+                              .state =
+                          next;
+                      ref
+                          .read(
+                            meterComparisonRecentProvider(
+                              widget.comparisonKey,
+                            ).notifier,
+                          )
+                          .state = next
+                          .toList();
+                      _overlayEntry?.markNeedsBuild();
+                    },
+                    onOverlayRefresh: () => _overlayEntry?.markNeedsBuild(),
+                    comparisonKey: widget.comparisonKey,
+                  ),
                 ),
               ),
             ),
@@ -131,18 +138,20 @@ class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelecto
   @override
   Widget build(BuildContext context) {
     final colors = dashboardColors(context);
-    final selected = ref.watch(meterComparisonSelectionProvider(widget.comparisonKey));
+    final selected = ref.watch(
+      meterComparisonSelectionProvider(widget.comparisonKey),
+    );
     final isOpen = _overlayEntry != null;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Compare meters',
+          dashboardText(context, 'Compare meters', 'مقارنة العدادات'),
           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: colors.textPrimary,
-              ),
+            fontWeight: FontWeight.w700,
+            color: colors.textPrimary,
+          ),
         ),
         const SizedBox(height: DashboardSpacing.xs),
         CompositedTransformTarget(
@@ -153,7 +162,7 @@ class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelecto
               onPressed: widget.meters.length < 2 ? null : _toggleOverlay,
               style: OutlinedButton.styleFrom(
                 minimumSize: const Size(0, 44),
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 backgroundColor: isOpen
                     ? colors.cardElevated
                     : colors.card.withValues(alpha: 0.92),
@@ -167,10 +176,7 @@ class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelecto
                       selected.isEmpty
                           ? 'Search and select meters (max $kMeterComparisonMaxSelection)'
                           : '${selected.length} meter${selected.length == 1 ? '' : 's'} selected',
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: colors.textPrimary,
-                      ),
+                      style: TextStyle(fontSize: 13, color: colors.textPrimary),
                     ),
                   ),
                   Icon(
@@ -193,21 +199,35 @@ class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelecto
               for (final meterId in selected)
                 InputChip(
                   label: Text(_meterLabel(meterId)),
-                  labelStyle: TextStyle(fontSize: 11, color: colors.textPrimary),
+                  labelStyle: TextStyle(
+                    fontSize: 11,
+                    color: colors.textPrimary,
+                  ),
                   deleteIcon: const Icon(Icons.close, size: 14),
                   onDeleted: () {
                     final next = Set<String>.from(selected)..remove(meterId);
                     ref
-                        .read(meterComparisonSelectionProvider(widget.comparisonKey).notifier)
-                        .state = next;
+                            .read(
+                              meterComparisonSelectionProvider(
+                                widget.comparisonKey,
+                              ).notifier,
+                            )
+                            .state =
+                        next;
                   },
                 ),
               if (selected.isNotEmpty)
                 ActionChip(
-                  label: const Text('Clear'),
-                  onPressed: () => ref
-                      .read(meterComparisonSelectionProvider(widget.comparisonKey).notifier)
-                      .state = {},
+                  label: Text(dashboardText(context, 'Clear', 'مسح')),
+                  onPressed: () =>
+                      ref
+                              .read(
+                                meterComparisonSelectionProvider(
+                                  widget.comparisonKey,
+                                ).notifier,
+                              )
+                              .state =
+                          {},
                 ),
             ],
           ),
@@ -216,10 +236,14 @@ class _MeterComparisonSelectorState extends ConsumerState<MeterComparisonSelecto
           Padding(
             padding: const EdgeInsets.only(top: DashboardSpacing.xxs),
             child: Text(
-              'Main meters are selected by default. Add others to compare.',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: colors.textMuted,
-                  ),
+              dashboardText(
+                context,
+                'Main meters are selected by default. Add others to compare.',
+                'يتم اختيار العدادات الرئيسية افتراضيًا. أضف غيرها للمقارنة.',
+              ),
+              style: Theme.of(
+                context,
+              ).textTheme.bodySmall?.copyWith(color: colors.textMuted),
             ),
           ),
       ],
@@ -262,7 +286,9 @@ class _ComparisonDropdownBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final colors = dashboardColors(context);
     final filtered = _filtered;
-    final favorites = ref.watch(meterComparisonFavoritesProvider(comparisonKey));
+    final favorites = ref.watch(
+      meterComparisonFavoritesProvider(comparisonKey),
+    );
     final recent = ref.watch(meterComparisonRecentProvider(comparisonKey));
 
     return Column(
@@ -274,7 +300,11 @@ class _ComparisonDropdownBody extends ConsumerWidget {
             autofocus: true,
             style: TextStyle(color: colors.textPrimary, fontSize: 14),
             decoration: InputDecoration(
-              hintText: 'Search meters',
+              hintText: dashboardText(
+                context,
+                'Search meters',
+                'بحث في العدادات',
+              ),
               hintStyle: TextStyle(color: colors.textMuted),
               prefixIcon: Icon(Icons.search, size: 18, color: colors.textMuted),
               isDense: true,
@@ -290,7 +320,9 @@ class _ComparisonDropdownBody extends ConsumerWidget {
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(10),
-                borderSide: BorderSide(color: colors.navy.withValues(alpha: 0.5)),
+                borderSide: BorderSide(
+                  color: colors.navy.withValues(alpha: 0.5),
+                ),
               ),
             ),
             onChanged: onQueryChanged,
@@ -306,13 +338,18 @@ class _ComparisonDropdownBody extends ConsumerWidget {
                 style: DashboardTypography.label(context),
               ),
               ActionChip(
-                label: const Text('Select mains'),
-                onPressed: () => onSelectionChanged(
-                  defaultChartComparisonMeterIds(meters),
+                label: Text(
+                  dashboardText(
+                    context,
+                    'Select mains',
+                    'اختيار العدادات الرئيسية',
+                  ),
                 ),
+                onPressed: () =>
+                    onSelectionChanged(defaultChartComparisonMeterIds(meters)),
               ),
               ActionChip(
-                label: const Text('Clear'),
+                label: Text(dashboardText(context, 'Clear', 'مسح')),
                 onPressed: () => onSelectionChanged({}),
               ),
             ],
@@ -320,19 +357,28 @@ class _ComparisonDropdownBody extends ConsumerWidget {
         ),
         if (recent.isNotEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: DashboardSpacing.sm),
-            child: Text('Recent', style: DashboardTypography.label(context)),
+            padding: const EdgeInsets.symmetric(
+              horizontal: DashboardSpacing.sm,
+            ),
+            child: Text(
+              dashboardText(context, 'Recent', 'الأحدث'),
+              style: DashboardTypography.label(context),
+            ),
           ),
         if (recent.isNotEmpty)
           SizedBox(
             height: 36,
             child: ListView(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: DashboardSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                horizontal: DashboardSpacing.sm,
+              ),
               children: [
                 for (final id in recent)
                   Padding(
-                    padding: const EdgeInsets.only(right: DashboardSpacing.xxs),
+                    padding: const EdgeInsetsDirectional.only(
+                      end: DashboardSpacing.xxs,
+                    ),
                     child: FilterChip(
                       label: Text(_labelFor(id)),
                       selected: selected.contains(id),
@@ -353,7 +399,9 @@ class _ComparisonDropdownBody extends ConsumerWidget {
         const SizedBox(height: DashboardSpacing.xs),
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: DashboardSpacing.xs),
+            padding: const EdgeInsets.symmetric(
+              horizontal: DashboardSpacing.xs,
+            ),
             itemCount: filtered.length,
             itemBuilder: (context, index) {
               final meter = filtered[index];
@@ -365,7 +413,9 @@ class _ComparisonDropdownBody extends ConsumerWidget {
                 value: checked,
                 secondary: IconButton(
                   icon: Icon(
-                    isFavorite ? Icons.star_rounded : Icons.star_outline_rounded,
+                    isFavorite
+                        ? Icons.star_rounded
+                        : Icons.star_outline_rounded,
                     size: 18,
                     color: isFavorite
                         ? DashboardColors.accentGold(context)
@@ -379,8 +429,13 @@ class _ComparisonDropdownBody extends ConsumerWidget {
                       next.add(meter.meterId);
                     }
                     ref
-                        .read(meterComparisonFavoritesProvider(comparisonKey).notifier)
-                        .state = next;
+                            .read(
+                              meterComparisonFavoritesProvider(
+                                comparisonKey,
+                              ).notifier,
+                            )
+                            .state =
+                        next;
                     onOverlayRefresh?.call();
                   },
                 ),
@@ -393,10 +448,9 @@ class _ComparisonDropdownBody extends ConsumerWidget {
                   ),
                 ),
                 subtitle: Text(
-                  AppStrings.of(context).localizedName(
-                    en: meter.meterName,
-                    ar: meter.meterNameAr,
-                  ),
+                  AppStrings.of(
+                    context,
+                  ).localizedName(en: meter.meterName, ar: meter.meterNameAr),
                   style: TextStyle(color: colors.textMuted, fontSize: 11),
                 ),
                 onChanged: (value) {

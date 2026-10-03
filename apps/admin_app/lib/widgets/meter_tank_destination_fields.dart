@@ -46,7 +46,7 @@ class MeterTankDestinationFields extends ConsumerWidget {
         if (poursIntoTank)
           tanksAsync.when(
             loading: () => const LinearProgressIndicator(),
-            error: (e, _) => Text('$e'),
+            error: (e, _) => Text(adminUserError(context)),
             data: (tanks) {
               final knownIds = {for (final tank in tanks) tank.id};
               String? value;

@@ -8,4 +8,7 @@ Future<void> writePhotoBytesToDisk({
 
 Future<Uint8List?> readPhotoBytesFromDisk(String absolutePath) async => null;
 
-Future<String?> resolvePhotoDocumentsPath(String relativeFileName) async => null;
+Future<String?> resolvePhotoDocumentsPath(String relativeFileName) async =>
+    null;
+
+Future<void> deletePhotoFromDisk(String absolutePath) async {}

@@ -1,4 +1,4 @@
-import 'dart:ui';
+import 'package:flutter/widgets.dart';
 
 import 'package:smart_meters_core/smart_meters_core.dart';
 
@@ -11,6 +11,15 @@ class EntryStrings {
   bool get isAr => locale.languageCode == 'ar';
 
   String _t(String en, String ar) => isAr ? ar : en;
+  String text(String en, String ar) => _t(en, ar);
+
+  String dateDisplay(DateTime date) =>
+      formatBusinessDateDisplay(date, languageCode: locale.languageCode);
+
+  String numberDisplay(num value, {int fractionDigits = 0}) => localizeDigits(
+    value.toStringAsFixed(fractionDigits),
+    languageCode: locale.languageCode,
+  );
 
   String get appTitle => _t('Meter Entry', 'إدخال العدادات');
 
@@ -34,6 +43,19 @@ class EntryStrings {
       _t('Passwords do not match', 'كلمتا المرور غير متطابقتين');
   String get signOut => _t('Sign out', 'تسجيل الخروج');
   String get support => _t('Support', 'الدعم');
+  String get notifications => _t('Notifications', 'الإشعارات');
+  String get enableSystemNotifications =>
+      _t('Enable system notifications', 'تفعيل إشعارات النظام');
+  String get systemNotificationsHint => _t(
+    'Receive sync and operational alerts on this device.',
+    'استلم تنبيهات المزامنة والتشغيل على هذا الجهاز.',
+  );
+  String get notificationPermissionGranted =>
+      _t('System notifications enabled.', 'تم تفعيل إشعارات النظام.');
+  String get notificationPermissionNotGranted => _t(
+    'Notification permission was not granted. You can enable it later in device settings.',
+    'لم يتم منح إذن الإشعارات. يمكنك تفعيله لاحقًا من إعدادات الجهاز.',
+  );
   String get supportHint => _t(
     'Need help? Contact our support team by email.',
     'تحتاج مساعدة؟ تواصل مع فريق الدعم عبر البريد الإلكتروني.',
@@ -42,6 +64,14 @@ class EntryStrings {
   String get cancel => _t('Cancel', 'إلغاء');
   String get saving => _t('Saving…', 'جارٍ الحفظ…');
   String get retry => _t('Retry', 'إعادة المحاولة');
+  String get genericError => _t(
+    'Something went wrong. Please try again.',
+    'حدث خطأ. يرجى المحاولة مرة أخرى.',
+  );
+  String get photoPickFailed => _t(
+    'Could not select the image. Please try again.',
+    'تعذّر اختيار الصورة. يرجى المحاولة مرة أخرى.',
+  );
 
   // Phase 6 — reading source badge (shown only when unified_ingestion is ON)
   String get source => _t('Source', 'المصدر');
@@ -58,8 +88,7 @@ class EntryStrings {
       'iot' => _t('IoT', 'إنترنت الأشياء'),
       'virtual' => _t('Virtual', 'افتراضي'),
       'legacy' => _t('Legacy', 'قديم'),
-      'ocr_photo' =>
-          _t('OCR (suggested)', 'تعرّف ضوئي على الحروف (مقترح)'),
+      'ocr_photo' => _t('OCR (suggested)', 'تعرّف ضوئي على الحروف (مقترح)'),
       _ => sourceKey,
     };
     return _t('Source: $label', 'المصدر: $label');
@@ -69,65 +98,70 @@ class EntryStrings {
   String get entryHeaderTitle =>
       _t('Meter Reading Entry', 'إدخال قراءات العدادات');
   String get backdated => _t('Backdated', 'تاريخ سابق');
-  String get pickEntryDate =>
-      _t('Entry date (backdating allowed)', 'تاريخ الإدخال (مسموح بتاريخ سابق)');
+  String get pickEntryDate => _t(
+    'Entry date (backdating allowed)',
+    'تاريخ الإدخال (مسموح بتاريخ سابق)',
+  );
 
   // Sites ----------------------------------------------------------------------
   String get selectSite => _t('Select site', 'اختر الموقع');
   String get selectSiteHint => _t(
-        'Only sites you are allowed to enter readings for are listed.',
-        'تُعرض فقط المواقع المصرّح لك بإدخال القراءات فيها.',
-      );
+    'Only sites you are allowed to enter readings for are listed.',
+    'تُعرض فقط المواقع المصرّح لك بإدخال القراءات فيها.',
+  );
   String get loadingSites => _t('Loading sites…', 'جارٍ تحميل المواقع…');
   String get couldNotLoadSites =>
       _t('Could not load sites.', 'تعذّر تحميل المواقع.');
-  String get noSites =>
-      _t('No sites available for reading entry.', 'لا توجد مواقع متاحة للإدخال.');
+  String get noSites => _t(
+    'No sites available for reading entry.',
+    'لا توجد مواقع متاحة للإدخال.',
+  );
 
   // Categories / types ---------------------------------------------------------
   String get selectMeterType => _t('Select meter type', 'اختر نوع العداد');
   String get selectMeterTypeHint => _t(
-        'Only types with meters registered at this site are shown.',
-        'تُعرض فقط الأنواع التي لها عدادات مسجّلة في هذا الموقع.',
-      );
+    'Only types with meters registered at this site are shown.',
+    'تُعرض فقط الأنواع التي لها عدادات مسجّلة في هذا الموقع.',
+  );
   String get metersOfType =>
       _t('Meters of this type at this site', 'عدادات هذا النوع في الموقع');
   String get loadingTypes =>
       _t('Loading meter types…', 'جارٍ تحميل أنواع العدادات…');
   String get couldNotLoadTypes =>
       _t('Could not load meter types.', 'تعذّر تحميل أنواع العدادات.');
-  String get noMetersAtSite =>
-      _t('No active meters found for this site.', 'لا توجد عدادات مفعّلة في هذا الموقع.');
+  String get noMetersAtSite => _t(
+    'No active meters found for this site.',
+    'لا توجد عدادات مفعّلة في هذا الموقع.',
+  );
 
   // Readings -------------------------------------------------------------------
   String get loadingMeters => _t('Loading meters…', 'جارٍ تحميل العدادات…');
   String get couldNotLoadMeters =>
       _t('Could not load meters.', 'تعذّر تحميل العدادات.');
   String get noMetersOfType => _t(
-        'No active meters of this type at this site.',
-        'لا توجد عدادات مفعّلة من هذا النوع في الموقع.',
-      );
+    'No active meters of this type at this site.',
+    'لا توجد عدادات مفعّلة من هذا النوع في الموقع.',
+  );
   String get readingsHint => _t(
-        'Enter values for each meter. Tap the photo area for camera or gallery. '
+    'Enter values for each meter. Tap the photo area for camera or gallery. '
         'Save stores locally and syncs when online.',
-        'أدخل القيم لكل عداد. اضغط على منطقة الصورة للكاميرا أو الاستوديو. '
+    'أدخل القيم لكل عداد. اضغط على منطقة الصورة للكاميرا أو الاستوديو. '
         'الحفظ يخزّن محليًا ويُزامن عند الاتصال.',
-      );
+  );
   String get readingValue => _t('Reading value', 'قيمة القراءة');
   String get tapAddPhoto => _t('Tap to add photo', 'اضغط لإضافة صورة');
-  String get photoRequired =>
-      _t('Add photo (required)', 'أضف صورة (إلزامي)');
+  String get photoRequired => _t('Add photo (required)', 'أضف صورة (إلزامي)');
   String get clearReading => _t('Clear reading?', 'مسح القراءة؟');
   String clearReadingBody(String meterName) => _t(
-        'Remove the value and photo for $meterName?',
-        'إزالة القيمة والصورة لـ $meterName؟',
-      );
+    'Remove the value and photo for $meterName?',
+    'إزالة القيمة والصورة لـ $meterName؟',
+  );
   String get clear => _t('Clear', 'مسح');
   String get camera => _t('Camera', 'الكاميرا');
   String get photoPickCancelled => _t(
-        'No photo selected. Try Camera or Gallery again.',
-        'لم يتم اختيار صورة. جرّب الكاميرا أو المعرض مرة أخرى.',
-      );
+    'No photo selected. Try Camera or Gallery again.',
+    'لم يتم اختيار صورة. جرّب الكاميرا أو المعرض مرة أخرى.',
+  );
   String get gallery => _t('Gallery', 'الاستوديو');
   String get viewPhoto => _t('View photo', 'عرض الصورة');
   String get replaceCamera => _t('Replace (camera)', 'استبدال (كاميرا)');
@@ -135,27 +169,28 @@ class EntryStrings {
   String get removePhoto => _t('Remove photo', 'إزالة الصورة');
   String get photo => _t('Photo', 'صورة');
   String get lastReading => _t('Last', 'السابق');
-  String get fixInvalid =>
-      _t('Fix invalid readings before saving.', 'صحّح القراءات غير الصالحة قبل الحفظ.');
+  String get fixInvalid => _t(
+    'Fix invalid readings before saving.',
+    'صحّح القراءات غير الصالحة قبل الحفظ.',
+  );
   String get enterAtLeastOne => _t(
-        'Enter at least one reading value to save.',
-        'أدخل قيمة قراءة واحدة على الأقل للحفظ.',
-      );
+    'Enter at least one reading value to save.',
+    'أدخل قيمة قراءة واحدة على الأقل للحفظ.',
+  );
   String get highReading => _t('High reading', 'قراءة مرتفعة');
   String get review => _t('Review', 'مراجعة');
   String get confirm => _t('Confirm', 'تأكيد');
   String savedCount(int n) => isAr
       ? (n == 1
-          ? 'تم حفظ قراءة واحدة (تُزامن عند الاتصال).'
-          : 'تم حفظ $n قراءات (تُزامن عند الاتصال).')
+            ? 'تم حفظ قراءة واحدة (تُزامن عند الاتصال).'
+            : 'تم حفظ $n قراءات (تُزامن عند الاتصال).')
       : (n == 1
-          ? '1 reading saved (syncing if online).'
-          : '$n readings saved (syncing if online).');
+            ? '1 reading saved (syncing if online).'
+            : '$n readings saved (syncing if online).');
 
   // Card border legend ---------------------------------------------------------
   String get legendEmpty => _t('Incomplete', 'غير مكتمل');
-  String get legendValue =>
-      _t('Value + photo ready', 'قيمة وصورة جاهزة');
+  String get legendValue => _t('Value + photo ready', 'قيمة وصورة جاهزة');
   String get legendPhoto => _t('Saved', 'تم الحفظ');
 
   // Profile --------------------------------------------------------------------
@@ -166,8 +201,7 @@ class EntryStrings {
   String get changePhoto => _t('Change photo', 'تغيير الصورة');
   String get addProfilePhoto => _t('Add profile photo', 'إضافة صورة شخصية');
   String get profileSaved => _t('Profile saved', 'تم حفظ الملف الشخصي');
-  String get nameRequired =>
-      _t('Full name is required', 'الاسم الكامل مطلوب');
+  String get nameRequired => _t('Full name is required', 'الاسم الكامل مطلوب');
   String get editProfile => _t('Edit profile', 'تعديل الملف');
   String get saveProfile => _t('Save profile', 'حفظ الملف');
 
@@ -175,11 +209,10 @@ class EntryStrings {
   String get online => _t('Online', 'متصل');
   String get offline => _t('Offline', 'غير متصل');
   String get offlineHint => _t(
-        'Offline mode: readings will sync automatically when connection returns.',
-        'وضع عدم الاتصال: ستُزامن القراءات تلقائيًا عند عودة الاتصال.',
-      );
-  String lastSync(String time) =>
-      _t('Last sync: $time', 'آخر مزامنة: $time');
+    'Offline mode: readings will sync automatically when connection returns.',
+    'وضع عدم الاتصال: ستُزامن القراءات تلقائيًا عند عودة الاتصال.',
+  );
+  String lastSync(String time) => _t('Last sync: $time', 'آخر مزامنة: $time');
   String syncedAt(String time) => _t('Synced $time', 'آخر مزامنة $time');
   String get syncNow => _t('Sync now', 'زامن الآن');
   String get sync => _t('Sync', 'مزامنة');
@@ -187,23 +220,21 @@ class EntryStrings {
   String get noInternet =>
       _t('No internet connection.', 'لا يوجد اتصال بالإنترنت.');
   String get couldNotSyncReading => _t(
-        'Could not sync reading. Try again later.',
-        'تعذّر مزامنة القراءة. حاول لاحقاً.',
-      );
+    'Could not sync reading. Try again later.',
+    'تعذّر مزامنة القراءة. حاول لاحقاً.',
+  );
   String get couldNotSyncPermission => _t(
-        'Could not sync reading. Check date permission and try again.',
-        'تعذّر مزامنة القراءة. تحقق من صلاحية التاريخ وحاول مجدداً.',
-      );
+    'Could not sync reading. Check date permission and try again.',
+    'تعذّر مزامنة القراءة. تحقق من صلاحية التاريخ وحاول مجدداً.',
+  );
 
   // Readings workspace ---------------------------------------------------------
   String get previousReading => _t('Previous', 'السابق');
   String get newReading => _t('New Reading', 'قراءة جديدة');
   String get consumption => _t('Consumption', 'الاستهلاك');
-  String get takeMeterPhoto =>
-      _t('Take Meter Photo', 'التقاط صورة العداد');
+  String get takeMeterPhoto => _t('Take Meter Photo', 'التقاط صورة العداد');
   String get retakePhoto => _t('Retake', 'إعادة التقاط');
-  String get searchMeters =>
-      _t('Search meters…', 'بحث في العدادات…');
+  String get searchMeters => _t('Search meters…', 'بحث في العدادات…');
   String get filterAll => _t('All', 'الكل');
   String get filterPending => _t('Pending', 'معلّق');
   String get filterDone => _t('Done', 'مكتمل');
@@ -215,8 +246,7 @@ class EntryStrings {
       _t('$done of $total completed', '$done من $total مكتمل');
   String metersFooter(int total, int done) =>
       _t('$total meters · $done completed', '$total عداد · $done مكتمل');
-  String get saveAndSubmit =>
-      _t('Save & Submit', 'حفظ وإرسال');
+  String get saveAndSubmit => _t('Save & Submit', 'حفظ وإرسال');
   String get formInvalid => fixInvalid;
 
   // Roles ----------------------------------------------------------------------
@@ -247,3 +277,6 @@ class EntryStrings {
   String meterName(Meter meter) =>
       isAr && meter.nameAr.trim().isNotEmpty ? meter.nameAr : meter.nameEn;
 }
+
+String entryText(BuildContext context, String en, String ar) =>
+    EntryStrings(Localizations.localeOf(context)).text(en, ar);

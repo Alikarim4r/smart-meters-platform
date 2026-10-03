@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../l10n/entry_strings.dart';
 
 class EntryLoadingCard extends StatelessWidget {
   const EntryLoadingCard({super.key, required this.message});
@@ -56,7 +57,10 @@ class EntryErrorCard extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 12),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(
+              onPressed: onRetry,
+              child: Text(entryText(context, 'Retry', 'إعادة المحاولة')),
+            ),
           ],
         ),
       ),

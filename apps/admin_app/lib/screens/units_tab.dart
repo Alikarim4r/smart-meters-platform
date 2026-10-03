@@ -6,6 +6,7 @@ import '../providers/catalog_providers.dart';
 import '../utils/catalog_validation.dart';
 import '../widgets/catalog_widgets.dart';
 import 'unit_form_screen.dart';
+import '../l10n/admin_strings.dart';
 
 class UnitsTab extends ConsumerStatefulWidget {
   const UnitsTab({super.key});
@@ -48,16 +49,16 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete unit?'),
+        title: Text(adminText(context, 'Delete unit?', 'حذف الوحدة؟')),
         content: Text('Delete "${unit.nameEn}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(adminText(context, 'Delete', 'حذف')),
           ),
         ],
       ),
@@ -105,9 +106,13 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
       ),
       data: (categories) {
         if (categories.isEmpty) {
-          return const CatalogEmptyState(
-            title: 'No categories',
-            message: 'Create a category first before adding units.',
+          return CatalogEmptyState(
+            title: adminText(context, 'No categories', 'لا توجد فئات'),
+            message: adminText(
+              context,
+              'Create a category first before adding units.',
+              'أنشئ فئة أولًا قبل إضافة الوحدات.',
+            ),
             icon: Icons.category_outlined,
           );
         }
@@ -137,7 +142,7 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                     _openAddForm(categoryId, units);
                   },
                   icon: const Icon(Icons.add),
-                  label: const Text('Add unit'),
+                  label: Text(adminText(context, 'Add unit', 'إضافة وحدة')),
                 )
               : null,
           body: SafeArea(
@@ -148,7 +153,7 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                   padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
                   child: DropdownMenu<String>(
                     expandedInsets: EdgeInsets.zero,
-                    label: const Text('Category'),
+                    label: Text(adminText(context, 'Category', 'الفئة')),
                     initialSelection: categoryId,
                     dropdownMenuEntries: [
                       for (final category in categories)
@@ -175,16 +180,26 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                     searchController: _searchController,
                     activeFilter: _filter,
                     onFilterChanged: (value) => setState(() => _filter = value),
-                    hintText: 'Search units…',
+                    hintText: adminText(
+                      context,
+                      'Search units…',
+                      'بحث في الوحدات…',
+                    ),
                   ),
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
                   child: Card(
                     color: Colors.amber.shade50,
-                    child: const ListTile(
+                    child: ListTile(
                       leading: Icon(Icons.warning_amber_outlined),
-                      title: Text('Unit conversion changes'),
+                      title: Text(
+                        adminText(
+                          context,
+                          'Unit conversion changes',
+                          'تغييرات تحويل الوحدة',
+                        ),
+                      ),
                       subtitle: Text(
                         'Changing unit conversion affects interpretation for '
                         'new meters only. Existing meters with readings are '
@@ -205,9 +220,13 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                           );
                           if (specs.isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
+                              SnackBar(
                                 content: Text(
-                                  'No standard catalog for this category code.',
+                                  adminText(
+                                    context,
+                                    'No standard catalog for this category code.',
+                                    'لا يوجد كتالوج قياسي لرمز هذه الفئة.',
+                                  ),
                                 ),
                               ),
                             );
@@ -241,7 +260,13 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                           }
                         },
                         icon: const Icon(Icons.playlist_add_check),
-                        label: const Text('Expand standard units (≥12)'),
+                        label: Text(
+                          adminText(
+                            context,
+                            'Expand standard units (≥12)',
+                            'توسيع الوحدات القياسية (≥12)',
+                          ),
+                        ),
                       ),
                     ),
                   ),
@@ -266,7 +291,11 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
 
                       if (filtered.isEmpty) {
                         return CatalogEmptyState(
-                          title: 'No units',
+                          title: adminText(
+                            context,
+                            'No units',
+                            'لا توجد وحدات',
+                          ),
                           message: canManage
                               ? 'No units for ${selectedCategory.nameEn}. Tap Add unit to create one.'
                               : 'No units for ${selectedCategory.nameEn}.',
@@ -368,9 +397,11 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                                         }
                                       },
                                       itemBuilder: (context) => [
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                           value: 'edit',
-                                          child: Text('Edit'),
+                                          child: Text(
+                                            adminText(context, 'Edit', 'تعديل'),
+                                          ),
                                         ),
                                         PopupMenuItem(
                                           value: 'toggle',
@@ -380,9 +411,11 @@ class _UnitsTabState extends ConsumerState<UnitsTab> {
                                                 : 'Activate',
                                           ),
                                         ),
-                                        const PopupMenuItem(
+                                        PopupMenuItem(
                                           value: 'delete',
-                                          child: Text('Delete'),
+                                          child: Text(
+                                            adminText(context, 'Delete', 'حذف'),
+                                          ),
                                         ),
                                       ],
                                     )

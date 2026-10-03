@@ -114,6 +114,25 @@ class ReadingPhotoFileStore {
     return logicalKey;
   }
 
+  Future<void> deletePhoto(String? path) async {
+    if (path == null || path.isEmpty) return;
+    final box = await _box();
+    await box.delete(path);
+
+    // Disk-backed saves are mirrored under their basename in Hive as well.
+    final normalized = path.replaceAll('\\', '/');
+    final basename = normalized.split('/').last;
+    if (basename.isNotEmpty && basename != path) {
+      await box.delete(basename);
+    }
+
+    try {
+      await deletePhotoFromDisk(path);
+    } catch (_) {
+      // Best-effort cleanup; stale local files must never block user actions.
+    }
+  }
+
   Future<Uint8List?> readBytes(String? path) async {
     if (path == null || path.isEmpty) return null;
     final box = await _box();

@@ -115,16 +115,15 @@ class NotificationRepository {
         .from('in_app_notifications')
         .insert({
           'organization_id': organizationId,
-          if (siteId != null) 'site_id': siteId,
-          if (userId != null) 'user_id': userId,
+          'site_id': ?siteId,
+          'user_id': ?userId,
           'notification_type': notificationType,
           'severity': severity,
           'title': title,
           'body': body,
           'event_key': eventKey,
-          if (relatedEntityType != null)
-            'related_entity_type': relatedEntityType,
-          if (relatedEntityId != null) 'related_entity_id': relatedEntityId,
+          'related_entity_type': ?relatedEntityType,
+          'related_entity_id': ?relatedEntityId,
           'payload': payload,
           'is_read': false,
         })
@@ -161,7 +160,7 @@ class NotificationRepository {
       'notification_type': notificationType,
       'enabled': enabled,
       'min_severity': minSeverity,
-      if (siteId != null) 'site_id': siteId,
+      'site_id': ?siteId,
       'updated_at': DateTime.now().toUtc().toIso8601String(),
     });
   }

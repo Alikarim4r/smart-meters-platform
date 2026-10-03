@@ -39,7 +39,15 @@ class _MetersTabState extends ConsumerState<MetersTab> {
   Future<void> _openAddForm(String? siteId) async {
     if (siteId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select a site before adding a meter.')),
+        SnackBar(
+          content: Text(
+            adminText(
+              context,
+              'Select a site before adding a meter.',
+              'اختر موقعًا قبل إضافة عداد.',
+            ),
+          ),
+        ),
       );
       return;
     }
@@ -90,7 +98,13 @@ class _MetersTabState extends ConsumerState<MetersTab> {
                             null;
                       });
                     }
-                    return const Text('No sites available.');
+                    return Text(
+                      adminText(
+                        context,
+                        'No sites available.',
+                        'لا توجد مواقع متاحة.',
+                      ),
+                    );
                   }
                   final selectedStillValid =
                       selectedSiteId != null &&
@@ -243,11 +257,11 @@ class _MetersTabState extends ConsumerState<MetersTab> {
                       title: s.isAr ? 'لا توجد عدادات' : 'No meters',
                       message: canManage
                           ? (s.isAr
-                              ? 'لا توجد عدادات مطابقة. اضغط إضافة عداد لإنشاء واحد.'
-                              : 'No meters match your filters. Tap Add meter to create one.')
+                                ? 'لا توجد عدادات مطابقة. اضغط إضافة عداد لإنشاء واحد.'
+                                : 'No meters match your filters. Tap Add meter to create one.')
                           : (s.isAr
-                              ? 'لا توجد عدادات مطابقة للفلاتر.'
-                              : 'No meters match your filters.'),
+                                ? 'لا توجد عدادات مطابقة للفلاتر.'
+                                : 'No meters match your filters.'),
                       icon: Icons.speed_outlined,
                     );
                   }

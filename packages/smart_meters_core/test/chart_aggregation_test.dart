@@ -346,7 +346,7 @@ void main() {
           'meter_id': meterId,
           'reading_date': date,
           'daily_consumption': consumption,
-          if (status != null) 'consumption_status': status,
+          'consumption_status': ?status,
           'meters': {
             'base_unit': baseUnit,
             'unit_code': unitCode,

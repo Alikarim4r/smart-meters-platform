@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../utils/user_validation.dart';
+import '../l10n/admin_strings.dart';
 
 class ApprovalStatusBadge extends StatelessWidget {
   const ApprovalStatusBadge({
@@ -69,7 +70,7 @@ class ActiveStatusBadge extends StatelessWidget {
       return const SizedBox.shrink();
     }
     return Chip(
-      label: const Text('Inactive'),
+      label: Text(adminText(context, 'Inactive', 'غير مفعّل')),
       visualDensity: VisualDensity.compact,
       backgroundColor: Colors.grey.shade200,
       labelStyle: TextStyle(color: Colors.grey.shade800),
@@ -188,7 +189,11 @@ class UserListTileCard extends StatelessWidget {
 }
 
 class AppAccessBadge extends StatelessWidget {
-  const AppAccessBadge({super.key, required this.category, this.compact = false});
+  const AppAccessBadge({
+    super.key,
+    required this.category,
+    this.compact = false,
+  });
 
   final AppAccessCategory category;
   final bool compact;

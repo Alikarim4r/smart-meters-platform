@@ -577,6 +577,15 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
 
       final now = DateTime.now();
       final existingDraft = state.localDraft;
+      if (existingDraft != null) {
+        final fileStore = _ref.read(readingPhotoFileStoreProvider);
+        if (existingDraft.localPhotoPath != result.localPhotoPath) {
+          await fileStore.deletePhoto(existingDraft.localPhotoPath);
+        }
+        if (existingDraft.watermarkedPhotoPath != result.watermarkedPhotoPath) {
+          await fileStore.deletePhoto(existingDraft.watermarkedPhotoPath);
+        }
+      }
       final draft = (existingDraft ??
               LocalReadingDraft(
                 localId: localId,
@@ -615,7 +624,7 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
       state = state.copyWith(
         isAttachingPhoto: false,
         errorMessage:
-            'تعذّر تجهيز الصورة: ${error.toString()}. جرّب صورة JPG/PNG.',
+            'تعذّر تجهيز الصورة. جرّب صورة JPG/PNG أخرى. / Could not prepare the image. Try another JPG/PNG image.',
       );
       return false;
     }
@@ -629,6 +638,11 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
     if (draft == null) {
       return;
     }
+    final fileStore = _ref.read(readingPhotoFileStoreProvider);
+    await Future.wait([
+      fileStore.deletePhoto(draft.localPhotoPath),
+      fileStore.deletePhoto(draft.watermarkedPhotoPath),
+    ]);
     final updated = draft.copyWith(
       clearLocalPhotoPath: true,
       clearWatermarkedPhotoPath: true,
@@ -651,6 +665,11 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
     }
     final draft = state.localDraft;
     if (draft != null) {
+      final fileStore = _ref.read(readingPhotoFileStoreProvider);
+      await Future.wait([
+        fileStore.deletePhoto(draft.localPhotoPath),
+        fileStore.deletePhoto(draft.watermarkedPhotoPath),
+      ]);
       await _storage.deleteDraft(draft.localId);
     }
     state = state.copyWith(

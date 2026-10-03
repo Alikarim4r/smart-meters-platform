@@ -40,12 +40,12 @@ class _EfficiencyMetersPolicySectionState
 
   Future<void> _bootstrapSite() async {
     final sites = await ref.read(adminSitesProvider.future);
-    final orgSites =
-        sites.where((s) => s.organizationId == widget.organizationId).toList();
+    final orgSites = sites
+        .where((s) => s.organizationId == widget.organizationId)
+        .toList();
     if (orgSites.isEmpty) return;
     final preferred = ref.read(selectedAdminSiteIdProvider);
-    final siteId = (preferred != null &&
-            orgSites.any((s) => s.id == preferred))
+    final siteId = (preferred != null && orgSites.any((s) => s.id == preferred))
         ? preferred
         : orgSites.first.id;
     await _selectSite(siteId);
@@ -61,8 +61,9 @@ class _EfficiencyMetersPolicySectionState
       _loadedGroup = null;
     });
     try {
-      final groups =
-          await ref.read(copGroupRepositoryProvider).listForSite(siteId);
+      final groups = await ref
+          .read(copGroupRepositoryProvider)
+          .listForSite(siteId);
       final group = groups.isEmpty
           ? null
           : groups.firstWhere((g) => g.isActive, orElse: () => groups.first);
@@ -96,13 +97,16 @@ class _EfficiencyMetersPolicySectionState
       _status = null;
     });
     try {
-      final saved = await ref.read(copGroupRepositoryProvider).upsert(
+      final saved = await ref
+          .read(copGroupRepositoryProvider)
+          .upsert(
             CopGroupUpsertInput(
               id: _loadedGroup?.id,
               siteId: siteId,
               nameEn: _loadedGroup?.nameEn ?? 'Plant efficiency (COP/EER)',
               nameAr: _loadedGroup?.nameAr ?? 'كفاءة المحطة (COP/EER)',
-              description: _loadedGroup?.description ??
+              description:
+                  _loadedGroup?.description ??
                   'Cooling meters ÷ electricity meters for COP and EER',
               isActive: true,
               btuMeterIds: _btuIds.toList(),
@@ -128,8 +132,9 @@ class _EfficiencyMetersPolicySectionState
   Widget build(BuildContext context) {
     final s = AdminStrings(ref.watch(adminLocaleProvider));
     final sitesAsync = ref.watch(adminSitesProvider);
-    final metersAsync =
-        _siteId == null ? null : ref.watch(siteMetersProvider(_siteId!));
+    final metersAsync = _siteId == null
+        ? null
+        : ref.watch(siteMetersProvider(_siteId!));
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -137,9 +142,9 @@ class _EfficiencyMetersPolicySectionState
         const Divider(height: 28),
         Text(
           s.efficiencyMetersPolicy,
-          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 4),
         Text(
@@ -147,10 +152,7 @@ class _EfficiencyMetersPolicySectionState
           style: Theme.of(context).textTheme.bodySmall,
         ),
         const SizedBox(height: 8),
-        Text(
-          s.copEerFormulaHint,
-          style: Theme.of(context).textTheme.bodySmall,
-        ),
+        Text(s.copEerFormulaHint, style: Theme.of(context).textTheme.bodySmall),
         const SizedBox(height: 12),
         sitesAsync.when(
           loading: () => const LinearProgressIndicator(),
@@ -170,10 +172,7 @@ class _EfficiencyMetersPolicySectionState
               decoration: InputDecoration(labelText: s.site),
               items: [
                 for (final site in orgSites)
-                  DropdownMenuItem(
-                    value: site.id,
-                    child: Text(site.nameEn),
-                  ),
+                  DropdownMenuItem(value: site.id, child: Text(site.nameEn)),
               ],
               onChanged: widget.enabled
                   ? (value) {
@@ -236,7 +235,9 @@ class _EfficiencyMetersPolicySectionState
                               }
                             : null,
                         title: Text(s.isAr ? meter.nameAr : meter.nameEn),
-                        subtitle: Text('${meter.meterCode} · ${meter.baseUnit}'),
+                        subtitle: Text(
+                          '${meter.meterCode} · ${meter.baseUnit}',
+                        ),
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
                     ),
@@ -269,7 +270,9 @@ class _EfficiencyMetersPolicySectionState
                               }
                             : null,
                         title: Text(s.isAr ? meter.nameAr : meter.nameEn),
-                        subtitle: Text('${meter.meterCode} · ${meter.baseUnit}'),
+                        subtitle: Text(
+                          '${meter.meterCode} · ${meter.baseUnit}',
+                        ),
                         controlAffinity: ListTileControlAffinity.leading,
                       ),
                     ),
@@ -277,8 +280,9 @@ class _EfficiencyMetersPolicySectionState
                   Align(
                     alignment: AlignmentDirectional.centerStart,
                     child: FilledButton.tonal(
-                      onPressed:
-                          widget.enabled && !_saving ? () => _save(s) : null,
+                      onPressed: widget.enabled && !_saving
+                          ? () => _save(s)
+                          : null,
                       child: Text(_saving ? s.saving : s.saveEfficiencyMeters),
                     ),
                   ),
@@ -291,8 +295,8 @@ class _EfficiencyMetersPolicySectionState
           Text(
             _status!,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: Theme.of(context).colorScheme.primary,
-                ),
+              color: Theme.of(context).colorScheme.primary,
+            ),
           ),
         ],
       ],

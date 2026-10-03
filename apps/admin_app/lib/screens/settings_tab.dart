@@ -60,7 +60,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
       _showMessage(s.settingsSaved);
     } catch (error) {
       setState(() => _saving = false);
-      _showMessage('Failed to save settings: $error');
+      _showMessage(s.genericError);
     }
   }
 
@@ -98,7 +98,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
       _showMessage(s.settingsResetDone);
     } catch (error) {
       setState(() => _saving = false);
-      _showMessage('Failed to reset settings: $error');
+      _showMessage(s.genericError);
     }
   }
 
@@ -124,11 +124,18 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
         top: false,
         child: orgsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (error, _) =>
-              Center(child: Text('Failed to load organizations: $error')),
+          error: (error, _) => Center(child: Text(adminCouldNotLoad(context))),
           data: (organizations) {
             if (organizations.isEmpty) {
-              return const Center(child: Text('No organizations available.'));
+              return Center(
+                child: Text(
+                  adminText(
+                    context,
+                    'No organizations available.',
+                    'لا توجد جهات متاحة.',
+                  ),
+                ),
+              );
             }
 
             final orgId = selectedOrgId ?? organizations.first.id;
@@ -143,7 +150,7 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
             return policyAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (error, _) =>
-                  Center(child: Text('Failed to load policy settings: $error')),
+                  Center(child: Text(adminCouldNotLoad(context))),
               data: (settings) {
                 _ensureDraft(settings);
                 final draft = _draft ?? settings;
@@ -505,7 +512,8 @@ class _SettingsTabState extends ConsumerState<SettingsTab> {
                       children: [
                         Expanded(
                           child: FilledButton.icon(
-                            onPressed: (!_dirty ||
+                            onPressed:
+                                (!_dirty ||
                                     _saving ||
                                     !(canManage || canSaveLogos))
                                 ? null
@@ -596,10 +604,7 @@ class _TimePickerTile extends StatelessWidget {
     }
     final hour = int.tryParse(match.group(1)!) ?? 23;
     final minute = int.tryParse(match.group(2)!) ?? 59;
-    return TimeOfDay(
-      hour: hour.clamp(0, 23),
-      minute: minute.clamp(0, 59),
-    );
+    return TimeOfDay(hour: hour.clamp(0, 23), minute: minute.clamp(0, 59));
   }
 
   String _format(TimeOfDay time) {
@@ -639,7 +644,7 @@ class _TimePickerTile extends StatelessWidget {
           border: const OutlineInputBorder(),
           suffixIcon: enabled
               ? IconButton(
-                  tooltip: 'Clear',
+                  tooltip: adminText(context, 'Clear', 'مسح'),
                   onPressed: () => onChanged(null),
                   icon: const Icon(Icons.clear),
                 )

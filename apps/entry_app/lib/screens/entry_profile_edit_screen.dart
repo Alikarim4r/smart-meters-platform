@@ -78,28 +78,36 @@ class _EntryProfileEditScreenState
     try {
       String? avatarPath = profile.avatarPath;
       if (_pendingAvatarBytes != null) {
-        avatarPath = await ref.read(profileRepositoryProvider).uploadAvatar(
+        avatarPath = await ref
+            .read(profileRepositoryProvider)
+            .uploadAvatar(
               userId: profile.id,
               bytes: _pendingAvatarBytes!,
               contentType: _pendingAvatarContentType ?? 'image/jpeg',
             );
       }
-      await ref.read(authProvider.notifier).updateOwnProfile(
+      await ref
+          .read(authProvider.notifier)
+          .updateOwnProfile(
             fullName: _nameController.text.trim(),
             companyName: _companyController.text.trim(),
             phone: _phoneController.text.trim(),
             avatarPath: avatarPath,
           );
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.profileSaved)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.profileSaved)));
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
       setState(() => _saving = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('$error')),
+        SnackBar(
+          content: Text(
+            EntryStrings(Localizations.localeOf(context)).genericError,
+          ),
+        ),
       );
     }
   }
@@ -116,7 +124,9 @@ class _EntryProfileEditScreenState
     final initials = _initials(displayName);
     final avatarUrl = profile == null
         ? null
-        : ref.read(profileRepositoryProvider).publicAvatarUrl(profile.avatarPath);
+        : ref
+              .read(profileRepositoryProvider)
+              .publicAvatarUrl(profile.avatarPath);
 
     ImageProvider? image;
     if (_pendingAvatarBytes != null) {
@@ -126,9 +136,7 @@ class _EntryProfileEditScreenState
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s.editProfile),
-      ),
+      appBar: AppBar(title: Text(s.editProfile)),
       body: SafeArea(
         child: Form(
           key: _formKey,
@@ -181,10 +189,9 @@ class _EntryProfileEditScreenState
                   isDense: true,
                   border: const OutlineInputBorder(),
                 ),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty)
-                        ? s.nameRequired
-                        : null,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? s.nameRequired
+                    : null,
               ),
               const SizedBox(height: 12),
               TextFormField(
@@ -233,8 +240,11 @@ class _EntryProfileEditScreenState
   }
 
   static String _initials(String name) {
-    final parts =
-        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {
       return parts.first.characters.first.toUpperCase();

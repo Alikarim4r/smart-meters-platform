@@ -50,15 +50,15 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
   bool _didPopulate = false;
 
   ReadingEntryQuery get _query => ReadingEntryQuery(
-        siteId: widget.site.id,
-        organizationId: widget.site.organizationId,
-        meterId: widget.status.meter.id,
-        category: widget.category,
-        businessDate: widget.businessDate,
-        initialTodayReading: widget.status.todayReading,
-        initialLastReading: widget.status.lastReading,
-        initialLocalDraft: widget.status.localDraft,
-      );
+    siteId: widget.site.id,
+    organizationId: widget.site.organizationId,
+    meterId: widget.status.meter.id,
+    category: widget.category,
+    businessDate: widget.businessDate,
+    initialTodayReading: widget.status.todayReading,
+    initialLastReading: widget.status.lastReading,
+    initialLocalDraft: widget.status.localDraft,
+  );
 
   @override
   void didUpdateWidget(covariant MeterReadingEntryCard oldWidget) {
@@ -100,21 +100,21 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
       if (i > 0 && fromEnd % 3 == 0) buf.write(',');
       buf.write(intPart[i]);
     }
-    final formatted = parts.length > 1 ? '${buf.toString()}.${parts[1]}' : buf.toString();
+    final formatted = parts.length > 1
+        ? '${buf.toString()}.${parts[1]}'
+        : buf.toString();
     return negative ? '-$formatted' : formatted;
   }
 
-  Future<bool> _pickPhoto(
-    ReadingPhotoSource source, {
-    XFile? prePicked,
-  }) async {
-    final ok =
-        await ref.read(readingEntryProvider(_query).notifier).attachPhoto(
-              site: widget.site,
-              meter: widget.status.meter,
-              source: source,
-              prePicked: prePicked,
-            );
+  Future<bool> _pickPhoto(ReadingPhotoSource source, {XFile? prePicked}) async {
+    final ok = await ref
+        .read(readingEntryProvider(_query).notifier)
+        .attachPhoto(
+          site: widget.site,
+          meter: widget.status.meter,
+          source: source,
+          prePicked: prePicked,
+        );
     if (ok) {
       setState(() {});
       widget.onChanged?.call();
@@ -144,14 +144,15 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
       if (!ok && mounted) {
         final msg = ref.read(readingEntryProvider(_query)).errorMessage;
         if (msg != null && msg.isNotEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(msg)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(msg)));
         }
       }
     } on PlatformException catch (error) {
       if (!mounted) return;
-      final denied = error.code.contains('permission') ||
+      final denied =
+          error.code.contains('permission') ||
           error.code.contains('access_denied');
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -165,7 +166,11 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
     } catch (error) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('تعذّر اختيار الصورة: $error')),
+        SnackBar(
+          content: Text(
+            EntryStrings(Localizations.localeOf(context)).photoPickFailed,
+          ),
+        ),
       );
     }
   }
@@ -251,9 +256,11 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
       hasValue: hasValue,
       hasPhoto: hasPhoto,
       isSaved: isSaved || work == MeterWorkStatus.submitted,
-      needsReview: work == MeterWorkStatus.failedSync ||
+      needsReview:
+          work == MeterWorkStatus.failedSync ||
           work == MeterWorkStatus.conflict,
-      savedLocally: work == MeterWorkStatus.savedLocally ||
+      savedLocally:
+          work == MeterWorkStatus.savedLocally ||
           work == MeterWorkStatus.syncing,
     );
   }
@@ -278,16 +285,19 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
         ? const AsyncValue<String?>.data(null)
         : ref.watch(meterReadingPhotoUrlProvider(remotePath));
     final remoteUrl = remoteUrlAsync.valueOrNull;
-    final hasPhoto = (previewPath != null && previewPath.isNotEmpty) ||
+    final hasPhoto =
+        (previewPath != null && previewPath.isNotEmpty) ||
         (remoteUrl != null && remoteUrl.isNotEmpty) ||
         (entryState.todayReading?.hasPhoto ?? false);
 
     final typed = double.tryParse(widget.controller.text.trim());
-    final consumption =
-        (typed != null && lastRaw != null) ? typed - lastRaw : null;
+    final consumption = (typed != null && lastRaw != null)
+        ? typed - lastRaw
+        : null;
 
     final hasValue = widget.controller.text.trim().isNotEmpty;
-    final isSaved = entryState.isSubmitted ||
+    final isSaved =
+        entryState.isSubmitted ||
         entryState.savedLocally ||
         draft?.status == LocalReadingStatus.savedLocally ||
         draft?.status == LocalReadingStatus.synced ||
@@ -299,10 +309,14 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
       hasPhoto: hasPhoto,
       isSaved: isSaved && (hasValue || entryState.isSubmitted),
     );
-    final titleColor =
-        EntryChrome.titleColor(isDark: isDark, scheme: theme.colorScheme);
-    final muted =
-        EntryChrome.mutedColor(isDark: isDark, scheme: theme.colorScheme);
+    final titleColor = EntryChrome.titleColor(
+      isDark: isDark,
+      scheme: theme.colorScheme,
+    );
+    final muted = EntryChrome.mutedColor(
+      isDark: isDark,
+      scheme: theme.colorScheme,
+    );
     final subtitleParts = <String>[
       meter.meterCode,
       s.categoryName(widget.category),
@@ -352,7 +366,10 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
                   onTap: () => Navigator.pop(context, 'gallery'),
                 ),
                 ListTile(
-                  leading: Icon(Icons.delete_outline, color: Colors.red.shade700),
+                  leading: Icon(
+                    Icons.delete_outline,
+                    color: Colors.red.shade700,
+                  ),
                   title: Text(
                     s.removePhoto,
                     style: TextStyle(color: Colors.red.shade700),
@@ -405,8 +422,9 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
               gradient: EntryChrome.cardWash(isDark: isDark),
               boxShadow: [
                 BoxShadow(
-                  color: EntryChrome.accent
-                      .withValues(alpha: isDark ? 0.12 : 0.08),
+                  color: EntryChrome.accent.withValues(
+                    alpha: isDark ? 0.12 : 0.08,
+                  ),
                   blurRadius: 8,
                   offset: const Offset(0, 3),
                 ),
@@ -476,8 +494,8 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
                             minWidth: 32,
                             minHeight: 32,
                           ),
-                          onPressed: entryState.isSaving ||
-                                  entryState.isAttachingPhoto
+                          onPressed:
+                              entryState.isSaving || entryState.isAttachingPhoto
                               ? null
                               : () => _clearEntry(s),
                           icon: Icon(
@@ -509,9 +527,7 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
                   if (widget.status.lastReading != null) ...[
                     const SizedBox(height: 2),
                     Text(
-                      formatBusinessDateDisplay(
-                        widget.status.lastReading!.readingDate,
-                      ),
+                      s.dateDisplay(widget.status.lastReading!.readingDate),
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: muted,
                         fontSize: 11,
@@ -562,7 +578,7 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
                             filled: true,
                             fillColor: isDark
                                 ? theme.colorScheme.surfaceContainerHighest
-                                    .withValues(alpha: 0.55)
+                                      .withValues(alpha: 0.55)
                                 : Colors.white.withValues(alpha: 0.55),
                           ),
                           onChanged: (_) {
@@ -603,8 +619,9 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
                         vertical: 8,
                       ),
                       decoration: BoxDecoration(
-                        color: MeterCardChrome.savedBorder
-                            .withValues(alpha: isDark ? 0.22 : 0.18),
+                        color: MeterCardChrome.savedBorder.withValues(
+                          alpha: isDark ? 0.22 : 0.18,
+                        ),
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: Row(
@@ -669,10 +686,7 @@ class _MeterReadingEntryCardState extends ConsumerState<MeterReadingEntryCard> {
 }
 
 class _StatusBadge extends StatelessWidget {
-  const _StatusBadge({
-    required this.status,
-    required this.strings,
-  });
+  const _StatusBadge({required this.status, required this.strings});
 
   final MeterWorkStatus status;
   final EntryStrings strings;
@@ -682,25 +696,25 @@ class _StatusBadge extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final (label, color, icon) = switch (status) {
       MeterWorkStatus.submitted => (
-          strings.statusDone,
-          MeterCardChrome.savedBorder,
-          Icons.check_circle_outline,
-        ),
+        strings.statusDone,
+        MeterCardChrome.savedBorder,
+        Icons.check_circle_outline,
+      ),
       MeterWorkStatus.savedLocally || MeterWorkStatus.syncing => (
-          strings.statusLocal,
-          MeterCardChrome.localBorder,
-          Icons.check_circle_outline,
-        ),
+        strings.statusLocal,
+        MeterCardChrome.localBorder,
+        Icons.check_circle_outline,
+      ),
       MeterWorkStatus.failedSync || MeterWorkStatus.conflict => (
-          strings.statusReview,
-          MeterCardChrome.reviewBorder,
-          Icons.error_outline,
-        ),
+        strings.statusReview,
+        MeterCardChrome.reviewBorder,
+        Icons.error_outline,
+      ),
       MeterWorkStatus.pending => (
-          strings.statusPending,
-          MeterCardChrome.emptyBorder,
-          Icons.schedule,
-        ),
+        strings.statusPending,
+        MeterCardChrome.emptyBorder,
+        Icons.schedule,
+      ),
     };
 
     return Container(
@@ -783,73 +797,72 @@ class _PhotoThumb extends StatelessWidget {
                     ),
                   )
                 : hasPhoto
-                    ? Stack(
-                        fit: StackFit.expand,
-                        children: [
-                          if (previewPath != null && previewPath!.isNotEmpty)
-                            LocalPhotoImage(
-                              path: previewPath,
-                              fit: BoxFit.cover,
-                            )
-                          else if (remoteUrl != null)
-                            Image.network(remoteUrl!, fit: BoxFit.cover)
-                          else
-                            ColoredBox(
-                              color: theme.colorScheme.surfaceContainerHighest,
-                            ),
-                          Align(
-                            alignment: Alignment.bottomCenter,
-                            child: Container(
-                              width: double.infinity,
-                              color: Colors.black54,
-                              padding: const EdgeInsets.symmetric(vertical: 2),
-                              child: Text(
-                                strings.photo,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                          const Positioned(
-                            top: 4,
-                            right: 4,
-                            child: Icon(
-                              Icons.check_circle,
-                              size: 16,
-                              color: Color(0xFF16A34A),
-                            ),
-                          ),
-                        ],
-                      )
-                    : Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.photo_camera_outlined,
-                            size: 20,
-                            color: photoRequired
-                                ? theme.colorScheme.error
-                                : theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.45),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
+                ? Stack(
+                    fit: StackFit.expand,
+                    children: [
+                      if (previewPath != null && previewPath!.isNotEmpty)
+                        LocalPhotoImage(path: previewPath, fit: BoxFit.cover)
+                      else if (remoteUrl != null)
+                        Image.network(remoteUrl!, fit: BoxFit.cover)
+                      else
+                        ColoredBox(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                        ),
+                      Align(
+                        alignment: Alignment.bottomCenter,
+                        child: Container(
+                          width: double.infinity,
+                          color: Colors.black54,
+                          padding: const EdgeInsets.symmetric(vertical: 2),
+                          child: Text(
                             strings.photo,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              fontSize: 10,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 9,
                               fontWeight: FontWeight.w700,
-                              color: photoRequired
-                                  ? theme.colorScheme.error
-                                  : theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.5),
                             ),
                           ),
-                        ],
+                        ),
                       ),
+                      const Positioned(
+                        top: 4,
+                        right: 4,
+                        child: Icon(
+                          Icons.check_circle,
+                          size: 16,
+                          color: Color(0xFF16A34A),
+                        ),
+                      ),
+                    ],
+                  )
+                : Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.photo_camera_outlined,
+                        size: 20,
+                        color: photoRequired
+                            ? theme.colorScheme.error
+                            : theme.colorScheme.onSurface.withValues(
+                                alpha: 0.45,
+                              ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        strings.photo,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: photoRequired
+                              ? theme.colorScheme.error
+                              : theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
+                        ),
+                      ),
+                    ],
+                  ),
           ),
         ),
       ),

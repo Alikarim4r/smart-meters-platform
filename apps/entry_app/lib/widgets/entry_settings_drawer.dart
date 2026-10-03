@@ -26,7 +26,9 @@ class EntrySettingsDrawer extends ConsumerWidget {
     final initials = _initials(displayName);
     final avatarUrl = profile == null
         ? null
-        : ref.read(profileRepositoryProvider).publicAvatarUrl(profile.avatarPath);
+        : ref
+              .read(profileRepositoryProvider)
+              .publicAvatarUrl(profile.avatarPath);
 
     return Drawer(
       child: Column(
@@ -54,84 +56,95 @@ class EntrySettingsDrawer extends ConsumerWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
               children: [
-                  _SectionLabel(
-                    icon: Icons.palette_outlined,
-                    text: s.appearance,
-                  ),
-                  const SizedBox(height: 8),
-                  SegmentedButton<ThemeMode>(
-                    style: theme.segmentedButtonTheme.style,
-                    segments: [
-                      ButtonSegment(
-                        value: ThemeMode.light,
-                        icon: const Icon(Icons.light_mode_outlined, size: 18),
-                        label: Text(s.themeLight),
+                _SectionLabel(icon: Icons.palette_outlined, text: s.appearance),
+                const SizedBox(height: 8),
+                SegmentedButton<ThemeMode>(
+                  style: theme.segmentedButtonTheme.style,
+                  segments: [
+                    ButtonSegment(
+                      value: ThemeMode.light,
+                      icon: const Icon(Icons.light_mode_outlined, size: 18),
+                      label: Text(s.themeLight),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.dark,
+                      icon: const Icon(Icons.dark_mode_outlined, size: 18),
+                      label: Text(s.themeDark),
+                    ),
+                    ButtonSegment(
+                      value: ThemeMode.system,
+                      icon: const Icon(
+                        Icons.brightness_auto_outlined,
+                        size: 18,
                       ),
-                      ButtonSegment(
-                        value: ThemeMode.dark,
-                        icon: const Icon(Icons.dark_mode_outlined, size: 18),
-                        label: Text(s.themeDark),
-                      ),
-                      ButtonSegment(
-                        value: ThemeMode.system,
-                        icon: const Icon(
-                          Icons.brightness_auto_outlined,
-                          size: 18,
+                      label: Text(s.themeSystem),
+                    ),
+                  ],
+                  selected: {themeMode},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (selection) => ref
+                      .read(entryThemeModeProvider.notifier)
+                      .setMode(selection.first),
+                ),
+                const SizedBox(height: 20),
+                _SectionLabel(icon: Icons.translate_outlined, text: s.language),
+                const SizedBox(height: 8),
+                SegmentedButton<String>(
+                  style: theme.segmentedButtonTheme.style,
+                  segments: [
+                    ButtonSegment(value: 'en', label: Text(s.languageEnglish)),
+                    ButtonSegment(value: 'ar', label: Text(s.languageArabic)),
+                  ],
+                  selected: {locale.languageCode},
+                  showSelectedIcon: false,
+                  onSelectionChanged: (selection) => ref
+                      .read(entryLocaleProvider.notifier)
+                      .setLocale(Locale(selection.first)),
+                ),
+                const SizedBox(height: 20),
+                _SectionLabel(icon: Icons.person_outline, text: s.account),
+                const SizedBox(height: 4),
+                SessionSecuritySettingsSection(locale: locale, dense: true),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.lock_outline),
+                  title: Text(s.changePassword),
+                  onTap: () => _showChangePasswordDialog(context, ref, s),
+                ),
+                const SizedBox(height: 12),
+                _SectionLabel(
+                  icon: Icons.notifications_outlined,
+                  text: s.notifications,
+                ),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.notifications_active_outlined),
+                  title: Text(s.enableSystemNotifications),
+                  subtitle: Text(s.systemNotificationsHint),
+                  onTap: () async {
+                    await LocalNotificationDelivery.instance.initialize();
+                    final granted = await LocalNotificationDelivery.instance
+                        .requestPermission();
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text(
+                          granted
+                              ? s.notificationPermissionGranted
+                              : s.notificationPermissionNotGranted,
                         ),
-                        label: Text(s.themeSystem),
                       ),
-                    ],
-                    selected: {themeMode},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (selection) => ref
-                        .read(entryThemeModeProvider.notifier)
-                        .setMode(selection.first),
-                  ),
-                  const SizedBox(height: 20),
-                  _SectionLabel(
-                    icon: Icons.translate_outlined,
-                    text: s.language,
-                  ),
-                  const SizedBox(height: 8),
-                  SegmentedButton<String>(
-                    style: theme.segmentedButtonTheme.style,
-                    segments: [
-                      ButtonSegment(
-                        value: 'en',
-                        label: Text(s.languageEnglish),
-                      ),
-                      ButtonSegment(
-                        value: 'ar',
-                        label: Text(s.languageArabic),
-                      ),
-                    ],
-                    selected: {locale.languageCode},
-                    showSelectedIcon: false,
-                    onSelectionChanged: (selection) => ref
-                        .read(entryLocaleProvider.notifier)
-                        .setLocale(Locale(selection.first)),
-                  ),
-                  const SizedBox(height: 20),
-                  _SectionLabel(
-                    icon: Icons.person_outline,
-                    text: s.account,
-                  ),
-                  const SizedBox(height: 4),
-                  SessionSecuritySettingsSection(locale: locale, dense: true),
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.lock_outline),
-                    title: Text(s.changePassword),
-                    onTap: () => _showChangePasswordDialog(context, ref, s),
-                  ),
-                  const SizedBox(height: 12),
-                  _SectionLabel(
-                    icon: Icons.support_agent_rounded,
-                    text: s.support,
-                  ),
-                  const SizedBox(height: 8),
-                  _SupportCard(title: s.support, hint: s.supportHint),
-                  const SizedBox(height: 16),
+                    );
+                  },
+                ),
+                const SizedBox(height: 12),
+                _SectionLabel(
+                  icon: Icons.support_agent_rounded,
+                  text: s.support,
+                ),
+                const SizedBox(height: 8),
+                _SupportCard(title: s.support, hint: s.supportHint),
+                const SizedBox(height: 16),
               ],
             ),
           ),
@@ -160,8 +173,11 @@ class EntrySettingsDrawer extends ConsumerWidget {
   }
 
   static String _initials(String name) {
-    final parts =
-        name.trim().split(RegExp(r'\s+')).where((p) => p.isNotEmpty).toList();
+    final parts = name
+        .trim()
+        .split(RegExp(r'\s+'))
+        .where((p) => p.isNotEmpty)
+        .toList();
     if (parts.isEmpty) return '?';
     if (parts.length == 1) {
       return parts.first.characters.first.toUpperCase();
@@ -231,14 +247,18 @@ class EntrySettingsDrawer extends ConsumerWidget {
             .read(authProvider.notifier)
             .updatePassword(passwordController.text);
         if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(s.passwordUpdated)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(s.passwordUpdated)));
         }
       } catch (error) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('$error')),
+            SnackBar(
+              content: Text(
+                EntryStrings(Localizations.localeOf(context)).genericError,
+              ),
+            ),
           );
         }
       }
@@ -362,12 +382,14 @@ class _DrawerHeader extends StatelessWidget {
                                 vertical: 2,
                               ),
                               decoration: BoxDecoration(
-                                color:
-                                    EntryChrome.accent.withValues(alpha: 0.16),
+                                color: EntryChrome.accent.withValues(
+                                  alpha: 0.16,
+                                ),
                                 borderRadius: BorderRadius.circular(999),
                                 border: Border.all(
-                                  color: EntryChrome.accent
-                                      .withValues(alpha: 0.45),
+                                  color: EntryChrome.accent.withValues(
+                                    alpha: 0.45,
+                                  ),
                                 ),
                               ),
                               child: Text(
@@ -386,10 +408,7 @@ class _DrawerHeader extends StatelessWidget {
                             email,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              color: emailColor,
-                              fontSize: 12,
-                            ),
+                            style: TextStyle(color: emailColor, fontSize: 12),
                           ),
                           const SizedBox(height: 4),
                           Text(

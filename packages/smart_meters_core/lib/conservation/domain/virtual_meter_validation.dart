@@ -186,8 +186,7 @@ class VirtualMeterValidation {
       metersById: metersById,
       memberIdsByVirtualId: {
         ...memberMap,
-        if (virtualMeterId != null)
-          virtualMeterId: memberMeters.map((m) => m.id).toList(),
+        ?virtualMeterId: memberMeters.map((m) => m.id).toList(),
       },
       draftMemberIds: virtualMeterId == null
           ? memberMeters.map((m) => m.id).toList()

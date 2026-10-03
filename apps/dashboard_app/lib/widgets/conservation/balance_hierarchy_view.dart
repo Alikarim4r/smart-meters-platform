@@ -51,10 +51,7 @@ class BalanceHierarchyView extends StatelessWidget {
             const SizedBox(height: 10),
             _node(s.source, result.utilityCode.toUpperCase()),
             _indentChild(
-              _node(
-                s.mainMeter,
-                mainMeterName ?? result.mainMeterId,
-              ),
+              _node(s.mainMeter, mainMeterName ?? result.mainMeterId),
             ),
             _indentChild(
               Column(
@@ -68,7 +65,10 @@ class BalanceHierarchyView extends StatelessWidget {
                   ),
                   if (result.missingMeterIds.isNotEmpty)
                     Padding(
-                      padding: const EdgeInsets.only(left: 12, top: 2),
+                      padding: const EdgeInsetsDirectional.only(
+                        start: 12,
+                        top: 2,
+                      ),
                       child: Text(
                         s.missingCount(result.missingMeterIds.length),
                         style: TextStyle(
@@ -87,7 +87,7 @@ class BalanceHierarchyView extends StatelessWidget {
                 result.balanceDifference == null
                     ? s.insufficientData
                     : '${result.balanceDifference!.toStringAsFixed(1)} '
-                        '${result.unitCode}',
+                          '${result.unitCode}',
                 emphasize: true,
               ),
               depth: 1,
@@ -145,7 +145,9 @@ class BalanceHierarchyView extends StatelessWidget {
           Icon(
             Icons.circle,
             size: 8,
-            color: emphasize ? DashboardPalette.navy : DashboardPalette.textMuted,
+            color: emphasize
+                ? DashboardPalette.navy
+                : DashboardPalette.textMuted,
           ),
           const SizedBox(width: 8),
           Expanded(
@@ -180,7 +182,7 @@ class BalanceHierarchyView extends StatelessWidget {
 
   Widget _indentChild(Widget child, {int depth = 1}) {
     return Padding(
-      padding: EdgeInsets.only(left: 14.0 * depth),
+      padding: EdgeInsetsDirectional.only(start: 14.0 * depth),
       child: child,
     );
   }

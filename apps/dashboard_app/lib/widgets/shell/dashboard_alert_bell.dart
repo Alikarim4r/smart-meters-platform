@@ -9,13 +9,11 @@ import '../../utils/dashboard_breakpoints.dart';
 import '../../providers/dashboard_providers.dart';
 import '../../utils/site_system_navigation.dart';
 import '../alert_widgets.dart';
+import '../../l10n/app_strings.dart';
 
 /// Header bell for all accessible sites (home dashboard).
 class DashboardHomeAlertBellButton extends ConsumerWidget {
-  const DashboardHomeAlertBellButton({
-    super.key,
-    this.onViewAll,
-  });
+  const DashboardHomeAlertBellButton({super.key, this.onViewAll});
 
   final VoidCallback? onViewAll;
 
@@ -24,7 +22,7 @@ class DashboardHomeAlertBellButton extends ConsumerWidget {
     final count = ref.watch(dashboardHomeAlertCountProvider);
 
     return IconButton(
-      tooltip: 'Alerts',
+      tooltip: dashboardText(context, 'Alerts', 'التنبيهات'),
       onPressed: () => showHomeAlertQuickPanel(
         context: context,
         ref: ref,
@@ -58,7 +56,7 @@ class DashboardAlertBellButton extends ConsumerWidget {
     final count = ref.watch(siteAlertCountProvider(siteId));
 
     return IconButton(
-      tooltip: 'Alerts',
+      tooltip: dashboardText(context, 'Alerts', 'التنبيهات'),
       onPressed: () => showAlertQuickPanel(
         context: context,
         ref: ref,
@@ -93,7 +91,7 @@ Future<void> showAlertQuickPanel({
       barrierLabel: 'Dismiss alerts',
       pageBuilder: (dialogContext, _, _) {
         return Align(
-          alignment: Alignment.centerRight,
+          alignment: AlignmentDirectional.centerEnd,
           child: Material(
             color: Colors.transparent,
             child: Container(
@@ -161,7 +159,7 @@ Future<void> showHomeAlertQuickPanel({
       barrierLabel: 'Dismiss alerts',
       pageBuilder: (dialogContext, _, _) {
         return Align(
-          alignment: Alignment.centerRight,
+          alignment: AlignmentDirectional.centerEnd,
           child: Material(
             color: Colors.transparent,
             child: SizedBox(
@@ -239,18 +237,15 @@ class HomeAlertQuickPanel extends ConsumerWidget {
             child: Row(
               children: [
                 Text(
-                  'Alerts',
+                  dashboardText(context, 'Alerts', 'التنبيهات'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: colors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 if (onClose != null)
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close),
-                  ),
+                  IconButton(onPressed: onClose, icon: const Icon(Icons.close)),
               ],
             ),
           ),
@@ -264,7 +259,11 @@ class HomeAlertQuickPanel extends ConsumerWidget {
               ),
               error: (_, _) => Center(
                 child: Text(
-                  'Could not load alerts',
+                  dashboardText(
+                    context,
+                    'Could not load alerts',
+                    'تعذّر تحميل التنبيهات',
+                  ),
                   style: TextStyle(color: colors.textMuted),
                 ),
               ),
@@ -272,7 +271,11 @@ class HomeAlertQuickPanel extends ConsumerWidget {
                 if (!summary.hasAlerts) {
                   return Center(
                     child: Text(
-                      'No active alerts',
+                      dashboardText(
+                        context,
+                        'No active alerts',
+                        'لا توجد تنبيهات نشطة',
+                      ),
                       style: TextStyle(color: colors.textMuted),
                     ),
                   );
@@ -289,34 +292,62 @@ class HomeAlertQuickPanel extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   children: [
                     CompactAlertSummaryRow(summary: summary),
-                    const SizedBox(height: 12),
+                    SizedBox(height: 12),
                     DropdownButtonFormField<AlertSeverity?>(
                       initialValue: severityFilter,
-                      decoration: const InputDecoration(
-                        labelText: 'Severity',
+                      decoration: InputDecoration(
+                        labelText: dashboardText(context, 'Severity', 'الشدة'),
                         isDense: true,
                       ),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: null,
-                          child: Text('All severities'),
+                          child: Text(
+                            dashboardText(
+                              context,
+                              'All severities',
+                              'كل مستويات الشدة',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: AlertSeverity.critical,
-                          child: Text('Critical only'),
+                          child: Text(
+                            dashboardText(
+                              context,
+                              'Critical only',
+                              'الحرجة فقط',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: AlertSeverity.warning,
-                          child: Text('Warning only'),
+                          child: Text(
+                            dashboardText(
+                              context,
+                              'Warning only',
+                              'التحذيرات فقط',
+                            ),
+                          ),
                         ),
                         DropdownMenuItem(
                           value: AlertSeverity.info,
-                          child: Text('Info only'),
+                          child: Text(
+                            dashboardText(
+                              context,
+                              'Info only',
+                              'المعلومات فقط',
+                            ),
+                          ),
                         ),
                       ],
-                      onChanged: (value) => ref
-                          .read(homeAlertSeverityFilterProvider.notifier)
-                          .state = value,
+                      onChanged: (value) =>
+                          ref
+                                  .read(
+                                    homeAlertSeverityFilterProvider.notifier,
+                                  )
+                                  .state =
+                              value,
                     ),
                     const SizedBox(height: 12),
                     for (final alert in topAlerts)
@@ -335,9 +366,8 @@ class HomeAlertQuickPanel extends ConsumerWidget {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           '+ ${filtered.length - 8} more alerts',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colors.textMuted,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.textMuted),
                         ),
                       ),
                   ],
@@ -353,7 +383,13 @@ class HomeAlertQuickPanel extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: FilledButton(
                   onPressed: onViewAll,
-                  child: const Text('View all alerts'),
+                  child: Text(
+                    dashboardText(
+                      context,
+                      'View all alerts',
+                      'عرض كل التنبيهات',
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -392,18 +428,15 @@ class AlertQuickPanel extends ConsumerWidget {
             child: Row(
               children: [
                 Text(
-                  'Alerts',
+                  dashboardText(context, 'Alerts', 'التنبيهات'),
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: colors.textPrimary,
-                      ),
+                    fontWeight: FontWeight.w800,
+                    color: colors.textPrimary,
+                  ),
                 ),
                 const Spacer(),
                 if (onClose != null)
-                  IconButton(
-                    onPressed: onClose,
-                    icon: const Icon(Icons.close),
-                  ),
+                  IconButton(onPressed: onClose, icon: const Icon(Icons.close)),
               ],
             ),
           ),
@@ -417,7 +450,11 @@ class AlertQuickPanel extends ConsumerWidget {
               ),
               error: (_, _) => Center(
                 child: Text(
-                  'Could not load alerts',
+                  dashboardText(
+                    context,
+                    'Could not load alerts',
+                    'تعذّر تحميل التنبيهات',
+                  ),
                   style: TextStyle(color: colors.textMuted),
                 ),
               ),
@@ -425,7 +462,11 @@ class AlertQuickPanel extends ConsumerWidget {
                 if (!summary.hasAlerts) {
                   return Center(
                     child: Text(
-                      'No active alerts',
+                      dashboardText(
+                        context,
+                        'No active alerts',
+                        'لا توجد تنبيهات نشطة',
+                      ),
                       style: TextStyle(color: colors.textMuted),
                     ),
                   );
@@ -445,12 +486,16 @@ class AlertQuickPanel extends ConsumerWidget {
                           alert: alert,
                           onTap: () {
                             onClose?.call();
-                            final target =
-                                sectionForAlertCategory(alert.categoryName);
+                            final target = sectionForAlertCategory(
+                              alert.categoryName,
+                            );
                             if (target != null) {
                               ref
-                                  .read(siteDashboardSectionProvider.notifier)
-                                  .state = target;
+                                      .read(
+                                        siteDashboardSectionProvider.notifier,
+                                      )
+                                      .state =
+                                  target;
                             }
                           },
                         ),
@@ -460,9 +505,8 @@ class AlertQuickPanel extends ConsumerWidget {
                         padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           '+ ${summary.total - 5} more alerts',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: colors.textMuted,
-                              ),
+                          style: Theme.of(context).textTheme.bodySmall
+                              ?.copyWith(color: colors.textMuted),
                         ),
                       ),
                   ],
@@ -478,7 +522,13 @@ class AlertQuickPanel extends ConsumerWidget {
                 padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
                 child: FilledButton(
                   onPressed: onViewAll,
-                  child: const Text('View all alerts'),
+                  child: Text(
+                    dashboardText(
+                      context,
+                      'View all alerts',
+                      'عرض كل التنبيهات',
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -2,6 +2,7 @@
 library;
 
 import 'package:flutter/material.dart';
+import '../l10n/admin_strings.dart';
 
 Future<bool?> confirmRestrictedDelete({
   required BuildContext context,
@@ -20,11 +21,11 @@ Future<bool?> confirmRestrictedDelete({
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(adminText(context, 'Cancel', 'إلغاء')),
         ),
         FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Delete'),
+          child: Text(adminText(context, 'Delete', 'حذف')),
         ),
       ],
     ),
@@ -47,12 +48,12 @@ Future<bool?> confirmForceDelete({
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(ctx, false),
-          child: const Text('Cancel'),
+          child: Text(adminText(context, 'Cancel', 'إلغاء')),
         ),
         FilledButton(
           style: FilledButton.styleFrom(backgroundColor: Colors.red.shade700),
           onPressed: () => Navigator.pop(ctx, true),
-          child: const Text('Force delete'),
+          child: Text(adminText(context, 'Force delete', 'حذف إجباري')),
         ),
       ],
     ),

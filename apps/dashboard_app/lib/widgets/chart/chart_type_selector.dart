@@ -12,17 +12,17 @@ import '../chart_widgets.dart';
 
 extension UtilityChartTypeIcons on UtilityChartType {
   IconData get icon => switch (this) {
-        UtilityChartType.line => Icons.show_chart_rounded,
-        UtilityChartType.bar => Icons.bar_chart_rounded,
-        UtilityChartType.area => Icons.area_chart_rounded,
-        UtilityChartType.step => Icons.stairs_outlined,
-        UtilityChartType.cumulative => Icons.trending_up_rounded,
-        UtilityChartType.weekday => Icons.calendar_view_week_outlined,
-        UtilityChartType.ranking => Icons.leaderboard_outlined,
-        UtilityChartType.pie => Icons.pie_chart_outline_rounded,
-        UtilityChartType.stackedBar => Icons.stacked_bar_chart_rounded,
-        UtilityChartType.sourceSplit => Icons.donut_small_outlined,
-      };
+    UtilityChartType.line => Icons.show_chart_rounded,
+    UtilityChartType.bar => Icons.bar_chart_rounded,
+    UtilityChartType.area => Icons.area_chart_rounded,
+    UtilityChartType.step => Icons.stairs_outlined,
+    UtilityChartType.cumulative => Icons.trending_up_rounded,
+    UtilityChartType.weekday => Icons.calendar_view_week_outlined,
+    UtilityChartType.ranking => Icons.leaderboard_outlined,
+    UtilityChartType.pie => Icons.pie_chart_outline_rounded,
+    UtilityChartType.stackedBar => Icons.stacked_bar_chart_rounded,
+    UtilityChartType.sourceSplit => Icons.donut_small_outlined,
+  };
 }
 
 class ChartTypeSelector extends StatelessWidget {
@@ -47,7 +47,7 @@ class ChartTypeSelector extends StatelessWidget {
         children: [
           for (final type in types)
             Padding(
-              padding: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsetsDirectional.only(end: 6),
               child: ChoiceChip(
                 avatar: Icon(type.icon, size: 16),
                 label: Text(s.chartTypeLabel(type)),
@@ -55,8 +55,9 @@ class ChartTypeSelector extends StatelessWidget {
                 selectedColor: colors.navy.withValues(alpha: 0.14),
                 labelStyle: TextStyle(
                   fontSize: 12,
-                  fontWeight:
-                      selected == type ? FontWeight.w700 : FontWeight.w500,
+                  fontWeight: selected == type
+                      ? FontWeight.w700
+                      : FontWeight.w500,
                   color: selected == type
                       ? colors.textPrimary
                       : colors.textMuted,
@@ -71,10 +72,7 @@ class ChartTypeSelector extends StatelessWidget {
 }
 
 class SourceSplitItem {
-  const SourceSplitItem({
-    required this.label,
-    required this.value,
-  });
+  const SourceSplitItem({required this.label, required this.value});
 
   final String label;
   final double value;
@@ -89,8 +87,9 @@ List<SourceSplitItem> sourceSplitFromMeterCards(
     if (consumption == null || consumption <= 0) {
       continue;
     }
-    final label =
-        card.sourceName.trim().isEmpty ? card.sourceCode : card.sourceName;
+    final label = card.sourceName.trim().isEmpty
+        ? card.sourceCode
+        : card.sourceName;
     totals[label] = (totals[label] ?? 0) + consumption;
   }
 

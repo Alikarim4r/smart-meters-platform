@@ -5,6 +5,7 @@ import 'package:smart_meters_core/smart_meters_core.dart';
 import '../providers/admin_providers.dart';
 import '../utils/user_validation.dart';
 import '../widgets/catalog_widgets.dart';
+import '../l10n/admin_strings.dart';
 
 /// Returns true when approval succeeded.
 Future<bool?> showUserApprovalDialog(
@@ -101,10 +102,7 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
       // Never fail approval UX if this secondary write errors.
       try {
         final scopeRole = await repo.getRoleByCode(
-          UserAdminRepository.scopeRoleCodeFor(
-            _role,
-            kind: ScopeKind.site,
-          ),
+          UserAdminRepository.scopeRoleCodeFor(_role, kind: ScopeKind.site),
         );
         if (scopeRole != null) {
           for (final siteId in _selectedSiteIds) {
@@ -170,22 +168,42 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
         : widget.user.profile.role.registrationSourceLabelEn;
 
     final roleItems = <DropdownMenuItem<UserRole>>[
-      const DropdownMenuItem(
+      DropdownMenuItem(
         value: UserRole.technician,
-        child: Text('Technician — Entry + Dashboard'),
+        child: Text(
+          adminText(
+            context,
+            'Technician — Entry + Dashboard',
+            'الفني — الإدخال + العرض',
+          ),
+        ),
       ),
-      const DropdownMenuItem(
+      DropdownMenuItem(
         value: UserRole.viewer,
-        child: Text('Viewer — Dashboard only'),
+        child: Text(
+          adminText(context, 'Viewer — Dashboard only', 'المشاهد — العرض فقط'),
+        ),
       ),
-      const DropdownMenuItem(
+      DropdownMenuItem(
         value: UserRole.siteAdmin,
-        child: Text('Site Admin — Admin + Entry + Dashboard'),
+        child: Text(
+          adminText(
+            context,
+            'Site Admin — Admin + Entry + Dashboard',
+            'مشرف الموقع — الإدارة + الإدخال + العرض',
+          ),
+        ),
       ),
       if (isOwner)
-        const DropdownMenuItem(
+        DropdownMenuItem(
           value: UserRole.superAdmin,
-          child: Text('Super Admin — Admin + Dashboard'),
+          child: Text(
+            adminText(
+              context,
+              'Super Admin — Admin + Dashboard',
+              'المشرف العام — الإدارة + العرض',
+            ),
+          ),
         ),
     ];
 
@@ -209,9 +227,9 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
               const SizedBox(height: 4),
               Text(
                 source,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+                style: Theme.of(
+                  context,
+                ).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
               const SizedBox(height: 16),
               DropdownButtonFormField<UserRole>(
@@ -252,7 +270,9 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
               if (sitesAsync.isLoading)
                 const Center(child: CircularProgressIndicator())
               else if (activeSites.isEmpty)
-                Text(isAr ? 'لا توجد مواقع مفعّلة.' : 'No active sites available.')
+                Text(
+                  isAr ? 'لا توجد مواقع مفعّلة.' : 'No active sites available.',
+                )
               else
                 ...activeSites.map((site) {
                   final selected = _selectedSiteIds.contains(site.id);
@@ -285,7 +305,9 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
                                 Expanded(
                                   child: SwitchListTile(
                                     contentPadding: EdgeInsets.zero,
-                                    title: const Text('Read'),
+                                    title: Text(
+                                      adminText(context, 'Read', 'قراءة'),
+                                    ),
                                     value: perms.canRead,
                                     onChanged: _submitting
                                         ? null
@@ -303,7 +325,9 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
                                 Expanded(
                                   child: SwitchListTile(
                                     contentPadding: EdgeInsets.zero,
-                                    title: const Text('Write'),
+                                    title: Text(
+                                      adminText(context, 'Write', 'كتابة'),
+                                    ),
                                     value: perms.canWrite,
                                     onChanged: _submitting || !perms.canRead
                                         ? null
@@ -329,7 +353,11 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
                 controller: _noteController,
                 enabled: !_submitting,
                 decoration: catalogFieldDecoration(
-                  labelText: 'Approval note (optional)',
+                  labelText: adminText(
+                    context,
+                    'Approval note (optional)',
+                    'ملاحظة الموافقة (اختياري)',
+                  ),
                 ),
                 maxLines: 2,
               ),
@@ -344,7 +372,7 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
       actions: [
         TextButton(
           onPressed: _submitting ? null : () => Navigator.pop(context, false),
-          child: const Text('Cancel'),
+          child: Text(adminText(context, 'Cancel', 'إلغاء')),
         ),
         FilledButton(
           onPressed: _submitting ? null : _submit,
@@ -354,7 +382,7 @@ class _UserApprovalDialogState extends ConsumerState<UserApprovalDialog> {
                   height: 18,
                   child: CircularProgressIndicator(strokeWidth: 2),
                 )
-              : const Text('Approve'),
+              : Text(adminText(context, 'Approve', 'موافقة')),
         ),
       ],
     );

@@ -311,7 +311,9 @@ class _OpportunitiesAdminScreenState
       ).showSnackBar(SnackBar(content: Text(s.isAr ? 'تم' : 'Updated')));
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -353,11 +355,16 @@ class _OpportunitiesAdminScreenState
                       decoration: InputDecoration(
                         labelText: s.isAr ? 'المنفعة' : 'Utility',
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'water', child: Text('water')),
+                      items: [
                         DropdownMenuItem(
-                          value: 'electricity',
-                          child: Text('electricity'),
+                          value: adminText(context, 'water', 'مياه'),
+                          child: Text(adminText(context, 'water', 'مياه')),
+                        ),
+                        DropdownMenuItem(
+                          value: adminText(context, 'electricity', 'كهرباء'),
+                          child: Text(
+                            adminText(context, 'electricity', 'كهرباء'),
+                          ),
                         ),
                       ],
                       onChanged: (v) {
@@ -436,7 +443,9 @@ class _OpportunitiesAdminScreenState
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -642,7 +651,9 @@ class _OpportunitiesAdminScreenState
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _refreshing = false);
     }

@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../utils/reading_validation.dart';
+import '../l10n/entry_strings.dart';
 
 class CumulativeReadingInput extends StatelessWidget {
   const CumulativeReadingInput({
@@ -41,8 +42,7 @@ class CumulativeReadingInput extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            'Enter cumulative meter reading',
+          Text(entryText(context, 'Enter cumulative meter reading', 'أدخل القراءة التراكمية للعداد'),
             style: theme.textTheme.titleSmall?.copyWith(
               fontWeight: FontWeight.w700,
               color: theme.colorScheme.primary,

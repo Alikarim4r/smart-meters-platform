@@ -57,24 +57,22 @@ class SiteOverviewPanel extends ConsumerWidget {
               padding: EdgeInsets.all(24),
               child: Center(child: CircularProgressIndicator()),
             ),
-            error: (e, _) => DashboardErrorState(message: '$e'),
+            error: (e, _) => DashboardErrorState(
+              message: AppStrings.of(context).genericError,
+            ),
             data: (categories) {
               final systemCards = <Widget>[
                 for (final system in UtilitySystemKey.values)
                   _SystemStatusCard(
                     system: system,
                     summary: categorySummaryForUtility(categories, system),
-                    onTap: () => onOpenSystem(
-                      switch (system) {
-                        UtilitySystemKey.water =>
-                          SiteDashboardSection.water,
-                        UtilitySystemKey.electricity =>
-                          SiteDashboardSection.electricity,
-                        UtilitySystemKey.btu =>
-                          SiteDashboardSection.btuCooling,
-                        UtilitySystemKey.fuel => SiteDashboardSection.fuel,
-                      },
-                    ),
+                    onTap: () => onOpenSystem(switch (system) {
+                      UtilitySystemKey.water => SiteDashboardSection.water,
+                      UtilitySystemKey.electricity =>
+                        SiteDashboardSection.electricity,
+                      UtilitySystemKey.btu => SiteDashboardSection.btuCooling,
+                      UtilitySystemKey.fuel => SiteDashboardSection.fuel,
+                    }),
                   ),
               ];
 
@@ -90,12 +88,16 @@ class SiteOverviewPanel extends ConsumerWidget {
                   if (useDesktop)
                     ResponsiveSplitRow(
                       left: DashboardChartCard(
-                        title: s.isAr ? 'إنجاز اليوم (كل الأنظمة)' : 'Today completion (all systems)',
-                        subtitle: 'Comparable percentage across meters',
+                        title: s.isAr
+                            ? 'إنجاز اليوم (كل الأنظمة)'
+                            : 'Today completion (all systems)',
+                        subtitle: dashboardText(context, 'Comparable percentage across meters', 'نسبة قابلة للمقارنة بين العدادات'),
                         height: 280,
                         child: completionAsync.when(
                           loading: () => const ChartLoadingPlaceholder(),
-                          error: (e, _) => ChartErrorPlaceholder(message: '$e'),
+                          error: (e, _) => ChartErrorPlaceholder(
+                            message: AppStrings.of(context).genericError,
+                          ),
                           data: (progress) => CompletionDonutChart(
                             submitted: progress.submitted,
                             pending: progress.pending,
@@ -108,22 +110,24 @@ class SiteOverviewPanel extends ConsumerWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              s.isAr ? 'القراءات المعلّقة حسب النظام' : 'Pending readings by system',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium
+                              s.isAr
+                                  ? 'القراءات المعلّقة حسب النظام'
+                                  : 'Pending readings by system',
+                              style: Theme.of(context).textTheme.titleMedium
                                   ?.copyWith(fontWeight: FontWeight.w700),
                             ),
                             const SizedBox(height: 12),
                             for (final system in UtilitySystemKey.values) ...[
                               _PendingRow(
                                 label: s.utilityLabel(system),
-                                pending: categorySummaryForUtility(
+                                pending:
+                                    categorySummaryForUtility(
                                       categories,
                                       system,
                                     )?.pendingToday ??
                                     0,
-                                total: categorySummaryForUtility(
+                                total:
+                                    categorySummaryForUtility(
                                       categories,
                                       system,
                                     )?.meterCount ??
@@ -138,11 +142,15 @@ class SiteOverviewPanel extends ConsumerWidget {
                     )
                   else ...[
                     DashboardChartCard(
-                      title: s.isAr ? 'إنجاز اليوم (كل الأنظمة)' : 'Today completion (all systems)',
+                      title: s.isAr
+                          ? 'إنجاز اليوم (كل الأنظمة)'
+                          : 'Today completion (all systems)',
                       height: 220,
                       child: completionAsync.when(
                         loading: () => const ChartLoadingPlaceholder(),
-                        error: (e, _) => ChartErrorPlaceholder(message: '$e'),
+                        error: (e, _) => ChartErrorPlaceholder(
+                          message: AppStrings.of(context).genericError,
+                        ),
                         data: (progress) => CompletionDonutChart(
                           submitted: progress.submitted,
                           pending: progress.pending,
@@ -222,7 +230,10 @@ class _PendingRow extends StatelessWidget {
       children: [
         SizedBox(
           width: 88,
-          child: Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+          child: Text(
+            label,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
         ),
         Expanded(
           child: ClipRRect(

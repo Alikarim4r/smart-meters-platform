@@ -7,36 +7,37 @@ import '../providers/admin_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 
-final _siteConservationProfileEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  final benchmarking = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.benchmarking,
-    siteId: siteId,
-  );
-  if (benchmarking) return true;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.intensity,
-    siteId: siteId,
-  );
-});
+final _siteConservationProfileEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      final benchmarking = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.benchmarking,
+        siteId: siteId,
+      );
+      if (benchmarking) return true;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.intensity,
+        siteId: siteId,
+      );
+    });
 
 final _siteConservationProfileProvider = FutureProvider.autoDispose
     .family<SiteConservationProfile?, String>((ref, siteId) {
-  return SiteConservationProfileRepository(ref.read(supabaseClientProvider))
-      .get(siteId);
-});
+      return SiteConservationProfileRepository(
+        ref.read(supabaseClientProvider),
+      ).get(siteId);
+    });
 
 /// Admin editor for site conservation profile (floor area / occupancy / peer).
 class SiteConservationProfileAdminScreen extends ConsumerWidget {
@@ -47,15 +48,14 @@ class SiteConservationProfileAdminScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final s = AdminStrings(ref.watch(adminLocaleProvider));
-    final enabledAsync =
-        ref.watch(_siteConservationProfileEnabledProvider(siteId));
+    final enabledAsync = ref.watch(
+      _siteConservationProfileEnabledProvider(siteId),
+    );
     final canManage = ref.watch(canManageMetersProvider);
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          s.isAr ? 'ملف ترشيد الموقع' : 'Site conservation profile',
-        ),
+        title: Text(s.isAr ? 'ملف ترشيد الموقع' : 'Site conservation profile'),
       ),
       body: enabledAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -74,8 +74,9 @@ class SiteConservationProfileAdminScreen extends ConsumerWidget {
               icon: Icons.flag_outlined,
             );
           }
-          final profileAsync =
-              ref.watch(_siteConservationProfileProvider(siteId));
+          final profileAsync = ref.watch(
+            _siteConservationProfileProvider(siteId),
+          );
           return profileAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => CatalogErrorView(
@@ -121,12 +122,8 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
   void initState() {
     super.initState();
     final p = widget.profile;
-    _areaCtrl = TextEditingController(
-      text: p?.floorAreaM2?.toString() ?? '',
-    );
-    _occCtrl = TextEditingController(
-      text: p?.occupancyCount?.toString() ?? '',
-    );
+    _areaCtrl = TextEditingController(text: p?.floorAreaM2?.toString() ?? '');
+    _occCtrl = TextEditingController(text: p?.occupancyCount?.toString() ?? '');
     _notesCtrl = TextEditingController(text: p?.profileNotes ?? '');
     _peerGroup = p?.peerGroup;
   }
@@ -161,8 +158,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                 TextField(
                   controller: _areaCtrl,
                   enabled: widget.canManage,
-                  keyboardType:
-                      const TextInputType.numberWithOptions(decimal: true),
+                  keyboardType: const TextInputType.numberWithOptions(
+                    decimal: true,
+                  ),
                   decoration: InputDecoration(
                     labelText: s.isAr ? 'مساحة الطابق (م²)' : 'Floor area (m²)',
                     helperText: 'Empty → Normalization Data Missing',
@@ -189,10 +187,7 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
                       child: Text(s.isAr ? 'بدون' : 'None'),
                     ),
                     for (final g in ConservationPeerGroup.values)
-                      DropdownMenuItem(
-                        value: g,
-                        child: Text(g.dbValue),
-                      ),
+                      DropdownMenuItem(value: g, child: Text(g.dbValue)),
                   ],
                   onChanged: widget.canManage
                       ? (v) => setState(() => _peerGroup = v)
@@ -249,8 +244,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
         floorAreaM2: area,
         occupancyCount: occ,
         peerGroup: _peerGroup,
-        profileNotes:
-            _notesCtrl.text.trim().isEmpty ? null : _notesCtrl.text.trim(),
+        profileNotes: _notesCtrl.text.trim().isEmpty
+            ? null
+            : _notesCtrl.text.trim(),
         updatedBy: ref.read(supabaseClientProvider).auth.currentUser?.id,
       );
       ref.invalidate(_siteConservationProfileProvider(widget.siteId));
@@ -260,7 +256,9 @@ class _ProfileFormState extends ConsumerState<_ProfileForm> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     } finally {
       if (mounted) setState(() => _saving = false);
     }

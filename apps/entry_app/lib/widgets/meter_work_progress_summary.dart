@@ -100,7 +100,7 @@ class MeterListFilterChips extends StatelessWidget {
       child: Row(
         children: MeterListFilter.values.map((filter) {
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsetsDirectional.only(end: 8),
             child: FilterChip(
               label: Text(filter.localizedLabel(isArabic)),
               selected: selected == filter,

@@ -60,22 +60,22 @@ class DashboardThemeColors extends ThemeExtension<DashboardThemeColors> {
   );
 
   static const dark = DashboardThemeColors(
-    background: Color(0xFF080D14),
-    card: Color(0xFF111925),
-    cardElevated: Color(0xFF182333),
-    border: Color(0xFF2A3647),
-    textPrimary: Color(0xFFEEF2F7),
-    textMuted: Color(0xFFA7B1C0),
-    navy: Color(0xFFDDE5F1),
-    navyMuted: Color(0xFF8EA4C3),
-    sidebar: Color(0xFF070B11),
-    sidebarBorder: Color(0xFF202B3A),
-    inputFill: Color(0xFF162130),
-    dialog: Color(0xFF101824),
+    background: Color(0xFF070E19),
+    card: Color(0xFF0E1826),
+    cardElevated: Color(0xFF142238),
+    border: Color(0xFF243653),
+    textPrimary: Color(0xFFF4F7FB),
+    textMuted: Color(0xFF9EABBE),
+    navy: Color(0xFFE5ECF7),
+    navyMuted: Color(0xFF91A9CB),
+    sidebar: Color(0xFF050A12),
+    sidebarBorder: Color(0xFF1C2B42),
+    inputFill: Color(0xFF101C2D),
+    dialog: Color(0xFF0D1725),
     meterPatternOpacity: 0,
-    chartGrid: Color(0xFF2A3647),
-    infoSurface: Color(0xFF162130),
-    infoBorder: Color(0xFF2A3A50),
+    chartGrid: Color(0xFF20314A),
+    infoSurface: Color(0xFF111F32),
+    infoBorder: Color(0xFF28405F),
   );
 
   static DashboardThemeColors of(BuildContext context) {

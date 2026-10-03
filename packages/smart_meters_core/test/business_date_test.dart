@@ -13,4 +13,14 @@ void main() {
   test('formatBusinessDate returns ISO date string', () {
     expect(formatBusinessDate(DateTime(2026, 7, 3)), '2026-07-03');
   });
+
+  test('formats Arabic display date with localized digits', () {
+    final date = DateTime(2026, 10, 3);
+    expect(
+      formatBusinessDateDisplay(date, languageCode: 'ar'),
+      '٣ أكتوبر ٢٠٢٦',
+    );
+    expect(formatBusinessDateDisplay(date), 'Oct 3, 2026');
+    expect(formatBusinessDate(date), '2026-10-03');
+  });
 }

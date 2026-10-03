@@ -10,10 +10,10 @@ import '../utils/utility_chart_type.dart';
 import 'dashboard_widgets.dart';
 
 TextStyle _chartAxisStyle(BuildContext context) => TextStyle(
-      fontSize: 11,
-      fontWeight: FontWeight.w600,
-      color: chartLabelColor(context),
-    );
+  fontSize: 11,
+  fontWeight: FontWeight.w600,
+  color: chartLabelColor(context),
+);
 
 /// Soft-cap Y so one outlier does not flatten the rest of the series.
 double chartSoftMaxY(Iterable<double> values) {
@@ -24,12 +24,22 @@ double chartSoftMaxY(Iterable<double> values) {
   if (positives.isEmpty) return 1.0;
   final max = positives.last;
   if (positives.length < 4) return max * 1.15;
-  final p90 = positives[((positives.length - 1) * 0.9).round()];
+  final p90 = positives[((positives.length - 1) * 0.9).floor()];
   if (p90 > 0 && max > p90 * 3.5) {
     return p90 * 1.5;
   }
   return max * 1.15;
 }
+
+/// Keeps soft-capped charts visually stable while preserving raw values in stats.
+double chartDisplayY(double value, double maxY) {
+  if (!value.isFinite || value <= 0) return 0;
+  if (maxY <= 0) return value;
+  return value > maxY ? maxY * 0.985 : value;
+}
+
+bool chartHasClippedOutlier(Iterable<double> values, double maxY) =>
+    values.any((value) => value.isFinite && value > maxY);
 
 String? _localizedPointLabel(
   BuildContext context,
@@ -42,17 +52,21 @@ String? _localizedPointLabel(
     return '${point.date.day} ${s.monthAbbrev(point.date.month)}';
   }
   if (bucket == null) return point.label;
-  return AppStrings.of(context).chartAxisLabel(date: point.date, bucket: bucket);
+  return AppStrings.of(
+    context,
+  ).chartAxisLabel(date: point.date, bucket: bucket);
 }
 
 /// Show sparse bottom labels so dates never overlap (especially on phones).
 int _bottomLabelStep(int pointCount, {int? maxLabels}) {
-  final limit = maxLabels ?? () {
-    if (pointCount <= 7) return pointCount;
-    if (pointCount <= 14) return 5;
-    if (pointCount <= 31) return 5;
-    return 6;
-  }();
+  final limit =
+      maxLabels ??
+      () {
+        if (pointCount <= 7) return pointCount;
+        if (pointCount <= 14) return 5;
+        if (pointCount <= 31) return 5;
+        return 6;
+      }();
   if (pointCount <= 1) return 1;
   if (pointCount <= limit) return 1;
   return (pointCount / limit).ceil();
@@ -153,11 +167,7 @@ LineTouchData _lineTouchData(BuildContext context) {
         for (final spot in spots)
           LineTooltipItem(
             formatChartValue(spot.y),
-            TextStyle(
-              color: fg,
-              fontWeight: FontWeight.w700,
-              fontSize: 13,
-            ),
+            TextStyle(color: fg, fontWeight: FontWeight.w700, fontSize: 13),
           ),
       ],
     ),
@@ -179,18 +189,15 @@ class ChartMonthSelector extends StatelessWidget {
     return DropdownButtonFormField<DashboardChartMonth>(
       initialValue: month,
       isDense: true,
-      decoration: const InputDecoration(
-        labelText: 'Chart month',
+      decoration: InputDecoration(
+        labelText: dashboardText(context, 'Chart month', 'شهر الرسم'),
         border: OutlineInputBorder(),
         isDense: true,
         contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       ),
       items: [
         for (final item in DashboardChartMonth.values)
-          DropdownMenuItem(
-            value: item,
-            child: Text(item.label),
-          ),
+          DropdownMenuItem(value: item, child: Text(item.label)),
       ],
       onChanged: (value) {
         if (value != null) onChanged(value);
@@ -217,7 +224,7 @@ class ChartPeriodSelector extends StatelessWidget {
         children: [
           for (final item in ChartPeriod.values)
             Padding(
-              padding: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsetsDirectional.only(end: 6),
               child: ChoiceChip(
                 label: Text(item.label),
                 selected: period == item,
@@ -306,7 +313,7 @@ class DashboardChartCard extends StatelessWidget {
                     if (trailing != null)
                       Flexible(
                         child: Align(
-                          alignment: Alignment.topRight,
+                          alignment: AlignmentDirectional.topEnd,
                           child: trailing!,
                         ),
                       ),
@@ -326,11 +333,7 @@ class DashboardChartCard extends StatelessWidget {
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              header,
-              const SizedBox(height: 12),
-              chartBody,
-            ],
+            children: [header, const SizedBox(height: 12), chartBody],
           );
         },
       ),
@@ -368,11 +371,7 @@ class ChartEmptyPlaceholder extends StatelessWidget {
 }
 
 class ChartErrorPlaceholder extends StatelessWidget {
-  const ChartErrorPlaceholder({
-    super.key,
-    required this.message,
-    this.onRetry,
-  });
+  const ChartErrorPlaceholder({super.key, required this.message, this.onRetry});
 
   final String message;
   final VoidCallback? onRetry;
@@ -438,11 +437,7 @@ List<Color> _chartPalette(ThemeData theme) {
 }
 
 class MultiSeriesLineChart extends StatelessWidget {
-  const MultiSeriesLineChart({
-    super.key,
-    required this.series,
-    this.unitLabel,
-  });
+  const MultiSeriesLineChart({super.key, required this.series, this.unitLabel});
 
   final List<CategoryConsumptionSeries> series;
   final String? unitLabel;
@@ -457,7 +452,9 @@ class MultiSeriesLineChart extends StatelessWidget {
 
     final theme = Theme.of(context);
     final colors = _chartPalette(theme);
-    final maxPoints = series.map((s) => s.points.length).fold(0, (a, b) => a > b ? a : b);
+    final maxPoints = series
+        .map((s) => s.points.length)
+        .fold(0, (a, b) => a > b ? a : b);
     if (maxPoints == 0) {
       return ChartEmptyPlaceholder(
         message: AppStrings.of(context).noReadingsForPeriod,
@@ -470,7 +467,8 @@ class MultiSeriesLineChart extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final legendReserve = 56.0 + (unitLabel != null && unitLabel!.isNotEmpty ? 20 : 0);
+        final legendReserve =
+            56.0 + (unitLabel != null && unitLabel!.isNotEmpty ? 20 : 0);
         final plotHeight = constraints.maxHeight.isFinite
             ? (constraints.maxHeight - legendReserve).clamp(140.0, 360.0)
             : 220.0;
@@ -489,10 +487,8 @@ class MultiSeriesLineChart extends StatelessWidget {
                     show: true,
                     drawVerticalLine: false,
                     horizontalInterval: chartMaxY / 4,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: chartGridColor(context),
-                      strokeWidth: 1,
-                    ),
+                    getDrawingHorizontalLine: (value) =>
+                        FlLine(color: chartGridColor(context), strokeWidth: 1),
                   ),
                   titlesData: FlTitlesData(
                     rightTitles: const AxisTitles(
@@ -531,9 +527,10 @@ class MultiSeriesLineChart extends StatelessWidget {
                           for (var j = 0; j < series[i].points.length; j++)
                             FlSpot(
                               j.toDouble(),
-                              series[i].points[j].value < 0
-                                  ? 0
-                                  : series[i].points[j].value,
+                              chartDisplayY(
+                                series[i].points[j].value,
+                                chartMaxY,
+                              ),
                             ),
                         ],
                         isCurved: true,
@@ -564,7 +561,11 @@ class MultiSeriesLineChart extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 6),
                 child: Text(
                   'Unit: $unitLabel',
-                  style: TextStyle(fontSize: 11, color: chartLabelColor(context), fontWeight: FontWeight.w600),
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: chartLabelColor(context),
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
           ],
@@ -595,14 +596,18 @@ class SingleSeriesLineChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
+      return ChartEmptyPlaceholder(
+        message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod,
+      );
     }
 
     final chartMaxY = chartSoftMaxY(points.map((p) => p.value));
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final legendReserve = unitLabel != null && unitLabel!.isNotEmpty ? 24.0 : 0.0;
+        final legendReserve = unitLabel != null && unitLabel!.isNotEmpty
+            ? 24.0
+            : 0.0;
         final plotHeight = constraints.maxHeight.isFinite
             ? (constraints.maxHeight - legendReserve).clamp(140.0, 360.0)
             : 220.0;
@@ -622,10 +627,8 @@ class SingleSeriesLineChart extends StatelessWidget {
                   gridData: FlGridData(
                     show: true,
                     drawVerticalLine: false,
-                    getDrawingHorizontalLine: (value) => FlLine(
-                      color: chartGridColor(context),
-                      strokeWidth: 1,
-                    ),
+                    getDrawingHorizontalLine: (value) =>
+                        FlLine(color: chartGridColor(context), strokeWidth: 1),
                   ),
                   titlesData: FlTitlesData(
                     rightTitles: const AxisTitles(
@@ -665,7 +668,10 @@ class SingleSeriesLineChart extends StatelessWidget {
                     LineChartBarData(
                       spots: [
                         for (var i = 0; i < points.length; i++)
-                          FlSpot(i.toDouble(), points[i].value.clamp(0, chartMaxY)),
+                          FlSpot(
+                            i.toDouble(),
+                            points[i].value.clamp(0, chartMaxY),
+                          ),
                       ],
                       isCurved: !isStep,
                       preventCurveOverShooting: true,
@@ -714,7 +720,9 @@ class SingleSeriesBarChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
+      return ChartEmptyPlaceholder(
+        message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod,
+      );
     }
 
     final chartMaxY = chartSoftMaxY(points.map((p) => p.value));
@@ -733,10 +741,8 @@ class SingleSeriesBarChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
                 rightTitles: const AxisTitles(
@@ -814,7 +820,9 @@ class SingleSeriesAreaChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (points.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
+      return ChartEmptyPlaceholder(
+        message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod,
+      );
     }
 
     final chartMaxY = chartSoftMaxY(points.map((p) => p.value));
@@ -836,10 +844,8 @@ class SingleSeriesAreaChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
                 rightTitles: const AxisTitles(
@@ -879,7 +885,10 @@ class SingleSeriesAreaChart extends StatelessWidget {
                 LineChartBarData(
                   spots: [
                     for (var i = 0; i < points.length; i++)
-                      FlSpot(i.toDouble(), points[i].value < 0 ? 0 : points[i].value),
+                      FlSpot(
+                        i.toDouble(),
+                        chartDisplayY(points[i].value, chartMaxY),
+                      ),
                   ],
                   isCurved: true,
                   preventCurveOverShooting: true,
@@ -916,7 +925,9 @@ class HorizontalRankingBarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (items.isEmpty || !items.any((i) => i.totalConsumption > 0)) {
       return ChartEmptyPlaceholder(
-        message: AppStrings.of(context).isAr ? 'لا توجد قراءات كافية لحساب الاستهلاك' : 'Not enough readings to calculate consumption',
+        message: AppStrings.of(context).isAr
+            ? 'لا توجد قراءات كافية لحساب الاستهلاك'
+            : 'Not enough readings to calculate consumption',
       );
     }
 
@@ -978,23 +989,20 @@ class HorizontalRankingBarChart extends StatelessWidget {
 }
 
 class CategorySummaryBarChart extends StatelessWidget {
-  const CategorySummaryBarChart({
-    super.key,
-    required this.series,
-  });
+  const CategorySummaryBarChart({super.key, required this.series});
 
   final List<CategoryConsumptionSeries> series;
 
   @override
   Widget build(BuildContext context) {
-    final ranked = series
-        .where((s) => s.totalConsumption > 0)
-        .toList()
+    final ranked = series.where((s) => s.totalConsumption > 0).toList()
       ..sort((a, b) => b.totalConsumption.compareTo(a.totalConsumption));
 
     if (ranked.isEmpty) {
       return ChartEmptyPlaceholder(
-        message: AppStrings.of(context).isAr ? 'لا توجد قراءات كافية لحساب الاستهلاك' : 'Not enough readings to calculate consumption',
+        message: AppStrings.of(context).isAr
+            ? 'لا توجد قراءات كافية لحساب الاستهلاك'
+            : 'Not enough readings to calculate consumption',
       );
     }
 
@@ -1059,7 +1067,10 @@ class CompletionDonutChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (total <= 0) {
       return ChartEmptyPlaceholder(
-        message: AppStrings.of(context).isAr ? 'لا توجد عدادات إدخال في هذا الموقع' : 'No entry meters at this site');
+        message: AppStrings.of(context).isAr
+            ? 'لا توجد عدادات إدخال في هذا الموقع'
+            : 'No entry meters at this site',
+      );
     }
 
     final theme = Theme.of(context);
@@ -1102,7 +1113,9 @@ class CompletionDonutChart extends StatelessWidget {
         ),
         Text(
           '$submitted/$total submitted today',
-          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+          ),
         ),
         Text(
           pending > 0 ? '$pending pending' : 'All readings submitted',
@@ -1127,13 +1140,20 @@ class MeterComparisonLineChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!result.canCompare) {
       return ChartEmptyPlaceholder(
-        message: result.warningMessage ?? (AppStrings.of(context).isAr ? 'لا يمكن مقارنة الوحدات بأمان' : 'Units cannot be compared safely'),
+        message:
+            result.warningMessage ??
+            (AppStrings.of(context).isAr
+                ? 'لا يمكن مقارنة الوحدات بأمان'
+                : 'Units cannot be compared safely'),
       );
     }
     if (!result.hasData) {
       return ChartEmptyPlaceholder(
         message:
-            result.warningMessage ?? (AppStrings.of(context).isAr ? 'لا توجد قراءات كافية لحساب الاستهلاك' : 'Not enough readings to calculate consumption'),
+            result.warningMessage ??
+            (AppStrings.of(context).isAr
+                ? 'لا توجد قراءات كافية لحساب الاستهلاك'
+                : 'Not enough readings to calculate consumption'),
       );
     }
 
@@ -1156,14 +1176,16 @@ class MeterComparisonLineChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -1226,7 +1248,11 @@ class MeterComparisonLineChart extends StatelessWidget {
             padding: const EdgeInsets.only(top: 6),
             child: Text(
               'Unit: ${result.baseUnit}',
-              style: TextStyle(fontSize: 11, color: chartLabelColor(context), fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 11,
+                color: chartLabelColor(context),
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
       ],
@@ -1249,11 +1275,15 @@ class MeterSharePieChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (items.isEmpty) {
-      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
+      return ChartEmptyPlaceholder(
+        message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod,
+      );
     }
     final total = items.fold<double>(0, (sum, item) => sum + item.value);
     if (total <= 0) {
-      return ChartEmptyPlaceholder(message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod);
+      return ChartEmptyPlaceholder(
+        message: emptyMessage ?? AppStrings.of(context).noReadingsForPeriod,
+      );
     }
     final palette = _chartPalette(Theme.of(context));
     return Column(
@@ -1334,44 +1364,46 @@ class MeterComparisonChart extends StatelessWidget {
     return switch (chartType) {
       UtilityChartType.bar => MeterComparisonBarChart(result: result),
       UtilityChartType.area => MeterComparisonAreaChart(result: result),
-      UtilityChartType.step =>
-        MeterComparisonLineChart(result: result, isStep: true),
+      UtilityChartType.step => MeterComparisonLineChart(
+        result: result,
+        isStep: true,
+      ),
       UtilityChartType.cumulative => MeterComparisonLineChart(
-          result: _transformComparisonSeries(
-            result,
-            cumulativeChartPoints,
-          ),
-        ),
+        result: _transformComparisonSeries(result, cumulativeChartPoints),
+      ),
       UtilityChartType.weekday => MeterComparisonBarChart(
-          result: _transformComparisonSeries(
-            result,
-            (points) => weekdayAveragePoints(
-              points,
-              labels: [
-                for (var i = 1; i <= 7; i++)
-                  AppStrings.of(context).weekdayAbbrev(i),
-              ],
-            ),
+        result: _transformComparisonSeries(
+          result,
+          (points) => weekdayAveragePoints(
+            points,
+            labels: [
+              for (var i = 1; i <= 7; i++)
+                AppStrings.of(context).weekdayAbbrev(i),
+            ],
           ),
         ),
-      UtilityChartType.stackedBar =>
-        MeterComparisonStackedBarChart(result: result),
+      ),
+      UtilityChartType.stackedBar => MeterComparisonStackedBarChart(
+        result: result,
+      ),
       UtilityChartType.pie => MeterSharePieChart(
-          items: [
-            for (final series in result.series)
-              if (series.periodTotal > 0)
-                (
-                  label: AppStrings.of(context).localizedName(
-                    en: series.meterName,
-                    ar: series.meterNameAr,
-                  ),
-                  value: series.periodTotal,
-                ),
-          ],
-          unitLabel: result.baseUnit,
-          emptyMessage:
-              result.warningMessage ?? (AppStrings.of(context).isAr ? 'لا توجد قراءات كافية للمقارنة' : 'Not enough readings to compare'),
-        ),
+        items: [
+          for (final series in result.series)
+            if (series.periodTotal > 0)
+              (
+                label: AppStrings.of(
+                  context,
+                ).localizedName(en: series.meterName, ar: series.meterNameAr),
+                value: series.periodTotal,
+              ),
+        ],
+        unitLabel: result.baseUnit,
+        emptyMessage:
+            result.warningMessage ??
+            (AppStrings.of(context).isAr
+                ? 'لا توجد قراءات كافية للمقارنة'
+                : 'Not enough readings to compare'),
+      ),
       _ => MeterComparisonLineChart(result: result),
     };
   }
@@ -1469,10 +1501,12 @@ class MeterComparisonStackedBarChart extends StatelessWidget {
                   ),
               ],
               titlesData: FlTitlesData(
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -1495,10 +1529,8 @@ class MeterComparisonStackedBarChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
             ),
           ),
@@ -1580,10 +1612,12 @@ class MeterComparisonBarChart extends StatelessWidget {
                   ),
               ],
               titlesData: FlTitlesData(
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -1606,10 +1640,8 @@ class MeterComparisonBarChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
             ),
           ),
@@ -1658,16 +1690,16 @@ class MeterComparisonAreaChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
-                rightTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles:
-                    const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -1693,7 +1725,13 @@ class MeterComparisonAreaChart extends StatelessWidget {
                   LineChartBarData(
                     spots: [
                       for (var j = 0; j < result.series[i].points.length; j++)
-                        FlSpot(j.toDouble(), result.series[i].points[j].value < 0 ? 0 : result.series[i].points[j].value),
+                        FlSpot(
+                          j.toDouble(),
+                          chartDisplayY(
+                            result.series[i].points[j].value,
+                            chartMaxY,
+                          ),
+                        ),
                     ],
                     isCurved: true,
                     preventCurveOverShooting: true,
@@ -1740,18 +1778,24 @@ class CopTrendLineChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (!result.hasRequiredMeters) {
       return ChartEmptyPlaceholder(
-        message: AppStrings.of(context).isAr ? 'COP يتطلب قراءات BTU والكهرباء' : 'COP requires both BTU and electricity readings',
+        message: AppStrings.of(context).isAr
+            ? 'COP يتطلب قراءات BTU والكهرباء'
+            : 'COP requires both BTU and electricity readings',
       );
     }
     if (!result.hasData) {
       return ChartEmptyPlaceholder(
-        message: result.emptyMessage ?? AppStrings.of(context).notEnoughReadingsForCop,
+        message:
+            result.emptyMessage ??
+            AppStrings.of(context).notEnoughReadingsForCop,
       );
     }
 
     final theme = Theme.of(context);
     final validPoints = result.points.where((p) => p.cop != null).toList();
-    final chartMaxY = chartSoftMaxY(validPoints.map((p) => p.cop!));
+    final rawCopValues = validPoints.map((p) => p.cop!).toList();
+    final chartMaxY = chartSoftMaxY(rawCopValues);
+    final hasVisualOutlier = chartHasClippedOutlier(rawCopValues, chartMaxY);
     final bucket = chartPeriodRange(
       period: period,
       businessDate: qatarBusinessDate(),
@@ -1767,14 +1811,16 @@ class CopTrendLineChart extends StatelessWidget {
               gridData: FlGridData(
                 show: true,
                 drawVerticalLine: false,
-                getDrawingHorizontalLine: (value) => FlLine(
-                  color: chartGridColor(context),
-                  strokeWidth: 1,
-                ),
+                getDrawingHorizontalLine: (value) =>
+                    FlLine(color: chartGridColor(context), strokeWidth: 1),
               ),
               titlesData: FlTitlesData(
-                rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                rightTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
+                topTitles: const AxisTitles(
+                  sideTitles: SideTitles(showTitles: false),
+                ),
                 leftTitles: AxisTitles(
                   sideTitles: SideTitles(
                     showTitles: true,
@@ -1803,13 +1849,27 @@ class CopTrendLineChart extends StatelessWidget {
                   spots: [
                     for (var i = 0; i < result.points.length; i++)
                       if (result.points[i].cop != null)
-                        FlSpot(i.toDouble(), result.points[i].cop!),
+                        FlSpot(
+                          i.toDouble(),
+                          chartDisplayY(result.points[i].cop!, chartMaxY),
+                        ),
                   ],
                   isCurved: true,
                   preventCurveOverShooting: true,
                   color: theme.colorScheme.primary,
-                  barWidth: 2.5,
+                  barWidth: 2.75,
                   dotData: FlDotData(show: result.points.length <= 14),
+                  belowBarData: BarAreaData(
+                    show: true,
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        theme.colorScheme.primary.withValues(alpha: 0.20),
+                        theme.colorScheme.primary.withValues(alpha: 0.02),
+                      ],
+                    ),
+                  ),
                 ),
               ],
             ),
@@ -1817,27 +1877,86 @@ class CopTrendLineChart extends StatelessWidget {
         ),
         if (result.averageCop != null)
           Padding(
-            padding: const EdgeInsets.only(top: 8),
+            padding: const EdgeInsets.only(top: 10),
             child: Wrap(
               spacing: 8,
-              runSpacing: 4,
+              runSpacing: 8,
               children: [
-                Text(
-                  'Avg ${result.averageCop!.toStringAsFixed(2)}',
-                  style: TextStyle(fontSize: 12, color: chartLabelColor(context)),
+                _ChartMetricPill(
+                  label: AppStrings.of(context).isAr ? 'المتوسط' : 'Avg',
+                  value: result.averageCop!.toStringAsFixed(2),
                 ),
-                Text(
-                  'Min ${result.minCop?.toStringAsFixed(2) ?? '—'}',
-                  style: TextStyle(fontSize: 12, color: chartLabelColor(context)),
+                _ChartMetricPill(
+                  label: AppStrings.of(context).isAr ? 'الأدنى' : 'Min',
+                  value: result.minCop?.toStringAsFixed(2) ?? '—',
                 ),
-                Text(
-                  'Max ${result.maxCop?.toStringAsFixed(2) ?? '—'}',
-                  style: TextStyle(fontSize: 12, color: chartLabelColor(context)),
+                _ChartMetricPill(
+                  label: AppStrings.of(context).isAr ? 'الأعلى' : 'Max',
+                  value: result.maxCop?.toStringAsFixed(2) ?? '—',
                 ),
+                if (hasVisualOutlier)
+                  _ChartMetricPill(
+                    label: AppStrings.of(context).isAr
+                        ? 'قيمة شاذة'
+                        : 'Outlier',
+                    value: AppStrings.of(context).isAr
+                        ? 'مقيدة بصريًا'
+                        : 'visually capped',
+                    emphasized: true,
+                  ),
               ],
             ),
           ),
       ],
+    );
+  }
+}
+
+class _ChartMetricPill extends StatelessWidget {
+  const _ChartMetricPill({
+    required this.label,
+    required this.value,
+    this.emphasized = false,
+  });
+
+  final String label;
+  final String value;
+  final bool emphasized;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final colors = dashboardColors(context);
+    final accent = theme.colorScheme.primary;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+      decoration: BoxDecoration(
+        color: emphasized
+            ? accent.withValues(alpha: 0.12)
+            : colors.cardElevated,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: emphasized ? accent.withValues(alpha: 0.45) : colors.border,
+        ),
+      ),
+      child: Text.rich(
+        TextSpan(
+          children: [
+            TextSpan(
+              text: '$label  ',
+              style: TextStyle(color: colors.textMuted),
+            ),
+            TextSpan(
+              text: value,
+              style: TextStyle(
+                color: emphasized ? accent : colors.textPrimary,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+        style: theme.textTheme.labelMedium,
+      ),
     );
   }
 }
@@ -1855,7 +1974,13 @@ class CategoryCompletionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (total <= 0) {
-      return const Text('No active meters in this category');
+      return Text(
+        dashboardText(
+          context,
+          'No active meters in this category',
+          'لا توجد عدادات نشطة في هذه الفئة',
+        ),
+      );
     }
     final pending = (total - submitted).clamp(0, total);
     final progress = total <= 0 ? 0.0 : submitted / total;

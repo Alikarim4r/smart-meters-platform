@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/admin_strings.dart';
 import '../providers/admin_providers.dart';
 import '../providers/catalog_providers.dart';
 import '../providers/correction_providers.dart';
@@ -15,11 +16,15 @@ class CorrectionsTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final canCorrect = ref.watch(canCorrectReadingsProvider);
     if (!canCorrect) {
-      return const Center(
+      return Center(
         child: Padding(
           padding: EdgeInsets.all(24),
           child: Text(
-            'Only super admins and site admins can review and correct readings.',
+            adminText(
+              context,
+              'Only super admins and site admins can review and correct readings.',
+              'يمكن للمشرف العام ومشرف الموقع فقط مراجعة القراءات وتصحيحها.',
+            ),
             textAlign: TextAlign.center,
           ),
         ),
@@ -42,7 +47,11 @@ class CorrectionsTab extends ConsumerWidget {
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
               child: Text(
-                'Review submitted readings, correct values, and view audit history.',
+                adminText(
+                  context,
+                  'Review submitted readings, correct values, and view audit history.',
+                  'راجع القراءات المرسلة وصحح القيم واعرض سجل التدقيق.',
+                ),
                 style: Theme.of(context).textTheme.bodyMedium,
               ),
             ),
@@ -55,22 +64,26 @@ class CorrectionsTab extends ConsumerWidget {
                     width: 220,
                     child: sitesAsync.when(
                       loading: () => const LinearProgressIndicator(),
-                      error: (e, _) => Text('Sites: $e'),
+                      error: (e, _) => Text(adminCouldNotLoad(context)),
                       data: (sites) {
                         return DropdownButtonFormField<String?>(
                           key: ValueKey('site-$siteId-${sites.length}'),
                           initialValue: siteId,
                           isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Site',
+                          decoration: InputDecoration(
+                            labelText: adminText(context, 'Site', 'الموقع'),
                             border: OutlineInputBorder(),
                             isDense: true,
                           ),
                           items: [
-                            const DropdownMenuItem<String?>(
+                            DropdownMenuItem<String?>(
                               value: null,
                               child: Text(
-                                'Select site',
+                                adminText(
+                                  context,
+                                  'Select site',
+                                  'اختر الموقع',
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -112,38 +125,37 @@ class CorrectionsTab extends ConsumerWidget {
                       data: (zones) {
                         final zoneId = ref.watch(correctionZoneIdProvider);
                         final selectedSite = sitesAsync.maybeWhen(
-                          data: (sites) => sites
-                              .where((s) => s.id == siteId)
-                              .firstOrNull,
+                          data: (sites) =>
+                              sites.where((s) => s.id == siteId).firstOrNull,
                           orElse: () => null,
                         );
                         final items = selectedSite == null
                             ? zones
                             : zones
-                                .where(
-                                  (z) =>
-                                      z.organizationId ==
-                                      selectedSite.organizationId,
-                                )
-                                .toList();
+                                  .where(
+                                    (z) =>
+                                        z.organizationId ==
+                                        selectedSite.organizationId,
+                                  )
+                                  .toList();
                         final effectiveZoneId =
                             zoneId != null && items.any((z) => z.id == zoneId)
-                                ? zoneId
-                                : null;
+                            ? zoneId
+                            : null;
                         return DropdownButtonFormField<String?>(
                           key: ValueKey('zone-$siteId-$effectiveZoneId'),
                           initialValue: effectiveZoneId,
                           isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Zone',
+                          decoration: InputDecoration(
+                            labelText: adminText(context, 'Zone', 'المنطقة'),
                             border: OutlineInputBorder(),
                             isDense: true,
                           ),
                           items: [
-                            const DropdownMenuItem<String?>(
+                            DropdownMenuItem<String?>(
                               value: null,
                               child: Text(
-                                'All zones',
+                                adminText(context, 'All zones', 'كل المناطق'),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -181,16 +193,20 @@ class CorrectionsTab extends ConsumerWidget {
                         return DropdownButtonFormField<String?>(
                           initialValue: categoryId,
                           isExpanded: true,
-                          decoration: const InputDecoration(
-                            labelText: 'Category',
+                          decoration: InputDecoration(
+                            labelText: adminText(context, 'Category', 'الفئة'),
                             border: OutlineInputBorder(),
                             isDense: true,
                           ),
                           items: [
-                            const DropdownMenuItem<String?>(
+                            DropdownMenuItem<String?>(
                               value: null,
                               child: Text(
-                                'All categories',
+                                adminText(
+                                  context,
+                                  'All categories',
+                                  'كل الفئات',
+                                ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                               ),
@@ -262,8 +278,14 @@ class CorrectionsTab extends ConsumerWidget {
             const SizedBox(height: 8),
             Expanded(
               child: siteId == null
-                  ? const Center(
-                      child: Text('Select a site to load submitted readings.'),
+                  ? Center(
+                      child: Text(
+                        adminText(
+                          context,
+                          'Select a site to load submitted readings.',
+                          'اختر موقعًا لتحميل القراءات المرسلة.',
+                        ),
+                      ),
                     )
                   : readingsAsync.when(
                       loading: () =>
@@ -271,14 +293,18 @@ class CorrectionsTab extends ConsumerWidget {
                       error: (error, _) => Center(
                         child: Padding(
                           padding: const EdgeInsets.all(24),
-                          child: Text('Failed to load readings: $error'),
+                          child: Text(adminCouldNotLoad(context)),
                         ),
                       ),
                       data: (readings) {
                         if (readings.isEmpty) {
-                          return const Center(
+                          return Center(
                             child: Text(
-                              'No readings match the current filters.',
+                              adminText(
+                                context,
+                                'No readings match the current filters.',
+                                'لا توجد قراءات تطابق عوامل التصفية الحالية.',
+                              ),
                             ),
                           );
                         }
@@ -409,8 +435,10 @@ class _ReadingCard extends ConsumerWidget {
                       runSpacing: 4,
                       children: [
                         if (row.isCorrected)
-                          const Chip(
-                            label: Text('Corrected'),
+                          Chip(
+                            label: Text(
+                              adminText(context, 'Corrected', 'تم التصحيح'),
+                            ),
                             visualDensity: VisualDensity.compact,
                           ),
                         ...row.alertTypes.map(

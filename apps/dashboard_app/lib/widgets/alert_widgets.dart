@@ -175,8 +175,7 @@ class AlertSummaryCard extends StatelessWidget {
                   Icon(Icons.notifications_active_outlined,
                       color: theme.colorScheme.primary),
                   const SizedBox(width: 8),
-                  Text(
-                    'Active alerts',
+                  Text(dashboardText(context, 'Active alerts', 'التنبيهات النشطة'),
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w700,
                     ),
@@ -196,17 +195,17 @@ class AlertSummaryCard extends StatelessWidget {
                 runSpacing: 8,
                 children: [
                   _CountChip(
-                    label: 'Critical',
+                    label: dashboardText(context, 'Critical', 'حرج'),
                     count: summary.critical,
                     color: theme.colorScheme.error,
                   ),
                   _CountChip(
-                    label: 'Warning',
+                    label: dashboardText(context, 'Warning', 'تحذير'),
                     count: summary.warning,
                     color: Colors.orange.shade800,
                   ),
                   _CountChip(
-                    label: 'Info',
+                    label: dashboardText(context, 'Info', 'معلومات'),
                     count: summary.info,
                     color: theme.colorScheme.primary,
                   ),

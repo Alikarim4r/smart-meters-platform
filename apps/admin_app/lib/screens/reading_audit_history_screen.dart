@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
+import '../l10n/admin_strings.dart';
 import '../providers/correction_providers.dart';
 
 class ReadingAuditHistoryScreen extends ConsumerWidget {
@@ -14,14 +15,22 @@ class ReadingAuditHistoryScreen extends ConsumerWidget {
     final historyAsync = ref.watch(readingAuditHistoryProvider(readingId));
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Audit history')),
+      appBar: AppBar(
+        title: Text(adminText(context, 'Audit history', 'سجل التدقيق')),
+      ),
       body: historyAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, _) => Center(child: Text('Error: $error')),
+        error: (error, _) => Center(child: Text(adminUserError(context))),
         data: (entries) {
           if (entries.isEmpty) {
-            return const Center(
-              child: Text('No audit history for this reading.'),
+            return Center(
+              child: Text(
+                adminText(
+                  context,
+                  'No audit history for this reading.',
+                  'لا يوجد سجل تدقيق لهذه القراءة.',
+                ),
+              ),
             );
           }
           return ListView.separated(

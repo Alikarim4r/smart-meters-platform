@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import '../../theme/dashboard_palette.dart';
+import '../../theme/dashboard_theme.dart';
 
 class PremiumSectionHeader extends StatelessWidget {
   const PremiumSectionHeader({
@@ -19,6 +19,7 @@ class PremiumSectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colors = dashboardColors(context);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -34,7 +35,7 @@ class PremiumSectionHeader extends StatelessWidget {
                     title,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.w800,
-                      color: DashboardPalette.navy,
+                      color: colors.textPrimary,
                       letterSpacing: -0.2,
                     ),
                   ),
@@ -44,7 +45,7 @@ class PremiumSectionHeader extends StatelessWidget {
                       child: Text(
                         subtitle!,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: DashboardPalette.textMuted,
+                          color: colors.textMuted,
                           height: 1.35,
                         ),
                       ),
@@ -56,8 +57,7 @@ class PremiumSectionHeader extends StatelessWidget {
           ],
         ),
         SizedBox(height: showDivider ? 14 : 12),
-        if (showDivider)
-          const Divider(height: 1, color: DashboardPalette.border),
+        if (showDivider) Divider(height: 1, color: colors.border),
       ],
     );
   }

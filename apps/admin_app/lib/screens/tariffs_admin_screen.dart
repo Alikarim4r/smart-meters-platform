@@ -7,44 +7,41 @@ import '../providers/admin_providers.dart';
 import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 
-final _siteTariffsUiEnabledProvider =
-    FutureProvider.autoDispose.family<bool, String>((ref, siteId) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final flags = ConservationFeatureFlagRepository(
-    ref.read(supabaseClientProvider),
-  );
-  final module = await flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.conservationModule,
-    siteId: siteId,
-  );
-  if (!module) return false;
-  return flags.isEnabled(
-    organizationId: site.organizationId,
-    flagKey: ConservationFeatureFlags.costRoi,
-    siteId: siteId,
-  );
-});
+final _siteTariffsUiEnabledProvider = FutureProvider.autoDispose
+    .family<bool, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final flags = ConservationFeatureFlagRepository(
+        ref.read(supabaseClientProvider),
+      );
+      final module = await flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.conservationModule,
+        siteId: siteId,
+      );
+      if (!module) return false;
+      return flags.isEnabled(
+        organizationId: site.organizationId,
+        flagKey: ConservationFeatureFlags.costRoi,
+        siteId: siteId,
+      );
+    });
 
-final _orgTariffsProvider =
-    FutureProvider.autoDispose.family<List<UtilityTariff>, String>((
-  ref,
-  siteId,
-) async {
-  final site = await ref.watch(adminSiteProvider(siteId).future);
-  final client = ref.read(supabaseClientProvider);
-  final rows = await client
-      .from('utility_tariffs')
-      .select()
-      .eq('organization_id', site.organizationId)
-      .order('effective_from', ascending: false);
-  return (rows as List)
-      .map(
-        (e) => UtilityTariff.fromJson(Map<String, dynamic>.from(e as Map)),
-      )
-      .where((t) => t.siteId == null || t.siteId == siteId)
-      .toList();
-});
+final _orgTariffsProvider = FutureProvider.autoDispose
+    .family<List<UtilityTariff>, String>((ref, siteId) async {
+      final site = await ref.watch(adminSiteProvider(siteId).future);
+      final client = ref.read(supabaseClientProvider);
+      final rows = await client
+          .from('utility_tariffs')
+          .select()
+          .eq('organization_id', site.organizationId)
+          .order('effective_from', ascending: false);
+      return (rows as List)
+          .map(
+            (e) => UtilityTariff.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .where((t) => t.siteId == null || t.siteId == siteId)
+          .toList();
+    });
 
 /// CRUD for utility tariffs (QAR default). Gated by module ∧ cost_roi.
 class TariffsAdminScreen extends ConsumerWidget {
@@ -59,9 +56,7 @@ class TariffsAdminScreen extends ConsumerWidget {
     final canManage = ref.watch(canManageMetersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s.isAr ? 'تعرفة المرافق' : 'Utility tariffs'),
-      ),
+      appBar: AppBar(title: Text(s.isAr ? 'تعرفة المرافق' : 'Utility tariffs')),
       floatingActionButton: enabledAsync.maybeWhen(
         data: (on) => on && canManage
             ? FloatingActionButton.extended(
@@ -124,10 +119,14 @@ class TariffsAdminScreen extends ConsumerWidget {
                         '${t.sourceNotes == null ? '' : '\n${t.sourceNotes}'}',
                       ),
                       isThreeLine: true,
-                      trailing: canManage &&
-                              t.status == UtilityTariffStatus.active
+                      trailing:
+                          canManage && t.status == UtilityTariffStatus.active
                           ? IconButton(
-                              tooltip: 'Supersede',
+                              tooltip: adminText(
+                                context,
+                                'Supersede',
+                                'استبدال',
+                              ),
                               icon: const Icon(Icons.archive_outlined),
                               onPressed: () => _supersede(context, ref, t),
                             )
@@ -149,9 +148,7 @@ class TariffsAdminScreen extends ConsumerWidget {
     final utilityCtrl = TextEditingController(text: 'water');
     final rateCtrl = TextEditingController();
     final unitCtrl = TextEditingController(text: 'm3');
-    final fromCtrl = TextEditingController(
-      text: _iso(DateTime.now()),
-    );
+    final fromCtrl = TextEditingController(text: _iso(DateTime.now()));
     final toCtrl = TextEditingController();
     final notesCtrl = TextEditingController();
     var siteSpecific = true;
@@ -163,7 +160,9 @@ class TariffsAdminScreen extends ConsumerWidget {
         return StatefulBuilder(
           builder: (ctx, setState) {
             return AlertDialog(
-              title: const Text('Add utility tariff'),
+              title: Text(
+                adminText(context, 'Add utility tariff', 'إضافة تعرفة خدمة'),
+              ),
               content: SingleChildScrollView(
                 child: SizedBox(
                   width: 400,
@@ -172,26 +171,40 @@ class TariffsAdminScreen extends ConsumerWidget {
                     children: [
                       TextField(
                         controller: utilityCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Utility type (water/electricity/…)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Utility type (water/electricity/…)',
+                            'نوع الخدمة (مياه/كهرباء/…)',
+                          ),
                         ),
                       ),
                       TextField(
                         controller: rateCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Rate (must be > 0)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Rate (must be > 0)',
+                            'التعرفة (يجب أن تكون > 0)',
+                          ),
                         ),
                         keyboardType: TextInputType.number,
                       ),
                       TextField(
                         controller: unitCtrl,
-                        decoration:
-                            const InputDecoration(labelText: 'Unit code'),
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Unit code',
+                            'رمز الوحدة',
+                          ),
+                        ),
                       ),
                       DropdownButtonFormField<String>(
                         initialValue: currency,
-                        decoration:
-                            const InputDecoration(labelText: 'Currency'),
+                        decoration: InputDecoration(
+                          labelText: adminText(context, 'Currency', 'العملة'),
+                        ),
                         items: const [
                           DropdownMenuItem(value: 'QAR', child: Text('QAR')),
                           DropdownMenuItem(value: 'USD', child: Text('USD')),
@@ -203,29 +216,48 @@ class TariffsAdminScreen extends ConsumerWidget {
                       ),
                       TextField(
                         controller: fromCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Effective from (YYYY-MM-DD)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Effective from (YYYY-MM-DD)',
+                            'ساري من (YYYY-MM-DD)',
+                          ),
                         ),
                       ),
                       TextField(
                         controller: toCtrl,
-                        decoration: const InputDecoration(
-                          labelText: 'Effective to (optional)',
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Effective to (optional)',
+                            'ساري حتى (اختياري)',
+                          ),
                         ),
                       ),
                       SwitchListTile(
                         contentPadding: EdgeInsets.zero,
-                        title: const Text('Site-specific'),
-                        subtitle: const Text(
-                          'Off = organization-wide tariff',
+                        title: Text(
+                          adminText(context, 'Site-specific', 'خاص بالموقع'),
+                        ),
+                        subtitle: Text(
+                          adminText(
+                            context,
+                            'Off = organization-wide tariff',
+                            'إيقاف = تعرفة على مستوى الجهة',
+                          ),
                         ),
                         value: siteSpecific,
                         onChanged: (v) => setState(() => siteSpecific = v),
                       ),
                       TextField(
                         controller: notesCtrl,
-                        decoration:
-                            const InputDecoration(labelText: 'Source notes'),
+                        decoration: InputDecoration(
+                          labelText: adminText(
+                            context,
+                            'Source notes',
+                            'ملاحظات المصدر',
+                          ),
+                        ),
                       ),
                     ],
                   ),
@@ -234,11 +266,11 @@ class TariffsAdminScreen extends ConsumerWidget {
               actions: [
                 TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Cancel'),
+                  child: Text(adminText(context, 'Cancel', 'إلغاء')),
                 ),
                 FilledButton(
                   onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Create'),
+                  child: Text(adminText(context, 'Create', 'إنشاء')),
                 ),
               ],
             );
@@ -261,18 +293,25 @@ class TariffsAdminScreen extends ConsumerWidget {
         effectiveTo: toCtrl.text.trim().isEmpty
             ? null
             : DateTime.parse(toCtrl.text.trim()),
-        sourceNotes:
-            notesCtrl.text.trim().isEmpty ? null : notesCtrl.text.trim(),
+        sourceNotes: notesCtrl.text.trim().isEmpty
+            ? null
+            : notesCtrl.text.trim(),
         createdBy: client.auth.currentUser?.id,
       );
       ref.invalidate(_orgTariffsProvider(siteId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tariff created')),
+        SnackBar(
+          content: Text(
+            adminText(context, 'Tariff created', 'تم إنشاء التعرفة'),
+          ),
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 
@@ -285,40 +324,49 @@ class TariffsAdminScreen extends ConsumerWidget {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Supersede tariff'),
+        title: Text(adminText(context, 'Supersede tariff', 'استبدال التعرفة')),
         content: TextField(
           controller: toCtrl,
-          decoration: const InputDecoration(
-            labelText: 'Effective to (YYYY-MM-DD)',
+          decoration: InputDecoration(
+            labelText: adminText(
+              context,
+              'Effective to (YYYY-MM-DD)',
+              'ساري حتى (YYYY-MM-DD)',
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text('Cancel'),
+            child: Text(adminText(context, 'Cancel', 'إلغاء')),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Supersede'),
+            child: Text(adminText(context, 'Supersede', 'استبدال')),
           ),
         ],
       ),
     );
     if (ok != true || !context.mounted) return;
     try {
-      await UtilityTariffRepository(ref.read(supabaseClientProvider))
-          .supersede(
+      await UtilityTariffRepository(ref.read(supabaseClientProvider)).supersede(
         id: tariff.id,
         effectiveTo: DateTime.parse(toCtrl.text.trim()),
       );
       ref.invalidate(_orgTariffsProvider(siteId));
       if (!context.mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Tariff superseded')),
+        SnackBar(
+          content: Text(
+            adminText(context, 'Tariff superseded', 'تم استبدال التعرفة'),
+          ),
+        ),
       );
     } catch (e) {
       if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('$e')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(adminUserError(context))));
     }
   }
 

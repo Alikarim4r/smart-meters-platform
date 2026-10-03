@@ -82,7 +82,9 @@ class MeterFilterToolbar extends ConsumerWidget {
           items: MeterCardStatusFilter.values,
           labelBuilder: s.statusFilter,
           onChanged: (v) =>
-              ref.read(meterCardStatusFilterProvider(filterKey).notifier).state =
+              ref
+                      .read(meterCardStatusFilterProvider(filterKey).notifier)
+                      .state =
                   v,
         ),
         if (isWater)
@@ -106,9 +108,11 @@ class MeterFilterToolbar extends ConsumerWidget {
         ),
         IconButton(
           tooltip: ascending ? s.ascending : s.descending,
-          onPressed: () => ref
-              .read(meterCardSortAscendingProvider(filterKey).notifier)
-              .state = !ascending,
+          onPressed: () =>
+              ref
+                      .read(meterCardSortAscendingProvider(filterKey).notifier)
+                      .state =
+                  !ascending,
           icon: Icon(
             ascending
                 ? Icons.arrow_upward_rounded
@@ -131,7 +135,9 @@ class MeterFilterToolbar extends ConsumerWidget {
                 focusNode: ref.watch(meterSearchFocusNodeProvider),
                 hint: s.searchMeters,
                 onChanged: (v) =>
-                    ref.read(meterCardSearchProvider(filterKey).notifier).state =
+                    ref
+                            .read(meterCardSearchProvider(filterKey).notifier)
+                            .state =
                         v,
               ),
             ),
@@ -175,9 +181,9 @@ class MeterFilterToolbar extends ConsumerWidget {
         child: DropdownButton<T>(
           value: value,
           isDense: true,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: colors.textPrimary,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.bodySmall?.copyWith(color: colors.textPrimary),
           items: [
             for (final item in items)
               DropdownMenuItem(

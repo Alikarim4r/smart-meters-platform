@@ -106,31 +106,54 @@ PartnerLinkIntent? parsePartnerLinkFlexible(Uri uri) {
     return null;
   }
 
-  final base = PartnerWebConfig.baseForScheme(PartnerAppLinks.dashboardScheme);
-  if (uri.toString().startsWith(base)) {
-    return parsePartnerWebQuery(
-      uri.queryParameters,
-      expectedScheme: PartnerAppLinks.dashboardScheme,
-    );
-  }
+  final candidates = <(String, String)>[
+    (
+      PartnerAppLinks.dashboardScheme,
+      PartnerWebConfig.baseForScheme(PartnerAppLinks.dashboardScheme),
+    ),
+    (
+      PartnerAppLinks.entryScheme,
+      PartnerWebConfig.baseForScheme(PartnerAppLinks.entryScheme),
+    ),
+    (
+      PartnerAppLinks.adminScheme,
+      PartnerWebConfig.baseForScheme(PartnerAppLinks.adminScheme),
+    ),
+  ];
 
-  final entryBase = PartnerWebConfig.baseForScheme(PartnerAppLinks.entryScheme);
-  if (uri.toString().startsWith(entryBase)) {
-    return parsePartnerWebQuery(
-      uri.queryParameters,
-      expectedScheme: PartnerAppLinks.entryScheme,
-    );
-  }
-
-  final adminBase = PartnerWebConfig.baseForScheme(PartnerAppLinks.adminScheme);
-  if (uri.toString().startsWith(adminBase)) {
-    return parsePartnerWebQuery(
-      uri.queryParameters,
-      expectedScheme: PartnerAppLinks.adminScheme,
-    );
+  // Compare URI components rather than raw string prefixes. This prevents a
+  // configured host such as `example.com/app` from accepting attacker-controlled
+  // lookalikes such as `example.com.evil.test/app` or `/application`.
+  for (final (scheme, base) in candidates) {
+    if (_matchesConfiguredWebBase(uri, base)) {
+      return parsePartnerWebQuery(uri.queryParameters, expectedScheme: scheme);
+    }
   }
 
   return null;
+}
+
+/// Visible for regression tests; production callers use [parsePartnerLinkFlexible].
+bool partnerWebBaseMatchesForTest(Uri uri, String configuredBase) =>
+    _matchesConfiguredWebBase(uri, configuredBase);
+
+bool _matchesConfiguredWebBase(Uri uri, String configuredBase) {
+  if (configuredBase.trim().isEmpty) return false;
+  final base = Uri.tryParse(configuredBase.trim());
+  if (base == null || base.scheme != 'https' || base.host.isEmpty) return false;
+  if (uri.scheme != base.scheme ||
+      uri.host.toLowerCase() != base.host.toLowerCase() ||
+      uri.port != base.port) {
+    return false;
+  }
+
+  final baseSegments = base.pathSegments.where((s) => s.isNotEmpty).toList();
+  final uriSegments = uri.pathSegments.where((s) => s.isNotEmpty).toList();
+  if (uriSegments.length < baseSegments.length) return false;
+  for (var i = 0; i < baseSegments.length; i++) {
+    if (uriSegments[i] != baseSegments[i]) return false;
+  }
+  return true;
 }
 
 void _copyIfPresent(

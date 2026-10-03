@@ -10,7 +10,8 @@ import 'notification_models.dart';
 class LocalNotificationDelivery {
   LocalNotificationDelivery._();
 
-  static final LocalNotificationDelivery instance = LocalNotificationDelivery._();
+  static final LocalNotificationDelivery instance =
+      LocalNotificationDelivery._();
 
   static const defaultChannelId = 'alerts_default';
   static const criticalChannelId = 'alerts_critical';
@@ -36,8 +37,8 @@ class LocalNotificationDelivery {
     const initSettings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       iOS: DarwinInitializationSettings(
-        requestAlertPermission: true,
-        requestSoundPermission: true,
+        requestAlertPermission: false,
+        requestSoundPermission: false,
       ),
       macOS: DarwinInitializationSettings(
         requestAlertPermission: false,
@@ -53,8 +54,10 @@ class LocalNotificationDelivery {
     );
 
     if (!kIsWeb && Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       await android?.createNotificationChannel(
         const AndroidNotificationChannel(
           defaultChannelId,
@@ -73,7 +76,6 @@ class LocalNotificationDelivery {
           playSound: true,
         ),
       );
-      await android?.requestNotificationsPermission();
     }
 
     _ready = true;
@@ -85,14 +87,17 @@ class LocalNotificationDelivery {
       soundEnabled: sp.getBool(NotificationSoundPrefs.storageKeySound) ?? true,
       minSeverity:
           sp.getString(NotificationSoundPrefs.storageKeyMinSeverity) ??
-              'warning',
+          'warning',
     );
   }
 
   Future<void> updatePrefs(NotificationSoundPrefs prefs) async {
     _prefs = prefs;
     final sp = await SharedPreferences.getInstance();
-    await sp.setBool(NotificationSoundPrefs.storageKeySound, prefs.soundEnabled);
+    await sp.setBool(
+      NotificationSoundPrefs.storageKeySound,
+      prefs.soundEnabled,
+    );
     await sp.setString(
       NotificationSoundPrefs.storageKeyMinSeverity,
       prefs.minSeverity,
@@ -102,13 +107,17 @@ class LocalNotificationDelivery {
   Future<bool> requestPermission() async {
     if (kIsWeb) return false;
     if (Platform.isAndroid) {
-      final android = _plugin.resolvePlatformSpecificImplementation<
-          AndroidFlutterLocalNotificationsPlugin>();
+      final android = _plugin
+          .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin
+          >();
       return await android?.requestNotificationsPermission() ?? false;
     }
     if (Platform.isIOS) {
-      final ios = _plugin.resolvePlatformSpecificImplementation<
-          IOSFlutterLocalNotificationsPlugin>();
+      final ios = _plugin
+          .resolvePlatformSpecificImplementation<
+            IOSFlutterLocalNotificationsPlugin
+          >();
       return await ios?.requestPermissions(alert: true, sound: true) ?? false;
     }
     return true;
@@ -126,18 +135,17 @@ class LocalNotificationDelivery {
     if (!Platform.isAndroid && !Platform.isIOS) return;
 
     final playSound = _prefs.allows(severity);
-    final channelId =
-        severity == 'critical' ? criticalChannelId : defaultChannelId;
-    final channelName =
-        severity == 'critical' ? 'Critical alerts' : 'Alerts';
+    final channelId = severity == 'critical'
+        ? criticalChannelId
+        : defaultChannelId;
+    final channelName = severity == 'critical' ? 'Critical alerts' : 'Alerts';
 
     final details = NotificationDetails(
       android: AndroidNotificationDetails(
         channelId,
         channelName,
         channelDescription: 'Smart Meters platform alerts',
-        importance:
-            severity == 'critical' ? Importance.max : Importance.high,
+        importance: severity == 'critical' ? Importance.max : Importance.high,
         priority: severity == 'critical' ? Priority.max : Priority.high,
         playSound: playSound,
         enableVibration: playSound,
@@ -149,16 +157,11 @@ class LocalNotificationDelivery {
       ),
     );
 
-    final notifId = id ??
+    final notifId =
+        id ??
         (title.hashCode ^ body.hashCode ^ severity.hashCode).abs() % 100000;
 
-    await _plugin.show(
-      notifId,
-      title,
-      body,
-      details,
-      payload: payload,
-    );
+    await _plugin.show(notifId, title, body, details, payload: payload);
   }
 
   Future<void> showFromNotification(InAppNotification n) {

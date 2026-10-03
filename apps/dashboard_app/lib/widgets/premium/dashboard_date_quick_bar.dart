@@ -26,12 +26,23 @@ class DashboardDateQuickBar extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final useCompact = compact || constraints.maxWidth < 520;
-        return _buildBar(context, useCompact: useCompact);
+        final compactWidth = useCompact && constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : 220.0;
+        return _buildBar(
+          context,
+          useCompact: useCompact,
+          compactWidth: compactWidth,
+        );
       },
     );
   }
 
-  Widget _buildBar(BuildContext context, {required bool useCompact}) {
+  Widget _buildBar(
+    BuildContext context, {
+    required bool useCompact,
+    required double compactWidth,
+  }) {
     final s = AppStrings.of(context);
     final today = qatarBusinessDate();
     final presets = <({String label, DashboardDateSelection value})>[
@@ -52,13 +63,13 @@ class DashboardDateQuickBar extends StatelessWidget {
           onChanged: onChanged,
           siteId: siteId,
           compact: useCompact,
-          width: useCompact ? 220 : 268,
+          width: useCompact ? compactWidth : 268,
         ),
         if (!useCompact) ...[
           const SizedBox(width: 8),
           for (final preset in presets)
             Padding(
-              padding: const EdgeInsets.only(right: 6),
+              padding: const EdgeInsetsDirectional.only(end: 6),
               child: _QuickChip(
                 label: preset.label,
                 selected: isSameDashboardDay(
@@ -101,8 +112,9 @@ class _QuickChip extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(20),
             border: Border.all(
-              color:
-                  selected ? colors.navy.withValues(alpha: 0.3) : colors.border,
+              color: selected
+                  ? colors.navy.withValues(alpha: 0.3)
+                  : colors.border,
             ),
           ),
           child: Text(
