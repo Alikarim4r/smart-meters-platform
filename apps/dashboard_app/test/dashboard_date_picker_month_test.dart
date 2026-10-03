@@ -51,4 +51,45 @@ void main() {
     expect(applied!.endDate.month, 7);
     expect(applied!.endDate.day, 10);
   });
+
+  testWidgets('embedded picker stays above system navigation without overflow',
+      (tester) async {
+    final initial = DashboardDateSelection.forPreset(
+      preset: DashboardDatePreset.customRange,
+      currentBusinessDate: DateTime(2026, 2, 28),
+      customStart: DateTime(2026, 2, 5),
+      customEnd: DateTime(2026, 2, 28),
+    );
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: buildDashboardLightTheme(),
+        home: MediaQuery(
+          data: const MediaQueryData(
+            size: Size(360, 640),
+            padding: EdgeInsets.only(bottom: 32),
+            viewPadding: EdgeInsets.only(bottom: 32),
+            textScaler: TextScaler.linear(1.15),
+          ),
+          child: Scaffold(
+            body: SizedBox(
+              height: 600,
+              child: DashboardDatePickerPanel(
+                initial: initial,
+                embedded: true,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+
+    await tester.pumpAndSettle();
+
+    expect(tester.takeException(), isNull);
+    expect(find.text('Cancel'), findsOneWidget);
+    expect(find.text('Apply'), findsOneWidget);
+    expect(tester.getRect(find.text('Apply')).bottom, lessThan(568));
+  });
+
 }

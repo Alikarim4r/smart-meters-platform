@@ -22,12 +22,15 @@ Future<DashboardDateSelection?> showDashboardDatePicker({
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
-      builder: (ctx) => Padding(
-        padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
-        child: DashboardDatePickerPanel(
-          initial: initial,
-          siteId: siteId,
-          embedded: true,
+      builder: (ctx) => FractionallySizedBox(
+        heightFactor: 0.96,
+        child: Padding(
+          padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(ctx).bottom),
+          child: DashboardDatePickerPanel(
+            initial: initial,
+            siteId: siteId,
+            embedded: true,
+          ),
         ),
       ),
     );
@@ -364,6 +367,8 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
         !(_kind == _PickerKind.customRange && _pendingSelection == null);
 
     final body = SingleChildScrollView(
+      padding: const EdgeInsets.only(bottom: 8),
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -492,24 +497,28 @@ class _DashboardDatePickerPanelState extends State<DashboardDatePickerPanel> {
     );
 
     if (widget.embedded) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              s.isAr ? 'اختيار تاريخ العمل' : 'Select business date',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    color: colors.textPrimary,
-                  ),
-            ),
-            const SizedBox(height: 12),
-            body,
-            const SizedBox(height: 12),
-            actions,
-          ],
+      return SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 8),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            mainAxisSize: MainAxisSize.max,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                s.isAr ? 'اختيار تاريخ العمل' : 'Select business date',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: colors.textPrimary,
+                    ),
+              ),
+              const SizedBox(height: 12),
+              Expanded(child: body),
+              const SizedBox(height: 8),
+              actions,
+            ],
+          ),
         ),
       );
     }
