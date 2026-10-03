@@ -35,44 +35,42 @@ abstract final class BrandChrome {
   static Color get textDarkMuted => _palette.textDarkMuted;
 
   static LinearGradient get iconWellGradient => LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [iconWellTop, iconWellBottom],
-      );
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+    colors: [iconWellTop, iconWellBottom],
+  );
 
-  /// Light: nearly flat white with a faint wash.
-  /// Dark: solid panel fill matching KPI tiles (not translucent).
+  /// Light: white settling into a whisper of the accent tint.
+  /// Dark: solid tonal panel (never translucent) so text contrast is stable.
   static LinearGradient cardWash({required bool isDark}) {
     if (isDark) {
       final flat = Color.alphaBlend(
-        accentSoft.withValues(alpha: 0.06),
+        accentSoft.withValues(alpha: 0.035),
         surfaceDark,
       );
       return LinearGradient(colors: [flat, flat]);
     }
     final soft = Color.alphaBlend(
-      accentSoft.withValues(alpha: 0.07),
+      accentSoft.withValues(alpha: 0.12),
       Colors.white,
     );
     return LinearGradient(
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
       colors: [Colors.white, soft],
     );
   }
 
   static Color border({required bool isDark, required ColorScheme scheme}) =>
-      isDark ? scheme.outline.withValues(alpha: 0.45) : borderLight;
+      isDark ? scheme.outline.withValues(alpha: 0.7) : borderLight;
 
   static Color titleColor({
     required bool isDark,
     required ColorScheme scheme,
-  }) =>
-      isDark ? scheme.onSurface : ink;
+  }) => isDark ? scheme.onSurface : ink;
 
   static Color mutedColor({
     required bool isDark,
     required ColorScheme scheme,
-  }) =>
-      isDark ? scheme.onSurface.withValues(alpha: 0.62) : inkMuted;
+  }) => isDark ? scheme.onSurface.withValues(alpha: 0.62) : inkMuted;
 }

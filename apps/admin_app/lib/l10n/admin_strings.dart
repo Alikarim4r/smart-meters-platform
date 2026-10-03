@@ -48,15 +48,11 @@ class AdminStrings {
   String get languageEnglish => 'English';
   String get languageArabic => 'العربية';
   String get account => _t('Account', 'الحساب');
-  String get aboutApp => _t('About', 'حول التطبيق');
-  String get createdDevelopedBy =>
-      _t('Created and developed by', 'تم الإنشاء والتطوير بواسطة');
-  String get developerName => _t(
-    'Eng. Ali Abdulkarim Elhassan',
-    'المهندس: علي عبد الكريم الحسن',
+  String get support => _t('Support', 'الدعم');
+  String get supportHint => _t(
+    'Need help? Contact our support team by email.',
+    'تحتاج مساعدة؟ تواصل مع فريق الدعم عبر البريد الإلكتروني.',
   );
-  String get developerPhone => '+974 3005 8899';
-  String get developerEmail => 'Support@AliMind.com';
   String get changePassword => _t('Change password', 'تغيير كلمة المرور');
   String get newPassword => _t('New password', 'كلمة المرور الجديدة');
   String get confirmPassword => _t('Confirm password', 'تأكيد كلمة المرور');

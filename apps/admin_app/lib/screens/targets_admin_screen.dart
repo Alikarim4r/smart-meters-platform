@@ -175,7 +175,7 @@ class TargetsAdminScreen extends ConsumerWidget {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     DropdownButtonFormField<ConservationTargetPeriodType>(
-                      value: periodType,
+                      initialValue: periodType,
                       decoration: InputDecoration(
                         labelText: s.isAr ? 'النوع' : 'Period type',
                       ),

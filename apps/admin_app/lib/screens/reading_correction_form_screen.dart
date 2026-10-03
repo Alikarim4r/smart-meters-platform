@@ -77,7 +77,7 @@ class _ReadingCorrectionFormScreenState
       await ref.read(readingCorrectionRepositoryProvider).replaceReadingPhoto(
             readingId: widget.readingId,
             bytes: bytes,
-            organizationId: organizationId!,
+            organizationId: organizationId,
           );
       if (oldPath != null) {
         ref.invalidate(correctionPhotoUrlProvider(oldPath));

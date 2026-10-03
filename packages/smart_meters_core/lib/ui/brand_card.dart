@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 
 import '../theme/brand_chrome.dart';
+import '../theme/brand_tokens.dart';
 
-/// Entry-matching card shell: cream→gold wash, thin border, soft gold shadow.
+/// Shared card shell: hairline border, near-flat tonal wash, resting shadow.
 BoxDecoration brandCardDecoration(
   BuildContext context, {
-  double radius = 16,
-  double borderWidth = 1.2,
+  double radius = BrandRadius.card,
+  double borderWidth = 1,
 }) {
   final theme = Theme.of(context);
   final isDark = theme.brightness == Brightness.dark;
@@ -17,17 +18,11 @@ BoxDecoration brandCardDecoration(
       width: borderWidth,
     ),
     gradient: BrandChrome.cardWash(isDark: isDark),
-    boxShadow: [
-      BoxShadow(
-        color: BrandChrome.accent.withValues(alpha: isDark ? 0.12 : 0.08),
-        blurRadius: 8,
-        offset: const Offset(0, 3),
-      ),
-    ],
+    boxShadow: BrandShadows.resting(isDark: isDark),
   );
 }
 
-/// Cream→gold icon well used on Entry selection cards.
+/// Tonal icon well used on selection and list cards.
 Widget brandIconWell({
   required BuildContext context,
   required IconData icon,
@@ -39,14 +34,24 @@ Widget brandIconWell({
     width: size,
     height: size,
     decoration: BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      gradient: BrandChrome.iconWellGradient,
-      border: Border.all(color: BrandChrome.accent.withValues(alpha: 0.35)),
+      borderRadius: BorderRadius.circular(BrandRadius.control - 2),
+      gradient: isDark ? null : BrandChrome.iconWellGradient,
+      color: isDark
+          ? Color.alphaBlend(
+              BrandChrome.accent.withValues(alpha: 0.30),
+              BrandChrome.surfaceDarkHigh,
+            )
+          : null,
+      border: Border.all(
+        color: isDark
+            ? BrandChrome.accentSoft.withValues(alpha: 0.14)
+            : BrandChrome.accent.withValues(alpha: 0.14),
+      ),
     ),
     child: Icon(
       icon,
       size: iconSize,
-      color: isDark ? BrandChrome.onAccent : BrandChrome.iconGlyph,
+      color: isDark ? BrandChrome.accentSoft : BrandChrome.iconGlyph,
     ),
   );
 }
@@ -59,7 +64,7 @@ class BrandInkCard extends StatelessWidget {
     this.onTap,
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     this.margin,
-    this.borderRadius = 16,
+    this.borderRadius = BrandRadius.card,
     this.enabled = true,
   });
 
@@ -142,7 +147,7 @@ class BrandListCard extends StatelessWidget {
                 Text(
                   title,
                   style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w800,
+                    fontWeight: FontWeight.w600,
                     color: titleColor,
                   ),
                 ),
@@ -159,8 +164,7 @@ class BrandListCard extends StatelessWidget {
               ],
             ),
           ),
-          trailing ??
-              Icon(Icons.arrow_forward_ios_rounded, size: 14, color: muted),
+          trailing ?? Icon(Icons.chevron_right_rounded, size: 20, color: muted),
         ],
       ),
     );

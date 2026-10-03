@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
-import '../providers/admin_providers.dart';
 
 /// Executive portfolio dashboard — limited cards, verified-only totals.
 /// Visible only when portfolio_optimization flag is ON.

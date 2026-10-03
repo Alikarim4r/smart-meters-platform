@@ -126,16 +126,11 @@ class EntrySettingsDrawer extends ConsumerWidget {
                   ),
                   const SizedBox(height: 12),
                   _SectionLabel(
-                    icon: Icons.info_outline,
-                    text: s.aboutApp,
+                    icon: Icons.support_agent_rounded,
+                    text: s.support,
                   ),
-                  const SizedBox(height: 6),
-                  _DeveloperCredit(
-                    title: s.createdDevelopedBy,
-                    name: s.developerName,
-                    phone: s.developerPhone,
-                    email: s.developerEmail,
-                  ),
+                  const SizedBox(height: 8),
+                  _SupportCard(title: s.support, hint: s.supportHint),
                   const SizedBox(height: 16),
               ],
             ),
@@ -448,51 +443,60 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-class _DeveloperCredit extends StatelessWidget {
-  const _DeveloperCredit({
-    required this.title,
-    required this.name,
-    required this.phone,
-    required this.email,
-  });
+class _SupportCard extends StatelessWidget {
+  const _SupportCard({required this.title, required this.hint});
 
   final String title;
-  final String name;
-  final String phone;
-  final String email;
+  final String hint;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.dividerColor.withValues(alpha: 0.7)),
+        gradient: EntryChrome.cardWash(isDark: isDark),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: EntryChrome.accent.withValues(alpha: isDark ? 0.36 : 0.22),
+        ),
       ),
-      child: Column(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.textTheme.bodySmall?.color?.withValues(alpha: 0.85),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: EntryChrome.accent.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(13),
+            ),
+            child: Icon(Icons.mail_outline_rounded, color: EntryChrome.accent),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(title, style: theme.textTheme.titleSmall),
+                const SizedBox(height: 3),
+                Text(hint, style: theme.textTheme.bodySmall),
+                const SizedBox(height: 9),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: SelectableText(
+                    SupportContact.email,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            name,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Directionality(
-            textDirection: TextDirection.ltr,
-            child: Text(phone, style: theme.textTheme.bodyMedium),
-          ),
-          Text(email, style: theme.textTheme.bodyMedium),
         ],
       ),
     );

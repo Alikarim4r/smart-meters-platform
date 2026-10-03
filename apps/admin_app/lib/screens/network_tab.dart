@@ -3330,16 +3330,8 @@ class _NamedAssetForm {
 }
 
 class _NewMeterDialog extends StatefulWidget {
-  const _NewMeterDialog({
-    required this.strings,
-    this.initialCode,
-    this.initialNameEn,
-    this.initialNameAr,
-  });
+  const _NewMeterDialog({required this.strings});
   final AdminStrings strings;
-  final String? initialCode;
-  final String? initialNameEn;
-  final String? initialNameAr;
   @override
   State<_NewMeterDialog> createState() => _NewMeterDialogState();
 }
@@ -3352,9 +3344,9 @@ class _NewMeterDialogState extends State<_NewMeterDialog> {
   @override
   void initState() {
     super.initState();
-    _code = TextEditingController(text: widget.initialCode ?? '');
-    _nameEn = TextEditingController(text: widget.initialNameEn ?? '');
-    _nameAr = TextEditingController(text: widget.initialNameAr ?? '');
+    _code = TextEditingController();
+    _nameEn = TextEditingController();
+    _nameAr = TextEditingController();
   }
 
   @override
@@ -3442,9 +3434,9 @@ class _NamedAssetDialogState extends State<_NamedAssetDialog> {
   @override
   void initState() {
     super.initState();
-    _code = TextEditingController(text: widget.initialCode ?? '');
-    _nameEn = TextEditingController(text: widget.initialNameEn ?? '');
-    _nameAr = TextEditingController(text: widget.initialNameAr ?? '');
+    _code = TextEditingController();
+    _nameEn = TextEditingController();
+    _nameAr = TextEditingController();
   }
 
   @override

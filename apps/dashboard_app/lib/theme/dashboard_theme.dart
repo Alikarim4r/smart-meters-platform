@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-
-import 'design_system/dashboard_radius.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
 
 /// Semantic dashboard colors for light and dark themes.
 @immutable
@@ -42,41 +41,41 @@ class DashboardThemeColors extends ThemeExtension<DashboardThemeColors> {
   final Color infoBorder;
 
   static const light = DashboardThemeColors(
-    background: Color(0xFFFFFFFF),
+    background: Color(0xFFF6F8FB),
     card: Color(0xFFFFFFFF),
-    cardElevated: Color(0xFFF7F9FC),
-    border: Color(0xFFE2E6EB),
-    textPrimary: Color(0xFF1B2430),
-    textMuted: Color(0xFF5C6775),
-    navy: Color(0xFF1B2430),
-    navyMuted: Color(0xFF3D5A80),
-    sidebar: Color(0xFF1B2430),
-    sidebarBorder: Color(0xFF273141),
-    inputFill: Color(0xFFFFFFFF),
+    cardElevated: Color(0xFFF1F4F8),
+    border: Color(0xFFDCE2EA),
+    textPrimary: Color(0xFF141B26),
+    textMuted: Color(0xFF5B6677),
+    navy: Color(0xFF1F3A63),
+    navyMuted: Color(0xFF657A9A),
+    sidebar: Color(0xFF0F1722),
+    sidebarBorder: Color(0xFF202C3C),
+    inputFill: Color(0xFFF8FAFC),
     dialog: Color(0xFFFFFFFF),
     meterPatternOpacity: 0,
-    chartGrid: Color(0xFFE2E6EB),
-    infoSurface: Color(0xFFEEF2F6),
-    infoBorder: Color(0xFFE2E6EB),
+    chartGrid: Color(0xFFE1E6ED),
+    infoSurface: Color(0xFFEEF3F9),
+    infoBorder: Color(0xFFD7E1EE),
   );
 
   static const dark = DashboardThemeColors(
-    background: Color(0xFF07111F),
-    card: Color(0xFF12233A),
-    cardElevated: Color(0xFF1A314D),
-    border: Color(0xFF2C4566),
-    textPrimary: Color(0xFFF3EFE4),
-    textMuted: Color(0xFFB7C5D8),
-    navy: Color(0xFFF3EFE4),
-    navyMuted: Color(0xFFB7C5D8),
-    sidebar: Color(0xFF050B14),
-    sidebarBorder: Color(0xFF152238),
-    inputFill: Color(0xFF1A314D),
-    dialog: Color(0xFF0E1A2C),
+    background: Color(0xFF080D14),
+    card: Color(0xFF111925),
+    cardElevated: Color(0xFF182333),
+    border: Color(0xFF2A3647),
+    textPrimary: Color(0xFFEEF2F7),
+    textMuted: Color(0xFFA7B1C0),
+    navy: Color(0xFFDDE5F1),
+    navyMuted: Color(0xFF8EA4C3),
+    sidebar: Color(0xFF070B11),
+    sidebarBorder: Color(0xFF202B3A),
+    inputFill: Color(0xFF162130),
+    dialog: Color(0xFF101824),
     meterPatternOpacity: 0,
-    chartGrid: Color(0xFF2C4566),
-    infoSurface: Color(0xFF12233A),
-    infoBorder: Color(0xFF2C4566),
+    chartGrid: Color(0xFF2A3647),
+    infoSurface: Color(0xFF162130),
+    infoBorder: Color(0xFF2A3A50),
   );
 
   static DashboardThemeColors of(BuildContext context) {
@@ -142,7 +141,8 @@ class DashboardThemeColors extends ThemeExtension<DashboardThemeColors> {
       inputFill: Color.lerp(inputFill, other.inputFill, t)!,
       dialog: Color.lerp(dialog, other.dialog, t)!,
       meterPatternOpacity:
-          meterPatternOpacity + (other.meterPatternOpacity - meterPatternOpacity) * t,
+          meterPatternOpacity +
+          (other.meterPatternOpacity - meterPatternOpacity) * t,
       chartGrid: Color.lerp(chartGrid, other.chartGrid, t)!,
       infoSurface: Color.lerp(infoSurface, other.infoSurface, t)!,
       infoBorder: Color.lerp(infoBorder, other.infoBorder, t)!,
@@ -150,186 +150,78 @@ class DashboardThemeColors extends ThemeExtension<DashboardThemeColors> {
   }
 }
 
-ThemeData buildDashboardLightTheme() {
-  const colors = DashboardThemeColors.light;
-  final colorScheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF1B2430),
-    brightness: Brightness.light,
-    primary: const Color(0xFF3D5A80),
-    onPrimary: Colors.white,
-    secondary: const Color(0xFFD9E2EC),
-    onSecondary: const Color(0xFF1B2430),
-    surface: Colors.white,
-    onSurface: colors.textPrimary,
-    surfaceContainerLowest: Colors.white,
-    surfaceContainerLow: Colors.white,
-    surfaceContainer: Colors.white,
-    surfaceContainerHigh: const Color(0xFFF7F9FC),
-    surfaceContainerHighest: const Color(0xFFF3F5F8),
-    surfaceTint: Colors.transparent,
-    secondaryContainer: const Color(0xFFD9E2EC).withValues(alpha: 0.55),
-    onSecondaryContainer: const Color(0xFF1B2430),
-    outline: colors.border,
-  );
-  return _buildTheme(colors: colors, colorScheme: colorScheme);
-}
+ThemeData buildDashboardLightTheme() => _buildTheme(
+  colors: DashboardThemeColors.light,
+  brightness: Brightness.light,
+);
 
-ThemeData buildDashboardDarkTheme() {
-  const colors = DashboardThemeColors.dark;
-  final colorScheme = ColorScheme.dark(
-    primary: const Color(0xFF3D5A80),
-    onPrimary: Colors.white,
-    secondary: const Color(0xFFD9E2EC),
-    onSecondary: const Color(0xFF1B2430),
-    surface: colors.card,
-    onSurface: colors.textPrimary,
-    onSurfaceVariant: colors.textMuted,
-    outline: colors.border,
-    outlineVariant: const Color(0xFF24344C),
-    surfaceContainerHighest: colors.cardElevated,
-    surfaceContainerHigh: const Color(0xFF1A314D),
-    surfaceContainer: colors.card,
-    surfaceContainerLow: const Color(0xFF0E1A2C),
-    surfaceContainerLowest: colors.background,
-    secondaryContainer: const Color(0xFF3D5A80).withValues(alpha: 0.22),
-    onSecondaryContainer: const Color(0xFFD9E2EC),
-    error: const Color(0xFFF07178),
-    onError: const Color(0xFF1A0A0C),
-  );
-  return _buildTheme(colors: colors, colorScheme: colorScheme);
-}
+ThemeData buildDashboardDarkTheme() =>
+    _buildTheme(colors: DashboardThemeColors.dark, brightness: Brightness.dark);
 
 ThemeData _buildTheme({
   required DashboardThemeColors colors,
-  required ColorScheme colorScheme,
+  required Brightness brightness,
 }) {
-  final base = ThemeData(
-    useMaterial3: true,
-    brightness: colorScheme.brightness,
-    colorScheme: colorScheme,
+  final isDark = brightness == Brightness.dark;
+  final base = isDark
+      ? BrandTheme.dark(palette: AppBrandPalette.dashboard)
+      : BrandTheme.light(palette: AppBrandPalette.dashboard);
+  final scheme = base.colorScheme;
+
+  return base.copyWith(
     scaffoldBackgroundColor: Colors.transparent,
     cardColor: colors.card,
     dividerColor: colors.border,
-    dialogTheme: DialogThemeData(
-      backgroundColor: colors.dialog,
+    extensions: <ThemeExtension<dynamic>>[colors],
+    appBarTheme: base.appBarTheme.copyWith(
+      backgroundColor: colors.card.withValues(alpha: isDark ? 0.98 : 0.96),
+      foregroundColor: colors.textPrimary,
+      surfaceTintColor: Colors.transparent,
+      scrolledUnderElevation: 0,
+      elevation: 0,
+    ),
+    cardTheme: base.cardTheme.copyWith(
+      color: colors.card,
       surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DashboardRadius.dialog),
+        borderRadius: BorderRadius.circular(BrandRadius.card),
+        side: BorderSide(color: colors.border),
       ),
     ),
-    bottomSheetTheme: BottomSheetThemeData(
+    inputDecorationTheme: base.inputDecorationTheme.copyWith(
+      fillColor: colors.inputFill,
+      labelStyle: base.textTheme.bodyMedium?.copyWith(color: colors.textMuted),
+      hintStyle: base.textTheme.bodyMedium?.copyWith(color: colors.textMuted),
+    ),
+    dialogTheme: base.dialogTheme.copyWith(
       backgroundColor: colors.dialog,
       surfaceTintColor: Colors.transparent,
-      modalBackgroundColor: colors.dialog,
-      dragHandleColor: colors.textMuted.withValues(alpha: 0.45),
     ),
-    segmentedButtonTheme: SegmentedButtonThemeData(
-      style: ButtonStyle(
-        foregroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return colors.textPrimary;
-          }
-          return colors.textMuted;
-        }),
-        backgroundColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const Color(0xFF3D5A80).withValues(
-              alpha: colorScheme.brightness == Brightness.dark ? 0.24 : 0.22,
-            );
-          }
-          return colors.inputFill;
-        }),
-        iconColor: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return colorScheme.brightness == Brightness.dark
-                ? const Color(0xFFD9E2EC)
-                : const Color(0xFF1B2430);
-          }
-          return colors.textMuted;
-        }),
-        side: WidgetStatePropertyAll(BorderSide(color: colors.border)),
-        shape: WidgetStatePropertyAll(
-          RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(DashboardRadius.control),
-          ),
-        ),
+    bottomSheetTheme: base.bottomSheetTheme.copyWith(
+      backgroundColor: colors.dialog,
+      modalBackgroundColor: colors.dialog,
+      surfaceTintColor: Colors.transparent,
+    ),
+    chipTheme: base.chipTheme.copyWith(
+      backgroundColor: colors.cardElevated,
+      selectedColor: scheme.primaryContainer,
+      side: BorderSide(color: colors.border),
+      labelStyle: base.textTheme.labelMedium?.copyWith(
+        color: colors.textPrimary,
       ),
     ),
-    radioTheme: RadioThemeData(
-      fillColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return colorScheme.primary;
-        }
-        return colors.textMuted;
-      }),
-    ),
-    popupMenuTheme: PopupMenuThemeData(
+    popupMenuTheme: base.popupMenuTheme.copyWith(
       color: colors.card,
       surfaceTintColor: Colors.transparent,
     ),
-    chipTheme: ChipThemeData(
-      backgroundColor: colors.cardElevated,
-      selectedColor: const Color(0xFF3D5A80).withValues(alpha: 0.28),
-      labelStyle: TextStyle(color: colors.textPrimary, fontSize: 12),
-      side: BorderSide(color: colors.border),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(DashboardRadius.chip + 2),
-      ),
-    ),
-    dividerTheme: DividerThemeData(color: colors.border, thickness: 1),
-    extensions: [colors],
-  );
-  return base.copyWith(
-    appBarTheme: AppBarTheme(
-      backgroundColor: colors.card,
-      foregroundColor: colors.textPrimary,
-      elevation: 0,
-      surfaceTintColor: Colors.transparent,
-    ),
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFF3D5A80),
-        foregroundColor: colorScheme.brightness == Brightness.dark
-            ? const Color(0xFF0B1F3A)
-            : const Color(0xFF2C2208),
-        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(DashboardRadius.control),
-        ),
-      ),
-    ),
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: colors.inputFill,
-      labelStyle: TextStyle(color: colors.textMuted),
-      hintStyle: TextStyle(color: colors.textMuted),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(DashboardRadius.control),
-        borderSide: BorderSide(color: colors.border),
-      ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(DashboardRadius.control),
-        borderSide: BorderSide(color: colors.border),
-      ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(DashboardRadius.control),
-        borderSide: BorderSide(color: colorScheme.primary, width: 1),
-      ),
-    ),
-    textTheme: base.textTheme.apply(
-      bodyColor: colors.textPrimary,
-      displayColor: colors.textPrimary,
-    ),
-    datePickerTheme: DatePickerThemeData(
+    datePickerTheme: base.datePickerTheme.copyWith(
       backgroundColor: colors.dialog,
       headerBackgroundColor: colors.cardElevated,
       headerForegroundColor: colors.textPrimary,
-      dayForegroundColor: WidgetStateProperty.resolveWith((states) {
-        if (states.contains(WidgetState.selected)) {
-          return Colors.white;
-        }
-        return colors.textPrimary;
-      }),
+    ),
+    textTheme: BrandType.textTheme(
+      ink: colors.textPrimary,
+      muted: colors.textMuted,
     ),
   );
 }
@@ -337,16 +229,17 @@ ThemeData _buildTheme({
 DashboardThemeColors dashboardColors(BuildContext context) =>
     DashboardThemeColors.of(context);
 
-Color chartGridColor(BuildContext context) => dashboardColors(context).chartGrid;
+Color chartGridColor(BuildContext context) =>
+    dashboardColors(context).chartGrid;
 
 Color chartLabelColor(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  return isDark ? const Color(0xFFD5E0EE) : const Color(0xFF3F3426);
+  return isDark ? const Color(0xFFDDE5F1) : const Color(0xFF43506A);
 }
 
 Color chartTooltipBg(BuildContext context) {
   final isDark = Theme.of(context).brightness == Brightness.dark;
-  return isDark ? const Color(0xFF12233A) : const Color(0xFF3F3426);
+  return isDark ? const Color(0xFF182333) : const Color(0xFF141B26);
 }
 
 Color chartTooltipFg(BuildContext context) {

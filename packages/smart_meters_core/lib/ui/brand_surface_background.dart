@@ -21,14 +21,16 @@ class BrandSurfaceBackground extends StatelessWidget {
   /// When false, passes [child] through with no canvas/motif layers.
   final bool showMotif;
 
-  static const assetPathLegacy = 'assets/branding/meter_line_art_pattern_md.png';
+  static const assetPathLegacy =
+      'assets/branding/meter_line_art_pattern_md.png';
+
   /// Falls back to the shipped MD motif until a dedicated gray asset is added.
   static const assetPathGray = 'assets/branding/meter_line_art_pattern_md.png';
 
   /// Exact bright white — never cream / off-white.
   static const pureWhite = Color(0xFFFFFFFF);
 
-  /// Cool gray strokes — a bit clearer, still soft on white.
+  /// Cool gray strokes — a quiet texture that never competes with content.
   static const motifGray = Color(0xFF9AA3B0);
 
   @override
@@ -43,9 +45,7 @@ class BrandSurfaceBackground extends StatelessWidget {
       children: [
         Positioned.fill(child: ColoredBox(color: base)),
         Positioned.fill(
-          child: IgnorePointer(
-            child: isDark ? _darkMotif() : _lightMotif(),
-          ),
+          child: IgnorePointer(child: isDark ? _darkMotif() : _lightMotif()),
         ),
         child,
       ],
@@ -54,16 +54,13 @@ class BrandSurfaceBackground extends StatelessWidget {
 
   static Widget _lightMotif() {
     return const Opacity(
-      opacity: 0.26,
+      opacity: 0.16,
       child: ColorFiltered(
         colorFilter: ColorFilter.mode(motifGray, BlendMode.srcIn),
         child: DecoratedBox(
           decoration: BoxDecoration(
             image: DecorationImage(
-              image: AssetImage(
-                assetPathGray,
-                package: 'smart_meters_core',
-              ),
+              image: AssetImage(assetPathGray, package: 'smart_meters_core'),
               repeat: ImageRepeat.repeat,
               alignment: Alignment.topLeft,
               scale: 1.4,
@@ -77,14 +74,11 @@ class BrandSurfaceBackground extends StatelessWidget {
 
   static Widget _darkMotif() {
     return const Opacity(
-      opacity: 0.28,
+      opacity: 0.14,
       child: DecoratedBox(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage(
-              assetPathLegacy,
-              package: 'smart_meters_core',
-            ),
+            image: AssetImage(assetPathLegacy, package: 'smart_meters_core'),
             repeat: ImageRepeat.repeat,
             alignment: Alignment.topLeft,
             scale: 1.35,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../theme/brand_chrome.dart';
+import '../theme/brand_tokens.dart';
+import 'brand_surface_background.dart';
 
 /// Shared asset paths for the METERS wordmark icons (package: smart_meters_core).
 abstract final class BrandMarkAssets {
@@ -22,15 +24,27 @@ class AppBrandMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(size * 0.22),
-      child: Image.asset(
-        assetPath,
-        package: 'smart_meters_core',
-        width: size,
-        height: size,
-        fit: BoxFit.cover,
-        filterQuality: FilterQuality.medium,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return Container(
+      width: size,
+      height: size,
+      padding: EdgeInsets.all(size * 0.035),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(size * 0.26),
+        color: isDark ? BrandChrome.surfaceDarkHigh : Colors.white,
+        border: Border.all(
+          color: BrandChrome.accent.withValues(alpha: isDark ? 0.38 : 0.22),
+        ),
+        boxShadow: BrandShadows.raised(isDark: isDark),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(size * 0.21),
+        child: Image.asset(
+          assetPath,
+          package: 'smart_meters_core',
+          fit: BoxFit.cover,
+          filterQuality: FilterQuality.high,
+        ),
       ),
     );
   }
@@ -88,87 +102,162 @@ class AppLoginPanel extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: Colors.transparent,
-      body: SafeArea(
-        child: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 420),
-              child: DecoratedBox(
-                decoration: BoxDecoration(
-                  color: isDark ? null : Colors.white,
-                  gradient: isDark ? BrandChrome.cardWash(isDark: true) : null,
-                  borderRadius: BorderRadius.circular(24),
-                  border: Border.all(
-                    color: isDark
-                        ? BrandChrome.border(
-                            isDark: true,
-                            scheme: theme.colorScheme,
-                          )
-                        : BrandChrome.accent.withValues(alpha: 0.28),
-                    width: 1.4,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: BrandChrome.primary.withValues(
-                        alpha: isDark ? 0.35 : 0.12,
-                      ),
-                      blurRadius: 28,
-                      offset: const Offset(0, 12),
-                    ),
-                  ],
+      body: BrandSurfaceBackground(
+        child: Stack(
+          children: [
+            PositionedDirectional(
+              top: -120,
+              end: -90,
+              child: _LoginGlow(
+                size: 310,
+                color: BrandChrome.accent.withValues(
+                  alpha: isDark ? 0.16 : 0.09,
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(26, 22, 26, 26),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (onLocaleChanged != null)
-                        Align(
-                          alignment: AlignmentDirectional.centerEnd,
-                          child: _LoginLocaleToggle(
-                            isArabic: isAr,
-                            onChanged: onLocaleChanged!,
-                          ),
+              ),
+            ),
+            PositionedDirectional(
+              bottom: -150,
+              start: -120,
+              child: _LoginGlow(
+                size: 360,
+                color: BrandChrome.primary.withValues(
+                  alpha: isDark ? 0.18 : 0.06,
+                ),
+              ),
+            ),
+            SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: BrandSpace.lg,
+                    vertical: BrandSpace.xl,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 430),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: BrandChrome.cardWash(isDark: isDark),
+                        borderRadius: BorderRadius.circular(
+                          BrandRadius.dialog + 2,
                         ),
-                      if (onLocaleChanged != null) const SizedBox(height: 8),
-                      Center(
-                        child:
-                            brandMark ??
-                            const AppBrandMark(
-                              assetPath: BrandMarkAssets.dashboard,
-                              size: 72,
+                        border: Border.all(
+                          color: isDark
+                              ? BrandChrome.border(
+                                  isDark: true,
+                                  scheme: theme.colorScheme,
+                                )
+                              : BrandChrome.accent.withValues(alpha: 0.18),
+                        ),
+                        boxShadow: BrandShadows.overlay(isDark: isDark),
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(
+                          BrandRadius.dialog + 2,
+                        ),
+                        child: Stack(
+                          children: [
+                            PositionedDirectional(
+                              top: 0,
+                              start: 0,
+                              end: 0,
+                              child: Container(
+                                height: 3,
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    colors: [
+                                      Colors.transparent,
+                                      BrandChrome.accent,
+                                      Colors.transparent,
+                                    ],
+                                  ),
+                                ),
+                              ),
                             ),
-                      ),
-                      const SizedBox(height: 18),
-                      Text(
-                        title,
-                        style: theme.textTheme.headlineSmall?.copyWith(
-                          color: titleColor,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: -0.2,
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(
+                                BrandSpace.xl,
+                                BrandSpace.lg,
+                                BrandSpace.xl,
+                                BrandSpace.xl,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  if (onLocaleChanged != null)
+                                    Align(
+                                      alignment: AlignmentDirectional.centerEnd,
+                                      child: _LoginLocaleToggle(
+                                        isArabic: isAr,
+                                        onChanged: onLocaleChanged!,
+                                      ),
+                                    ),
+                                  if (onLocaleChanged != null)
+                                    const SizedBox(height: BrandSpace.md),
+                                  Center(
+                                    child:
+                                        brandMark ??
+                                        const AppBrandMark(
+                                          assetPath: BrandMarkAssets.dashboard,
+                                          size: 78,
+                                        ),
+                                  ),
+                                  const SizedBox(height: BrandSpace.lg),
+                                  Text(
+                                    title,
+                                    style: theme.textTheme.headlineMedium
+                                        ?.copyWith(
+                                          color: titleColor,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                    textAlign: TextAlign.center,
+                                  ),
+                                  if (subtitle != null) ...[
+                                    const SizedBox(height: BrandSpace.xs),
+                                    Text(
+                                      subtitle!,
+                                      style: theme.textTheme.bodyMedium
+                                          ?.copyWith(
+                                            color: mutedColor,
+                                            height: 1.5,
+                                          ),
+                                      textAlign: TextAlign.center,
+                                    ),
+                                  ],
+                                  const SizedBox(height: BrandSpace.xl),
+                                  child,
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        textAlign: TextAlign.center,
                       ),
-                      if (subtitle != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          subtitle!,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: mutedColor,
-                            height: 1.35,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                      ],
-                      const SizedBox(height: 22),
-                      child,
-                    ],
+                    ),
                   ),
                 ),
               ),
             ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _LoginGlow extends StatelessWidget {
+  const _LoginGlow({required this.size, required this.color});
+
+  final double size;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IgnorePointer(
+      child: Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          gradient: RadialGradient(colors: [color, color.withValues(alpha: 0)]),
         ),
       ),
     );
@@ -180,11 +269,7 @@ typedef DemoLoginPanel = AppLoginPanel;
 
 /// Section title for dashboard chrome.
 class AppSectionHeader extends StatelessWidget {
-  const AppSectionHeader({
-    super.key,
-    required this.title,
-    this.subtitle,
-  });
+  const AppSectionHeader({super.key, required this.title, this.subtitle});
 
   final String title;
   final String? subtitle;
@@ -202,8 +287,7 @@ class AppSectionHeader extends StatelessWidget {
             fontWeight: FontWeight.w700,
           ),
         ),
-        if (subtitle != null)
-          Text(subtitle!, style: theme.textTheme.bodySmall),
+        if (subtitle != null) Text(subtitle!, style: theme.textTheme.bodySmall),
       ],
     );
   }
@@ -212,12 +296,8 @@ class AppSectionHeader extends StatelessWidget {
 /// Backward-compatible alias.
 typedef DemoSectionHeader = AppSectionHeader;
 
-
 class _LoginLocaleToggle extends StatelessWidget {
-  const _LoginLocaleToggle({
-    required this.isArabic,
-    required this.onChanged,
-  });
+  const _LoginLocaleToggle({required this.isArabic, required this.onChanged});
 
   final bool isArabic;
   final ValueChanged<Locale> onChanged;
@@ -227,7 +307,9 @@ class _LoginLocaleToggle extends StatelessWidget {
     final theme = Theme.of(context);
     return DecoratedBox(
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.55),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(
+          alpha: 0.55,
+        ),
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: theme.colorScheme.outlineVariant),
       ),

@@ -10,7 +10,7 @@ void main() {
     const config = SupabaseConfig.fromEnvironment;
     config.validate();
 
-    await bootstrapSupabase(config: config);
+    await bootstrapSupabase(config: config, appKey: 'entry');
 
     const email = String.fromEnvironment('STAGING_TEST_EMAIL');
     const password = String.fromEnvironment('STAGING_TEST_PASSWORD');

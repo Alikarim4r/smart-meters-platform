@@ -21,6 +21,7 @@ class AdminHomeScreen extends ConsumerStatefulWidget {
 class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
   static const _networkTabIndex = 2;
   int _index = 0;
+
   /// Lazy-build heavy tabs so post-login first paint only loads Structure.
   final Set<int> _visitedTabs = {0};
 
@@ -75,18 +76,55 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
     final titles = [s.structure, s.meters, s.network, s.users];
 
     return Scaffold(
-      appBar: AppBar(title: Text(titles[_index])),
+      appBar: AppBar(
+        toolbarHeight: 76,
+        titleSpacing: 8,
+        title: Row(
+          children: [
+            brandIconWell(
+              context: context,
+              icon: switch (_index) {
+                0 => Icons.account_tree_outlined,
+                1 => Icons.speed_outlined,
+                2 => Icons.hub_outlined,
+                _ => Icons.people_outline,
+              },
+              size: 40,
+              iconSize: 20,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    titles[_index],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    s.appTitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
       drawer: const AdminSettingsDrawer(),
       body: BrandSurfaceBackground(
         showMotif: false,
         child: IndexedStack(
           index: _index,
-          children: [
-            _tabBody(0),
-            _tabBody(1),
-            _tabBody(2),
-            _tabBody(3),
-          ],
+          children: [_tabBody(0), _tabBody(1), _tabBody(2), _tabBody(3)],
         ),
       ),
       bottomNavigationBar: NavigationBar(

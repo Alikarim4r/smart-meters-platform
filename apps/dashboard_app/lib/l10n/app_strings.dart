@@ -86,15 +86,10 @@ class AppStrings {
   String get systemThemeHint =>
       isAr ? 'يتبع إعدادات الجهاز تلقائياً' : 'Follows your device setting';
 
-  String get designerContact => isAr ? 'بيانات المصمم' : 'Designer contact';
-
-  /// Single localized credit line — Arabic or English based on app language.
-  String get designerCredit => isAr
-      ? 'تصميم & تطوير المهندس : علي عبد الكريم الحسن'
-      : 'Design & development by Eng. Ali Abdulkarim Elhassan';
-  String get designerEmail => 'support@alimind.com';
-  String get designerPhone => '+974 3005 88 99';
-  String get call => isAr ? 'اتصال' : 'Call';
+  String get support => isAr ? 'الدعم' : 'Support';
+  String get supportHint => isAr
+      ? 'تحتاج مساعدة؟ تواصل مع فريق الدعم عبر البريد الإلكتروني.'
+      : 'Need help? Contact our support team by email.';
   String get sendEmail => isAr ? 'إرسال بريد' : 'Send email';
 
   String get role => isAr ? 'الصلاحية' : 'Role';
@@ -750,8 +745,9 @@ class AppStrings {
   String zonesCount(int count) {
     if (!isAr) return count == 1 ? '1 zone' : '$count zones';
     if (count == 0) return 'لا مناطق';
-    if (count == 1)
+    if (count == 1) {
       return '\u0645\u0646\u0637\u0642\u0629 \u0648\u0627\u062d\u062f\u0629';
+    }
     if (count == 2) return 'منطقتان';
     if (count >= 3 && count <= 10) return '$count مناطق';
     return '$count منطقة';

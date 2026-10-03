@@ -333,44 +333,31 @@ class _DashboardSettingsSheetState
             ),
             const SizedBox(height: 12),
             _SectionCard(
-              title: s.designerContact,
+              title: s.support,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    s.designerCredit,
-                    textAlign: TextAlign.start,
+                    s.supportHint,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          fontSize: 12,
-                          height: 1.35,
-                          fontWeight: FontWeight.w500,
+                          height: 1.4,
                           color: colors.textMuted,
                         ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
                   _ContactRow(
-                    icon: Icons.email_outlined,
+                    icon: Icons.mail_outline_rounded,
                     label: s.email,
-                    value: s.designerEmail,
+                    value: SupportContact.email,
                     actionTooltip: s.sendEmail,
                     actionIcon: Icons.open_in_new_rounded,
                     onAction: () {
-                      Clipboard.setData(ClipboardData(text: s.designerEmail));
-                      _launchUri(
-                        Uri(scheme: 'mailto', path: s.designerEmail),
+                      Clipboard.setData(
+                        const ClipboardData(text: SupportContact.email),
                       );
-                    },
-                  ),
-                  const SizedBox(height: 8),
-                  _ContactRow(
-                    icon: Icons.phone_outlined,
-                    label: s.call,
-                    value: s.designerPhone,
-                    actionTooltip: s.call,
-                    actionIcon: Icons.call_outlined,
-                    onAction: () {
-                      Clipboard.setData(ClipboardData(text: s.designerPhone));
-                      _launchUri(Uri(scheme: 'tel', path: '+97430058899'));
+                      _launchUri(
+                        Uri(scheme: 'mailto', path: SupportContact.email),
+                      );
                     },
                   ),
                 ],
