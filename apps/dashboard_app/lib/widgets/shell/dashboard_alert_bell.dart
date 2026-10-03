@@ -346,11 +346,15 @@ class HomeAlertQuickPanel extends ConsumerWidget {
             ),
           ),
           if (onViewAll != null)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: FilledButton(
-                onPressed: onViewAll,
-                child: const Text('View all alerts'),
+            SafeArea(
+              top: false,
+              minimum: const EdgeInsets.only(bottom: 8),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: FilledButton(
+                  onPressed: onViewAll,
+                  child: const Text('View all alerts'),
+                ),
               ),
             ),
         ],
@@ -467,11 +471,15 @@ class AlertQuickPanel extends ConsumerWidget {
             ),
           ),
           if (onViewAll != null)
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: FilledButton(
-                onPressed: onViewAll,
-                child: const Text('View all alerts'),
+            SafeArea(
+              top: false,
+              minimum: const EdgeInsets.only(bottom: 8),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                child: FilledButton(
+                  onPressed: onViewAll,
+                  child: const Text('View all alerts'),
+                ),
               ),
             ),
         ],
