@@ -77,8 +77,8 @@
         "ملاحظة: تثبيت APK على أندرويد يتطلب السماح بالتثبيت من مصادر غير المتجر. تطبيقات الماك غير موقّعة من Apple Notary وقد تحتاج «فتح على أي حال» من إعدادات الأمان. حزم ويندوز تُشغَّل بعد فك الضغط دون مثبّت.",
       backAbout: "العودة للتعريف",
       openApps: "فتح بوابة التطبيقات",
-      creatorTitle: "تم الإنشاء والتطوير بواسطة",
-      creatorName: "المهندس: علي عبد الكريم الحسن",
+      supportTitle: "الدعم",
+      supportLead: "للمساعدة، تواصل معنا عبر البريد الإلكتروني.",
       footerNote: "بوابة مرحلية للوصول إلى تطبيقات الويب",
     },
     en: {
@@ -158,8 +158,8 @@
         "Note: Android APKs need installs from unknown sources. Mac apps are not Apple-notarized and may need Open Anyway. Windows zips run after extraction with no installer.",
       backAbout: "Back to about",
       openApps: "Open apps gateway",
-      creatorTitle: "Created and developed by",
-      creatorName: "Eng. Ali Abdulkarim Elhassan",
+      supportTitle: "Support",
+      supportLead: "For assistance, contact us by email.",
       footerNote: "Staging portal for web app access",
     },
   };
@@ -205,10 +205,6 @@
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const key = el.getAttribute("data-i18n");
       if (dict[key] != null) el.textContent = dict[key];
-    });
-    // Show only the name matching current language
-    document.querySelectorAll("[data-creator-name]").forEach((el) => {
-      el.textContent = dict.creatorName;
     });
     const langBtn = document.querySelector("[data-lang-toggle]");
     if (langBtn) {
