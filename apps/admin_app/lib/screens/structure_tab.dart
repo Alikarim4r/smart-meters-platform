@@ -216,98 +216,99 @@ class _OrgExpansion extends StatelessWidget {
         : org.nameEn;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 0, 12, 10),
-      child: BrandInkCard(
-        padding: EdgeInsets.zero,
-        child: Theme(
-          data: theme.copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            initiallyExpanded: true,
-            tilePadding: const EdgeInsets.symmetric(horizontal: 12),
-            childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
-            leading: brandIconWell(
-              context: context,
-              icon: Icons.account_balance_rounded,
-              size: 40,
-              iconSize: 20,
-            ),
-            title: InkWell(
-              onTap: () => onSelect(StructureOrgSelection(org.id)),
-              child: Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: BrandChrome.titleColor(
-                    isDark: isDark,
-                    scheme: theme.colorScheme,
+      padding: const EdgeInsets.fromLTRB(12, 0, 12, 12),
+      child: BrandLedger(
+        children: [
+          Theme(
+            data: theme.copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              initiallyExpanded: true,
+              tilePadding: const EdgeInsets.symmetric(horizontal: 12),
+              childrenPadding: const EdgeInsets.fromLTRB(8, 0, 8, 10),
+              leading: brandIconWell(
+                context: context,
+                icon: Icons.account_balance_rounded,
+                size: 40,
+                iconSize: 20,
+              ),
+              title: InkWell(
+                onTap: () => onSelect(StructureOrgSelection(org.id)),
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    color: BrandChrome.titleColor(
+                      isDark: isDark,
+                      scheme: theme.colorScheme,
+                    ),
                   ),
                 ),
               ),
-            ),
-            iconColor: BrandChrome.iconGlyph,
-            collapsedIconColor: BrandChrome.inkMuted,
-            children: [
-              _StructureChildTile(
-                icon: Icons.category_outlined,
-                title: strings.siteTypesNode,
-                subtitle: '${org.siteTypes.length}',
-                selected:
-                    selection is StructureSiteTypesSelection &&
-                    (selection! as StructureSiteTypesSelection)
-                            .organizationId ==
-                        org.id,
-                onTap: () => onSelect(StructureSiteTypesSelection(org.id)),
-              ),
-              for (final zone in roots)
-                _ZoneNode(
-                  zone: zone,
-                  tree: tree,
-                  selection: selection,
-                  strings: strings,
-                  onSelect: onSelect,
-                  depth: 0,
+              iconColor: BrandChrome.iconGlyph,
+              collapsedIconColor: BrandChrome.inkMuted,
+              children: [
+                _StructureChildTile(
+                  icon: Icons.category_outlined,
+                  title: strings.siteTypesNode,
+                  subtitle: '${org.siteTypes.length}',
+                  selected:
+                      selection is StructureSiteTypesSelection &&
+                      (selection! as StructureSiteTypesSelection)
+                              .organizationId ==
+                          org.id,
+                  onTap: () => onSelect(StructureSiteTypesSelection(org.id)),
                 ),
-              if (directs.isNotEmpty)
-                Theme(
-                  data: theme.copyWith(dividerColor: Colors.transparent),
-                  child: ExpansionTile(
-                    tilePadding: const EdgeInsets.symmetric(horizontal: 8),
-                    leading: Icon(
-                      Icons.location_city_outlined,
-                      size: 20,
-                      color: BrandChrome.iconGlyph,
-                    ),
-                    title: Text(
-                      strings.directSites,
-                      style: TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: BrandChrome.titleColor(
-                          isDark: isDark,
-                          scheme: theme.colorScheme,
+                for (final zone in roots)
+                  _ZoneNode(
+                    zone: zone,
+                    tree: tree,
+                    selection: selection,
+                    strings: strings,
+                    onSelect: onSelect,
+                    depth: 0,
+                  ),
+                if (directs.isNotEmpty)
+                  Theme(
+                    data: theme.copyWith(dividerColor: Colors.transparent),
+                    child: ExpansionTile(
+                      tilePadding: const EdgeInsets.symmetric(horizontal: 8),
+                      leading: Icon(
+                        Icons.location_city_outlined,
+                        size: 20,
+                        color: BrandChrome.iconGlyph,
+                      ),
+                      title: Text(
+                        strings.directSites,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: BrandChrome.titleColor(
+                            isDark: isDark,
+                            scheme: theme.colorScheme,
+                          ),
                         ),
                       ),
+                      children: [
+                        for (final site in directs)
+                          _StructureChildTile(
+                            icon: Icons.place_outlined,
+                            title: strings.isAr && site.nameAr.trim().isNotEmpty
+                                ? site.nameAr
+                                : site.nameEn,
+                            selected:
+                                selection is StructureSiteSelection &&
+                                (selection! as StructureSiteSelection).siteId ==
+                                    site.id,
+                            indent: 12,
+                            onTap: () =>
+                                onSelect(StructureSiteSelection(site.id)),
+                          ),
+                      ],
                     ),
-                    children: [
-                      for (final site in directs)
-                        _StructureChildTile(
-                          icon: Icons.place_outlined,
-                          title: strings.isAr && site.nameAr.trim().isNotEmpty
-                              ? site.nameAr
-                              : site.nameEn,
-                          selected:
-                              selection is StructureSiteSelection &&
-                              (selection! as StructureSiteSelection).siteId ==
-                                  site.id,
-                          indent: 12,
-                          onTap: () =>
-                              onSelect(StructureSiteSelection(site.id)),
-                        ),
-                    ],
                   ),
-                ),
-            ],
+              ],
+            ),
           ),
-        ),
+        ],
       ),
     );
   }
@@ -344,71 +345,79 @@ class _ZoneNode extends StatelessWidget {
         : zone.nameEn;
 
     return Padding(
-      padding: EdgeInsetsDirectional.only(start: 8.0 * depth, bottom: 6),
-      child: BrandInkCard(
-        padding: EdgeInsets.zero,
-        child: Theme(
-          data: theme.copyWith(dividerColor: Colors.transparent),
-          child: ExpansionTile(
-            tilePadding: const EdgeInsets.symmetric(horizontal: 10),
-            childrenPadding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
-            leading: brandIconWell(
-              context: context,
-              icon: Icons.map_outlined,
-              size: 36,
-              iconSize: 18,
-            ),
-            title: InkWell(
-              onTap: () => onSelect(StructureZoneSelection(zone.id)),
-              child: Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                  color: BrandChrome.titleColor(
-                    isDark: isDark,
-                    scheme: theme.colorScheme,
+      padding: EdgeInsetsDirectional.only(start: 8.0 * depth),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Theme(
+            data: theme.copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              tilePadding: const EdgeInsets.symmetric(horizontal: 10),
+              childrenPadding: const EdgeInsets.fromLTRB(6, 0, 6, 8),
+              leading: brandIconWell(
+                context: context,
+                icon: Icons.map_outlined,
+                size: 36,
+                iconSize: 18,
+              ),
+              title: InkWell(
+                onTap: () => onSelect(StructureZoneSelection(zone.id)),
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                    color: BrandChrome.titleColor(
+                      isDark: isDark,
+                      scheme: theme.colorScheme,
+                    ),
                   ),
                 ),
               ),
-            ),
-            subtitle: zone.defaultSiteType == null
-                ? null
-                : Text(
-                    zone.defaultSiteType!.label(isAr: strings.isAr),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: BrandChrome.mutedColor(
-                        isDark: isDark,
-                        scheme: theme.colorScheme,
+              subtitle: zone.defaultSiteType == null
+                  ? null
+                  : Text(
+                      zone.defaultSiteType!.label(isAr: strings.isAr),
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: BrandChrome.mutedColor(
+                          isDark: isDark,
+                          scheme: theme.colorScheme,
+                        ),
                       ),
                     ),
+              iconColor: BrandChrome.iconGlyph,
+              collapsedIconColor: BrandChrome.inkMuted,
+              children: [
+                for (final child in children)
+                  _ZoneNode(
+                    zone: child,
+                    tree: tree,
+                    selection: selection,
+                    strings: strings,
+                    onSelect: onSelect,
+                    depth: depth + 1,
                   ),
-            iconColor: BrandChrome.iconGlyph,
-            collapsedIconColor: BrandChrome.inkMuted,
-            children: [
-              for (final child in children)
-                _ZoneNode(
-                  zone: child,
-                  tree: tree,
-                  selection: selection,
-                  strings: strings,
-                  onSelect: onSelect,
-                  depth: depth + 1,
-                ),
-              for (final site in sites)
-                _StructureChildTile(
-                  icon: Icons.place_outlined,
-                  title: strings.isAr && site.nameAr.trim().isNotEmpty
-                      ? site.nameAr
-                      : site.nameEn,
-                  selected:
-                      selection is StructureSiteSelection &&
-                      (selection! as StructureSiteSelection).siteId == site.id,
-                  indent: 8,
-                  onTap: () => onSelect(StructureSiteSelection(site.id)),
-                ),
-            ],
+                for (final site in sites)
+                  _StructureChildTile(
+                    icon: Icons.place_outlined,
+                    title: strings.isAr && site.nameAr.trim().isNotEmpty
+                        ? site.nameAr
+                        : site.nameEn,
+                    selected:
+                        selection is StructureSiteSelection &&
+                        (selection! as StructureSiteSelection).siteId ==
+                            site.id,
+                    indent: 8,
+                    onTap: () => onSelect(StructureSiteSelection(site.id)),
+                  ),
+              ],
+            ),
           ),
-        ),
+          Divider(
+            height: 1,
+            indent: 48 + (8.0 * depth),
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ],
       ),
     );
   }
@@ -434,55 +443,29 @@ class _StructureChildTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
     return Padding(
-      padding: EdgeInsetsDirectional.only(start: indent, bottom: 6),
-      child: BrandInkCard(
-        onTap: onTap,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        child: Row(
-          children: [
-            brandIconWell(context: context, icon: icon, size: 34, iconSize: 17),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
-                      color: BrandChrome.titleColor(
-                        isDark: isDark,
-                        scheme: theme.colorScheme,
-                      ),
-                    ),
-                  ),
-                  if (subtitle != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle!,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: BrandChrome.mutedColor(
-                          isDark: isDark,
-                          scheme: theme.colorScheme,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
+      padding: EdgeInsetsDirectional.only(start: indent),
+      child: Column(
+        children: [
+          BrandLedgerRow(
+            title: title,
+            subtitle: subtitle,
+            selected: selected,
+            onTap: onTap,
+            leading: Icon(
+              icon,
+              size: 20,
+              color: selected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurfaceVariant,
             ),
-            Icon(
-              Icons.arrow_forward_ios_rounded,
-              size: 12,
-              color: BrandChrome.mutedColor(
-                isDark: isDark,
-                scheme: theme.colorScheme,
-              ),
-            ),
-          ],
-        ),
+          ),
+          Divider(
+            height: 1,
+            indent: 48,
+            color: theme.colorScheme.outlineVariant,
+          ),
+        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../models/meter_entry_status.dart';
 
@@ -15,68 +16,34 @@ class MeterWorkProgressSummary extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     String t(String en, String ar) => isArabic ? ar : en;
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        _StatPill(
+    return BrandMetricLedger(
+      items: [
+        BrandMetricItem(
           label: t('Total', 'الإجمالي'),
-          value: summary.total,
-          color: Colors.blueGrey,
+          value: '${summary.total}',
+          icon: Icons.speed_outlined,
         ),
-        _StatPill(
+        BrandMetricItem(
           label: t('Pending', 'معلّق'),
-          value: summary.pending,
-          color: Colors.orange,
+          value: '${summary.pending}',
+          tone: BrandStatusTone.warning,
         ),
-        _StatPill(
+        BrandMetricItem(
           label: t('Saved locally', 'محفوظ محلياً'),
-          value: summary.savedLocally,
-          color: Colors.indigo,
+          value: '${summary.savedLocally}',
+          tone: BrandStatusTone.info,
         ),
-        _StatPill(
+        BrandMetricItem(
           label: t('Submitted', 'مُرسَل'),
-          value: summary.submitted,
-          color: Colors.green,
+          value: '${summary.submitted}',
+          tone: BrandStatusTone.success,
         ),
-        _StatPill(
+        BrandMetricItem(
           label: t('Failed sync', 'فشل المزامنة'),
-          value: summary.failedSync,
-          color: Colors.red,
+          value: '${summary.failedSync}',
+          tone: BrandStatusTone.danger,
         ),
       ],
-    );
-  }
-}
-
-class _StatPill extends StatelessWidget {
-  const _StatPill({
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  final String label;
-  final int value;
-  final MaterialColor color;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.shade50,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.shade200),
-      ),
-      child: Text(
-        '$label: $value',
-        style: TextStyle(
-          color: color.shade900,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-      ),
     );
   }
 }

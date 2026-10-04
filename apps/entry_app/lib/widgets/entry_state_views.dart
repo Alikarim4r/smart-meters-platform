@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
+
 import '../l10n/entry_strings.dart';
 
 class EntryLoadingCard extends StatelessWidget {
@@ -8,22 +10,10 @@ class EntryLoadingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Row(
-          children: [
-            const SizedBox(
-              width: 22,
-              height: 22,
-              child: CircularProgressIndicator(strokeWidth: 2),
-            ),
-            const SizedBox(width: 16),
-            Text(message),
-          ],
-        ),
-      ),
+    return Semantics(
+      label: message,
+      liveRegion: true,
+      child: const BrandSkeletonLedger(rows: 4),
     );
   }
 }
@@ -40,29 +30,13 @@ class EntryErrorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    return Card(
-      elevation: 0,
-      color: isDark ? const Color(0xFF450A0A) : Colors.red.shade50,
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message,
-              style: TextStyle(
-                color: isDark ? Colors.red.shade200 : Colors.red.shade900,
-              ),
-            ),
-            const SizedBox(height: 12),
-            OutlinedButton(
-              onPressed: onRetry,
-              child: Text(entryText(context, 'Retry', 'إعادة المحاولة')),
-            ),
-          ],
-        ),
+    return BrandEmptyState(
+      icon: Icons.sync_problem_outlined,
+      title: message,
+      action: OutlinedButton.icon(
+        onPressed: onRetry,
+        icon: const Icon(Icons.refresh),
+        label: Text(entryText(context, 'Retry', 'إعادة المحاولة')),
       ),
     );
   }
@@ -75,12 +49,6 @@ class EntryEmptyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Text(message, textAlign: TextAlign.center),
-      ),
-    );
+    return BrandEmptyState(icon: Icons.inbox_outlined, title: message);
   }
 }

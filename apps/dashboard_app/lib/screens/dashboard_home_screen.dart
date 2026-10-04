@@ -13,9 +13,6 @@ import '../utils/dashboard_filters.dart';
 import '../widgets/alert_widgets.dart';
 import '../widgets/dashboard_widgets.dart';
 import '../widgets/premium/premium_section_header.dart';
-import '../widgets/premium/premium_stat_card.dart';
-import '../widgets/premium/responsive_grid.dart';
-import '../widgets/premium/utility_colors.dart';
 import 'site_dashboard_screen.dart';
 
 class DashboardHomeScreen extends ConsumerStatefulWidget {
@@ -88,7 +85,6 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
     }
 
     final padding = DashboardBreakpoints.contentPadding(context);
-    final isWide = DashboardBreakpoints.useSidebar(context);
 
     final listContent = RefreshIndicator(
       onRefresh: _refresh,
@@ -122,7 +118,7 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
             sitesAsync.when(
               loading: () => const SizedBox.shrink(),
               error: (_, _) => const SizedBox.shrink(),
-              data: (sites) => _HomeKpiGrid(sites: sites, isWide: isWide),
+              data: (sites) => _HomeKpiGrid(sites: sites),
             ),
           if (widget.alertsFocus)
             alertsAsync.when(
@@ -283,10 +279,9 @@ class _DashboardHomeScreenState extends ConsumerState<DashboardHomeScreen> {
 }
 
 class _HomeKpiGrid extends StatelessWidget {
-  const _HomeKpiGrid({required this.sites, required this.isWide});
+  const _HomeKpiGrid({required this.sites});
 
   final List<DashboardSiteOverview> sites;
-  final bool isWide;
 
   @override
   Widget build(BuildContext context) {
@@ -307,36 +302,34 @@ class _HomeKpiGrid extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
-      child: ResponsiveGrid(
-        minItemWidth: isWide ? 180 : 160,
-        childHeight: 150,
-        children: [
-          PremiumStatCard(
-            icon: Icons.apartment_outlined,
+      child: BrandMetricLedger(
+        items: [
+          BrandMetricItem(
             label: strings.sites,
             value: '${sites.length}',
-            subtitle: strings.accessible,
-            accent: AppColors.navy,
+            detail: strings.accessible,
+            icon: Icons.apartment_outlined,
+            tone: BrandStatusTone.info,
           ),
-          PremiumStatCard(
-            icon: Icons.speed,
+          BrandMetricItem(
             label: strings.meters,
             value: '$totalMeters',
-            subtitle: strings.acrossSites,
-            accent: DashboardUtilityColors.water,
+            detail: strings.acrossSites,
+            icon: Icons.speed_outlined,
           ),
-          PremiumStatCard(
-            icon: Icons.today,
+          BrandMetricItem(
             label: strings.submittedToday,
             value: '$submitted',
-            subtitle: completion,
-            accent: DashboardUtilityColors.success,
+            detail: completion,
+            icon: Icons.today_outlined,
+            tone: BrandStatusTone.success,
+            emphasize: true,
           ),
-          PremiumStatCard(
-            icon: Icons.pending_actions,
+          BrandMetricItem(
             label: strings.pendingToday,
             value: '$pending',
-            accent: DashboardUtilityColors.warning,
+            icon: Icons.pending_actions_outlined,
+            tone: BrandStatusTone.warning,
           ),
         ],
       ),

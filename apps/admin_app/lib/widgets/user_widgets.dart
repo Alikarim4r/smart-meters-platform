@@ -17,10 +17,22 @@ class ApprovalStatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final (label, color) = switch (status) {
-      ApprovalStatus.pending => ('Pending', Colors.orange.shade800),
-      ApprovalStatus.approved => ('Approved', Colors.green.shade800),
-      ApprovalStatus.rejected => ('Rejected', Colors.red.shade800),
-      ApprovalStatus.suspended => ('Suspended', Colors.deepPurple.shade800),
+      ApprovalStatus.pending => (
+        adminText(context, 'Pending', 'قيد الانتظار'),
+        Colors.orange.shade800,
+      ),
+      ApprovalStatus.approved => (
+        adminText(context, 'Approved', 'معتمد'),
+        Colors.green.shade800,
+      ),
+      ApprovalStatus.rejected => (
+        adminText(context, 'Rejected', 'مرفوض'),
+        Colors.red.shade800,
+      ),
+      ApprovalStatus.suspended => (
+        adminText(context, 'Suspended', 'موقوف'),
+        Colors.deepPurple.shade800,
+      ),
     };
 
     return Chip(
@@ -50,7 +62,17 @@ class UserRoleBadge extends StatelessWidget {
     };
 
     return Chip(
-      label: Text(userRoleLabel(role)),
+      label: Text(switch (role) {
+        UserRole.superAdmin => adminText(context, 'Super Admin', 'مشرف عام'),
+        UserRole.siteAdmin => adminText(context, 'Site Admin', 'مشرف مواقع'),
+        UserRole.technician => adminText(context, 'Technician', 'فني إدخال'),
+        UserRole.technicianRequest => adminText(
+          context,
+          'Technician Request',
+          'طلب فني إدخال',
+        ),
+        UserRole.viewer => adminText(context, 'Viewer', 'مُشاهد'),
+      }),
       visualDensity: compact ? VisualDensity.compact : VisualDensity.standard,
       backgroundColor: color.withValues(alpha: 0.1),
       labelStyle: TextStyle(color: color, fontWeight: FontWeight.w500),
@@ -85,12 +107,16 @@ class UserListTileCard extends StatelessWidget {
     this.trailing,
     this.onTap,
     this.subtitleExtra,
+    this.isFirst = false,
+    this.isLast = false,
   });
 
   final AdminUser user;
   final Widget? trailing;
   final VoidCallback? onTap;
   final Widget? subtitleExtra;
+  final bool isFirst;
+  final bool isLast;
 
   @override
   Widget build(BuildContext context) {
@@ -106,83 +132,93 @@ class UserListTileCard extends StatelessWidget {
       scheme: theme.colorScheme,
     );
 
-    return BrandInkCard(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      onTap: onTap,
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: BrandLedgerTile(
+        isFirst: isFirst,
+        isLast: isLast,
+        child: BrandInkCard(
+          onTap: onTap,
+          padding: const EdgeInsets.all(16),
+          borderRadius: 0,
+          borderWidth: 0,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              brandIconWell(
-                context: context,
-                icon: Icons.person_outline_rounded,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  brandIconWell(
+                    context: context,
+                    icon: Icons.person_outline_rounded,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          user.displayName,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w800,
+                            color: titleColor,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          profile.email,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: muted,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  ?trailing,
+                ],
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      user.displayName,
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: titleColor,
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: [
+                  UserRoleBadge(role: profile.role, compact: true),
+                  ApprovalStatusBadge(
+                    status: profile.approvalStatus,
+                    compact: true,
+                  ),
+                  ActiveStatusBadge(isActive: profile.isActive),
+                  ...profile.role.accessibleApps.map(
+                    (app) => AppAccessBadge(category: app, compact: true),
+                  ),
+                  if (profile.isPlatformOwner)
+                    Chip(
+                      label: Text(
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'مالك المنصة'
+                            : 'Platform owner',
+                      ),
+                      visualDensity: VisualDensity.compact,
+                      backgroundColor: Colors.amber.shade100,
+                      labelStyle: TextStyle(
+                        color: Colors.amber.shade900,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      profile.email,
-                      style: theme.textTheme.bodySmall?.copyWith(color: muted),
-                    ),
-                  ],
-                ),
+                ],
               ),
-              ?trailing,
+              if (subtitleExtra != null) ...[
+                const SizedBox(height: 8),
+                subtitleExtra!,
+              ],
+              const SizedBox(height: 8),
+              Text(
+                '${AdminStrings(Localizations.localeOf(context)).sitesCount(user.siteAssignmentCount)} · ${adminText(context, 'Created', 'تاريخ الإنشاء')} ${localizeDigits(formatAdminDateTime(profile.createdAt), languageCode: Localizations.localeOf(context).languageCode)}',
+                style: theme.textTheme.bodySmall?.copyWith(color: muted),
+              ),
             ],
           ),
-          const SizedBox(height: 10),
-          Wrap(
-            spacing: 6,
-            runSpacing: 6,
-            children: [
-              UserRoleBadge(role: profile.role, compact: true),
-              ApprovalStatusBadge(
-                status: profile.approvalStatus,
-                compact: true,
-              ),
-              ActiveStatusBadge(isActive: profile.isActive),
-              ...profile.role.accessibleApps.map(
-                (app) => AppAccessBadge(category: app, compact: true),
-              ),
-              if (profile.isPlatformOwner)
-                Chip(
-                  label: Text(
-                    Localizations.localeOf(context).languageCode == 'ar'
-                        ? 'مالك المنصة'
-                        : 'Platform owner',
-                  ),
-                  visualDensity: VisualDensity.compact,
-                  backgroundColor: Colors.amber.shade100,
-                  labelStyle: TextStyle(
-                    color: Colors.amber.shade900,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-            ],
-          ),
-          if (subtitleExtra != null) ...[
-            const SizedBox(height: 8),
-            subtitleExtra!,
-          ],
-          const SizedBox(height: 8),
-          Text(
-            '${user.siteAssignmentCount} site(s) · Created ${formatAdminDateTime(profile.createdAt)}',
-            style: theme.textTheme.bodySmall?.copyWith(color: muted),
-          ),
-        ],
+        ),
       ),
     );
   }

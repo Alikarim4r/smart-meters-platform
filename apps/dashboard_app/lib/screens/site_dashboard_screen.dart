@@ -131,7 +131,10 @@ class SiteDashboardScreen extends ConsumerWidget {
     }
 
     final body = summaryAsync.when(
-      loading: () => const Center(child: CircularProgressIndicator()),
+      loading: () => ListView(
+        padding: const EdgeInsets.all(16),
+        children: const [BrandSkeletonLedger(rows: 6)],
+      ),
       error: (error, _) => DashboardErrorState(
         message: AppStrings.of(context).genericError,
         onRetry: () => ref.invalidate(siteDashboardSummaryProvider(siteId)),

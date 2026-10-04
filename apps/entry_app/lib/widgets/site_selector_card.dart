@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:smart_meters_core/smart_meters_core.dart';
 
-import '../theme/entry_chrome.dart';
-
 class SiteSelectorCard extends StatelessWidget {
   const SiteSelectorCard({
     super.key,
@@ -17,91 +15,31 @@ class SiteSelectorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final title =
-        isAr && site.nameAr.trim().isNotEmpty ? site.nameAr : site.nameEn;
+    final scheme = Theme.of(context).colorScheme;
+    final title = isAr && site.nameAr.trim().isNotEmpty
+        ? site.nameAr
+        : site.nameEn;
     final subtitleParts = <String>[
       site.displayZoneName,
       site.typeLabel(isAr: isAr),
       if (site.location != null && site.location!.isNotEmpty) site.location!,
     ];
-    final border = EntryChrome.border(isDark: isDark, scheme: theme.colorScheme);
-    final titleColor =
-        EntryChrome.titleColor(isDark: isDark, scheme: theme.colorScheme);
-    final muted =
-        EntryChrome.mutedColor(isDark: isDark, scheme: theme.colorScheme);
 
-    return Material(
-      color: Colors.transparent,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Ink(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: border, width: 1.2),
-            gradient: EntryChrome.cardWash(isDark: isDark),
-            boxShadow: [
-              BoxShadow(
-                color: EntryChrome.accent.withValues(alpha: isDark ? 0.12 : 0.08),
-                blurRadius: 8,
-                offset: const Offset(0, 3),
-              ),
-            ],
-          ),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(12),
-                    gradient: EntryChrome.iconWellGradient,
-                    border: Border.all(
-                      color: EntryChrome.accent.withValues(alpha: 0.35),
-                    ),
-                  ),
-                  child: Icon(
-                    Icons.apartment_rounded,
-                    color: isDark ? EntryChrome.onAccent : EntryChrome.iconGlyph,
-                    size: 22,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w800,
-                          color: titleColor,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        subtitleParts.join(' · '),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: muted,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 14,
-                  color: muted,
-                ),
-              ],
-            ),
-          ),
+    return BrandLedgerRow(
+      title: title,
+      subtitle: subtitleParts.join(' · '),
+      onTap: onTap,
+      leading: Container(
+        width: 38,
+        height: 38,
+        decoration: BoxDecoration(
+          color: scheme.primaryContainer.withValues(alpha: 0.55),
+          borderRadius: BorderRadius.circular(BrandRadius.chip),
+        ),
+        child: Icon(
+          Icons.apartment_outlined,
+          color: scheme.onPrimaryContainer,
+          size: 21,
         ),
       ),
     );

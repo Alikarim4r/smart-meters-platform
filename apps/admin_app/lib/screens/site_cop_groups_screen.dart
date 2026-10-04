@@ -8,13 +8,10 @@ import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 import 'cop_group_form_screen.dart';
 
-final _siteCopGroupsProvider =
-    FutureProvider.autoDispose.family<List<CopGroupDetail>, String>((
-  ref,
-  siteId,
-) {
-  return ref.watch(copGroupRepositoryProvider).listForSite(siteId);
-});
+final _siteCopGroupsProvider = FutureProvider.autoDispose
+    .family<List<CopGroupDetail>, String>((ref, siteId) {
+      return ref.watch(copGroupRepositoryProvider).listForSite(siteId);
+    });
 
 /// Manage COP/EER efficiency groups for a site (BTU + electricity meters).
 class SiteCopGroupsScreen extends ConsumerWidget {
@@ -29,9 +26,7 @@ class SiteCopGroupsScreen extends ConsumerWidget {
     final canManage = ref.watch(canManageMetersProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(s.copEerGroups),
-      ),
+      appBar: AppBar(title: Text(s.copEerGroups)),
       floatingActionButton: canManage
           ? FloatingActionButton.extended(
               onPressed: () async {
@@ -49,7 +44,7 @@ class SiteCopGroupsScreen extends ConsumerWidget {
       body: groupsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => CatalogErrorView(
-          message: error.toString(),
+          message: s.couldNotLoad,
           onRetry: () => ref.invalidate(_siteCopGroupsProvider(siteId)),
         ),
         data: (groups) {

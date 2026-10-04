@@ -202,36 +202,10 @@ class CatalogEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(icon, size: 56, color: Colors.grey.shade400),
-            const SizedBox(height: 16),
-            if (title != null)
-              Text(
-                title!,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            if (title != null) const SizedBox(height: 8),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: Colors.grey.shade700,
-                height: 1.4,
-              ),
-            ),
-          ],
-        ),
-      ),
+    return BrandEmptyState(
+      icon: icon,
+      title: title ?? message,
+      message: title == null ? null : message,
     );
   }
 }
@@ -248,59 +222,26 @@ class CatalogErrorView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.error_outline, size: 48, color: Colors.red.shade400),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            FilledButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: Text(catalogStrings(context).retry),
-            ),
-          ],
-        ),
+    return BrandEmptyState(
+      icon: Icons.error_outline,
+      title: message,
+      action: FilledButton.icon(
+        onPressed: onRetry,
+        icon: const Icon(Icons.refresh),
+        label: Text(catalogStrings(context).retry),
       ),
     );
   }
 }
 
 Widget catalogStatusChip({required bool isActive}) {
-  final color = isActive ? Colors.green : Colors.grey;
   return Builder(
     builder: (context) {
       final s = catalogStrings(context);
-      return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: color.shade50,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: color.shade200),
-        ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              isActive ? Icons.check_circle : Icons.pause_circle_outline,
-              size: 14,
-              color: color.shade700,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              isActive ? s.active : s.inactive,
-              style: TextStyle(
-                color: color.shade800,
-                fontSize: 12,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
+      return BrandStatusMark(
+        label: isActive ? s.active : s.inactive,
+        tone: isActive ? BrandStatusTone.success : BrandStatusTone.neutral,
+        compact: true,
       );
     },
   );

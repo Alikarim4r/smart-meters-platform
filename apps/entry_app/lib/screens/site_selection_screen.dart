@@ -9,10 +9,7 @@ import '../widgets/entry_state_views.dart';
 import '../widgets/site_selector_card.dart';
 
 class SiteSelectionScreen extends ConsumerWidget {
-  const SiteSelectionScreen({
-    super.key,
-    required this.onSiteSelected,
-  });
+  const SiteSelectionScreen({super.key, required this.onSiteSelected});
 
   final ValueChanged<Site> onSiteSelected;
 
@@ -26,19 +23,18 @@ class SiteSelectionScreen extends ConsumerWidget {
       children: [
         Text(
           s.selectSite,
-          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.w800,
-              ),
+          style: Theme.of(
+            context,
+          ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 8),
         Text(
           s.selectSiteHint,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Theme.of(context)
-                    .colorScheme
-                    .onSurface
-                    .withValues(alpha: 0.6),
-              ),
+            color: Theme.of(
+              context,
+            ).colorScheme.onSurface.withValues(alpha: 0.6),
+          ),
         ),
         const SizedBox(height: 20),
         sitesAsync.when(
@@ -52,16 +48,13 @@ class SiteSelectionScreen extends ConsumerWidget {
               return EntryEmptyCard(message: s.noSites);
             }
 
-            return Column(
+            return BrandLedger(
               children: [
                 for (final site in sites)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: SiteSelectorCard(
-                      site: site,
-                      isAr: s.isAr,
-                      onTap: () => onSiteSelected(site),
-                    ),
+                  SiteSelectorCard(
+                    site: site,
+                    isAr: s.isAr,
+                    onTap: () => onSiteSelected(site),
                   ),
               ],
             );

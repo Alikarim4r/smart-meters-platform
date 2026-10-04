@@ -86,6 +86,7 @@ export 'theme/brand_theme.dart';
 export 'theme/brand_tokens.dart';
 export 'ui/session_security_settings_section.dart';
 export 'ui/brand_card.dart';
+export 'ui/brand_instrument.dart';
 export 'ui/brand_surface_background.dart';
 export 'ui/demo_branding.dart';
 export 'ui/meter_category_icons.dart';

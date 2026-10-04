@@ -64,7 +64,10 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
       children: [
         Row(
           children: [
-            IconButton(onPressed: widget.onBack, icon: const Icon(Icons.arrow_back)),
+            IconButton(
+              onPressed: widget.onBack,
+              icon: const Icon(Icons.arrow_back),
+            ),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -72,14 +75,14 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
                   Text(
                     s.categoryName(widget.category),
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                   Text(
                     s.siteName(widget.site),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade700,
-                        ),
+                      color: Colors.grey.shade700,
+                    ),
                   ),
                 ],
               ),
@@ -129,10 +132,7 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                MeterWorkProgressSummary(
-                  summary: summary,
-                  isArabic: s.isAr,
-                ),
+                MeterWorkProgressSummary(summary: summary, isArabic: s.isAr),
                 const SizedBox(height: 12),
                 if (filtered.isEmpty)
                   EntryEmptyCard(
@@ -141,15 +141,16 @@ class _MeterListScreenState extends ConsumerState<MeterListScreen> {
                         : 'No meters match your search or filter.',
                   )
                 else
-                  for (final status in filtered)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 8),
-                      child: MeterListCard(
-                        status: status,
-                        isArabic: s.isAr,
-                        onTap: () => widget.onMeterTap(status),
-                      ),
-                    ),
+                  BrandLedger(
+                    children: [
+                      for (final status in filtered)
+                        MeterListCard(
+                          status: status,
+                          isArabic: s.isAr,
+                          onTap: () => widget.onMeterTap(status),
+                        ),
+                    ],
+                  ),
               ],
             );
           },

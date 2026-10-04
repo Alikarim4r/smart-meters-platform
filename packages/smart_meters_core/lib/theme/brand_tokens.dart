@@ -24,12 +24,12 @@ abstract final class BrandSpace {
 
 /// Corner hierarchy: smaller elements get tighter corners, containers softer.
 abstract final class BrandRadius {
-  static const double badge = 6;
-  static const double chip = 10;
-  static const double control = 14;
-  static const double card = 18;
-  static const double dialog = 24;
-  static const double sheet = 28;
+  static const double badge = 4;
+  static const double chip = 8;
+  static const double control = 10;
+  static const double card = 12;
+  static const double dialog = 18;
+  static const double sheet = 20;
   static const double pill = 999;
 }
 
@@ -39,11 +39,8 @@ abstract final class BrandShadows {
   static const _shade = Color(0xFF0B1220);
 
   static List<BoxShadow> resting({required bool isDark}) => [
-    BoxShadow(
-      color: _shade.withValues(alpha: isDark ? 0.28 : 0.04),
-      blurRadius: 2,
-      offset: const Offset(0, 1),
-    ),
+    // Resting content belongs to the page plane. Hairlines and tone carry its
+    // hierarchy; elevation is reserved for transient UI.
   ];
 
   static List<BoxShadow> raised({required bool isDark}) => [
@@ -74,6 +71,10 @@ abstract final class BrandMotion {
   static const Duration standard = Duration(milliseconds: 220);
   static const Duration emphasized = Duration(milliseconds: 360);
   static const Curve curve = Curves.easeOutCubic;
+
+  /// Honors the platform reduce-motion setting for every shared transition.
+  static Duration resolve(BuildContext context, Duration duration) =>
+      MediaQuery.disableAnimationsOf(context) ? Duration.zero : duration;
 }
 
 /// Semantic status colors tuned for both themes (AA on their surfaces).

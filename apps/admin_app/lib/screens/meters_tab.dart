@@ -244,7 +244,10 @@ class _MetersTabState extends ConsumerState<MetersTab> {
             ),
             Expanded(
               child: metersAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: BrandSkeletonLedger(rows: 6),
+                ),
                 error: (error, _) => CatalogErrorView(
                   message: friendlyMeterError(error),
                   onRetry: () => ref.invalidate(adminMetersProvider),
@@ -266,189 +269,204 @@ class _MetersTabState extends ConsumerState<MetersTab> {
                     );
                   }
 
-                  return ListView.separated(
+                  return ListView.builder(
                     padding: EdgeInsets.fromLTRB(16, 12, 16, listBottomPadding),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final meter = filtered[index];
-                      return BrandInkCard(
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) =>
-                                  MeterDetailScreen(meterId: meter.id),
-                            ),
-                          );
-                          ref.invalidate(adminMetersProvider);
-                        },
-                        padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            brandIconWell(
-                              context: context,
-                              icon: Icons.speed_outlined,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    meter.nameEn,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: BrandChrome.titleColor(
-                                            isDark:
-                                                Theme.of(context).brightness ==
-                                                Brightness.dark,
-                                            scheme: Theme.of(
-                                              context,
-                                            ).colorScheme,
-                                          ),
-                                        ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${meter.meterCode} · ${meter.siteNameEn ?? 'Site'}',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: BrandChrome.mutedColor(
-                                            isDark:
-                                                Theme.of(context).brightness ==
-                                                Brightness.dark,
-                                            scheme: Theme.of(
-                                              context,
-                                            ).colorScheme,
-                                          ),
-                                        ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '${meter.categoryConfig?.nameEn ?? meter.categoryCode} · '
-                                    '${meter.sourceConfig?.nameEn ?? meter.sourceDisplayName} · '
-                                    '${meter.unitConfig?.nameEn ?? meter.unitDisplayLabel}',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: BrandChrome.mutedColor(
-                                            isDark:
-                                                Theme.of(context).brightness ==
-                                                Brightness.dark,
-                                            scheme: Theme.of(
-                                              context,
-                                            ).colorScheme,
-                                          ),
-                                        ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      catalogStatusChip(
-                                        isActive: meter.isActive,
-                                      ),
-                                      if (meter.includeInDashboard)
-                                        catalogTypeChip(
-                                          label: 'Dashboard',
-                                          icon: Icons.dashboard_outlined,
-                                          color: Colors.brown,
-                                        ),
-                                    ],
-                                  ),
-                                ],
+                      return BrandLedgerTile(
+                        isFirst: index == 0,
+                        isLast: index == filtered.length - 1,
+                        child: BrandInkCard(
+                          borderRadius: 0,
+                          borderWidth: 0,
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    MeterDetailScreen(meterId: meter.id),
                               ),
-                            ),
-                            if (canManage)
-                              PopupMenuButton<String>(
-                                onSelected: (action) async {
-                                  switch (action) {
-                                    case 'edit':
-                                      await Navigator.of(context).push(
-                                        MaterialPageRoute<void>(
-                                          builder: (_) => MeterFormScreen(
-                                            siteId: meter.siteId,
-                                            meter: meter,
+                            );
+                            ref.invalidate(adminMetersProvider);
+                          },
+                          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              brandIconWell(
+                                context: context,
+                                icon: Icons.speed_outlined,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      meter.nameEn,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: BrandChrome.titleColor(
+                                              isDark:
+                                                  Theme.of(
+                                                    context,
+                                                  ).brightness ==
+                                                  Brightness.dark,
+                                              scheme: Theme.of(
+                                                context,
+                                              ).colorScheme,
+                                            ),
                                           ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${meter.meterCode} · ${meter.siteNameEn ?? 'Site'}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: BrandChrome.mutedColor(
+                                              isDark:
+                                                  Theme.of(
+                                                    context,
+                                                  ).brightness ==
+                                                  Brightness.dark,
+                                              scheme: Theme.of(
+                                                context,
+                                              ).colorScheme,
+                                            ),
+                                          ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      '${meter.categoryConfig?.nameEn ?? meter.categoryCode} · '
+                                      '${meter.sourceConfig?.nameEn ?? meter.sourceDisplayName} · '
+                                      '${meter.unitConfig?.nameEn ?? meter.unitDisplayLabel}',
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .bodySmall
+                                          ?.copyWith(
+                                            color: BrandChrome.mutedColor(
+                                              isDark:
+                                                  Theme.of(
+                                                    context,
+                                                  ).brightness ==
+                                                  Brightness.dark,
+                                              scheme: Theme.of(
+                                                context,
+                                              ).colorScheme,
+                                            ),
+                                          ),
+                                    ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        catalogStatusChip(
+                                          isActive: meter.isActive,
                                         ),
-                                      );
-                                      ref.invalidate(adminMetersProvider);
-                                    case 'toggle':
-                                      try {
-                                        await ref
-                                            .read(meterRepositoryProvider)
-                                            .updateMeter(
-                                              meter.id,
-                                              isActive: !meter.isActive,
-                                            );
-                                        ref.invalidate(adminMetersProvider);
-                                      } catch (error) {
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              friendlyMeterError(error),
+                                        if (meter.includeInDashboard)
+                                          catalogTypeChip(
+                                            label: 'Dashboard',
+                                            icon: Icons.dashboard_outlined,
+                                            color: Colors.brown,
+                                          ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (canManage)
+                                PopupMenuButton<String>(
+                                  onSelected: (action) async {
+                                    switch (action) {
+                                      case 'edit':
+                                        await Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) => MeterFormScreen(
+                                              siteId: meter.siteId,
+                                              meter: meter,
                                             ),
                                           ),
                                         );
-                                      }
-                                    case 'delete':
-                                      final confirmed =
-                                          await confirmForceDelete(
-                                            context: context,
-                                            title: s.isAr
-                                                ? 'حذف العداد؟'
-                                                : 'Delete meter?',
-                                            entityName: meter.nameEn,
+                                        ref.invalidate(adminMetersProvider);
+                                      case 'toggle':
+                                        try {
+                                          await ref
+                                              .read(meterRepositoryProvider)
+                                              .updateMeter(
+                                                meter.id,
+                                                isActive: !meter.isActive,
+                                              );
+                                          ref.invalidate(adminMetersProvider);
+                                        } catch (error) {
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                friendlyMeterError(error),
+                                              ),
+                                            ),
                                           );
-                                      if (confirmed != true) return;
-                                      try {
-                                        final repo = ref.read(
-                                          meterRepositoryProvider,
-                                        );
-                                        await repo.forceDeleteMeter(meter.id);
-                                        ref.invalidate(adminMetersProvider);
-                                      } catch (error) {
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              friendlyMeterError(error),
+                                        }
+                                      case 'delete':
+                                        final confirmed =
+                                            await confirmForceDelete(
+                                              context: context,
+                                              title: s.isAr
+                                                  ? 'حذف العداد؟'
+                                                  : 'Delete meter?',
+                                              entityName: meter.nameEn,
+                                            );
+                                        if (confirmed != true) return;
+                                        try {
+                                          final repo = ref.read(
+                                            meterRepositoryProvider,
+                                          );
+                                          await repo.forceDeleteMeter(meter.id);
+                                          ref.invalidate(adminMetersProvider);
+                                        } catch (error) {
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                friendlyMeterError(error),
+                                              ),
                                             ),
-                                          ),
-                                        );
-                                      }
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text(s.edit),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'toggle',
-                                    child: Text(
-                                      meter.isActive
-                                          ? s.deactivate
-                                          : s.activate,
-                                    ),
-                                  ),
-                                  if (canDelete)
+                                          );
+                                        }
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
                                     PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text(s.delete),
+                                      value: 'edit',
+                                      child: Text(s.edit),
                                     ),
-                                ],
-                              ),
-                          ],
+                                    PopupMenuItem(
+                                      value: 'toggle',
+                                      child: Text(
+                                        meter.isActive
+                                            ? s.deactivate
+                                            : s.activate,
+                                      ),
+                                    ),
+                                    if (canDelete)
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child: Text(s.delete),
+                                      ),
+                                  ],
+                                ),
+                            ],
+                          ),
                         ),
                       );
                     },

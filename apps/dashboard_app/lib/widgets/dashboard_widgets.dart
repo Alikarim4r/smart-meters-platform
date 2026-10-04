@@ -52,8 +52,7 @@ class DashboardSummaryTile extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (icon != null)
-            Icon(icon, size: 20, color: accent),
+          if (icon != null) Icon(icon, size: 20, color: accent),
           if (icon != null) const SizedBox(height: 8),
           Text(
             value,
@@ -65,9 +64,7 @@ class DashboardSummaryTile extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colors.textMuted,
-            ),
+            style: theme.textTheme.bodySmall?.copyWith(color: colors.textMuted),
           ),
         ],
       ),
@@ -120,44 +117,7 @@ class DashboardEmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colors = dashboardColors(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 72,
-              height: 72,
-              decoration: BoxDecoration(
-                color: colors.cardElevated,
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: colors.border),
-              ),
-              child: Icon(icon, size: 34, color: colors.navyMuted),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: colors.textPrimary,
-                    fontWeight: FontWeight.w800,
-                  ),
-            ),
-            if (subtitle != null) ...[
-              const SizedBox(height: 8),
-              Text(
-                subtitle!,
-                textAlign: TextAlign.center,
-                style: TextStyle(color: colors.textMuted),
-              ),
-            ],
-          ],
-        ),
-      ),
-    );
+    return BrandEmptyState(icon: icon, title: title, message: subtitle);
   }
 }
 
@@ -175,46 +135,21 @@ class DashboardErrorState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline,
-              size: 40,
-              color: Theme.of(context).colorScheme.error,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              title,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.w700,
-                  ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              message,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodyMedium,
-            ),
-            if (onRetry != null) ...[
-              const SizedBox(height: 16),
-              FilledButton.tonalIcon(
-                onPressed: onRetry,
-                icon: const Icon(Icons.refresh, size: 18),
-                label: Text(
-                  Localizations.localeOf(context).languageCode == 'ar'
-                      ? 'إعادة المحاولة'
-                      : 'Retry',
-                ),
+    return BrandEmptyState(
+      icon: Icons.error_outline,
+      title: title,
+      message: message,
+      action: onRetry == null
+          ? null
+          : FilledButton.tonalIcon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh, size: 18),
+              label: Text(
+                Localizations.localeOf(context).languageCode == 'ar'
+                    ? 'إعادة المحاولة'
+                    : 'Retry',
               ),
-            ],
-          ],
-        ),
-      ),
+            ),
     );
   }
 }
@@ -257,7 +192,9 @@ class DashboardSiteListTile extends StatelessWidget {
                   ),
                   DashboardStatusBadge(
                     label: site.isActive ? s.active : s.inactive,
-                    color: site.isActive ? Colors.green.shade800 : Colors.grey.shade700,
+                    color: site.isActive
+                        ? Colors.green.shade800
+                        : Colors.grey.shade700,
                   ),
                 ],
               ),
@@ -296,12 +233,12 @@ class DashboardSiteListTile extends StatelessWidget {
                     ),
                   ),
                   if (overview.lastReadingDate != null)
-                      _ChipLabel(
-                        icon: Icons.history,
-                        label: s.isAr
-                            ? 'آخر قراءة: ${formatBusinessDate(overview.lastReadingDate!)}'
-                            : 'Last: ${formatBusinessDate(overview.lastReadingDate!)}',
-                      ),
+                    _ChipLabel(
+                      icon: Icons.history,
+                      label: s.isAr
+                          ? 'آخر قراءة: ${formatBusinessDate(overview.lastReadingDate!)}'
+                          : 'Last: ${formatBusinessDate(overview.lastReadingDate!)}',
+                    ),
                 ],
               ),
             ],
@@ -329,12 +266,12 @@ class _ChipLabel extends StatelessWidget {
         border: Border.all(color: colors.border.withValues(alpha: 0.8)),
       ),
       child: Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(icon, size: 14, color: colors.textMuted),
-        const SizedBox(width: 4),
-        Text(label, style: TextStyle(fontSize: 12, color: colors.textMuted)),
-      ],
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: colors.textMuted),
+          const SizedBox(width: 4),
+          Text(label, style: TextStyle(fontSize: 12, color: colors.textMuted)),
+        ],
       ),
     );
   }

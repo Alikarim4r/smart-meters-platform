@@ -47,24 +47,20 @@ class CategorySelectionScreen extends ConsumerWidget {
           loading: () => EntryLoadingCard(message: s.loadingTypes),
           error: (error, _) => EntryErrorCard(
             message: s.couldNotLoadTypes,
-            onRetry: () =>
-                ref.invalidate(availableCategoriesProvider(site.id)),
+            onRetry: () => ref.invalidate(availableCategoriesProvider(site.id)),
           ),
           data: (categories) {
             if (categories.isEmpty) {
               return EntryEmptyCard(message: s.noMetersAtSite);
             }
 
-            return Column(
+            return BrandLedger(
               children: [
                 for (final category in categories)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 12),
-                    child: CategorySelectorCard(
-                      category: category,
-                      strings: s,
-                      onTap: () => onCategorySelected(category),
-                    ),
+                  CategorySelectorCard(
+                    category: category,
+                    strings: s,
+                    onTap: () => onCategorySelected(category),
                   ),
               ],
             );

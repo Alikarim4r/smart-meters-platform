@@ -8,7 +8,6 @@ import '../../reports/report_export_button.dart';
 import '../../reports/report_models.dart';
 import '../../theme/dashboard_spacing.dart';
 import '../../theme/dashboard_theme.dart';
-import '../../theme/glass_surface.dart';
 import '../../utils/dashboard_breakpoints.dart';
 import '../../utils/dashboard_date_range.dart';
 import '../shell/dashboard_alert_bell.dart';
@@ -48,73 +47,114 @@ class DashboardTopHeader extends ConsumerWidget {
     final colors = dashboardColors(context);
     final s = AppStrings(ref.watch(localeProvider));
 
-    return GlassSurface(
-      borderRadius: 0,
-      useBlur: false,
-      tintOpacity: 0.94,
-      padding: EdgeInsets.fromLTRB(
-        padding,
-        DashboardSpacing.lg,
-        padding,
-        DashboardSpacing.md,
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          if (onBack != null) ...[
-            IconButton(
-              tooltip: s.backToSites,
-              onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_rounded),
-            ),
-          ],
-          Expanded(
-            child: Text(
-              site != null
-                  ? s.localizedName(en: site!.nameEn, ar: site!.nameAr)
-                  : (title ?? s.appTitle),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w800,
-                color: colors.textPrimary,
-              ),
-            ),
-          ),
-          if (dateSelection != null && onDateSelectionChanged != null)
-            Flexible(
-              child: Align(
-                alignment: AlignmentDirectional.centerEnd,
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  reverse: true,
-                  child: DashboardDateQuickBar(
-                    selection: dateSelection!,
-                    onChanged: onDateSelectionChanged!,
-                    siteId: siteId,
-                    compact: true,
-                  ),
-                ),
-              ),
-            ),
-          if (siteId != null) ...[
-            const SizedBox(width: DashboardSpacing.xs),
-            DashboardAlertBellButton(siteId: siteId!, onViewAll: onViewAlerts),
-          ] else ...[
-            const SizedBox(width: DashboardSpacing.xs),
-            DashboardHomeAlertBellButton(onViewAll: onViewAlerts),
-          ],
-          ReportExportIconButton(
-            defaultType: exportType,
-            siteId: siteId,
-            categoryId: exportCategoryId,
-          ),
-          IconButton(
-            tooltip: s.refresh,
-            onPressed: onRefresh,
-            icon: const Icon(Icons.refresh_rounded),
+    final heading = Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          site != null
+              ? s.localizedName(en: site!.nameEn, ar: site!.nameAr)
+              : (title ?? s.appTitle),
+          maxLines: 2,
+          overflow: TextOverflow.ellipsis,
+          style: Theme.of(
+            context,
+          ).textTheme.titleLarge?.copyWith(color: colors.textPrimary),
+        ),
+        if (subtitle != null && subtitle!.trim().isNotEmpty) ...[
+          const SizedBox(height: DashboardSpacing.xxs),
+          Text(
+            subtitle!,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ],
+      ],
+    );
+
+    final actions = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (siteId != null)
+          DashboardAlertBellButton(siteId: siteId!, onViewAll: onViewAlerts)
+        else
+          DashboardHomeAlertBellButton(onViewAll: onViewAlerts),
+        ReportExportIconButton(
+          defaultType: exportType,
+          siteId: siteId,
+          categoryId: exportCategoryId,
+        ),
+        IconButton(
+          tooltip: s.refresh,
+          onPressed: onRefresh,
+          icon: const Icon(Icons.refresh_rounded),
+        ),
+      ],
+    );
+
+    final dateBar = dateSelection != null && onDateSelectionChanged != null
+        ? SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DashboardDateQuickBar(
+              selection: dateSelection!,
+              onChanged: onDateSelectionChanged!,
+              siteId: siteId,
+              compact: true,
+            ),
+          )
+        : null;
+
+    return Material(
+      color: Theme.of(context).colorScheme.surface,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: Theme.of(context).colorScheme.outlineVariant,
+            ),
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsetsDirectional.fromSTEB(
+            padding,
+            DashboardSpacing.md,
+            padding,
+            DashboardSpacing.sm,
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final compact = constraints.maxWidth < 900;
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      if (onBack != null)
+                        IconButton(
+                          tooltip: s.backToSites,
+                          onPressed: onBack,
+                          icon: const Icon(Icons.arrow_back_rounded),
+                        ),
+                      Expanded(child: heading),
+                      if (!compact && dateBar != null) ...[
+                        const SizedBox(width: DashboardSpacing.md),
+                        Flexible(child: dateBar),
+                      ],
+                      const SizedBox(width: DashboardSpacing.xs),
+                      actions,
+                    ],
+                  ),
+                  if (compact && dateBar != null) ...[
+                    const SizedBox(height: DashboardSpacing.xs),
+                    dateBar,
+                  ],
+                ],
+              );
+            },
+          ),
+        ),
       ),
     );
   }

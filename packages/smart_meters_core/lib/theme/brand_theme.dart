@@ -156,8 +156,8 @@ abstract final class BrandTheme {
       iconTheme: IconThemeData(color: glyph, size: 22),
       appBarTheme: AppBarTheme(
         elevation: 0,
-        scrolledUnderElevation: 0.5,
-        shadowColor: scheme.shadow.withValues(alpha: isDark ? 0.5 : 0.12),
+        scrolledUnderElevation: 0,
+        shadowColor: Colors.transparent,
         centerTitle: false,
         backgroundColor: panel,
         foregroundColor: ink,
@@ -283,13 +283,13 @@ abstract final class BrandTheme {
         focusedErrorBorder: field(scheme.error, 1.6),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        height: 72,
+        height: 68,
         elevation: 0,
         backgroundColor: panel,
         surfaceTintColor: Colors.transparent,
         shadowColor: Colors.transparent,
         indicatorColor: scheme.primaryContainer,
-        indicatorShape: const StadiumBorder(),
+        indicatorShape: rounded(BrandRadius.control),
         labelTextStyle: WidgetStateProperty.resolveWith((states) {
           final selected = states.contains(WidgetState.selected);
           return text.labelMedium?.copyWith(
@@ -307,7 +307,7 @@ abstract final class BrandTheme {
       navigationRailTheme: NavigationRailThemeData(
         backgroundColor: panel,
         indicatorColor: scheme.primaryContainer,
-        indicatorShape: const StadiumBorder(),
+        indicatorShape: rounded(BrandRadius.control),
         selectedIconTheme: IconThemeData(color: scheme.onPrimaryContainer),
         unselectedIconTheme: IconThemeData(color: muted),
         selectedLabelTextStyle: text.labelMedium?.copyWith(color: ink),

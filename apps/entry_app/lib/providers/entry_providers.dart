@@ -30,31 +30,31 @@ final businessDateProvider = StateProvider<DateTime>((ref) {
   return qatarBusinessDate();
 });
 
-final sitePolicyProvider =
-    FutureProvider.autoDispose.family<PolicySettings, String>((ref, siteId) async {
-  final storage = ref.read(offlineStorageProvider);
-  final isOnline = ref.watch(isOnlineProvider);
-  if (isOnline) {
-    try {
-      final policy = await ref
-          .read(policySettingsRepositoryProvider)
-          .getEffectivePolicyForSite(siteId);
-      await storage.cacheSitePolicy(
-        siteId: siteId,
-        policy: policy.toCacheJson(),
-      );
-      return policy;
-    } catch (_) {
-      // Fall through to cache.
-    }
-  }
-  final cached = storage.getCachedSitePolicy(siteId);
-  if (cached != null) {
-    return PolicySettings.fromJson(cached);
-  }
-  // Absolute last resort — must not silently disable photo required if known.
-  return PolicySettings.defaults('unknown');
-});
+final sitePolicyProvider = FutureProvider.autoDispose
+    .family<PolicySettings, String>((ref, siteId) async {
+      final storage = ref.read(offlineStorageProvider);
+      final isOnline = ref.watch(isOnlineProvider);
+      if (isOnline) {
+        try {
+          final policy = await ref
+              .read(policySettingsRepositoryProvider)
+              .getEffectivePolicyForSite(siteId);
+          await storage.cacheSitePolicy(
+            siteId: siteId,
+            policy: policy.toCacheJson(),
+          );
+          return policy;
+        } catch (_) {
+          // Fall through to cache.
+        }
+      }
+      final cached = storage.getCachedSitePolicy(siteId);
+      if (cached != null) {
+        return PolicySettings.fromJson(cached);
+      }
+      // Absolute last resort — must not silently disable photo required if known.
+      return PolicySettings.defaults('unknown');
+    });
 
 final accessibleSitesProvider = FutureProvider<List<Site>>((ref) async {
   final profile = ref.watch(authProvider).profile;
@@ -83,36 +83,42 @@ final accessibleSitesProvider = FutureProvider<List<Site>>((ref) async {
 
 final selectedSiteProvider = StateProvider<Site?>((ref) => null);
 
-final selectedCategoryProvider = StateProvider<MeterCategoryConfig?>((ref) => null);
+final selectedCategoryProvider = StateProvider<MeterCategoryConfig?>(
+  (ref) => null,
+);
 
 final meterListSearchProvider = StateProvider<String>((ref) => '');
 
-final meterListFilterProvider =
-    StateProvider<MeterListFilter>((ref) => MeterListFilter.all);
+final meterListFilterProvider = StateProvider<MeterListFilter>(
+  (ref) => MeterListFilter.all,
+);
 
 final availableCategoriesProvider =
-    FutureProvider.family<List<MeterCategoryConfig>, String>((ref, siteId) async {
-  final storage = ref.read(offlineStorageProvider);
-  final isOnline = ref.watch(isOnlineProvider);
-  if (isOnline) {
-    try {
-      final categories = await ref
-          .read(meterCatalogRepositoryProvider)
-          .getCategoriesForSite(siteId);
-      await storage.cacheCategories(
-        siteId: siteId,
-        categories: categories.map((c) => c.toJson()).toList(),
-      );
-      return categories;
-    } catch (_) {
-      // Fall through to cache.
-    }
-  }
-  return storage
-      .getCachedCategories(siteId)
-      .map(MeterCategoryConfig.fromJson)
-      .toList();
-});
+    FutureProvider.family<List<MeterCategoryConfig>, String>((
+      ref,
+      siteId,
+    ) async {
+      final storage = ref.read(offlineStorageProvider);
+      final isOnline = ref.watch(isOnlineProvider);
+      if (isOnline) {
+        try {
+          final categories = await ref
+              .read(meterCatalogRepositoryProvider)
+              .getCategoriesForSite(siteId);
+          await storage.cacheCategories(
+            siteId: siteId,
+            categories: categories.map((c) => c.toJson()).toList(),
+          );
+          return categories;
+        } catch (_) {
+          // Fall through to cache.
+        }
+      }
+      return storage
+          .getCachedCategories(siteId)
+          .map(MeterCategoryConfig.fromJson)
+          .toList();
+    });
 
 class EntryMeterQuery {
   const EntryMeterQuery({
@@ -145,105 +151,104 @@ class EntryMeterQuery {
 }
 
 final metersWithStatusProvider =
-    FutureProvider.family<List<MeterEntryStatus>, EntryMeterQuery>((ref, query) async {
-  final storage = ref.read(offlineStorageProvider);
-  final isOnline = ref.watch(isOnlineProvider);
-  final localDrafts = storage.getDraftsForSiteAndDate(
-    siteId: query.siteId,
-    readingDate: query.readingDateIso,
-  );
-  final draftsByMeter = {
-    for (final draft in localDrafts) draft.meterId: draft,
-  };
-
-  if (isOnline) {
-    try {
-      final meterRepo = ref.read(meterRepositoryProvider);
-      final readingRepo = ref.read(meterReadingRepositoryProvider);
-
-      final meters = await meterRepo.getMetersForSiteAndCategoryId(
-        query.siteId,
-        query.categoryId,
+    FutureProvider.family<List<MeterEntryStatus>, EntryMeterQuery>((
+      ref,
+      query,
+    ) async {
+      final storage = ref.read(offlineStorageProvider);
+      final isOnline = ref.watch(isOnlineProvider);
+      final localDrafts = storage.getDraftsForSiteAndDate(
+        siteId: query.siteId,
+        readingDate: query.readingDateIso,
       );
-      final meterIds = meters.map((meter) => meter.id).toList();
+      final draftsByMeter = {
+        for (final draft in localDrafts) draft.meterId: draft,
+      };
 
-      // Parallel: today + last readings (last uses a single bulk query).
-      final bundled = await Future.wait([
-        readingRepo.getReadingsForSiteAndDate(
-          siteId: query.siteId,
-          date: query.businessDate,
-          meterIds: meterIds,
-        ),
-        readingRepo.getLatestReadingsBeforeDate(
-          meterIds: meterIds,
-          date: query.businessDate,
-        ),
-      ]);
-      final todayReadings = bundled[0];
-      final lastReadings = bundled[1];
+      if (isOnline) {
+        try {
+          final meterRepo = ref.read(meterRepositoryProvider);
+          final readingRepo = ref.read(meterReadingRepositoryProvider);
 
-      // Cache in background — don't block the UI on Hive writes.
-      unawaited(
-        storage.cacheMeters(
-          siteId: query.siteId,
-          category: query.categoryCode,
-          meters: meters
+          final meters = await meterRepo.getMetersForSiteAndCategoryId(
+            query.siteId,
+            query.categoryId,
+          );
+          final meterIds = meters.map((meter) => meter.id).toList();
+
+          // Parallel: today + last readings (last uses a single bulk query).
+          final bundled = await Future.wait([
+            readingRepo.getReadingsForSiteAndDate(
+              siteId: query.siteId,
+              date: query.businessDate,
+              meterIds: meterIds,
+            ),
+            readingRepo.getLatestReadingsBeforeDate(
+              meterIds: meterIds,
+              date: query.businessDate,
+            ),
+          ]);
+          final todayReadings = bundled[0];
+          final lastReadings = bundled[1];
+
+          // Cache in background — don't block the UI on Hive writes.
+          unawaited(
+            storage.cacheMeters(
+              siteId: query.siteId,
+              category: query.categoryCode,
+              meters: meters
+                  .map(
+                    (meter) => CachedMeter.fromMeter(
+                      meter: meter,
+                      lastReading: lastReadings[meter.id],
+                    ),
+                  )
+                  .toList(),
+            ),
+          );
+
+          return meters
               .map(
-                (meter) => CachedMeter.fromMeter(
+                (meter) => MeterEntryStatus(
                   meter: meter,
+                  todayReading: todayReadings[meter.id],
+                  localDraft: draftsByMeter[meter.id],
                   lastReading: lastReadings[meter.id],
+                  workStatus: MeterEntryStatus.resolveWorkStatus(
+                    todayReading: todayReadings[meter.id],
+                    localDraft: draftsByMeter[meter.id],
+                  ),
                 ),
               )
-              .toList(),
-        ),
+              .toList();
+        } catch (_) {
+          // Fall through to cache.
+        }
+      }
+
+      final cachedMeters = storage.getCachedMeters(
+        siteId: query.siteId,
+        category: query.categoryCode,
       );
 
-      return meters
+      return cachedMeters
           .map(
-            (meter) => MeterEntryStatus(
-              meter: meter,
-              todayReading: todayReadings[meter.id],
-              localDraft: draftsByMeter[meter.id],
-              lastReading: lastReadings[meter.id],
+            (cached) => MeterEntryStatus(
+              meter: cached.toMeter(),
+              todayReading: null,
+              localDraft: draftsByMeter[cached.meterId],
+              lastReading: lastReadingFromCached(cached),
               workStatus: MeterEntryStatus.resolveWorkStatus(
-                todayReading: todayReadings[meter.id],
-                localDraft: draftsByMeter[meter.id],
+                todayReading: null,
+                localDraft: draftsByMeter[cached.meterId],
               ),
             ),
           )
           .toList();
-    } catch (_) {
-      // Fall through to cache.
-    }
-  }
-
-  final cachedMeters = storage.getCachedMeters(
-    siteId: query.siteId,
-    category: query.categoryCode,
-  );
-
-  return cachedMeters
-      .map(
-        (cached) => MeterEntryStatus(
-          meter: cached.toMeter(),
-          todayReading: null,
-          localDraft: draftsByMeter[cached.meterId],
-          lastReading: lastReadingFromCached(cached),
-          workStatus: MeterEntryStatus.resolveWorkStatus(
-            todayReading: null,
-            localDraft: draftsByMeter[cached.meterId],
-          ),
-        ),
-      )
-      .toList();
-});
+    });
 
 class SyncState {
-  const SyncState({
-    this.isSyncing = false,
-    this.lastSyncTime,
-    this.lastError,
-  });
+  const SyncState({this.isSyncing = false, this.lastSyncTime, this.lastError});
 
   final bool isSyncing;
   final DateTime? lastSyncTime;
@@ -288,7 +293,9 @@ class SyncNotifier extends StateNotifier<SyncState> {
     }
 
     if (!_ref.read(isOnlineProvider)) {
-      state = state.copyWith(lastError: 'لا يوجد اتصال بالإنترنت. / No internet connection.');
+      state = state.copyWith(
+        lastError: 'لا يوجد اتصال بالإنترنت. / No internet connection.',
+      );
       return 0;
     }
 
@@ -343,13 +350,15 @@ final syncProvider = StateNotifierProvider<SyncNotifier, SyncState>((ref) {
   return SyncNotifier(ref);
 });
 
-final meterReadingPhotoUrlProvider =
-    FutureProvider.autoDispose.family<String?, String>((ref, storagePath) async {
-  if (storagePath.isEmpty) {
-    return null;
-  }
-  return ref.read(meterImageStorageRepositoryProvider).createSignedUrl(storagePath);
-});
+final meterReadingPhotoUrlProvider = FutureProvider.autoDispose
+    .family<String?, String>((ref, storagePath) async {
+      if (storagePath.isEmpty) {
+        return null;
+      }
+      return ref
+          .read(meterImageStorageRepositoryProvider)
+          .createSignedUrl(storagePath);
+    });
 
 class ReadingEntryState {
   const ReadingEntryState({
@@ -375,8 +384,7 @@ class ReadingEntryState {
   final bool savedLocally;
 
   bool get isSubmitted =>
-      todayReading != null ||
-      localDraft?.status == LocalReadingStatus.synced;
+      todayReading != null || localDraft?.status == LocalReadingStatus.synced;
 
   bool get isReadOnly =>
       todayReading != null ||
@@ -385,8 +393,7 @@ class ReadingEntryState {
       localDraft?.status == LocalReadingStatus.synced;
 
   bool get canEdit =>
-      !isReadOnly &&
-      (localDraft == null || localDraft!.isEditable);
+      !isReadOnly && (localDraft == null || localDraft!.isEditable);
 
   ReadingEntryState copyWith({
     MeterReading? lastReading,
@@ -454,7 +461,8 @@ class ReadingEntryQuery {
 }
 
 class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
-  ReadingEntryNotifier(this._ref, this._query) : super(const ReadingEntryState()) {
+  ReadingEntryNotifier(this._ref, this._query)
+    : super(const ReadingEntryState()) {
     _load();
   }
 
@@ -496,11 +504,14 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
             _query.meterId,
             _query.businessDate,
           );
-          last ??= today ??
+          if (!mounted) return;
+          last ??=
+              today ??
               await repo.getLastReadingBeforeDate(
                 _query.meterId,
                 _query.businessDate,
               );
+          if (!mounted) return;
         } catch (_) {
           // Use cache/draft only below.
         }
@@ -511,13 +522,15 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
           siteId: _query.siteId,
           category: _query.category.code,
         );
-        final match =
-            cached.where((meter) => meter.meterId == _query.meterId).toList();
+        final match = cached
+            .where((meter) => meter.meterId == _query.meterId)
+            .toList();
         if (match.isNotEmpty) {
           last = lastReadingFromCached(match.first);
         }
       }
 
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         todayReading: today,
@@ -525,6 +538,7 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
         localDraft: localDraft,
       );
     } catch (_) {
+      if (!mounted) return;
       state = state.copyWith(
         isLoading: false,
         errorMessage: 'Could not load reading data. Please try again.',
@@ -544,7 +558,9 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
 
     final profile = _ref.read(authProvider).profile;
     if (profile == null) {
-      state = state.copyWith(errorMessage: 'Session expired. Please sign in again.');
+      state = state.copyWith(
+        errorMessage: 'Session expired. Please sign in again.',
+      );
       return false;
     }
 
@@ -586,37 +602,35 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
           await fileStore.deletePhoto(existingDraft.watermarkedPhotoPath);
         }
       }
-      final draft = (existingDraft ??
-              LocalReadingDraft(
-                localId: localId,
-                siteId: _query.siteId,
-                meterId: _query.meterId,
-                readingDate: _query.readingDateIso,
-                rawValue: 0,
-                status: LocalReadingStatus.draft,
-                createdAt: now,
+      final draft =
+          (existingDraft ??
+                  LocalReadingDraft(
+                    localId: localId,
+                    siteId: _query.siteId,
+                    meterId: _query.meterId,
+                    readingDate: _query.readingDateIso,
+                    rawValue: 0,
+                    status: LocalReadingStatus.draft,
+                    createdAt: now,
+                    updatedAt: now,
+                    organizationId: _query.organizationId,
+                    categoryCode: _query.category.code,
+                  ))
+              .copyWith(
+                localPhotoPath: result.localPhotoPath,
+                watermarkedPhotoPath: result.watermarkedPhotoPath,
+                photoSource: result.source,
+                photoUploadStatus: PhotoUploadStatus.attachedLocally,
+                photoCapturedAt: now,
                 updatedAt: now,
                 organizationId: _query.organizationId,
                 categoryCode: _query.category.code,
-              ))
-          .copyWith(
-            localPhotoPath: result.localPhotoPath,
-            watermarkedPhotoPath: result.watermarkedPhotoPath,
-            photoSource: result.source,
-            photoUploadStatus: PhotoUploadStatus.attachedLocally,
-            photoCapturedAt: now,
-            updatedAt: now,
-            organizationId: _query.organizationId,
-            categoryCode: _query.category.code,
-            clearRemotePhotoPath: true,
-            clearRemotePhotoUrl: true,
-            clearPhotoErrorMessage: true,
-          );
+                clearRemotePhotoPath: true,
+                clearRemotePhotoUrl: true,
+                clearPhotoErrorMessage: true,
+              );
 
-      state = state.copyWith(
-        isAttachingPhoto: false,
-        localDraft: draft,
-      );
+      state = state.copyWith(isAttachingPhoto: false, localDraft: draft);
       // Persist immediately so photos survive app kill before Save.
       await _storage.saveDraft(draft);
       return true;
@@ -682,49 +696,54 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
     return true;
   }
 
-  Future<bool> saveReading({
-    required double rawValue,
-    String? note,
-  }) async {
+  Future<bool> saveReading({required double rawValue, String? note}) async {
     if (state.isReadOnly || state.isSaving) {
       return false;
     }
 
     final userId = _ref.read(authProvider).profile?.id;
     if (userId == null) {
-      state = state.copyWith(errorMessage: 'Session expired. Please sign in again.');
+      state = state.copyWith(
+        errorMessage: 'Session expired. Please sign in again.',
+      );
       return false;
     }
 
-    state = state.copyWith(isSaving: true, clearError: true, saveSucceeded: false);
+    state = state.copyWith(
+      isSaving: true,
+      clearError: true,
+      saveSucceeded: false,
+    );
 
     final trimmedNote = note?.trim();
     final now = DateTime.now();
-    final existingDraft = state.localDraft ??
+    final existingDraft =
+        state.localDraft ??
         _storage.getDraftForMeterAndDate(
           meterId: _query.meterId,
           readingDate: _query.readingDateIso,
         );
-    final draft = (existingDraft ??
-            LocalReadingDraft(
-              localId: _newLocalId(),
-              siteId: _query.siteId,
-              meterId: _query.meterId,
-              readingDate: _query.readingDateIso,
+    final draft =
+        (existingDraft ??
+                LocalReadingDraft(
+                  localId: _newLocalId(),
+                  siteId: _query.siteId,
+                  meterId: _query.meterId,
+                  readingDate: _query.readingDateIso,
+                  rawValue: rawValue,
+                  status: LocalReadingStatus.savedLocally,
+                  createdAt: now,
+                  updatedAt: now,
+                  organizationId: _query.organizationId,
+                  categoryCode: _query.category.code,
+                ))
+            .copyWith(
               rawValue: rawValue,
-              status: LocalReadingStatus.savedLocally,
-              createdAt: now,
+              note: trimmedNote?.isEmpty == true ? null : trimmedNote,
               updatedAt: now,
               organizationId: _query.organizationId,
               categoryCode: _query.category.code,
-            ))
-        .copyWith(
-          rawValue: rawValue,
-          note: trimmedNote?.isEmpty == true ? null : trimmedNote,
-          updatedAt: now,
-          organizationId: _query.organizationId,
-          categoryCode: _query.category.code,
-        );
+            );
 
     final isOnline = _ref.read(isOnlineProvider);
     final localDraft = draft.copyWith(
@@ -758,7 +777,8 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
           ? PolicySettings.fromJson(cached)
           : PolicySettings.defaults(_query.organizationId);
     }
-    final hasPhoto = localDraft.hasLocalPhoto ||
+    final hasPhoto =
+        localDraft.hasLocalPhoto ||
         (localDraft.remotePhotoPath != null &&
             localDraft.remotePhotoPath!.trim().isNotEmpty) ||
         (state.todayReading?.hasPhoto ?? false);
@@ -826,7 +846,8 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
           localDraft: syncedDraft,
           savedLocally: true,
           saveSucceeded: true,
-          errorMessage: syncedDraft.errorMessage ?? syncedDraft.photoErrorMessage,
+          errorMessage:
+              syncedDraft.errorMessage ?? syncedDraft.photoErrorMessage,
         );
         _ref.invalidate(metersWithStatusProvider);
         return true;
@@ -869,5 +890,5 @@ class ReadingEntryNotifier extends StateNotifier<ReadingEntryState> {
 
 final readingEntryProvider = StateNotifierProvider.autoDispose
     .family<ReadingEntryNotifier, ReadingEntryState, ReadingEntryQuery>(
-  (ref, query) => ReadingEntryNotifier(ref, query),
-);
+      (ref, query) => ReadingEntryNotifier(ref, query),
+    );

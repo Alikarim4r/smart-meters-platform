@@ -80,7 +80,7 @@ class _EfficiencyMetersPolicySectionState
       if (!mounted) return;
       setState(() {
         _loading = false;
-        _status = error.toString();
+        _status = AdminStrings(ref.read(adminLocaleProvider)).couldNotLoad;
       });
     }
   }
@@ -123,7 +123,7 @@ class _EfficiencyMetersPolicySectionState
       if (!mounted) return;
       setState(() {
         _saving = false;
-        _status = error.toString();
+        _status = s.genericError;
       });
     }
   }
@@ -156,7 +156,7 @@ class _EfficiencyMetersPolicySectionState
         const SizedBox(height: 12),
         sitesAsync.when(
           loading: () => const LinearProgressIndicator(),
-          error: (e, _) => Text(e.toString()),
+          error: (e, _) => Text(s.couldNotLoad),
           data: (sites) {
             final orgSites = sites
                 .where((site) => site.organizationId == widget.organizationId)
@@ -188,7 +188,7 @@ class _EfficiencyMetersPolicySectionState
         else if (metersAsync != null)
           metersAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Text(e.toString()),
+            error: (e, _) => Text(s.couldNotLoad),
             data: (meters) {
               final btuMeters = meters
                   .where(

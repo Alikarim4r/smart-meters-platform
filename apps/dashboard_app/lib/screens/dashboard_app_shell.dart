@@ -53,15 +53,9 @@ class DashboardAppShell extends ConsumerWidget {
 
     Widget body;
     if (selectedSiteId != null) {
-      body = SiteDashboardScreen(
-        siteId: selectedSiteId,
-        embedded: true,
-      );
+      body = SiteDashboardScreen(siteId: selectedSiteId, embedded: true);
     } else if (section == DashboardShellSection.alerts) {
-      body = const DashboardHomeScreen(
-        embedded: true,
-        alertsFocus: true,
-      );
+      body = const DashboardHomeScreen(embedded: true, alertsFocus: true);
     } else {
       body = DashboardHomeScreen(
         embedded: true,
@@ -69,8 +63,9 @@ class DashboardAppShell extends ConsumerWidget {
           ref.read(selectedSiteIdProvider.notifier).state = siteId;
           ref.read(siteDashboardSectionProvider.notifier).state =
               SiteDashboardSection.overview;
-          ref.read(siteDateSelectionProvider(siteId).notifier).state =
-              defaultDateSelectionForSite(
+          ref
+              .read(siteDateSelectionProvider(siteId).notifier)
+              .state = defaultDateSelectionForSite(
             siteId,
             ref.read(businessDateProvider),
           );
@@ -83,46 +78,47 @@ class DashboardAppShell extends ConsumerWidget {
       onLink: (intent) => applyDashboardPartnerLink(ref, intent),
       child: DashboardNotificationBridge(
         child: DashboardKeyboardShortcuts(
-        onRefresh: refreshCurrent,
-        onFocusSearch: () =>
-            ref.read(meterSearchFocusNodeProvider).requestFocus(),
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          body: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Size to sidebar width — do not expand into the content pane.
-              BrandSurfaceBackground(
-                expand: false,
-                showMotif: false,
-                child: DashboardSidebar(
-                  onSignOut: () => ref.read(authProvider.notifier).signOut(),
-                ),
-              ),
-              Expanded(
-                child: DashboardBackground(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (selectedSiteId == null)
-                        DashboardTopHeader(
-                          onRefresh: refreshCurrent,
-                          onViewAlerts: () {
-                            ref
-                                .read(dashboardShellSectionProvider.notifier)
-                                .state = DashboardShellSection.alerts;
-                          },
-                        ),
-                      // Fill the pane — avoid centered max-width gutters of empty motif.
-                      Expanded(child: body),
-                    ],
+          onRefresh: refreshCurrent,
+          onFocusSearch: () =>
+              ref.read(meterSearchFocusNodeProvider).requestFocus(),
+          child: Scaffold(
+            backgroundColor: Colors.transparent,
+            body: Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Size to sidebar width — do not expand into the content pane.
+                BrandSurfaceBackground(
+                  expand: false,
+                  showMotif: false,
+                  child: DashboardSidebar(
+                    onSignOut: () => ref.read(authProvider.notifier).signOut(),
                   ),
                 ),
-              ),
-            ],
+                Expanded(
+                  child: DashboardBackground(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (selectedSiteId == null)
+                          DashboardTopHeader(
+                            onRefresh: refreshCurrent,
+                            onViewAlerts: () {
+                              ref
+                                  .read(dashboardShellSectionProvider.notifier)
+                                  .state = DashboardShellSection
+                                  .alerts;
+                            },
+                          ),
+                        // Fill the pane — avoid centered max-width gutters of empty motif.
+                        Expanded(child: body),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -145,7 +141,9 @@ class _MobileDashboardShell extends ConsumerWidget {
       section,
       selectedSiteId == null
           ? null
-          : ref.watch(siteCategoriesSummaryProvider(selectedSiteId)).valueOrNull,
+          : ref
+                .watch(siteCategoriesSummaryProvider(selectedSiteId))
+                .valueOrNull,
     );
 
     Future<void> refreshCurrent() async {
@@ -164,22 +162,19 @@ class _MobileDashboardShell extends ConsumerWidget {
       ref.read(siteDashboardSectionProvider.notifier).state =
           SiteDashboardSection.overview;
       ref.read(siteDateSelectionProvider(siteId).notifier).state =
-          defaultDateSelectionForSite(
-        siteId,
-        ref.read(businessDateProvider),
-      );
+          defaultDateSelectionForSite(siteId, ref.read(businessDateProvider));
     }
 
     final title = selectedSiteId == null
         ? s.sites
         : summaryAsync?.maybeWhen(
-              data: (summary) => s.localizedName(
-                en: summary.site.nameEn,
-                ar: summary.site.nameAr,
-              ),
-              orElse: () => s.appTitle,
-            ) ??
-            s.appTitle;
+                data: (summary) => s.localizedName(
+                  en: summary.site.nameEn,
+                  ar: summary.site.nameAr,
+                ),
+                orElse: () => s.appTitle,
+              ) ??
+              s.appTitle;
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -194,7 +189,8 @@ class _MobileDashboardShell extends ConsumerWidget {
         ),
       ),
       appBar: AppBar(
-        title: Text(title),
+        toolbarHeight: 72,
+        title: Text(title, maxLines: 2, overflow: TextOverflow.ellipsis),
         backgroundColor: dashboardColors(context).background,
         actions: [
           if (selectedSiteId != null) ...[
@@ -229,20 +225,12 @@ class _MobileDashboardShell extends ConsumerWidget {
         top: false,
         bottom: true,
         minimum: EdgeInsets.only(
-          bottom: MediaQuery.viewPaddingOf(context).bottom > 0
-              ? 0
-              : 8,
+          bottom: MediaQuery.viewPaddingOf(context).bottom > 0 ? 0 : 8,
         ),
         child: DashboardBackground(
           child: selectedSiteId == null
-              ? DashboardHomeScreen(
-                  embedded: true,
-                  onSiteSelected: openSite,
-                )
-              : SiteDashboardScreen(
-                  siteId: selectedSiteId,
-                  embedded: true,
-                ),
+              ? DashboardHomeScreen(embedded: true, onSiteSelected: openSite)
+              : SiteDashboardScreen(siteId: selectedSiteId, embedded: true),
         ),
       ),
     );

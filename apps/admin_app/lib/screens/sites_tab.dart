@@ -147,7 +147,10 @@ class _SitesTabState extends ConsumerState<SitesTab> {
             const SizedBox(height: 8),
             Expanded(
               child: sitesAsync.when(
-                loading: () => const Center(child: CircularProgressIndicator()),
+                loading: () => const Padding(
+                  padding: EdgeInsets.all(16),
+                  child: BrandSkeletonLedger(rows: 6),
+                ),
                 error: (error, _) => CatalogErrorView(
                   message: friendlySiteError(error),
                   onRetry: () => ref.invalidate(adminSitesProvider),
@@ -171,55 +174,83 @@ class _SitesTabState extends ConsumerState<SitesTab> {
                     );
                   }
 
-                  return ListView.separated(
+                  return ListView.builder(
                     padding: EdgeInsets.fromLTRB(16, 8, 16, listBottomPadding),
                     itemCount: filtered.length,
-                    separatorBuilder: (_, _) => const SizedBox(height: 10),
                     itemBuilder: (context, index) {
                       final site = filtered[index];
-                      return BrandInkCard(
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute<void>(
-                              builder: (_) => SiteDetailScreen(siteId: site.id),
-                            ),
-                          );
-                          ref.invalidate(adminSitesProvider);
-                        },
-                        padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
-                        child: Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            brandIconWell(
-                              context: context,
-                              icon: Icons.apartment_rounded,
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    site.nameEn,
-                                    style: Theme.of(context)
-                                        .textTheme
-                                        .titleSmall
-                                        ?.copyWith(
-                                          fontWeight: FontWeight.w800,
-                                          color: BrandChrome.titleColor(
-                                            isDark:
-                                                Theme.of(context).brightness ==
-                                                Brightness.dark,
-                                            scheme: Theme.of(
-                                              context,
-                                            ).colorScheme,
-                                          ),
-                                        ),
-                                  ),
-                                  if (site.nameAr.isNotEmpty) ...[
-                                    const SizedBox(height: 2),
+                      return BrandLedgerTile(
+                        isFirst: index == 0,
+                        isLast: index == filtered.length - 1,
+                        child: BrandInkCard(
+                          borderRadius: 0,
+                          borderWidth: 0,
+                          onTap: () async {
+                            await Navigator.of(context).push(
+                              MaterialPageRoute<void>(
+                                builder: (_) =>
+                                    SiteDetailScreen(siteId: site.id),
+                              ),
+                            );
+                            ref.invalidate(adminSitesProvider);
+                          },
+                          padding: const EdgeInsets.fromLTRB(14, 12, 8, 12),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              brandIconWell(
+                                context: context,
+                                icon: Icons.apartment_rounded,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
                                     Text(
-                                      site.nameAr,
+                                      site.nameEn,
+                                      style: Theme.of(context)
+                                          .textTheme
+                                          .titleSmall
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w800,
+                                            color: BrandChrome.titleColor(
+                                              isDark:
+                                                  Theme.of(
+                                                    context,
+                                                  ).brightness ==
+                                                  Brightness.dark,
+                                              scheme: Theme.of(
+                                                context,
+                                              ).colorScheme,
+                                            ),
+                                          ),
+                                    ),
+                                    if (site.nameAr.isNotEmpty) ...[
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        site.nameAr,
+                                        style: Theme.of(context)
+                                            .textTheme
+                                            .bodySmall
+                                            ?.copyWith(
+                                              color: BrandChrome.mutedColor(
+                                                isDark:
+                                                    Theme.of(
+                                                      context,
+                                                    ).brightness ==
+                                                    Brightness.dark,
+                                                scheme: Theme.of(
+                                                  context,
+                                                ).colorScheme,
+                                              ),
+                                            ),
+                                      ),
+                                    ],
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      '${site.typeLabel(isAr: false)}'
+                                      '${site.location != null ? ' · ${site.location}' : ''}',
                                       style: Theme.of(context)
                                           .textTheme
                                           .bodySmall
@@ -236,153 +267,139 @@ class _SitesTabState extends ConsumerState<SitesTab> {
                                             ),
                                           ),
                                     ),
-                                  ],
-                                  const SizedBox(height: 6),
-                                  Text(
-                                    '${site.typeLabel(isAr: false)}'
-                                    '${site.location != null ? ' · ${site.location}' : ''}',
-                                    style: Theme.of(context).textTheme.bodySmall
-                                        ?.copyWith(
-                                          color: BrandChrome.mutedColor(
-                                            isDark:
-                                                Theme.of(context).brightness ==
-                                                Brightness.dark,
-                                            scheme: Theme.of(
-                                              context,
-                                            ).colorScheme,
-                                          ),
+                                    const SizedBox(height: 10),
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: [
+                                        catalogStatusChip(
+                                          isActive: site.isActive,
                                         ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: [
-                                      catalogStatusChip(
-                                        isActive: site.isActive,
-                                      ),
-                                      catalogTypeChip(
-                                        label: site.displayZoneName,
-                                        icon: Icons.map_outlined,
-                                        color: site.zoneId == null
-                                            ? Colors.brown
-                                            : Colors.amber,
-                                      ),
-                                      if (site.meterCount != null)
                                         catalogTypeChip(
-                                          label:
-                                              '${site.meterCount} meter${site.meterCount == 1 ? '' : 's'}',
-                                          icon: Icons.speed,
-                                          color: Colors.orange,
+                                          label: site.displayZoneName,
+                                          icon: Icons.map_outlined,
+                                          color: site.zoneId == null
+                                              ? Colors.brown
+                                              : Colors.amber,
                                         ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (canEdit)
-                              PopupMenuButton<String>(
-                                onSelected: (action) async {
-                                  switch (action) {
-                                    case 'edit':
-                                      await Navigator.of(context).push(
-                                        MaterialPageRoute<void>(
-                                          builder: (_) =>
-                                              SiteFormScreen(site: site),
-                                        ),
-                                      );
-                                      ref.invalidate(adminSitesProvider);
-                                    case 'toggle':
-                                      await _toggleActive(site);
-                                    case 'meters':
-                                      ref
-                                              .read(
-                                                selectedAdminSiteIdProvider
-                                                    .notifier,
-                                              )
-                                              .state =
-                                          site.id;
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        SnackBar(
-                                          content: Text(
-                                            'Open the Meters tab for ${site.nameEn}',
+                                        if (site.meterCount != null)
+                                          catalogTypeChip(
+                                            label:
+                                                '${site.meterCount} meter${site.meterCount == 1 ? '' : 's'}',
+                                            icon: Icons.speed,
+                                            color: Colors.orange,
                                           ),
-                                        ),
-                                      );
-                                    case 'delete':
-                                      final confirmed = canForceDelete
-                                          ? await confirmForceDelete(
-                                              context: context,
-                                              title: adminText(
-                                                context,
-                                                'Force-delete site?',
-                                                'حذف الموقع إجباريًا؟',
-                                              ),
-                                              entityName: site.nameEn,
-                                            )
-                                          : await confirmRestrictedDelete(
-                                              context: context,
-                                              title: adminText(
-                                                context,
-                                                'Delete site?',
-                                                'حذف الموقع؟',
-                                              ),
-                                              entityName: site.nameEn,
-                                              restrictionMessage:
-                                                  'Not allowed while meters, tanks, or other linked data still reference this site. '
-                                                  'Remove dependents first, or ask a super admin to force-delete.',
-                                            );
-                                      if (confirmed != true) return;
-                                      try {
-                                        final repo = ref.read(
-                                          siteRepositoryProvider,
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (canEdit)
+                                PopupMenuButton<String>(
+                                  onSelected: (action) async {
+                                    switch (action) {
+                                      case 'edit':
+                                        await Navigator.of(context).push(
+                                          MaterialPageRoute<void>(
+                                            builder: (_) =>
+                                                SiteFormScreen(site: site),
+                                          ),
                                         );
-                                        if (canForceDelete) {
-                                          await repo.forceDeleteSite(site.id);
-                                        } else {
-                                          await repo.deleteSite(site.id);
-                                        }
                                         ref.invalidate(adminSitesProvider);
-                                      } catch (error) {
+                                      case 'toggle':
+                                        await _toggleActive(site);
+                                      case 'meters':
+                                        ref
+                                                .read(
+                                                  selectedAdminSiteIdProvider
+                                                      .notifier,
+                                                )
+                                                .state =
+                                            site.id;
                                         if (!context.mounted) return;
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
                                           SnackBar(
                                             content: Text(
-                                              friendlySiteError(error),
+                                              'Open the Meters tab for ${site.nameEn}',
                                             ),
                                           ),
                                         );
-                                      }
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: 'edit',
-                                    child: Text(s.edit),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'toggle',
-                                    child: Text(
-                                      site.isActive ? s.deactivate : s.activate,
-                                    ),
-                                  ),
-                                  PopupMenuItem(
-                                    value: 'meters',
-                                    child: Text(s.viewMeters),
-                                  ),
-                                  if (canDelete)
+                                      case 'delete':
+                                        final confirmed = canForceDelete
+                                            ? await confirmForceDelete(
+                                                context: context,
+                                                title: adminText(
+                                                  context,
+                                                  'Force-delete site?',
+                                                  'حذف الموقع إجباريًا؟',
+                                                ),
+                                                entityName: site.nameEn,
+                                              )
+                                            : await confirmRestrictedDelete(
+                                                context: context,
+                                                title: adminText(
+                                                  context,
+                                                  'Delete site?',
+                                                  'حذف الموقع؟',
+                                                ),
+                                                entityName: site.nameEn,
+                                                restrictionMessage:
+                                                    'Not allowed while meters, tanks, or other linked data still reference this site. '
+                                                    'Remove dependents first, or ask a super admin to force-delete.',
+                                              );
+                                        if (confirmed != true) return;
+                                        try {
+                                          final repo = ref.read(
+                                            siteRepositoryProvider,
+                                          );
+                                          if (canForceDelete) {
+                                            await repo.forceDeleteSite(site.id);
+                                          } else {
+                                            await repo.deleteSite(site.id);
+                                          }
+                                          ref.invalidate(adminSitesProvider);
+                                        } catch (error) {
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(
+                                                friendlySiteError(error),
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
                                     PopupMenuItem(
-                                      value: 'delete',
-                                      child: Text(s.delete),
+                                      value: 'edit',
+                                      child: Text(s.edit),
                                     ),
-                                ],
-                              ),
-                          ],
+                                    PopupMenuItem(
+                                      value: 'toggle',
+                                      child: Text(
+                                        site.isActive
+                                            ? s.deactivate
+                                            : s.activate,
+                                      ),
+                                    ),
+                                    PopupMenuItem(
+                                      value: 'meters',
+                                      child: Text(s.viewMeters),
+                                    ),
+                                    if (canDelete)
+                                      PopupMenuItem(
+                                        value: 'delete',
+                                        child: Text(s.delete),
+                                      ),
+                                  ],
+                                ),
+                            ],
+                          ),
                         ),
                       );
                     },

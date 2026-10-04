@@ -8,11 +8,7 @@ import '../providers/preferences_providers.dart';
 import '../widgets/catalog_widgets.dart';
 
 class CopGroupFormScreen extends ConsumerStatefulWidget {
-  const CopGroupFormScreen({
-    super.key,
-    required this.siteId,
-    this.existing,
-  });
+  const CopGroupFormScreen({super.key, required this.siteId, this.existing});
 
   final String siteId;
   final CopGroupDetail? existing;
@@ -35,7 +31,9 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
   void initState() {
     super.initState();
     final existing = widget.existing;
-    _nameEn = TextEditingController(text: existing?.nameEn ?? 'Chiller Plant COP');
+    _nameEn = TextEditingController(
+      text: existing?.nameEn ?? 'Chiller Plant COP',
+    );
     _nameAr = TextEditingController(
       text: existing?.nameAr ?? 'معامل أداء محطة التبريد',
     );
@@ -56,15 +54,17 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
   Future<void> _save(AdminStrings s) async {
     if (!_formKey.currentState!.validate()) return;
     if (_btuMeterIds.isEmpty || _elecMeterIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(s.copGroupNeedsBothMeterTypes)),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.copGroupNeedsBothMeterTypes)));
       return;
     }
 
     setState(() => _saving = true);
     try {
-      await ref.read(copGroupRepositoryProvider).upsert(
+      await ref
+          .read(copGroupRepositoryProvider)
+          .upsert(
             CopGroupUpsertInput(
               id: widget.existing?.id,
               siteId: widget.siteId,
@@ -82,9 +82,9 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.genericError)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -118,9 +118,9 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
       Navigator.of(context).pop();
     } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(error.toString())),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(s.genericError)));
     } finally {
       if (mounted) setState(() => _saving = false);
     }
@@ -148,8 +148,7 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (error, _) => CatalogErrorView(
           message: friendlyMeterError(error),
-          onRetry: () =>
-              ref.invalidate(siteMetersProvider(widget.siteId)),
+          onRetry: () => ref.invalidate(siteMetersProvider(widget.siteId)),
         ),
         data: (meters) {
           final btuMeters = meters
@@ -180,17 +179,15 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
                 TextFormField(
                   controller: _nameEn,
                   decoration: InputDecoration(labelText: s.englishName),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? s.fieldRequired
-                      : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? s.fieldRequired : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
                   controller: _nameAr,
                   decoration: InputDecoration(labelText: s.arabicName),
-                  validator: (v) => (v == null || v.trim().isEmpty)
-                      ? s.fieldRequired
-                      : null,
+                  validator: (v) =>
+                      (v == null || v.trim().isEmpty) ? s.fieldRequired : null,
                 ),
                 const SizedBox(height: 12),
                 TextFormField(
@@ -231,9 +228,7 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
                         });
                       },
                       title: Text(s.isAr ? meter.nameAr : meter.nameEn),
-                      subtitle: Text(
-                        '${meter.meterCode} · ${meter.baseUnit}',
-                      ),
+                      subtitle: Text('${meter.meterCode} · ${meter.baseUnit}'),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
                   ),
@@ -264,9 +259,7 @@ class _CopGroupFormScreenState extends ConsumerState<CopGroupFormScreen> {
                         });
                       },
                       title: Text(s.isAr ? meter.nameAr : meter.nameEn),
-                      subtitle: Text(
-                        '${meter.meterCode} · ${meter.baseUnit}',
-                      ),
+                      subtitle: Text('${meter.meterCode} · ${meter.baseUnit}'),
                       controlAffinity: ListTileControlAffinity.leading,
                     ),
                   ),

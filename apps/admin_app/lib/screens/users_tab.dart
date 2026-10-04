@@ -398,6 +398,8 @@ class _UsersTabState extends ConsumerState<UsersTab> {
                                 ApprovalStatus.pending;
                             return UserListTileCard(
                               user: user,
+                              isFirst: i == 0,
+                              isLast: i == byRole[role]!.length - 1,
                               onTap: () => _openUserDetail(user),
                               subtitleExtra: isPending && canManage
                                   ? Column(

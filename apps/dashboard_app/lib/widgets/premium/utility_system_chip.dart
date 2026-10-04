@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:smart_meters_core/smart_meters_core.dart';
 
 import '../../l10n/app_strings.dart';
 import '../../theme/dashboard_theme.dart';
@@ -37,30 +38,21 @@ class UtilitySystemChip extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           onTap: () => onSelected(section),
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(BrandRadius.control),
           child: AnimatedContainer(
-            duration: const Duration(milliseconds: 180),
-            curve: Curves.easeOutCubic,
-            constraints: const BoxConstraints(minHeight: 44),
+            duration: BrandMotion.resolve(context, BrandMotion.quick),
+            curve: BrandMotion.curve,
+            constraints: const BoxConstraints(
+              minHeight: BrandSpace.touchTarget,
+            ),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
               color: selected ? selectedBg : colors.cardElevated,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(BrandRadius.control),
               border: Border.all(
                 color: selected ? selectedBorder : colors.border,
                 width: selected ? 1.35 : 1,
               ),
-              boxShadow: selected
-                  ? [
-                      BoxShadow(
-                        color: scheme.primary.withValues(
-                          alpha: isDark ? 0.12 : 0.08,
-                        ),
-                        blurRadius: 16,
-                        offset: const Offset(0, 5),
-                      ),
-                    ]
-                  : null,
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,

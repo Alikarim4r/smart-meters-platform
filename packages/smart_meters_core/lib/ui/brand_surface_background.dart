@@ -54,7 +54,7 @@ class BrandSurfaceBackground extends StatelessWidget {
 
   static Widget _lightMotif() {
     return const Opacity(
-      opacity: 0.16,
+      opacity: 0.07,
       child: ColorFiltered(
         colorFilter: ColorFilter.mode(motifGray, BlendMode.srcIn),
         child: DecoratedBox(
@@ -74,7 +74,7 @@ class BrandSurfaceBackground extends StatelessWidget {
 
   static Widget _darkMotif() {
     return const Opacity(
-      opacity: 0.14,
+      opacity: 0.06,
       child: DecoratedBox(
         decoration: BoxDecoration(
           image: DecorationImage(

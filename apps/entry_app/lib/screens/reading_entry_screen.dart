@@ -312,8 +312,10 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
         SnackBar(
           content: Text(
             denied
-                ? 'فعّل صلاحية الكاميرا/الصور من إعدادات التطبيق ثم أعد المحاولة.'
-                : 'تعذّر فتح الكاميرا/المعرض: ${error.message ?? error.code}',
+                ? (s.isAr
+                      ? 'فعّل صلاحية الكاميرا/الصور من إعدادات التطبيق ثم أعد المحاولة.'
+                      : 'Enable camera or photo access in app settings, then try again.')
+                : s.photoPickFailed,
           ),
         ),
       );
@@ -351,7 +353,10 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
         ),
       ),
       body: entryState.isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? ListView(
+              padding: const EdgeInsets.all(16),
+              children: const [BrandSkeletonLedger(rows: 5)],
+            )
           : SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
               child: Form(
@@ -445,29 +450,44 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
                       ),
                       if (entryState.errorMessage != null) ...[
                         const SizedBox(height: 10),
-                        Text(
-                          entryState.errorMessage!,
-                          style: TextStyle(color: theme.colorScheme.error),
+                        Semantics(
+                          liveRegion: true,
+                          child: BrandStatusMark(
+                            label: s.isAr
+                                ? 'تعذّر حفظ القراءة. راجع القيمة والصورة ثم أعد المحاولة.'
+                                : 'Could not save the reading. Review the value and photo, then try again.',
+                            tone: BrandStatusTone.danger,
+                          ),
                         ),
                       ],
-                      const SizedBox(height: 16),
-                      FilledButton(
-                        onPressed: entryState.isSaving ? null : _save,
-                        style: FilledButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                        ),
-                        child: entryState.isSaving
-                            ? const SizedBox(
-                                height: 20,
-                                width: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : Text(s.isAr ? 'حفظ القراءة' : 'Save reading'),
-                      ),
                     ],
                   ],
+                ),
+              ),
+            ),
+      bottomNavigationBar: entryState.isLoading || isReadOnly
+          ? null
+          : SafeArea(
+              top: false,
+              child: Material(
+                color: theme.colorScheme.surface,
+                child: Container(
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+                  decoration: BoxDecoration(
+                    border: Border(
+                      top: BorderSide(color: theme.colorScheme.outlineVariant),
+                    ),
+                  ),
+                  child: FilledButton.icon(
+                    onPressed: entryState.isSaving ? null : _save,
+                    icon: entryState.isSaving
+                        ? const SizedBox.square(
+                            dimension: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.save_outlined),
+                    label: Text(s.isAr ? 'حفظ القراءة' : 'Save reading'),
+                  ),
                 ),
               ),
             ),
@@ -478,22 +498,34 @@ class _ReadingEntryScreenState extends ConsumerState<ReadingEntryScreen> {
 class _LocalDraftBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Container(
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.surfaceContainerHigh,
+      borderRadius: BorderRadius.circular(BrandRadius.control),
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.indigo.shade50,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.indigo.shade100),
+        borderRadius: BorderRadius.circular(BrandRadius.control),
+        border: Border.all(color: theme.colorScheme.outlineVariant),
       ),
-      child: Text(
-        entryText(
-          context,
-          'You are editing a locally saved reading. Changes sync when online.',
-          'أنت تعدّل قراءة محفوظة محليًا. ستتم مزامنة التغييرات عند الاتصال.',
-        ),
-        style: TextStyle(color: Colors.indigo.shade900, fontSize: 13),
+      child: Row(
+        children: [
+          Icon(Icons.cloud_off_outlined, color: theme.colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              entryText(
+                context,
+                'You are editing a locally saved reading. Changes sync when online.',
+                'أنت تعدّل قراءة محفوظة محليًا. ستتم مزامنة التغييرات عند الاتصال.',
+              ),
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
       ),
+    ),
     );
   }
 }
@@ -513,88 +545,50 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return Card(
-      margin: EdgeInsets.zero,
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              meter.nameEn,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            _InfoRow(
-              label: entryText(context, 'Code', 'الرمز'),
-              value: meter.meterCode,
-            ),
-            if (location != null && location!.trim().isNotEmpty)
-              _InfoRow(
-                label: entryText(context, 'Location', 'الموقع'),
-                value: location!,
-              ),
-            _InfoRow(
-              label: entryText(context, 'Unit', 'الوحدة'),
-              value: meter.unitDisplayLabel,
-            ),
-            _InfoRow(
-              label: entryText(context, 'Today', 'اليوم'),
-              value: EntryStrings(
-                Localizations.localeOf(context),
-              ).dateDisplay(businessDate),
-            ),
-            _InfoRow(
-              label: entryText(context, 'Last reading', 'آخر قراءة'),
-              value: lastReading == null
-                  ? 'No previous reading'
-                  : '${lastReading!.rawValue} ${meter.unitDisplayLabel} '
-                        '(${formatBusinessDate(lastReading!.readingDate)})',
-            ),
-          ],
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final meterName = isAr && meter.nameAr.trim().isNotEmpty
+        ? meter.nameAr
+        : meter.nameEn;
+    return BrandContextStrip(
+      fields: [
+        BrandContextField(
+          label: entryText(context, 'Meter', 'العداد'),
+          value: meterName,
+          flex: 2,
+          maxLines: 2,
         ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  const _InfoRow({required this.label, required this.value});
-
-  final String label;
-  final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 96,
-            child: Text(
-              label,
-              style: TextStyle(color: Colors.grey.shade600, fontSize: 13),
-            ),
+        BrandContextField(
+          label: entryText(context, 'Code', 'الرمز'),
+          value: meter.meterCode,
+          tabular: true,
+        ),
+        if (location != null && location!.trim().isNotEmpty)
+          BrandContextField(
+            label: entryText(context, 'Location', 'الموقع'),
+            value: location!,
+            maxLines: 2,
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13),
-            ),
-          ),
-        ],
-      ),
+        BrandContextField(
+          label: entryText(context, 'Unit', 'الوحدة'),
+          value: meter.unitDisplayLabel,
+        ),
+        BrandContextField(
+          label: entryText(context, 'Today', 'اليوم'),
+          value: EntryStrings(
+            Localizations.localeOf(context),
+          ).dateDisplay(businessDate),
+          tabular: true,
+        ),
+        BrandContextField(
+          label: entryText(context, 'Last reading', 'آخر قراءة'),
+          value: lastReading == null
+              ? (isAr ? 'لا توجد قراءة سابقة' : 'No previous reading')
+              : '${lastReading!.rawValue} ${meter.unitDisplayLabel} '
+                    '(${formatBusinessDate(lastReading!.readingDate)})',
+          maxLines: 2,
+          tabular: true,
+        ),
+      ],
     );
   }
 }

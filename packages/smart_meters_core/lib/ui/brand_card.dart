@@ -3,7 +3,8 @@ import 'package:flutter/material.dart';
 import '../theme/brand_chrome.dart';
 import '../theme/brand_tokens.dart';
 
-/// Shared card shell: hairline border, near-flat tonal wash, resting shadow.
+/// Shared content surface: hairline border and quiet tonal fill, without
+/// resting elevation.
 BoxDecoration brandCardDecoration(
   BuildContext context, {
   double radius = BrandRadius.card,
@@ -18,7 +19,6 @@ BoxDecoration brandCardDecoration(
       width: borderWidth,
     ),
     gradient: BrandChrome.cardWash(isDark: isDark),
-    boxShadow: BrandShadows.resting(isDark: isDark),
   );
 }
 
@@ -65,6 +65,7 @@ class BrandInkCard extends StatelessWidget {
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
     this.margin,
     this.borderRadius = BrandRadius.card,
+    this.borderWidth = 1,
     this.enabled = true,
   });
 
@@ -73,6 +74,7 @@ class BrandInkCard extends StatelessWidget {
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry? margin;
   final double borderRadius;
+  final double borderWidth;
   final bool enabled;
 
   @override
@@ -85,7 +87,11 @@ class BrandInkCard extends StatelessWidget {
         borderRadius: radius,
         onTap: enabled ? onTap : null,
         child: Ink(
-          decoration: brandCardDecoration(context, radius: borderRadius),
+          decoration: brandCardDecoration(
+            context,
+            radius: borderRadius,
+            borderWidth: borderWidth,
+          ),
           child: Padding(padding: padding, child: child),
         ),
       ),

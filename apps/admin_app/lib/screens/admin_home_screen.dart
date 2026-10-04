@@ -74,24 +74,34 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
 
     final s = AdminStrings(ref.watch(adminLocaleProvider));
     final titles = [s.structure, s.meters, s.network, s.users];
+    final icons = const [
+      Icons.account_tree_outlined,
+      Icons.speed_outlined,
+      Icons.hub_outlined,
+      Icons.people_outline,
+    ];
+    final selectedIcons = const [
+      Icons.account_tree,
+      Icons.speed,
+      Icons.hub,
+      Icons.people,
+    ];
+    final useRail = MediaQuery.sizeOf(context).width >= 840;
+    final content = BrandSurfaceBackground(
+      showMotif: false,
+      child: IndexedStack(
+        index: _index,
+        children: [_tabBody(0), _tabBody(1), _tabBody(2), _tabBody(3)],
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(
-        toolbarHeight: 76,
+        toolbarHeight: 68,
         titleSpacing: 8,
         title: Row(
           children: [
-            brandIconWell(
-              context: context,
-              icon: switch (_index) {
-                0 => Icons.account_tree_outlined,
-                1 => Icons.speed_outlined,
-                2 => Icons.hub_outlined,
-                _ => Icons.people_outline,
-              },
-              size: 40,
-              iconSize: 20,
-            ),
+            Icon(icons[_index], color: Theme.of(context).colorScheme.primary),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -120,39 +130,45 @@ class _AdminHomeScreenState extends ConsumerState<AdminHomeScreen> {
         ),
       ),
       drawer: const AdminSettingsDrawer(),
-      body: BrandSurfaceBackground(
-        showMotif: false,
-        child: IndexedStack(
-          index: _index,
-          children: [_tabBody(0), _tabBody(1), _tabBody(2), _tabBody(3)],
-        ),
-      ),
-      bottomNavigationBar: NavigationBar(
-        selectedIndex: _index,
-        onDestinationSelected: _selectTab,
-        destinations: [
-          NavigationDestination(
-            icon: const Icon(Icons.account_tree_outlined),
-            selectedIcon: const Icon(Icons.account_tree),
-            label: s.structure,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.speed_outlined),
-            selectedIcon: const Icon(Icons.speed),
-            label: s.meters,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.hub_outlined),
-            selectedIcon: const Icon(Icons.hub),
-            label: s.network,
-          ),
-          NavigationDestination(
-            icon: const Icon(Icons.people_outline),
-            selectedIcon: const Icon(Icons.people),
-            label: s.users,
-          ),
-        ],
-      ),
+      body: useRail
+          ? Row(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                NavigationRail(
+                  selectedIndex: _index,
+                  onDestinationSelected: _selectTab,
+                  extended: MediaQuery.sizeOf(context).width >= 1180,
+                  labelType: MediaQuery.sizeOf(context).width >= 1180
+                      ? NavigationRailLabelType.none
+                      : NavigationRailLabelType.all,
+                  destinations: [
+                    for (var index = 0; index < titles.length; index++)
+                      NavigationRailDestination(
+                        icon: Icon(icons[index]),
+                        selectedIcon: Icon(selectedIcons[index]),
+                        label: Text(titles[index]),
+                      ),
+                  ],
+                ),
+                const VerticalDivider(width: 1),
+                Expanded(child: content),
+              ],
+            )
+          : content,
+      bottomNavigationBar: useRail
+          ? null
+          : NavigationBar(
+              selectedIndex: _index,
+              onDestinationSelected: _selectTab,
+              destinations: [
+                for (var index = 0; index < titles.length; index++)
+                  NavigationDestination(
+                    icon: Icon(icons[index]),
+                    selectedIcon: Icon(selectedIcons[index]),
+                    label: titles[index],
+                  ),
+              ],
+            ),
     );
   }
 }

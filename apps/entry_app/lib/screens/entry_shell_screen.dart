@@ -123,7 +123,7 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
               const ConnectivityStatusBar(),
               Expanded(
                 child: AnimatedSwitcher(
-                  duration: const Duration(milliseconds: 250),
+                  duration: BrandMotion.resolve(context, BrandMotion.standard),
                   child: selectedSite == null
                       ? SiteSelectionScreen(
                           key: const ValueKey('site'),
@@ -178,7 +178,7 @@ class _EntryShellScreenState extends ConsumerState<EntryShellScreen>
   }
 }
 
-/// Compact header matching site/category card language (cream + gold).
+/// Compact field header: context first, with a ruled edge instead of a card.
 class EntryHeader extends StatelessWidget {
   const EntryHeader({
     super.key,
@@ -206,10 +206,6 @@ class EntryHeader extends StatelessWidget {
     final isBackdated =
         formatBusinessDate(businessDate) !=
         formatBusinessDate(qatarBusinessDate());
-    final border = EntryChrome.border(
-      isDark: isDark,
-      scheme: theme.colorScheme,
-    );
     final muted = EntryChrome.mutedColor(
       isDark: isDark,
       scheme: theme.colorScheme,
@@ -220,22 +216,15 @@ class EntryHeader extends StatelessWidget {
     );
 
     return Container(
-      constraints: const BoxConstraints(minHeight: 80, maxHeight: 96),
-      margin: const EdgeInsets.fromLTRB(12, 8, 12, 0),
+      constraints: const BoxConstraints(minHeight: 68),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: border, width: 1.2),
-        gradient: EntryChrome.cardWash(isDark: isDark),
-        boxShadow: [
-          BoxShadow(
-            color: EntryChrome.accent.withValues(alpha: isDark ? 0.14 : 0.1),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
+        color: theme.colorScheme.surface,
+        border: Border(
+          bottom: BorderSide(color: theme.colorScheme.primary, width: 2),
+        ),
       ),
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(6, 8, 2, 8),
+        padding: const EdgeInsetsDirectional.fromSTEB(4, 8, 4, 8),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
@@ -250,24 +239,13 @@ class EntryHeader extends StatelessWidget {
                 ),
               )
             else
-              const SizedBox(width: 6),
-            Container(
-              width: 36,
-              height: 36,
-              margin: const EdgeInsetsDirectional.only(end: 10),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(10),
-                gradient: EntryChrome.iconWellGradient,
-                border: Border.all(
-                  color: EntryChrome.accent.withValues(alpha: 0.35),
-                ),
-              ),
-              child: Icon(
-                Icons.speed_rounded,
-                color: isDark ? EntryChrome.onAccent : EntryChrome.iconGlyph,
-                size: 20,
-              ),
+              const SizedBox(width: 10),
+            Icon(
+              Icons.speed_outlined,
+              color: theme.colorScheme.primary,
+              size: 22,
             ),
+            const SizedBox(width: 10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -275,7 +253,7 @@ class EntryHeader extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    maxLines: 1,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
                     style: theme.textTheme.titleSmall?.copyWith(
                       fontWeight: FontWeight.w800,
@@ -311,25 +289,11 @@ class EntryHeader extends StatelessWidget {
                           ),
                         ],
                         if (isBackdated) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 1,
-                            ),
-                            decoration: BoxDecoration(
-                              color: EntryChrome.accent.withValues(alpha: 0.18),
-                              borderRadius: BorderRadius.circular(999),
-                            ),
-                            child: Text(
-                              strings.backdated,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: isDark
-                                    ? AppColors.goldSoft
-                                    : EntryChrome.iconGlyph,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            ),
+                          const SizedBox(width: 8),
+                          BrandStatusMark(
+                            label: strings.backdated,
+                            tone: BrandStatusTone.warning,
+                            compact: true,
                           ),
                         ],
                       ],

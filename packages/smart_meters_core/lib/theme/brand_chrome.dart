@@ -40,25 +40,13 @@ abstract final class BrandChrome {
     colors: [iconWellTop, iconWellBottom],
   );
 
-  /// Light: white settling into a whisper of the accent tint.
-  /// Dark: solid tonal panel (never translucent) so text contrast is stable.
+  /// Quiet tonal panel. Product personality comes from controls and status,
+  /// not decorative gradients behind operational content.
   static LinearGradient cardWash({required bool isDark}) {
-    if (isDark) {
-      final flat = Color.alphaBlend(
-        accentSoft.withValues(alpha: 0.035),
-        surfaceDark,
-      );
-      return LinearGradient(colors: [flat, flat]);
-    }
-    final soft = Color.alphaBlend(
-      accentSoft.withValues(alpha: 0.12),
-      Colors.white,
-    );
-    return LinearGradient(
-      begin: Alignment.topCenter,
-      end: Alignment.bottomCenter,
-      colors: [Colors.white, soft],
-    );
+    final flat = isDark
+        ? Color.alphaBlend(accentSoft.withValues(alpha: 0.035), surfaceDark)
+        : Color.alphaBlend(accentSoft.withValues(alpha: 0.035), Colors.white);
+    return LinearGradient(colors: [flat, flat]);
   }
 
   static Color border({required bool isDark, required ColorScheme scheme}) =>
