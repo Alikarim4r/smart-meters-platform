@@ -12,6 +12,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Zero-state release guard
+        if: startsWith(github.head_ref, 'release/zero-state') || startsWith(github.ref_name, 'release/zero-state')
+        run: python3 scripts/check_zero_state_release.py
+
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
