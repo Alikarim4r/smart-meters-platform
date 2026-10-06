@@ -17,7 +17,9 @@ PACKAGE_IDS = {
 }
 OPERATIONAL_TABLES = (
     "organizations",
+    "zones",
     "sites",
+    "site_tanks",
     "meters",
     "meter_readings",
 )
@@ -27,6 +29,56 @@ errors: list[str] = []
 def require(condition: bool, message: str) -> None:
     if not condition:
         errors.append(message)
+
+
+def top_level_sql(sql: str) -> str:
+    """Exclude stored routine bodies while keeping migration-time executable SQL.
+
+    INSERT statements inside CREATE FUNCTION/PROCEDURE define future runtime
+    behavior and are not seed data. DO blocks execute during migration and are
+    intentionally retained so any operational inserts inside them are caught.
+    """
+    dollar = re.compile(r"(?P<tag>\$[A-Za-z_][A-Za-z0-9_]*\$|\$\$)")
+    out: list[str] = []
+    cursor = 0
+
+    while True:
+        start = dollar.search(sql, cursor)
+        if start is None:
+            out.append(sql[cursor:])
+            break
+
+        tag = start.group("tag")
+        close = sql.find(tag, start.end())
+        if close < 0:
+            out.append(sql[cursor:])
+            break
+
+        end = close + len(tag)
+        out.append(sql[cursor:start.start()])
+
+        prefix = sql[max(0, start.start() - 2000):start.start()]
+        statement = prefix[prefix.rfind(";") + 1:].lower()
+        is_routine_body = (
+            "create" in statement
+            and (
+                " function " in f" {statement} "
+                or " procedure " in f" {statement} "
+            )
+            and re.search(r"\bas\s*$", statement) is not None
+        )
+
+        if is_routine_body:
+            out.append(" ")
+        else:
+            out.append(sql[start.end():close])
+        cursor = end
+
+    cleaned = "".join(out)
+    cleaned = re.sub(r"/\*.*?\*/", " ", cleaned, flags=re.DOTALL)
+    cleaned = re.sub(r"--[^\n]*", " ", cleaned)
+    cleaned = re.sub(r"'(?:''|[^'])*'", "''", cleaned, flags=re.DOTALL)
+    return cleaned
 
 
 for app in APPS:
@@ -59,22 +111,51 @@ require(
     "zero-state release must not contain SQL files in supabase/seed: "
     + ", ".join(str(path.relative_to(ROOT)) for path in seed_files),
 )
-require(not (ROOT / "supabase" / "seed.sql").exists(), "supabase/seed.sql must be absent")
+require(
+    not (ROOT / "supabase" / "seed.sql").exists(),
+    "supabase/seed.sql must be absent",
+)
+
+config = (ROOT / "supabase" / "config.toml").read_text(encoding="utf-8")
+require(
+    re.search(r"(?ms)^\[db\.seed\].*?^enabled\s*=\s*false\s*$", config)
+    is not None,
+    "supabase/config.toml must disable db.seed for the zero-state release",
+)
 
 insert_pattern = re.compile(
-    r"insert\s+into\s+(?:public\.)?(?:\"?)("
+    r"insert\s+into\s+(?:public\.)?\"?("
     + "|".join(OPERATIONAL_TABLES)
-    + r")(?:\"?)\b",
+    + r")\"?\b",
     flags=re.IGNORECASE | re.MULTILINE,
 )
+migration_name_pattern = re.compile(r"^(\d+)_([a-z0-9_]+)\.sql$")
+seen_versions: dict[str, Path] = {}
+
 for migration in sorted((ROOT / "supabase" / "migrations").glob("*.sql")):
-    text = migration.read_text(encoding="utf-8")
-    if match := insert_pattern.search(text):
+    name_match = migration_name_pattern.match(migration.name)
+    require(name_match is not None, f"invalid migration filename: {migration.name}")
+    if name_match is not None:
+        version = name_match.group(1)
+        previous = seen_versions.get(version)
+        require(
+            previous is None,
+            (
+                f"duplicate migration version {version}: "
+                f"{previous.name if previous else ''}, {migration.name}"
+            ),
+        )
+        seen_versions[version] = migration
+
+    migration_sql = migration.read_text(encoding="utf-8")
+    if match := insert_pattern.search(top_level_sql(migration_sql)):
         errors.append(
             f"{migration.relative_to(ROOT)} seeds operational table {match.group(1)}"
         )
 
-app_env = (ROOT / "packages" / "smart_meters_core" / "lib" / "config" / "app_env.dart").read_text(encoding="utf-8")
+app_env = (
+    ROOT / "packages" / "smart_meters_core" / "lib" / "config" / "app_env.dart"
+).read_text(encoding="utf-8")
 require(
     "defaultValue: 'production'" in app_env,
     "AppEnv must default to production for release builds",

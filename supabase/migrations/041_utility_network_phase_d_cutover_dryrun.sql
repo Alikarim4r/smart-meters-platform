@@ -602,7 +602,8 @@ revoke all on function public.utility_assert_legacy_writes_allowed(uuid, uuid) f
 revoke all on function public.utility_legacy_edge_conn_kind(text) from public;
 revoke all on function public.utility_legacy_connection_already_in_revision(uuid, uuid, uuid, uuid, text) from public;
 revoke all on function public.utility_legacy_node_already_in_revision(uuid, uuid) from public;
-revoke all on function public.finalize_legacy_network_cutover(uuid, uuid, boolean, text) from public;
+-- No four-argument overload exists in the versioned migration chain.
+-- Do not REVOKE a nonexistent signature: fresh database replay must remain valid.
 revoke all on function public.finalize_legacy_network_cutover(uuid, uuid, boolean, text, boolean) from public;
 revoke all on function public.get_legacy_write_status(uuid, uuid) from public;
 

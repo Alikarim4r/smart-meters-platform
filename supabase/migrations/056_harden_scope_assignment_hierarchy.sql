@@ -110,7 +110,11 @@ create policy "user_scope_assignments_write"
   );
 
 -- Enrich assignee RPC with scope ids + whether row is direct for the requested level.
-create or replace function public.list_scope_assignees_at(
+-- PostgreSQL cannot CREATE OR REPLACE a function when its OUT/return-table
+-- shape changes. Drop the prior 10-column overload, then recreate it.
+drop function if exists public.list_scope_assignees_at(uuid, uuid, uuid);
+
+create function public.list_scope_assignees_at(
   p_organization_id uuid default null,
   p_zone_id uuid default null,
   p_site_id uuid default null
@@ -275,3 +279,6 @@ begin
   order by coalesce(p.full_name, p.email);
 end;
 $$;
+
+revoke all on function public.list_scope_assignees_at(uuid, uuid, uuid) from public;
+grant execute on function public.list_scope_assignees_at(uuid, uuid, uuid) to authenticated;
